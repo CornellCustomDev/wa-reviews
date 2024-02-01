@@ -1,0 +1,37 @@
+{
+  "name": "cornell-custom-dev/laravel-starter-kit",
+  "description": "Cornell University Custom Development Laravel Starter Kit",
+  "license": "MIT",
+  "type": "library",
+  "require": {
+    "php": "^8.1",
+    "livewire/livewire": "^3.3",
+    "spatie/laravel-package-tools": "^1.16",
+    "cubear/cwd_framework_lite": "^3.0",
+    "propaganistas/laravel-phone": "^5.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^8.17",
+    "phpunit/phpunit": "^10.5",
+    "laravel/pint": "^1.13"
+  },
+  "autoload": {
+    "psr-4": {
+      "CornellCustomDev\\LaravelStarterKit\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "CornellCustomDev\\LaravelStarterKit\\Tests\\": "tests"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

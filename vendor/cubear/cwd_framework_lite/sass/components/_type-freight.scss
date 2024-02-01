@@ -1,0 +1,383 @@
+// CWD Component: Implement Cornell's Freight font families
+// ---------------------------------------------------------------------------
+// Recommended breakpoints to match base theme:
+// @media (min-width: 321px) - above 3.5" phones begins
+// @media (min-width: 480px)
+// @media (min-width: 624px)
+// @media (min-width: 768px) - tablet begins, sidebar begins
+// @media (min-width: 992px) - desktop main navigation begins
+// @media (min-width: 1080px)
+// @media (min-width: 1200px)
+// @media (min-width: 1400px) - maximum content width begins
+
+/* Fonts
+----------------------------------------------------------------- */
+
+// Apply Freight to font variables used by other components
+$project-font-family-sans-serif: $cornell-font-family-sans-serif;
+$project-font-family-serif: $cornell-font-family-serif;
+$project-font-family-sans-alt: $cornell-font-family-sans-serif;
+$project-font-family-sans-ui: $cornell-font-family-sans-serif;
+$project-font-family-serif-alt: $cornell-font-family-serif;
+
+// Freight Sans Pro
+body, .base-font, 
+table, table caption, 
+#main form label, 
+#main-navigation li, 
+#utility-navigation li, 
+h1, h2, h3, h4, h5, h6, 
+.h1, .h2, .h3, .h4, .h5, .h6, 
+.sans, 
+.intro, 
+.breadcrumb, 
+.secondary-navigation ul li, .secondary-navigation ul ul li, .menu-block-title + .secondary-navigation ul li, .secondary .menu-block-title, 
+.cwd-component .subheading h4, .cwd-component h4.subheading, .cwd-component .subheading h4.sans, .cwd-component h4.subheading.sans, 
+.cwd-component .subheading.subheading-secondary h4, .cwd-component h4.subheading.subheading-secondary, 
+blockquote.offset, blockquote.impact, 
+body > footer a.link-block, #body-footer a.link-block, 
+.cu-search label, 
+fieldset.semantic legend, #main fieldset.semantic legend, fieldset fieldset legend, #main fieldset fieldset legend, 
+form.webform-submission-form fieldset legend, #main form.webform-submission-form fieldset legend, 
+#main form input, #main form input[type='submit'], #main form input[type='reset'], #main form input[type='button'], #main form textarea, 
+a.link-button, 
+.slider-caption h2, .slider-caption p, #popup .caption {
+	font-family: $cornell-font-family-sans-serif;
+}
+
+// Freight Text (comment out to use only Sans)
+.serif, 
+.cu-brand h3, 
+main .secondary h2, main .secondary h3, main .secondary .h2, main .secondary .h3, 
+.band[role='complementary'] h2, .band[role='complementary'] h3, .band[role='complementary'] .h2, .band[role='complementary'] .h3, 
+.secondary-navigation ul li, .secondary .menu-block-title, 
+.cwd-component .subheading h4, .cwd-component h4.subheading, .cwd-component .subheading h4.sans, .cwd-component h4.subheading.sans, 
+blockquote.offset, blockquote.impact, 
+fieldset.semantic legend, #main fieldset.semantic legend, fieldset fieldset legend, #main fieldset fieldset legend, 
+form.webform-submission-form fieldset legend, #main form.webform-submission-form fieldset legend, 
+a.link-button.serif {
+	font-family: $cornell-font-family-serif;
+	-webkit-font-smoothing: subpixel-antialiased;
+	-moz-osx-font-smoothing: auto;
+}
+
+// Line Height for Basic Content
+main, #main, body > footer, #body-footer, .band {
+	line-height: 1.5;
+}
+
+// Disable Subpixel Antialiasing (Strategically)
+.cu-gray #cu-header .cu-unit, 
+.cu-black #cu-header .cu-unit, 
+.cu-red #cu-header .cu-unit {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+
+/* Responsive Scale
+----------------------------------------------------------------- */
+
+// Body Text (16px -> 18px)
+body, 
+table, 
+#main form label {
+	font-size: 16px;
+	
+	@media (min-width: 992px) {
+		font-size: 18px;
+	}
+}
+
+// Body Text (16px -> 17px)
+body > footer, #body-footer,
+#main .secondary, 
+#main form .option-label, 
+.content-sidebar {
+	font-size: 16px;
+	
+	@media (min-width: 992px) {
+		font-size: 17px;
+	}
+}
+
+// Body Text (16px uniform) 
+article footer, 
+.cwd-component .summary, 
+.cwd-component .text, 
+.cwd-component.full .date {
+	font-size: 16px;
+}
+
+// Small Print (14px -> 16px)
+.smallprint {
+	font-size: 14px;
+	
+	@media (min-width: 992px) {
+		font-size: 16px;
+	}
+}
+
+// Small Print (14px uniform)
+.cwd-component .metadata-set, 
+.cwd-component .date, 
+.cwd-component .subheading.subheading-secondary h4, 
+.cwd-component h4.subheading.subheading-secondary, 
+.cwd-component ul.inline, 
+.cwd-tooltip, 
+table.compact td, table.compact th {
+	font-size: 14px;
+}
+
+// Small Print (15px uniform)
+body > footer ul li, 
+body > footer .sub-footer, 
+#main form .description, 
+.photo-info {
+	font-size: 15px;
+}
+
+// Specialty Headings
+#main .secondary h2 {
+	font-size: 24px;
+	color: #666;
+}
+.cwd-component .subheading h4, .cwd-component h4.subheading {
+	font-size: 17px;
+	
+	&.sans {
+		font-size: 16px;
+		font-weight: 500;
+	}
+}
+
+// Specialty Blockquotes
+blockquote {
+	&.impact, &.impact p, &.offset, &.offset p {
+		font-size: 21px;
+		
+		@media (min-width: 992px) {
+			font-size: 22px;
+		}
+	}
+	&.offset, &.offset p {
+		@media (min-width: 1200px) {
+			font-size: 24px;
+			line-height: 1.45;
+		}
+	}
+}
+
+// Browser-Prefixed Placeholder Text (must be defined separately) 
+#main form ::-moz-placeholder {
+	font-size: 16px;
+	line-height: 1.4;
+}
+#main form ::-ms-input-placeholder {
+	font-size: 16px;
+	line-height: 1.4;
+}
+#main form ::-webkit-input-placeholder {
+	font-size: 16px;
+	line-height: 1.4;
+}
+
+// CU Header
+.cu-seal #cu-header .cu-brand {
+	@media (min-width: 768px) {
+		padding-top: 15px;
+		padding-bottom: 20px;
+	}
+	@media (min-width: 1200px) {
+		padding-top: 25px;
+		padding-bottom: 30px;
+	}
+}
+#cu-header .cu-brand {
+	h2 {
+		font-size: 26px;
+		font-weight: 400;
+		margin-top: 3px;
+		
+		@media (min-width: 768px) {
+			font-size: 34px;
+		}
+		@media (min-width: 992px) {
+			font-size: 40px;
+		}
+		@media (min-width: 1200px) {
+			font-size: 46px;
+		}
+	}
+	h3 {
+		font-size: 14px;
+		@media (min-width: 768px) {
+			font-size: 18px;
+			margin-top: 0.2em;
+		}
+		@media (min-width: 992px) {
+			font-size: 19px;
+		}
+		@media (min-width: 1200px) {
+			font-size: 23px;
+			margin-top: 0.15em;
+		}
+	}
+}
+
+// CU Search
+.cu-search form > label {
+	font-size: 23px;
+	vertical-align: text-bottom;
+}
+.cu-search .search-filters label {
+	font-size: 15px;
+}
+
+// Footer
+body > footer ul li, #body-footer ul li {
+	font-size: 15px;
+}
+body > footer .h5, #body-footer .h5 {
+	font-size: 20px;
+	font-weight: 400;
+}
+body > footer .h6, #body-footer .h6 {
+	font-size: 16px;
+	font-weight: 600;
+}
+body > footer a.link-block, #body-footer a.link-block {
+	padding: 0.55em 1em 0.6em;
+	@media (min-width: 768px) {
+		font-size: 15px;
+		padding: 0.6em 1em;
+	}
+}
+
+// Main Navigation
+#main-navigation li {
+	font-size: 16px;
+	
+	@media (min-width: 992px) {
+		font-size: 17px;
+	}
+}
+
+// Utility Navigation
+#utility-navigation li {
+	font-size: 16px;
+}
+@media (min-width: 1080px) {
+	.cu-seal .mobile-button {
+		width: 44px;
+		height: 43px;
+	}
+	#utility-navigation a {
+		height: 37px;
+		line-height: 36px;
+		padding: 0 22px;
+	}
+}
+
+// Breadcrumb
+.breadcrumb li {
+	font-size: 16px;
+}
+
+// Section Navigation
+.secondary-navigation ul li, .secondary .menu-block-title {
+	font-size: 24px;
+	color: #666;
+}
+.secondary-navigation ul ul li, .menu-block-title + .secondary-navigation ul li {
+	font-size: 18px;
+	font-weight: 400;
+}
+.secondary-navigation ul ul ul li, .menu-block-title + .secondary-navigation ul ul li {
+	font-size: 16px;
+}
+.secondary-navigation ul ul ul, .menu-block-title + .secondary-navigation ul ul {
+	padding-left: 20px;
+}
+
+// Breadcrumb + Section Navigation mobile combo
+@media (max-width: 767px) {
+	.mobile .breadcrumb + h2 {
+		font-size: 23px !important;
+	}
+	.mobile .breadcrumb + h2 + .secondary-navigation li, 
+	.mobile .breadcrumb + h2 + .secondary-navigation li li {
+		font-size: 16px !important;
+		font-weight: 400;
+	}
+}
+
+// Outliers
+code, 
+kbd, 
+pre, 
+samp {
+	font-size: 87.5%; // monospace runs larger
+}
+
+// Resets for consistency of layout
+#cu-header {
+	font-size: 14px;
+}
+
+// Weight Tweaks
+strong {
+	//font-weight: 600; // 600 would make bold text more subtle (compared to default 700) which might better suit some projects
+}
+.cwd-events .location {
+	font-weight: 400;
+}
+
+// Links
+#body-footer .footer-links a, body > footer .footer-links a, .footer-links-mimic a {
+	color: #fff;
+	@include text-decoration-color( rgba(255,255,255,0.4) );
+}
+.cwd-component a.designer, .cwd-component a .designer .deco, .cwd-component .designer a {
+	background-position: 0 1.2em;
+}
+.cwd-component a.designer:hover, .cwd-component a:hover .designer .deco, .cwd-component .designer a:hover {
+	background-position: 0 1.2em;
+}
+.cwd-component .metadata-set a {
+	line-height: 1.3;
+}
+a.link-button {
+	padding: 0.4em 0.8em;
+	line-height: 1.4;
+	
+	@media (min-width: 992px) {
+		font-size: 17px;
+		padding: 0.5em 1.2em;
+	}
+	
+	.fa, .zmdi {
+		top: 2px;
+		
+		@media (min-width: 992px) {
+			font-size: 21px;
+			top: 3px;
+			margin-left: 0.4em;
+		}
+	}
+}
+
+// Drupal CMS
+.messages {
+	font-size: 15px;
+	
+	.message__single:before, .messages__item:before {
+		font-size: 18px;
+		line-height: 1;
+	}
+}
+.pager ul li {
+	font-size: 15px;
+	font-variant-numeric: lining-nums;
+	font-feature-settings: "lnum";
+}

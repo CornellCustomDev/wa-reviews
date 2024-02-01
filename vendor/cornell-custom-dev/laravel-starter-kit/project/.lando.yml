@@ -1,0 +1,6 @@
+name: :project_slug
+recipe: laravel
+config:
+  webroot: ./public
+  php: 8.2
+  composer_version: 2-latest
