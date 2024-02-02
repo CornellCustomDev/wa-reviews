@@ -1,8 +1,11 @@
 <x-cd.layout.app title="WA Reviews" subtitle="Projects">
+    <div class="cwd-component align-right">
+        <x-forms.link-button route="{{ route('projects.create') }}" title="Create New Project" />
+    </div>
+
     <h1>Projects</h1>
 
-    <table class="table -table-responsive">
-        <caption>Projects</caption>
+    <table class="table striped bordered">
         <thead>
         <tr>
             <th>Project</th>

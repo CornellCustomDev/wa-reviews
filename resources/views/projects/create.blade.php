@@ -3,22 +3,16 @@
 
     <form method="POST" action="{{ route('projects.store') }}">
         @csrf
-        <div class="form-group">
-            <label for="name">Project Name</label>
-            <input type="text" class="form-control" id="name" name="name" required>
-        </div>
+        <label for="name">Project Name</label>
+        <input type="text" id="name" name="name" required>
 
-        <div class="form-group">
-            <label for="site">Site</label>
-            <input type="text" class="form-control" id="site" name="site" required>
-        </div>
+        <label for="site_url">Site URL</label>
+        <input type="text" id="site_url" name="site_url" required>
 
-        <div class="form-group">
-            <label for="description">Description</label>
-            <textarea class="form-control" id="description" name="description" required></textarea>
-        </div>
+        <label for="description">Description</label>
+        <textarea id="description" name="description" required></textarea>
 
-        <button type="submit" class="btn btn-primary">Create Project</button>
+        <input type="submit" value="Create Project">
     </form>
 
 </x-cd.layout.app>

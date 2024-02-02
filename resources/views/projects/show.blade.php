@@ -1,8 +1,24 @@
 <x-cd.layout.app title="WA Reviews" subtitle="Project">
+    <div class="cwd-component align-right">
+        <x-forms.link-button route="{{ route('projects.edit', $project) }}" title="Edit Project" />
+    </div>
+
     <h1>{{ $project->name }}</h1>
 
-    <p>Site: <a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a></p>
-    <p>Created: {{ $project->created_at->toFormattedDateString() }}</p>
+    <table class="table bordered">
+        <tr>
+            <th>Project</th>
+            <td>{{ $project->name }}</td>
+        </tr>
+        <tr>
+            <th>Site</th>
+            <td><a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a></td>
+        </tr>
+        <tr>
+            <th>Created</th>
+            <td>{{ $project->created_at->toFormattedDateString() }}</td>
+        </tr>
+    </table>
 
     <div>
         {!! $project->description !!}
