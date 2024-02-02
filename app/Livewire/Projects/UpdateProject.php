@@ -17,6 +17,7 @@ class UpdateProject extends Component
 
     public function save()
     {
+        $this->authorize('update', $this->form->project);
         $this->form->update();
 
         return redirect()->route('projects.index');

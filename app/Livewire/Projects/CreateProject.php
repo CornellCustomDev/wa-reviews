@@ -3,6 +3,7 @@
 namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ProjectForm;
+use App\Models\Project;
 use Livewire\Component;
 
 class CreateProject extends Component
@@ -11,6 +12,7 @@ class CreateProject extends Component
 
     public function save()
     {
+        $this->authorize('create', Project::class);
         $this->form->store();
 
         return redirect()->route('projects.index');
