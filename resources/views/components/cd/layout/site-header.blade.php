@@ -3,7 +3,7 @@
         <div class="container-fluid">
             <a id="mobile-home" href="#"><span class="sr-only">Home</span></a>
             <ul class="list-menu links">
-                <li class="active parent"><a href="/">Template</a></li>
+                <li><a href="{{ route('projects.index') }}">Projects</a></li>
             </ul>
         </div>
     </nav>
