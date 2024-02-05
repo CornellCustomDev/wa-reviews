@@ -1,4 +1,5 @@
 <div>
+    <h1>Create Project</h1>
     <form wire:submit="save">
         <label for="name">Project Name</label>
         <input type="text" id="name" name="name" required wire:model="form.name">
@@ -20,5 +21,8 @@
         <textarea id="description" name="description" wire:model="form.description"></textarea>
 
         <input type="submit" value="Create Project">
+        <a href="{{ route('projects.index') }}" >
+            <input type="button" value="Cancel">
+        </a>
     </form>
 </div>

@@ -1,3 +1,7 @@
+@props([
+    'title' => 'Cornell University',
+    'subtitle' => null
+])
 <header id="cu-header" aria-label="Site banner">
     <div id="cu-search" class="cu-search">
         <div class="container-fluid">
@@ -21,7 +25,9 @@
         <h1 class="cu-logo"><a href="https://www.cornell.edu"><img class="sr-only" src="{{ asset('cwd-framework/images/cornell/bold_cornell_logo_simple_b31b1b.svg') }}" alt="Cornell University" width="245" height="62"></a></h1>
         <div class="cu-unit">
             <h2>{{ $title }}</h2>
-            <h3 class="sans">{{ $subtitle }}</h3>
+            @if($subtitle)
+                <h3 class="sans">{{ $subtitle }}</h3>
+            @endif
         </div>
         <div class="buttons">
             <button class="mobile-button" id="mobile-nav">Main Menu</button>

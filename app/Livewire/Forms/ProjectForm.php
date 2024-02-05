@@ -18,15 +18,6 @@ class ProjectForm extends Form
     #[Validate('nullable|string')]
     public string $description = '';
 
-//    public function rules(): array
-//    {
-//        return [
-//            'name' => 'required|string|max:255',
-//            'site_url' => 'required|url',
-//            'description' => 'nullable|string',
-//        ];
-//    }
-
     public function setModel(Project $project): void
     {
         $this->project = $project;

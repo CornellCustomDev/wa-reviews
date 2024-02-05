@@ -1,4 +1,4 @@
-<x-cd.layout.app title="WA Reviews" subtitle="Project">
+<div>
     <div class="cwd-component align-right">
         <x-forms.link-button route="{{ route('projects.edit', $project) }}" title="Edit Project" />
     </div>
@@ -23,4 +23,4 @@
     <div>
         {!! $project->description !!}
     </div>
-</x-cd.layout.app>
+</div>

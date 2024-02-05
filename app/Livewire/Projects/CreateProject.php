@@ -20,6 +20,7 @@ class CreateProject extends Component
 
     public function render()
     {
-        return view('livewire.projects.create-project');
+        return view('livewire.projects.create-project')
+            ->layout('components.layouts.app');
     }
 }

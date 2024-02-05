@@ -1,6 +1,10 @@
 <?php
 
-use App\Http\Controllers\ProjectController;
+use App\Livewire\Projects\CreateProject;
+use App\Livewire\Projects\ShowProject;
+use App\Livewire\Projects\UpdateProject;
+use App\Livewire\Projects\ViewProjects;
+use App\Models\Project;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,5 +22,9 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::resource('projects', ProjectController::class);
-
+Route::prefix('projects')->name('projects.')->group(function () {
+    Route::get('/', ViewProjects::class)->name('index')->can('viewAny', Project::class);
+    Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
+    Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
+    Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
+});

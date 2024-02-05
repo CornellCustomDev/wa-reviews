@@ -1,12 +1,11 @@
 <?php
 
-namespace Tests\Feature\Livewire\Projects;
+namespace Tests\Feature\Livewire;
 
 use App\Livewire\Projects\CreateProject;
+use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Models\Project;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Livewire\Livewire;
 use Tests\Feature\FeatureTestCase;
 
@@ -28,6 +27,16 @@ class ProjectTest extends FeatureTestCase
             ->set('form.description', 'This is a test project')
             ->call('save')
             ->assertRedirect(route('projects.index'));
+    }
+
+    /** @test */
+    public function can_show_project()
+    {
+        $project = Project::factory()->create();
+
+        Livewire::test(ShowProject::class, ['project' => $project])
+            ->assertStatus(200)
+            ->assertSee($project->name);
     }
 
     /** @test */

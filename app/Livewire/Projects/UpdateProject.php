@@ -25,6 +25,7 @@ class UpdateProject extends Component
 
     public function render()
     {
-        return view('livewire.projects.update-project');
+        return view('livewire.projects.update-project')
+            ->layout('components.layouts.app');
     }
 }

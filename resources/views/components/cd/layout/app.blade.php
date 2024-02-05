@@ -1,3 +1,4 @@
+@props(['siteTitle' => config('app.name'), 'title', 'subtitle' => null])
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,7 +34,7 @@
 <div id="skipnav"><a href="#main">Skip to main content</a></div>
 
 <div class="band" id="super-header">
-    <x-cd.layout.cu-header :title="$title" :subtitle="$subtitle"/>
+    <x-cd.layout.cu-header :title="$siteTitle" :subtitle="$subtitle ?? ''"/>
     <x-cd.layout.site-header/>
 </div>
 
