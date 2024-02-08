@@ -23,11 +23,6 @@
     <!-- <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css"> -->
     <!-- <link href="{{ asset('cwd-framework/css/cwd_patterns.css') }}" rel="stylesheet"> -->
 
-    <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
-
     <!-- Icon Fonts -->
     <link href="{{ asset('cwd-framework/fonts/font-awesome.min.css') }}" rel="stylesheet">
     <link href="{{ asset('cwd-framework/fonts/material-design-iconic-font.min.css') }}" rel="stylesheet">
