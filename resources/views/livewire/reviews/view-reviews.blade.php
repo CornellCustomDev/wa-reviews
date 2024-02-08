@@ -1,5 +1,8 @@
 <div>
     <div class="cwd-component align-right">
+        @can('create', [App\Models\Review::class, $project])
+            <x-forms.link-button route="{{ route('reviews.create', $project) }}" title="Create Review" />
+        @endcan
         <x-forms.link-button route="{{ route('projects.show', $project) }}" title="Back to Project" />
     </div>
 
@@ -11,6 +14,7 @@
             <th>Target</th>
             <th>Description</th>
             <th>Recommendation</th>
+            <th>Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -19,6 +23,24 @@
                 <td>{{ $review->target }}</td>
                 <td>{{ $review->description }}</td>
                 <td>{{ $review->recommendation }}</td>
+                <td class="text-nowrap">
+                    <x-forms.link-button route="{{ route('reviews.show', [$review->project, $review]) }}" title="View Review {{ $review->id }}">
+                        <span class="zmdi zmdi-eye" style="margin-right: 0" />
+                    </x-forms.link-button>
+                    @can('update', $review)
+                    <x-forms.link-button route="{{ route('reviews.edit', [$review->project, $review]) }}" title="Edit Review {{ $review->id }}">
+                        <span class="zmdi zmdi-edit" style="margin-right: 0" />
+                    </x-forms.link-button>
+                    @endcan
+                    @can('delete', $review)
+                    <x-forms.link-button route="#" title="Delete Review {{ $review->id }}"
+                        wire:click.prevent="delete({{ $review->id }})"
+                        wire:confirm="Are you sure you want to delete Review {{ $review->id }}?"
+                    >
+                        <span class="zmdi zmdi-delete" style="margin-right: 0" />
+                    </x-forms.link-button>
+                    @endcan
+                </td>
             </tr>
         @endforeach
         </tbody>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Reviews;
 
 use App\Models\Project;
+use App\Models\Review;
 use Livewire\Component;
 
 class ViewReviews extends Component
@@ -17,5 +18,12 @@ class ViewReviews extends Component
                 'reviews' => $this->project->reviews,
             ])
             ->layout('components.layouts.app', ['sidebar' => false]);
+    }
+
+    public function delete(Review $review)
+    {
+        $this->authorize('delete', $review);
+
+        $review->delete();
     }
 }

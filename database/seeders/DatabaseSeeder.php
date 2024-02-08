@@ -21,12 +21,9 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        $this->call([
-            ProjectSeeder::class,
-        ]);
+        $projects = Project::factory(10)->create();
 
         // Add between 0 and 10 reviews to each project
-        $projects = Project::all();
         foreach ($projects as $project) {
             Review::factory(rand(0, 10))->create([
                 'project_id' => $project->id,
