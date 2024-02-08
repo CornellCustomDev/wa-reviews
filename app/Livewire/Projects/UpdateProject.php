@@ -20,7 +20,7 @@ class UpdateProject extends Component
         $this->authorize('update', $this->form->project);
         $this->form->update();
 
-        return redirect()->route('projects.index');
+        return redirect()->route('projects.show', $this->form->project);
     }
 
     public function render()

@@ -4,7 +4,9 @@ use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Livewire\Projects\ViewProjects;
+use App\Livewire\Reviews\ViewReviews;
 use App\Models\Project;
+use App\Models\Review;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,4 +29,11 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
     Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
     Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
+});
+
+Route::prefix('projects/{project}/reviews')->name('reviews.')->group(function () {
+    Route::get('/', ViewReviews::class)->name('index')->can('viewAny', [Review::class, 'project']);
+//    Route::get('/create', CreateReview::class)->name('create')->can('create', [Review::class, 'project']);
+//    Route::get('/{review}', ShowReview::class)->name('show')->can('view', 'review');
+//    Route::get('/{review}/edit', UpdateReview::class)->name('edit')->can('update', 'review');
 });

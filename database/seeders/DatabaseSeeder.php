@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Project;
+use App\Models\Review;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -22,5 +24,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ProjectSeeder::class,
         ]);
+
+        // Add between 0 and 10 reviews to each project
+        $projects = Project::all();
+        foreach ($projects as $project) {
+            Review::factory(rand(0, 10))->create([
+                'project_id' => $project->id,
+            ]);
+        }
     }
 }

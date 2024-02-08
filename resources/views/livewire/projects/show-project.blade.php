@@ -1,5 +1,8 @@
 <div>
     <div class="cwd-component align-right">
+        @can('viewAny', [\App\Models\Review::class, $project])
+            <x-forms.link-button route="{{ route('reviews.index', $project) }}" title="View Reviews" />
+        @endcan
         <x-forms.link-button route="{{ route('projects.edit', $project) }}" title="Edit Project" />
     </div>
 

@@ -1,2 +1,5 @@
-@props(['title' => null])
-@include('components.cd.layout.app', ['subtitle' => $title])
+@props([
+    'title' => null,
+    'sidebar' => true
+])
+@include('components.cd.layout.app', ['subtitle' => $title, 'sidebar' => $sidebar])

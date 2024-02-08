@@ -1,4 +1,9 @@
-@props(['siteTitle' => config('app.name'), 'title', 'subtitle' => null])
+@props([
+    'siteTitle' => config('app.name'),
+    'title',
+    'subtitle' => null,
+    'sidebar' => true
+])
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -29,7 +34,13 @@
 
     @livewireStyles
 </head>
-<body class="cu-seal sidebar sidebar-right sidebar-tint sidebar-tint-edge">
+<body @class([
+    'cu-seal',
+    'sidebar' => $sidebar,
+    'sidebar-right' => $sidebar,
+    'sidebar-tint' => $sidebar,
+    'sidebar-tint-edge' => $sidebar
+])>
 
 <div id="skipnav"><a href="#main">Skip to main content</a></div>
 
@@ -41,11 +52,11 @@
 <div id="main-content" class="band">
     <main id="main" class="container-fluid aria-target" tabindex="-1">
         <div class="row">
-            <x-cd.layout.sidebar-top/>
+            @if($sidebar)<x-cd.layout.sidebar-top/>@endif
             <x-cd.layout.main-article>
                 {{ $slot }}
             </x-cd.layout.main-article>
-            <x-cd.layout.sidebar-bottom/>
+            @if($sidebar)<x-cd.layout.sidebar-bottom/>@endif
         </div>
     </main>
 </div>

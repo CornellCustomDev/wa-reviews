@@ -22,7 +22,7 @@
 
         <input type="submit" value="Update Project">
 
-        <a href="{{ route('projects.index') }}" >
+        <a href="{{ route('projects.show', $form->project) }}" >
             <input type="button" value="Cancel">
         </a>
     </form>
