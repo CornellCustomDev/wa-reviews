@@ -2,7 +2,8 @@
     'siteTitle' => config('app.name'),
     'title',
     'subtitle' => null,
-    'sidebar' => true
+    'sidebar' => true,
+    'supplementary' => false,
 ])
 <!DOCTYPE html>
 <html lang="en">
@@ -56,7 +57,7 @@
     </main>
 </div>
 
-<x-cd.layout.supplementary-content/>
+@if($supplementary)<x-cd.layout.supplementary-content/>@endif
 
 <x-cd.layout.footer/>
 
