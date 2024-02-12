@@ -20,7 +20,14 @@ class ViewReviews extends Component
         return view('livewire.reviews.view-reviews', [
                 'reviews' => $this->project->reviews,
             ])
-            ->layout('components.layouts.app', ['sidebar' => false]);
+            ->layout('components.layouts.app', [
+                'sidebar' => false,
+                'breadcrumbs' => [
+                    'Projects' => route('projects.index'),
+                    $this->project->name => route('projects.show', $this->project),
+                    'Reviews' => 'active'
+                ],
+            ]);
     }
 
     public function delete(Review $review): void

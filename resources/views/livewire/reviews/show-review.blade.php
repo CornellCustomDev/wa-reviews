@@ -19,4 +19,6 @@
             <td><livewire:reviews.review-field :$review field="recommendation" label="Recommendation"/></td>
         </tr>
     </table>
+
+    <livewire:review-items.view-items :review="$review" />
 </div>
