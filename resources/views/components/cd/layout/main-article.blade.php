@@ -1,4 +1,7 @@
+@props(['breadcrumbs' => []])
 <article id="main-article" class="primary">
-    <x-cd.layout.breadcrumbs />
+    @if(count($breadcrumbs) > 0)
+        <x-cd.layout.breadcrumbs :breadcrumbs="$breadcrumbs" />
+    @endif
     {{ $slot }}
 </article>

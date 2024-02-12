@@ -1,9 +1,15 @@
+@props(['breadcrumbs' => []])
 <div id="breadcrumb-navigation" {{ $attributes }}>
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <ul class="list-menu">
             <li><a href="/"><span class="limiter">Home</span></a></li>
-            <!-- <li><a href="#"><span class="limiter">This Page Has An Especially Long Title Which Will Be Truncated With Ellipses</span></a></li> -->
-            <li><span class="limiter">Optional Current Page</span></li>
+            @foreach($breadcrumbs as $breadcrumb => $route)
+                @if ($route == 'active')
+                    <li><span class="limiter">{{ $breadcrumb }}</span></li>
+                @else
+                    <li><a href="{{ $route }}"><span class="limiter">{{ $breadcrumb }}</span></a></li>
+                @endif
+            @endforeach
         </ul>
     </nav>
 </div>

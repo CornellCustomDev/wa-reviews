@@ -4,6 +4,7 @@
     'subtitle' => null,
     'sidebar' => true,
     'supplementary' => false,
+    'breadcrumbs' => [],
 ])
 <!DOCTYPE html>
 <html lang="en">
@@ -49,7 +50,7 @@
     <main id="main" class="container-fluid aria-target" tabindex="-1">
         <div class="row">
             @if($sidebar)<x-cd.layout.sidebar-top/>@endif
-            <x-cd.layout.main-article>
+            <x-cd.layout.main-article :breadcrumbs="$breadcrumbs">
                 {{ $slot }}
             </x-cd.layout.main-article>
             @if($sidebar)<x-cd.layout.sidebar-bottom/>@endif
