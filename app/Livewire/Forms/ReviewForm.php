@@ -26,6 +26,11 @@ class ReviewForm extends Form
         $this->recommendation = $review->recommendation;
     }
 
+    public function getModel(): Review
+    {
+        return $this->review;
+    }
+
     public function store(Project $project): void
     {
         $this->validate();
@@ -33,10 +38,14 @@ class ReviewForm extends Form
         $project->reviews()->create($this->all());
     }
 
-    public function update(): void
+    public function update(?string $field): void
     {
         $this->validate();
 
-        $this->review->update($this->all());
+        if ($field) {
+            $this->review->update([$field => $this->$field]);
+        } else {
+            $this->review->update($this->all());
+        }
     }
 }

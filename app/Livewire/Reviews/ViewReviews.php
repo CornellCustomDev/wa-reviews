@@ -23,27 +23,6 @@ class ViewReviews extends Component
             ->layout('components.layouts.app', ['sidebar' => false]);
     }
 
-    public function edit(Review $review): void
-    {
-        $this->authorize('update', $review);
-        $this->form->setModel($review);
-
-        $this->editingId = $review->id;
-    }
-
-    public function save(): void
-    {
-        $this->authorize('update', $this->form->review);
-        $this->form->update();
-
-        $this->editingId = 0;
-    }
-
-    public function cancel(): void
-    {
-        $this->editingId = 0;
-    }
-
     public function delete(Review $review): void
     {
         $this->authorize('delete', $review);
