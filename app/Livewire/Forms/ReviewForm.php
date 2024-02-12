@@ -11,7 +11,7 @@ class ReviewForm extends Form
 {
     public ?Review $review;
 
-    #[Validate('string|max:255')]
+    #[Validate('required|string|max:255')]
     public string $target = '';
     #[Validate('string')]
     public string $description = '';

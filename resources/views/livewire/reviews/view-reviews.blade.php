@@ -8,6 +8,8 @@
 
     <h1>{{ $project->name }}: Reviews</h1>
 
+    <form wire:submit.prevent>
+
     <table class="table striped bordered">
         <thead>
         <tr>
@@ -20,7 +22,30 @@
         <tbody>
         @foreach($reviews as $review)
             <tr wire:key="{{ $review->id }}">
-                <td>{{ $review->target }}</td>
+                <td x-on:click="await $wire.edit({{ $review->id }}); $nextTick(() => { $refs.form_target.focus() })" style="cursor:pointer">
+                    <div x-show="$wire.editingId != '{{ $review->id }}'">
+                        {{ $review->target }}
+                    </div>
+                    <div x-show="$wire.editingId == '{{ $review->id }}'">
+                        <label for="target" class="sr-only">Target</label>
+                        <input
+                            id="target"
+                            type="text" wire:model="form.target" x-on:blur="$wire.save()" x-ref="form_target"
+                            {{--                            wire:keyup.tab="next({{ $review->id }})"--}}
+                            @class(['panel accent-red' => $errors->has('form.target')])
+                            @error('form.target')
+                            aria-invalid="true"
+                            aria-description="{{ $message }}"
+                            @enderror
+                        />
+                        @error('form.target')
+                        <div>
+                            <span class="error">{{ $message }}</span>
+                        </div>
+                        @enderror
+                        {{--                        <span wire:loading>Saving...</span>--}}
+                    </div>
+                </td>
                 <td>{{ $review->description }}</td>
                 <td>{{ $review->recommendation }}</td>
                 <td class="text-nowrap">
@@ -45,4 +70,6 @@
         @endforeach
         </tbody>
     </table>
+
+    </form>
 </div>
