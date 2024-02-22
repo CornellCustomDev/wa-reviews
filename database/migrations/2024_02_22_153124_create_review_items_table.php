@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('review_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('review_id')->constrained();
-            $table->string('guideline_id', 3);
+            $table->foreignId('guideline_id')->constrained();
             $table->string('assessment', 20);
             $table->string('target')->nullable();
             $table->text('description')->nullable();

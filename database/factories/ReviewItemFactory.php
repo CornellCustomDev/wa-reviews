@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\Assessment;
 use App\Enums\TestingMethod;
+use App\Models\Guideline;
 use App\Models\Review;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -22,7 +23,7 @@ class ReviewItemFactory extends Factory
 
         return [
             'review_id' => Review::factory(),
-            'guideline_id' => $this->faker->numberBetween(1, 90),
+            'guideline_id' => Guideline::factory(),
             'assessment' => $this->faker->randomElement(Assessment::values()),
             'target' => $this->faker->sentence,
             'description' => $this->faker->paragraph,
