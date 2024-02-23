@@ -1,5 +1,9 @@
 <?php
 
+use App\Livewire\Categories\ShowCategory;
+use App\Livewire\Categories\ViewCategories;
+use App\Livewire\Guidelines\ShowGuideline;
+use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
@@ -40,3 +44,17 @@ Route::prefix('projects/{project}/reviews')->name('reviews.')->group(function ()
     Route::get('/{review}', ShowReview::class)->name('show')->can('view', 'review');
     Route::get('/{review}/edit', UpdateReview::class)->name('edit')->can('update', 'review');
 });
+
+// Guidelines
+Route::prefix('guidelines')->name('guidelines.')->group(function () {
+    Route::get('/', ViewGuidelines::class)->name('index');
+    Route::get('/{guideline}', ShowGuideline::class)->name('show');
+//    Route::get('/{guideline}/edit', UpdateGuideline::class)->name('edit')->can('update', 'guideline');
+});
+
+// Criteria
+Route::prefix('categories')->name('categories.')->group(function () {
+    Route::get('/', ViewCategories::class)->name('index');
+    Route::get('/{category}', ShowCategory::class)->name('show');
+});
+

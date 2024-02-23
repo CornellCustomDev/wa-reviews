@@ -22,7 +22,7 @@
                 <span class="error">{{ $message }}</span>
             </div>
             @enderror
-            {{--                        <span wire:loading>Saving...</span>--}}
+            <span wire:loading><span class="fas fa-sync fa-spin"></span><span class="sr-only">Saving...</span></span>
         </form>
     </div>
 </div>

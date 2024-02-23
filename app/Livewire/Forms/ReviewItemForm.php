@@ -15,13 +15,13 @@ class ReviewItemForm extends Form
 
     #[Validate('required|string|max:3')]
     public string $guideline_id;
-    #[Validate('required|enum:App\Enums\Assessment')]
+    #[Validate('required')]
     public Assessment $assessment;
     #[Validate('string|max:255')]
     public string $target = '';
     #[Validate('string')]
     public string $description;
-    #[Validate('enum:App\Enums\TestingMethod')]
+    #[Validate]
     public ?TestingMethod $testing_method;
     #[Validate('string')]
     public string $recommendation;

@@ -29,12 +29,14 @@ class DatabaseSeeder extends Seeder
                 'project_id' => $project->id,
             ]);
 
-            // Add 1 - 3 ReviewItems for each review
+            // Add 1 - 3 ReviewItems for each review, using a random guideline for each ReviewItem
             foreach ($reviews as $review) {
-                ReviewItem::factory(rand(1, 3))->create([
-                    'review_id' => $review->id,
-                    'guideline_id' => $guidelines->random()->id,
-                ]);
+                ReviewItem::factory(rand(1, 3))
+                    ->sequence(fn ($sequence) => [
+                        'review_id' => $review->id,
+                        'guideline_id' => $guidelines->random()->id,
+                    ])
+                    ->create();
             }
         }
     }

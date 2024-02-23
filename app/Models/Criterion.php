@@ -20,4 +20,9 @@ class Criterion extends Model
     {
         return $this->hasMany(Guideline::class);
     }
+
+    public function getLongName(): string
+    {
+        return "$this->number $this->name ($this->level)";
+    }
 }

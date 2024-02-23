@@ -4,6 +4,8 @@
             <a id="mobile-home" href="#"><span class="sr-only">Home</span></a>
             <ul class="list-menu links">
                 <li><a href="{{ route('projects.index') }}">Projects</a></li>
+                <li><a href="{{ route('guidelines.index') }}">Guidelines</a></li>
+                <li><a href="{{ route('categories.index') }}">Categories</a></li>
             </ul>
         </div>
     </nav>

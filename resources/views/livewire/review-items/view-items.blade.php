@@ -11,13 +11,13 @@
         <table class="table striped bordered">
             <thead>
                 <tr>
-                    <th>Guideline ID</th>
+                    <th>ID</th>
+                    <th>Category</th>
                     <th>Criteria</th>
                     <th>Assessment</th>
-                    <th>Target</th>
-                    <th>Description</th>
+                    <th>Observed functionality (Description)</th>
                     <th>Test Method</th>
-                    <th>Recommendation</th>
+                    <th>Recommendation for Remediation</th>
                     <th>Image Links</th>
                     <th>CE Issue</th>
                     <th>Actions</th>
@@ -27,16 +27,18 @@
                 @foreach($reviewItems as $reviewItem)
                     <tr wire:key="{{ $reviewItem->id }}">
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-guideline_id'" :$reviewItem field="guideline_id" label="Guideline ID" />
+                            <x-forms.link-button route="{{ route('guidelines.show', $reviewItem->guideline) }}" title="{{ $reviewItem->guideline->number }}" />
                         </td>
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-criteria'" :$reviewItem field="criteria" label="Criteria" />
+                            <a href="{{ route('categories.show', $reviewItem->guideline->category) }}">
+                                {{ $reviewItem->guideline->category->name }}
+                            </a>
+                        </td>
+                        <td>
+                            {{ $reviewItem->guideline->criterion->getLongName() }}
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-assessment'" :$reviewItem field="assessment" label="Assessment" />
-                        </td>
-                        <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-target'" :$reviewItem field="target" label="Target" />
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-description'" :$reviewItem field="description" label="Description" />
@@ -51,7 +53,7 @@
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-image_links'" :$reviewItem field="image_links" label="Image Links" />
                         </td>
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-ce_issue'" :$reviewItem field="ce_issue" label="CE Issue" />
+                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-content_issue'" :$reviewItem field="content_issue" label="CE Issue" />
                         </td>
                         <td class="text-nowrap">
                             @can('delete', $review)

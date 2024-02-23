@@ -32,4 +32,9 @@ class ReviewItem extends Model
     {
         return $this->belongsTo(Review::class);
     }
+
+    public function guideline(): BelongsTo
+    {
+        return $this->belongsTo(Guideline::class);
+    }
 }

@@ -106,6 +106,7 @@ class GuidelineSeeder extends Seeder
             [88, 'Multimedia', '4.1.2 Name, Role, Value (A)', 'Video and audio content or iframes which present user-readable content require a title or description.'],
             [89, 'Structure', '4.1.2 Name, Role, Value (A)', 'All custom functionality utilizes the appropriate ARIA features for states, properties, and values. (e.g. aria-expanded, aria-haspopup)'],
             [90, 'Motion', '4.1.3 Status Messages (AA)', 'Status messages which change without a page reload notify users of assistive technologies without requiring the user to send focus to the message.'],
+            // ['UX', 'User Experience', 'Non-WCAG User Experience Callouts', ''],
         ])->map(function ($guideline) {
             return [
                 'number' => $guideline[0],
