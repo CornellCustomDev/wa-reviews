@@ -6,7 +6,7 @@ enum TestingMethod: string
 {
     use NamedEnum;
 
-    case ANDI = 'andi';
+    case ANDI = 'ANDI';
     case AXE = 'aXe Extension';
     case CCA = 'Color Contract Analyzer';
     case KEYBOARD = 'Keyboard';
@@ -14,5 +14,4 @@ enum TestingMethod: string
     case SR = 'Screen Reader';
     case SI = 'Site Improve';
     case WAVE = 'WAVE Extension';
-    case OTHER = 'Other';
 }

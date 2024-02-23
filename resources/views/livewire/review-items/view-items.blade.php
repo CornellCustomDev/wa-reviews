@@ -1,9 +1,7 @@
-<div>
+<div class="cwd-component">
     <form>
-        <div class="cwd-component align-right">
-            <button type="button" wire:click="add">
-                Add Review Item
-            </button>
+        <div class="align-right">
+            <x-forms.link-button route="{{ route('review-items.create', [$review->project, $review]) }}" title="Add Review Item" />
         </div>
 
         <h1>Review Items</h1>
@@ -56,6 +54,9 @@
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-content_issue'" :$reviewItem field="content_issue" label="CE Issue" />
                         </td>
                         <td class="text-nowrap">
+                            <x-forms.link-button route="{{ route('review-items.edit', [$review->project, $review, $reviewItem]) }}" title="Edit Review Item {{ $reviewItem->id }}">
+                                <span class="zmdi zmdi-edit" style="margin-right: 0" />
+                            </x-forms.link-button>
                             @can('delete', $review)
                                 <x-forms.link-button
                                     route="#" title="Delete Review Item {{ $reviewItem->id }}"

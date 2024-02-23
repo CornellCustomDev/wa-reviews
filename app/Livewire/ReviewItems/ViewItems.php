@@ -13,7 +13,7 @@ class ViewItems extends Component
 
     public function add(): void
     {
-        $this->authorize('create', $this->review);
+        $this->authorize('create', $this->review->project);
 
     }
 

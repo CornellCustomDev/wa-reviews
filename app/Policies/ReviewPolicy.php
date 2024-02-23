@@ -12,7 +12,7 @@ class ReviewPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(?User $user, ?Project $project): bool
+    public function viewAny(?User $user, Project $project): bool
     {
         return true;
     }

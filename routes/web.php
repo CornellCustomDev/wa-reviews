@@ -8,12 +8,15 @@ use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Livewire\Projects\ViewProjects;
+use App\Livewire\ReviewItems\CreateItem;
+use App\Livewire\ReviewItems\UpdateItem;
 use App\Livewire\Reviews\CreateReview;
 use App\Livewire\Reviews\ShowReview;
 use App\Livewire\Reviews\UpdateReview;
 use App\Livewire\Reviews\ViewReviews;
 use App\Models\Project;
 use App\Models\Review;
+use App\Models\ReviewItem;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,16 +48,19 @@ Route::prefix('projects/{project}/reviews')->name('reviews.')->group(function ()
     Route::get('/{review}/edit', UpdateReview::class)->name('edit')->can('update', 'review');
 });
 
-// Guidelines
+// Review Items
+Route::prefix('projects/{project}/reviews/{review}/items')->name('review-items.')->group(function () {
+    Route::get('/create', CreateItem::class)->name('create'); //->can('update', [Review::class, 'project']);
+    Route::get('/{reviewItem}/edit', UpdateItem::class)->name('edit'); //->can('update', [Review::class, 'project']);
+});
+
 Route::prefix('guidelines')->name('guidelines.')->group(function () {
     Route::get('/', ViewGuidelines::class)->name('index');
     Route::get('/{guideline}', ShowGuideline::class)->name('show');
 //    Route::get('/{guideline}/edit', UpdateGuideline::class)->name('edit')->can('update', 'guideline');
 });
 
-// Criteria
 Route::prefix('categories')->name('categories.')->group(function () {
     Route::get('/', ViewCategories::class)->name('index');
     Route::get('/{category}', ShowCategory::class)->name('show');
 });
-
