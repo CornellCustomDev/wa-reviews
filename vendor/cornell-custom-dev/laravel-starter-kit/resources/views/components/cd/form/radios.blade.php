@@ -1,9 +1,12 @@
 <x-cd.form.form-item field="{{ $name ?? $attributes->whereStartsWith('wire:model')->first() }}" 
         classes="{{ $classes ?? '' }}" 
         required="{{ (($required??'') === 'false') ? 0 : (boolval($required??'')?1:0) }}"
-        description="{{ $description ?? ''}}"
+        :description="$description ?? ''"
 >
-    <x-slot name="field_title">{{ $label }}</x-slot>
+@php 
+  $field=$name ?? $attributes->whereStartsWith('wire:model')->first();
+@endphp
+    <x-slot name="field_title">{!! $label !!}</x-slot>
     <div class="flex-grid compact-rows no-margin">
     @foreach ($radiobuttons as $rad) 
         <div class="form-item">
@@ -11,7 +14,7 @@
                 {{ $attributes->whereStartsWith('wire:model') }}
                 {{ $attributes->whereStartsWIth('aria') }}
                 @if (!empty($description))
-                    aria-describedby="{{ $name ?? $attributes->whereStartsWith('wire:model')->first() }}_desc"
+                    aria-describedby="{{ $field }}_desc"
                 @endif
             >
             <label class="option-label" for="{{$field}}-{{$loop->index}}">{{$rad["label"]}}</label>

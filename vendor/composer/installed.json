@@ -137,12 +137,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/CU-CommunityApps/CD-LaravelStarterKit.git",
-                "reference": "ee181a7b40c1dea6ce232a355f85659ede39e3f4"
+                "reference": "0fd4407646502d7cc07255baf90657471296636d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CU-CommunityApps/CD-LaravelStarterKit/zipball/ee181a7b40c1dea6ce232a355f85659ede39e3f4",
-                "reference": "ee181a7b40c1dea6ce232a355f85659ede39e3f4",
+                "url": "https://api.github.com/repos/CU-CommunityApps/CD-LaravelStarterKit/zipball/0fd4407646502d7cc07255baf90657471296636d",
+                "reference": "0fd4407646502d7cc07255baf90657471296636d",
                 "shasum": ""
             },
             "require": {
@@ -157,7 +157,7 @@
                 "orchestra/testbench": "^8.17",
                 "phpunit/phpunit": "^10.5"
             },
-            "time": "2024-01-09T20:25:22+00:00",
+            "time": "2024-02-08T21:17:47+00:00",
             "type": "library",
             "extra": {
                 "laravel": {

@@ -7,14 +7,15 @@
             for="{{ $field }}"
             @if($is_required) aria-required="true" @endif
         >
-            @if ($is_required) <span style="color:red";>* </span> @endif {{ $field_title }}:
+            @if ($is_required) <span style="color:red";>* </span> @endif {!! $field_title !!}:
         </label>
 
         {{ $slot }}
-    </div>
     @if (!empty($description))
-        <div class="description" id="{{$field}}_desc">{{$description}}</div>   
+        <div class="description" id="{{$field}}_desc">{!!$description!!}</div>   
     @endif
+    </div>
+
     @error($field)
     <div class="error" role="alert">
         {!! $message !!}

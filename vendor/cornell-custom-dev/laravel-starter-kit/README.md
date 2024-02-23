@@ -80,7 +80,8 @@ The libraries included in the Starter Kit are documented in their respective REA
 
 Blade components included in the Starter Kit are documented in their respective files:
 
-- [Form Components](src/FORM_COMPONENTS.md): A set of Blade components for creating form components styled with the CWD Framework.
+- [Form Components](resources/views/components/cd/form/README.md): A set of Blade components for creating form components styled with the CSS Framework.
+- [Dialog Components](resources/views/components/cd/dialog/README.md): A set of Blade components for creating modal dialogs.
 
 ## Deploying a site
 Once a Media3 site has been created, you have confirmed you can reach the default site via a web browser, and you have access to the site login by command line, the code can be deployed.

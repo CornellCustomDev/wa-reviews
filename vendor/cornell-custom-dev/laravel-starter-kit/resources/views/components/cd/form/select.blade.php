@@ -1,11 +1,14 @@
 <x-cd.form.form-item field="{{ $name ?? $attributes->whereStartsWith('wire:model')->first() }}" 
         classes="{{ $classes ?? '' }}" 
         required="{{ (($required??'') === 'false') ? 0 : (boolval($required??'')?1:0) }}"
-        description="{{ $description ?? ''}}"
+        :description="$description ?? ''"
 >
-    <x-slot name="field_title">{{ $label }}</x-slot>
-    <select id="{{ $id ?? $name ?? $attributes->whereStartsWith('wire:model')->first() }}" 
-            name="{{ $name ?? $attributes->whereStartsWith('wire:model')->first() }}"
+@php 
+  $field=$name ?? $attributes->whereStartsWith('wire:model')->first();
+@endphp
+    <x-slot name="field_title">{!! $label !!}</x-slot>
+    <select id="{{ $id ?? $field }}" 
+            name="{{ $field }}"
         @if ($disabled??false)
             disabled
         @endif
@@ -13,7 +16,7 @@
         {{$attributes->whereStartsWith("wire:model")}}
         {{$attributes->whereStartsWIth('aria')}}
         @if (!empty($description))
-          aria-describedby="{{ $name ?? $attributes->whereStartsWith('wire:model')->first() }}_desc"
+          aria-describedby="{{ $field }}_desc"
         @endif
     />
     @foreach ($options as $opt)
