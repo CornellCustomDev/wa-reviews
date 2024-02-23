@@ -12,6 +12,8 @@ class ReviewItemField extends Component
     public ReviewItem $reviewItem;
     public string $field;
     public string $label;
+    public string $fieldType = 'text';
+    public array $options = [];
 
     public bool $initialized = false;
     public bool $editing = false;

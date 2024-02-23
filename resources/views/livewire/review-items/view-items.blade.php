@@ -36,13 +36,13 @@
                             {{ $reviewItem->guideline->criterion->getLongName() }}
                         </td>
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-assessment'" :$reviewItem field="assessment" label="Assessment" />
+                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-assessment'" :$reviewItem field="assessment" label="Assessment" field-type="select" />
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-description'" :$reviewItem field="description" label="Description" />
                         </td>
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-testing_method'" :$reviewItem field="testing_method" label="Test Method" />
+                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-testing_method'" :$reviewItem field="testing_method" label="Test Method" field-type="select"/>
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-recommendation'" :$reviewItem field="recommendation" label="Recommendation" />
@@ -51,7 +51,7 @@
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-image_links'" :$reviewItem field="image_links" label="Image Links" />
                         </td>
                         <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-content_issue'" :$reviewItem field="content_issue" label="CE Issue" />
+                            <livewire:review-items.review-item-field-checkbox :key="$reviewItem->id . '-content_issue'" :$reviewItem field="content_issue" label="CE Issue" field-type="checkbox"/>
                         </td>
                         <td class="text-nowrap">
                             <x-forms.link-button route="{{ route('review-items.edit', [$review->project, $review, $reviewItem]) }}" title="Edit Review Item {{ $reviewItem->id }}">

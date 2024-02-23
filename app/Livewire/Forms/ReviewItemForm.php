@@ -63,6 +63,16 @@ class ReviewItemForm extends Form
             ]);
     }
 
+    public function getOptions($field): array
+    {
+        return match($field) {
+            'guideline_id' => $this->guidelineOptions->toArray(),
+            'assessment' => $this->assessmentOptions->toArray(),
+            'testing_method' => $this->testingMethodOptions->toArray(),
+            default => [],
+        };
+    }
+
     public function setModel(ReviewItem $reviewItem): void
     {
         $this->reviewItem = $reviewItem;
