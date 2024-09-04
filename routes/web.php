@@ -2,6 +2,7 @@
 
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
+use App\Livewire\Chat;
 use App\Livewire\Guidelines\ShowGuideline;
 use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Projects\CreateProject;
@@ -64,3 +65,5 @@ Route::prefix('categories')->name('categories.')->group(function () {
     Route::get('/', ViewCategories::class)->name('index');
     Route::get('/{category}', ShowCategory::class)->name('show');
 });
+
+Route::get('/chat', Chat::class)->name('chat');
