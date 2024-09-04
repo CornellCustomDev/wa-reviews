@@ -4,22 +4,31 @@ namespace App\Services\AzureOpenAI;
 
 use Illuminate\Support\Facades\Storage;
 use OpenAI;
+use OpenAI\Exceptions\ErrorException;
+use OpenAI\Exceptions\TransporterException;
+use OpenAI\Exceptions\UnserializableResponse;
 use OpenAI\Resources\Chat;
 use OpenAI\Responses\Chat\CreateResponse;
 
 class ChatService
 {
-    private Chat $chat;
-    public ?array $params;
-    public OpenAI\Client $client;
+    protected OpenAI\Client $client;
+    protected Chat $chat;
+    protected ?array $params;
+    protected CreateResponse $response;
 
     public function __construct(
+        // Azure OpenAI resource connection
         string $endpoint,
         string $apiKey,
-        string $searchKey,
-        string $model,
         string $apiVersion,
-        string $configFile,
+        string $model,
+        // Search resource connection
+        string $searchEndpoint,
+        string $searchKey,
+        string $indexName,
+        // Chat configuration
+        string $roleInformation,
     )
     {
         $this->client = OpenAI::factory()
@@ -28,10 +37,14 @@ class ChatService
             ->withQueryParam('api-version', $apiVersion)
             ->make();
 
-        $this->params = $this->getParameters(
-            filename: $configFile,
-            searchKey: $searchKey,
+        $config = new ChatConfig(
+            search_endpoint: $searchEndpoint,
+            search_key: $searchKey,
+            index_name: $indexName,
+            role_information: $roleInformation,
+            top_p: 0.1,
         );
+        $this->params = $config->getParameters();
 
         $this->chat = $this->client->chat();
     }
@@ -41,25 +54,16 @@ class ChatService
         return app(ChatService::class);
     }
 
-    public static function getParameters(
-        string $filename,
-        string $searchKey,
-    ): ?array
+    /**
+     * @throws ErrorException|UnserializableResponse|TransporterException
+     */
+    public function send(): void
     {
-        $json = Storage::get($filename);
-        if (empty($json)) {
-            return null;
+        $this->response = $this->chat->create($this->params);
+        // Add the messages to the chat history
+        foreach ($this->response->choices as $result) {
+            $this->params['messages'][] = ['role' => $result->message->role, 'content' => $result->message->content];
         }
-
-        $config = json_decode($json, true);
-        $config['azureSearchKey'] = $searchKey;
-
-        return $config;
-    }
-
-    public function send(): CreateResponse
-    {
-        return $this->chat->create($this->params);
     }
 
     public function addMessage(string $message): array
@@ -67,6 +71,16 @@ class ChatService
         $this->params['messages'][] = ['role' => 'user', 'content' => $message];
 
         return $this->params['messages'];
+    }
+
+    public function getMessages(): array
+    {
+        return $this->params['messages'];
+    }
+
+    public function setMessages(array $messages): void
+    {
+        $this->params['messages'] = $messages;
     }
 
 }

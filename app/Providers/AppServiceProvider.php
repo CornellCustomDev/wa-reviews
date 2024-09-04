@@ -15,12 +15,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             abstract: ChatService::class,
             concrete: fn() => new ChatService(
-                endpoint:   strval(config('azure_openai.endpoint')),
-                apiKey:     strval(config('azure_openai.api_key')),
-                searchKey:  strval(config('azure_openai.search_key')),
-                model:      strval(config('azure_openai.model')),
+                endpoint: strval(config('azure_openai.endpoint')),
+                apiKey: strval(config('azure_openai.api_key')),
                 apiVersion: strval(config('azure_openai.api_version')),
-                configFile: strval(config('azure_openai.config_file')),
+                model: strval(config('azure_openai.model')),
+                searchEndpoint: strval(config('azure_openai.search_endpoint')),
+                searchKey: strval(config('azure_openai.search_key')),
+                indexName: strval(config('azure_openai.index_name')),
+                roleInformation: strval(config('azure_openai.role_information')),
             ),
         );
     }

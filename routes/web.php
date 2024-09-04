@@ -66,4 +66,5 @@ Route::prefix('categories')->name('categories.')->group(function () {
     Route::get('/{category}', ShowCategory::class)->name('show');
 });
 
+// Livewire route
 Route::get('/chat', Chat::class)->name('chat');
