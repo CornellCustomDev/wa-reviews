@@ -59,7 +59,6 @@ class ChatConfig
 
     public function getParameters(): array
     {
-        json_encode($this->parameters, JSON_PRETTY_PRINT);
         return $this->parameters;
     }
 }
