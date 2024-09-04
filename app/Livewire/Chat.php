@@ -37,10 +37,6 @@ class Chat extends Component
             dd($e);
         }
         $this->messages = $chatService->getMessages();
-
-        $markdown = "**This is markdown bold text**";
-        $html = \Str::of($markdown)->markdown();
-
     }
 
 }
