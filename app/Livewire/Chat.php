@@ -10,6 +10,7 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class Chat extends Component
 {
+    public mixed $prompt;
     public array $messages = [];
     public string $userMessage = '';
 
@@ -17,18 +18,19 @@ class Chat extends Component
     public function mount(): void
     {
         $chatService = app(ChatService::class);
+        $this->prompt = $chatService->prompt;
         $this->messages = $chatService->getMessages();
     }
 
-    // Respond to submitting the form
     public function sendMessage(): void
     {
-        $this->messages[] = [
-            'role' => 'user',
-            'content' => $this->userMessage,
-        ];
         $chatService = app(ChatService::class);
+
+        // Hydrate the ChatService with the message context
         $chatService->setMessages($this->messages);
+        // Add the current message
+        $chatService->addMessage($this->userMessage);
+
         try {
             $chatService->send();
             $this->userMessage = '';
@@ -36,6 +38,8 @@ class Chat extends Component
             // TODO Decide how we want to handle errors
             dd($e);
         }
+
+        // Update the messages with the response
         $this->messages = $chatService->getMessages();
     }
 

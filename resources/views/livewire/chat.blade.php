@@ -1,5 +1,8 @@
 <div>
-{{--  List the messages, with role=system messages on the left and role=user on the right --}}
+    <div>
+        <h3>Prompt</h3>
+        <div class="message-text">{!! nl2br($prompt) !!}</div>
+    </div>
     @foreach ($messages as $message)
         <div>
             <h3>{{ $message['role'] }}:</h3>
@@ -11,6 +14,7 @@
 
     {{--  The form to send a message --}}
     <form wire:submit="sendMessage">
+        <h3>Your message:</h3>
         <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
         <button type="submit">Send</button>
     </form>

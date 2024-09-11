@@ -8,14 +8,11 @@ use OpenAI\Exceptions\ErrorException;
 use OpenAI\Exceptions\TransporterException;
 use OpenAI\Exceptions\UnserializableResponse;
 use OpenAI\Resources\Chat;
-use OpenAI\Responses\Chat\CreateResponse;
 
 class ChatService
 {
-    protected OpenAI\Client $client;
     protected Chat $chat;
-    protected ?array $params;
-    protected CreateResponse $response;
+    protected array $messages = [];
 
     public function __construct(
         // Azure OpenAI resource connection
@@ -23,30 +20,21 @@ class ChatService
         string $apiKey,
         string $apiVersion,
         string $model,
-        // Search resource connection
-        string $searchEndpoint,
-        string $searchKey,
-        string $indexName,
-        // Chat configuration
-        string $roleInformation,
+        // Chat parameters
+        public readonly string $prompt,
+        protected string $guidelinesFile = 'guidelines.md',
+        protected float $temperature = 0.7,
+        protected float $top_p = 0.95,
+        protected int $max_tokens = 800,
     )
     {
-        $this->client = OpenAI::factory()
+        $client = OpenAI::factory()
             ->withBaseUri("$endpoint/openai/deployments/$model")
             ->withHttpHeader('api-key', $apiKey)
             ->withQueryParam('api-version', $apiVersion)
             ->make();
 
-        $config = new ChatConfig(
-            search_endpoint: $searchEndpoint,
-            search_key: $searchKey,
-            index_name: $indexName,
-            role_information: $roleInformation,
-            top_p: 0.1,
-        );
-        $this->params = $config->getParameters();
-
-        $this->chat = $this->client->chat();
+        $this->chat = $client->chat();
     }
 
     public static function make(): ChatService
@@ -59,28 +47,42 @@ class ChatService
      */
     public function send(): void
     {
-        $this->response = $this->chat->create($this->params);
+        $parameters = [
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => $this->prompt.Storage::get($this->guidelinesFile),
+                ],
+                ...$this->messages,
+            ],
+            'temperature' => $this->temperature,
+            'top_p' => $this->top_p,
+            'max_tokens' => $this->max_tokens,
+        ];
+
+        $response = $this->chat->create($parameters);
+
         // Add the messages to the chat history
-        foreach ($this->response->choices as $result) {
-            $this->params['messages'][] = ['role' => $result->message->role, 'content' => $result->message->content];
+        foreach ($response->choices as $result) {
+            $this->addMessage(message: $result->message->content, role: $result->message->role);
         }
     }
 
-    public function addMessage(string $message): array
+    public function addMessage(string $message, string $role = 'user'): array
     {
-        $this->params['messages'][] = ['role' => 'user', 'content' => $message];
+        $this->messages[] = ['role' => $role, 'content' => $message];
 
-        return $this->params['messages'];
+        return $this->messages;
     }
 
     public function getMessages(): array
     {
-        return $this->params['messages'];
+        return $this->messages;
     }
 
     public function setMessages(array $messages): void
     {
-        $this->params['messages'] = $messages;
+        $this->messages = $messages;
     }
 
 }
