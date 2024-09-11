@@ -6,7 +6,7 @@
         <x-cd.form.text label="Description" wire:model="form.description" />
         <x-cd.form.text label="Recommendation" wire:model="form.recommendation" />
 
-        <input type="submit" value="Create Review">
+        <input type="submit" value="Add Issue">
         <a href="{{ route('reviews.index', $this->project) }}" >
             <input type="button" value="Cancel">
         </a>

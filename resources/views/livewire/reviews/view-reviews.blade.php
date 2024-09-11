@@ -1,12 +1,12 @@
 <div>
     <div class="cwd-component align-right">
         @can('create', [App\Models\Review::class, $project])
-            <x-forms.link-button route="{{ route('reviews.create', $project) }}" title="Create Review" />
+            <x-forms.link-button route="{{ route('reviews.create', $project) }}" title="Add Issue" />
         @endcan
         <x-forms.link-button route="{{ route('projects.show', $project) }}" title="Back to Project" />
     </div>
 
-    <h1>{{ $project->name }}: Reviews</h1>
+    <h1>{{ $project->name }}: Issues</h1>
 
     <table class="table striped bordered">
         <thead>

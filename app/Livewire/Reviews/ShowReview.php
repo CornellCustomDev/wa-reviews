@@ -16,8 +16,8 @@ class ShowReview extends Component
             ->layout('components.layouts.app', ['sidebar' => false, 'breadcrumbs' => [
                 'Projects' => route('projects.index'),
                 $this->review->project->name => route('projects.show', $this->review->project),
-                'Reviews' => route('reviews.index', $this->review->project),
-                'Viewing Review' => 'active'
+                'Issues' => route('reviews.index', $this->review->project),
+                'Viewing Issue' => 'active'
             ]]);
     }
 }
