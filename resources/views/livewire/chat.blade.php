@@ -12,7 +12,7 @@
         <div>
             <hr>
             <h3 class="h4">{{ ucfirst($message['role']) }}</h3>
-            <div class="message-text">{!! \Str::of($message['content'])->markdown() !!}</div>
+            <div class="message-text">{!! Str::of($message['content'])->markdown() !!}</div>
         </div>
     @endforeach
 
@@ -34,7 +34,8 @@
         </button>
         <div x-show="prompt">
             <h3>Prompt</h3>
-            <div class="message-text">{!! \Str::of($prompt)->markdown() !!}</div>
+            <p class="smallprint">This is the information given to the AI at the start of the chat telling it how to respond. It has been tuned for the WA review process and the Cornell guidelines document. It is a work in progress!</p>
+            <div class="message-text">{!! Str::of($prompt)->markdown() !!}</div>
         </div>
     </div>
 </x-slot>
