@@ -4,29 +4,29 @@
    - 2. Code Copy
    ------------------------------------------------------------------------- */
 
-		
+
 // 1. Automated Table of Contents ---------------------------------------------------------------
-	
+
 // defaults
 var default_origin_target = '#main-article';
 var default_toc_target = '#page-toc';
-	
+
 function autoTOC(origin_target,toc_target) {
-	
-	jQuery(document).ready(function($) {	
+
+	jQuery(document).ready(function($) {
 		// apply arguments or use defaults
 		var origin = origin_target || default_origin_target;
 		var toc = toc_target || default_toc_target;
-		
+
 		var headings = $(origin + ' > h2, ' + origin + ' > h3, ' + origin + ' > h4, ' + origin + ' > section > h2, ' + origin + ' > section > h3, ' + origin + ' > section > h4').not('.no-toc');
 		var nest_level = 1;
-		
+
 		if ( headings.length > 1 ) {
-			
+
 			$(origin).attr('tabindex','-1').addClass('aria-target'); // set focus target for accessibility
 			$(toc).append('<ol></ol>'); // start a list to populate
 			$(headings).each(function(i) {
-				
+
 				// Strip links and accommodate semantic tags within headings (<small>, <code>, etc...)
 				var link_label_process = $(this).clone();
 				$(link_label_process).children('a').contents().unwrap('a'); // remove existing links
@@ -46,7 +46,7 @@ function autoTOC(origin_target,toc_target) {
 					}
 				}
 				$(this).attr('id','section-'+(i+1)).addClass('toc').after('<a href="' + origin + '" class="back-to-toc" title="Back to Top"><span class="sr-only">Back to Top</span></a>');
-				
+
 				// Nested Lists
 				if ( nest_level == 1 && $(this).filter('h3').length > 0 ) {
 					nest_level++;
@@ -74,14 +74,14 @@ function autoTOC(origin_target,toc_target) {
 				else {
 					$(toc + ' > ol > ol:last-of-type > ol:last-of-type').append('<li><a href="#section-'+(i+1)+'">'+link_label+'</a></li>');
 				}
-				
+
 			});
-			
+
 			// Nesting Cleanup (moves sublists into the list item above them for proper nesting)
 			$(toc + ' li + ol').each(function() {
 				$(this).appendTo($(this).prev());
 			});
-			
+
 			// "Back to Top" mouse events
 			$('.back-to-toc').click(function(e) {
 				$('html, body').animate({
@@ -104,18 +104,18 @@ function autoTOC(origin_target,toc_target) {
 			});
 		}
 	});
-	
+
 }
 
 // 2. Code Copy -----------------------------------------------------------
-	
+
 function codeCopySetup(selectors) {
-	
+
 	jQuery(document).ready(function($) {
-		
+
 		$(selectors).addClass('code-copy');
 		$('.code-copy').before('<button class="button-copy enabled"><span class="sr-only">Copy Code</span></button>');
-		
+
 		// button code here
 		$('.button-copy.enabled').each(function() {
 			var copy_target = $(this).next('.code-copy');
@@ -146,7 +146,7 @@ function codeCopySetup(selectors) {
 
 // Window Load ------------------------------------------------------------
 $(window).on('load', function(e) {
-	
+
 
 });
 

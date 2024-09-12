@@ -7,7 +7,7 @@ use Exception;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-#[Layout('components.layouts.app')]
+#[Layout('components.layouts.app', ['sidebar' => true])]
 class Chat extends Component
 {
     public mixed $prompt;
@@ -41,6 +41,11 @@ class Chat extends Component
 
         // Update the messages with the response
         $this->messages = $chatService->getMessages();
+    }
+
+    public function render()
+    {
+        return view('livewire.chat');
     }
 
 }
