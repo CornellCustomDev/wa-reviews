@@ -19,6 +19,10 @@
 
     <table class="table bordered">
         <tr>
+            <th>WGAC 2 criterion</th>
+            <td>{{ $guideline->criterion->getLongName() }}</td>
+        </tr>
+        <tr>
             <th>Category</th>
             <td>
                 <a href="{{ route('categories.show', $guideline->category) }}">
@@ -26,17 +30,7 @@
                 </a>
             </td>
         </tr>
-        <tr>
-            <th>WGAC 2 criterion</th>
-            <td>{{ $guideline->criterion->getLongName() }}</td>
-        </tr>
-        <tr>
-            <th>Tools and requirements</th>
-            <td></td>
-        </tr>
-        <tr>
-            <th>Test procedure</th>
-            <td>{!! $guideline->description !!}</td>
-        </tr>
     </table>
+
+    {!! Str::of($guideline->notes)->markdown() !!}
 </div>
