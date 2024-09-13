@@ -20,7 +20,7 @@
     <table class="table bordered">
         <tr>
             <th>WGAC 2 criterion</th>
-            <td>{{ $guideline->criterion->getLongName() }}</td>
+            <td><a href="{{ route('criteria.show', [$guideline->criterion]) }}">{{ $guideline->criterion->getLongName() }}</a></td>
         </tr>
         <tr>
             <th>Category</th>

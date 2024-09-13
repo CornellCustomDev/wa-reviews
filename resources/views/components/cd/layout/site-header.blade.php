@@ -5,6 +5,7 @@
             <ul class="list-menu links">
                 <li><a href="{{ route('projects.index') }}">Projects</a></li>
                 <li><a href="{{ route('guidelines.index') }}">Guidelines</a></li>
+                <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('categories.index') }}">Categories</a></li>
                 <li><a href="{{ route('chat') }}">Chat</a></li>
             </ul>
