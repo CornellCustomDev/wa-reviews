@@ -4,3 +4,30 @@ config:
   webroot: ./public
   php: 8.2
   composer_version: 2-latest
+
+
+tooling:
+  phpunit:
+    service: appserver
+    description: "Run PHP Unit tests: lando phpunit"
+
+  ## Xdebug apache toggling
+  xdebug-on:
+    service: appserver
+    description: Enable xdebug for apache
+    cmd:
+      - /bin/bash -c '
+        [[ $(php -i | grep xdebug | grep "xdebug.mode") ]]
+        || (echo "Lando was not built with xdebug. Add config.xdebug=true to your .lando.local.yml?" && exit 1)'
+      - echo "[INFO] Enabling xdebug ..."
+      - echo xdebug.mode = "debug,develop" > /usr/local/etc/php/conf.d/zzz-lando-xdebug.ini
+      - /etc/init.d/apache2 reload
+    user: root
+  xdebug-off:
+    service: appserver
+    description: Disable xdebug for apache
+    cmd:
+      - echo "[INFO] Disabling xdebug ..."
+      - echo xdebug.mode = "off" > /usr/local/etc/php/conf.d/zzz-lando-xdebug.ini
+      - /etc/init.d/apache2 reload
+    user: root

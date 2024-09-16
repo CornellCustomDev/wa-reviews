@@ -11,6 +11,6 @@ class ViewProjects extends Component
     {
         return view('livewire.projects.view-projects', [
             'projects' => Project::all(),
-        ])->layout('components.layouts.app');
+        ])->layout('components.layouts.app', ['sidebar' => false]);
     }
 }

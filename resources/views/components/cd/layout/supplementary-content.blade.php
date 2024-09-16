@@ -2,14 +2,13 @@
     <div class="container-fluid">
         <div class="row">
             <div class="primary">
-                <h2>Supplementary Region</h2>
-                <p>This region mirrors the sidebar proportions of the <code>&lt;main&gt;</code> region above using the
-                    <code>.primary</code> and <code>.secondary</code> classes.</p>
+                {{ $slot }}
             </div>
+            @if ($secondary ?? false)
             <div class="secondary">
-                <h2>Supplementary Sidebar</h2>
-                <p>Sidebar Content</p>
+                {{ $secondary }}
             </div>
+            @endif
         </div>
     </div>
 </div>

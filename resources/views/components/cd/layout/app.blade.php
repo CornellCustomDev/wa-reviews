@@ -49,16 +49,28 @@
 <div id="main-content" class="band">
     <main id="main" class="container-fluid aria-target" tabindex="-1">
         <div class="row">
-            @if($sidebar)<x-cd.layout.sidebar-top/>@endif
+            @if ($sidebar && ($sidebarPrimary ?? false))
+                <x-cd.layout.sidebar-top>
+                    {{ $sidebarPrimary }}
+                </x-cd.layout.sidebar-top>
+            @endif
             <x-cd.layout.main-article :breadcrumbs="$breadcrumbs">
                 {{ $slot }}
             </x-cd.layout.main-article>
-            @if($sidebar)<x-cd.layout.sidebar-bottom/>@endif
+            @if ($sidebar && ($sidebarSecondary ?? false))
+                <x-cd.layout.sidebar-bottom>
+                    {{ $sidebarSecondary }}
+                </x-cd.layout.sidebar-bottom>
+            @endif
         </div>
     </main>
 </div>
 
-@if($supplementary)<x-cd.layout.supplementary-content/>@endif
+@if ($supplementary)
+    <x-cd.layout.supplementary-content>
+        {{ $supplementary }}
+    </x-cd.layout.supplementary-content>
+@endif
 
 <x-cd.layout.footer/>
 
@@ -68,6 +80,10 @@
 <!-- CWD Components -->
 <script src="{{ asset('cwd-framework/js/cwd.js') }}"></script>
 <script src="{{ asset('cwd-framework/js/cwd_utilities.js') }}"></script>
+<script src="{{ asset('cwd-framework/js/cwd_experimental.js') }}"></script>
+<script>
+    autoTOC();
+</script>
 
 @livewireScripts
 </body>

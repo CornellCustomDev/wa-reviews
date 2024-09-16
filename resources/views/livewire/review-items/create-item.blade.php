@@ -1,7 +1,7 @@
 <div>
-    <h1>Create Review Item</h1>
+    <h1>Add Review Item</h1>
 
-    <h2>Review</h2>
+    <h2>Issue</h2>
     <table class="table bordered">
         <tr>
             <th>

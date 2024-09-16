@@ -9,8 +9,8 @@
         <table class="table striped bordered">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Category</th>
+{{--                    <th>ID</th>--}}
+{{--                    <th>Category</th>--}}
                     <th>Criteria</th>
                     <th>Assessment</th>
                     <th>Observed functionality (Description)</th>
@@ -24,14 +24,14 @@
             <tbody>
                 @foreach($reviewItems as $reviewItem)
                     <tr wire:key="{{ $reviewItem->id }}">
-                        <td>
-                            <x-forms.link-button route="{{ route('guidelines.show', $reviewItem->guideline) }}" title="{{ $reviewItem->guideline->number }}" />
-                        </td>
-                        <td>
-                            <a href="{{ route('categories.show', $reviewItem->guideline->category) }}">
-                                {{ $reviewItem->guideline->category->name }}
-                            </a>
-                        </td>
+{{--                        <td>--}}
+{{--                            <x-forms.link-button route="{{ route('guidelines.show', $reviewItem->guideline) }}" title="{{ $reviewItem->guideline->number }}" />--}}
+{{--                        </td>--}}
+{{--                        <td>--}}
+{{--                            <a href="{{ route('categories.show', $reviewItem->guideline->category) }}">--}}
+{{--                                {{ $reviewItem->guideline->category->name }}--}}
+{{--                            </a>--}}
+{{--                        </td>--}}
                         <td>
                             {{ $reviewItem->guideline->criterion->getLongName() }}
                         </td>
