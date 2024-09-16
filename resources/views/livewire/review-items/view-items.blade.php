@@ -4,7 +4,7 @@
             <x-forms.link-button route="{{ route('review-items.create', [$review->project, $review]) }}" title="Add Review Item" />
         </div>
 
-        <h1>Review Items</h1>
+        <h1>Issue Details</h1>
 
         <table class="table striped bordered">
             <thead>

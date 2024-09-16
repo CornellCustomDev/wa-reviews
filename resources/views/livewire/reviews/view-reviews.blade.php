@@ -3,17 +3,15 @@
         @can('create', [App\Models\Review::class, $project])
             <x-forms.link-button route="{{ route('reviews.create', $project) }}" title="Add Issue" />
         @endcan
-        <x-forms.link-button route="{{ route('projects.show', $project) }}" title="Back to Project" />
     </div>
 
-    <h1>{{ $project->name }}: Issues</h1>
+    <h2>Issues</h2>
 
     <table class="table striped bordered">
         <thead>
         <tr>
             <th>Target</th>
             <th>Description</th>
-            <th>Recommendation</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -25,9 +23,6 @@
                 </td>
                 <td>
                     <livewire:reviews.review-field :key="$review->id . '-description'" :$review field="description" label="Description" />
-                </td>
-                <td>
-                    <livewire:reviews.review-field :key="$review->id . '-recommendation'" :$review field="recommendation" label="Recommendation" />
                 </td>
                 <td class="text-nowrap">
                     <x-forms.link-button route="{{ route('reviews.show', [$review->project, $review]) }}" title="View Review {{ $review->id }}">
