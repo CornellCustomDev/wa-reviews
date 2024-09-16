@@ -3,6 +3,8 @@
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
 use App\Livewire\Chat;
+use App\Livewire\Criteria\ShowCriterion;
+use App\Livewire\Criteria\ViewCriteria;
 use App\Livewire\Guidelines\Doc;
 use App\Livewire\Guidelines\ShowGuideline;
 use App\Livewire\Guidelines\ViewGuidelines;
@@ -60,6 +62,11 @@ Route::prefix('guidelines')->name('guidelines.')->group(function () {
     Route::get('/', ViewGuidelines::class)->name('index');
     Route::get('/{guideline}', ShowGuideline::class)->name('show');
 //    Route::get('/{guideline}/edit', UpdateGuideline::class)->name('edit')->can('update', 'guideline');
+});
+
+Route::prefix('criteria')->name('criteria.')->group(function () {
+    Route::get('/', ViewCriteria::class)->name('index');
+    Route::get('/{criterion}', ShowCriterion::class)->name('show');
 });
 
 Route::prefix('categories')->name('categories.')->group(function () {

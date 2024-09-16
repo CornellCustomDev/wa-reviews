@@ -1,9 +1,9 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.link-button route="{{ route('reviews.index', $review->project) }}" title="Back to Reviews" />
+        <x-forms.link-button route="{{ route('projects.show', $review->project) }}" title="Back to Project" />
     </div>
 
-    <h1>{{ $review->project->name }}: Review</h1>
+    <h1>{{ $review->project->name }}: Issue</h1>
 
     <table class="table bordered">
         <tr>
@@ -13,10 +13,6 @@
         <tr>
             <th>Description</th>
             <td><livewire:reviews.review-field :$review field="description" label="Description" /></td>
-        </tr>
-        <tr>
-            <th>Recommendation</th>
-            <td><livewire:reviews.review-field :$review field="recommendation" label="Recommendation"/></td>
         </tr>
     </table>
 

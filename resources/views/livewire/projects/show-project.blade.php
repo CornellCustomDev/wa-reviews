@@ -1,8 +1,5 @@
 <div>
     <div class="cwd-component align-right">
-        @can('viewAny', [\App\Models\Review::class, $project])
-            <x-forms.link-button route="{{ route('reviews.index', $project) }}" title="View Issues" />
-        @endcan
         <x-forms.link-button route="{{ route('projects.edit', $project) }}" title="Edit Project" />
     </div>
 
@@ -18,12 +15,14 @@
             <td><a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a></td>
         </tr>
         <tr>
+            <th>Description</th>
+            <td>{!! $project->description !!}</td>
+        </tr>
+        <tr>
             <th>Created</th>
             <td>{{ $project->created_at->toFormattedDateString() }}</td>
         </tr>
     </table>
 
-    <div>
-        {!! $project->description !!}
-    </div>
+    <livewire:reviews.view-reviews :project="$project" />
 </div>

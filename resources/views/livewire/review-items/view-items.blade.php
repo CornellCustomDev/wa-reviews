@@ -4,16 +4,14 @@
             <x-forms.link-button route="{{ route('review-items.create', [$review->project, $review]) }}" title="Add Review Item" />
         </div>
 
-        <h1>Review Items</h1>
+        <h1>Issue Details</h1>
 
         <table class="table striped bordered">
             <thead>
                 <tr>
-{{--                    <th>ID</th>--}}
-{{--                    <th>Category</th>--}}
-                    <th>Criteria</th>
+                    <th>Observation</th>
+                    <th>WCAG Criteria</th>
                     <th>Assessment</th>
-                    <th>Observed functionality (Description)</th>
                     <th>Test Method</th>
                     <th>Recommendation for Remediation</th>
                     <th>Image Links</th>
@@ -24,22 +22,14 @@
             <tbody>
                 @foreach($reviewItems as $reviewItem)
                     <tr wire:key="{{ $reviewItem->id }}">
-{{--                        <td>--}}
-{{--                            <x-forms.link-button route="{{ route('guidelines.show', $reviewItem->guideline) }}" title="{{ $reviewItem->guideline->number }}" />--}}
-{{--                        </td>--}}
-{{--                        <td>--}}
-{{--                            <a href="{{ route('categories.show', $reviewItem->guideline->category) }}">--}}
-{{--                                {{ $reviewItem->guideline->category->name }}--}}
-{{--                            </a>--}}
-{{--                        </td>--}}
                         <td>
-                            {{ $reviewItem->guideline->criterion->getLongName() }}
+                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-description'" :$reviewItem field="description" label="Description" />
+                        </td>
+                        <td>
+                            <a href="{{ route('criteria.show', $reviewItem->guideline->criterion) }}">{{ $reviewItem->guideline->criterion->getNumberName() }}</a>
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-assessment'" :$reviewItem field="assessment" label="Assessment" field-type="select" />
-                        </td>
-                        <td>
-                            <livewire:review-items.review-item-field :key="$reviewItem->id . '-description'" :$reviewItem field="description" label="Description" />
                         </td>
                         <td>
                             <livewire:review-items.review-item-field :key="$reviewItem->id . '-testing_method'" :$reviewItem field="testing_method" label="Test Method" field-type="select"/>

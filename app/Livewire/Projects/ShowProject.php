@@ -13,9 +13,12 @@ class ShowProject extends Component
     {
         $this->authorize('view', $this->project);
         return view('livewire.projects.show-project')
-            ->layout('components.layouts.app', ['breadcrumbs' => [
-                'Projects' => route('projects.index'),
-                $this->project->name => 'active'
-            ]]);
+            ->layout('components.layouts.app', [
+                'breadcrumbs' => [
+                    'Projects' => route('projects.index'),
+                    $this->project->name => 'active',
+                ],
+                'sidebar' => false,
+            ]);
     }
 }
