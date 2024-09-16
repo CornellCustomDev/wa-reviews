@@ -21,6 +21,11 @@ class Criterion extends Model
         return $this->hasMany(Guideline::class);
     }
 
+    public function getNumberName(): string
+    {
+        return "$this->number $this->name";
+    }
+
     public function getLongName(): string
     {
         return "$this->number $this->name ($this->level)";
