@@ -2,7 +2,7 @@
 
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
-use App\Livewire\Chat;
+use App\Livewire\AI\Chat;
 use App\Livewire\Criteria\ShowCriterion;
 use App\Livewire\Criteria\ViewCriteria;
 use App\Livewire\Guidelines\Doc;
@@ -17,10 +17,8 @@ use App\Livewire\ReviewItems\UpdateItem;
 use App\Livewire\Reviews\CreateReview;
 use App\Livewire\Reviews\ShowReview;
 use App\Livewire\Reviews\UpdateReview;
-use App\Livewire\Reviews\ViewReviews;
 use App\Models\Project;
 use App\Models\Review;
-use App\Models\ReviewItem;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,7 +44,7 @@ Route::prefix('projects')->name('projects.')->group(function () {
 });
 
 Route::prefix('projects/{project}/reviews')->name('reviews.')->group(function () {
-    Route::get('/', ViewReviews::class)->name('index')->can('viewAny', [Review::class, 'project']);
+    Route::get('/', fn($project) => redirect()->route('projects.show', $project))->name('index');
     Route::get('/create', CreateReview::class)->name('create')->can('create', [Review::class, 'project']);
     Route::get('/{review}', ShowReview::class)->name('show')->can('view', 'review');
     Route::get('/{review}/edit', UpdateReview::class)->name('edit')->can('update', 'review');

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\AI;
 
 use App\Services\AzureOpenAI\ChatService;
 use Exception;
@@ -45,7 +45,7 @@ class Chat extends Component
 
     public function render()
     {
-        return view('livewire.chat');
+        return view('livewire.ai.chat');
     }
 
 }

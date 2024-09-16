@@ -13,11 +13,13 @@ class ShowReview extends Component
     {
         $this->authorize('view', $this->review);
         return view('livewire.reviews.show-review')
-            ->layout('components.layouts.app', ['sidebar' => false, 'breadcrumbs' => [
-                'Projects' => route('projects.index'),
-                $this->review->project->name => route('projects.show', $this->review->project),
-                'Issues' => route('reviews.index', $this->review->project),
-                'Viewing Issue' => 'active'
-            ]]);
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => [
+                    'Projects' => route('projects.index'),
+                    $this->review->project->name => route('projects.show', $this->review->project),
+                    'Viewing Issue' => 'active'
+                ],
+            ]);
     }
 }
