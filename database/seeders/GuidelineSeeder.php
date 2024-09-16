@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Console\Commands\SplitGuidelines;
 use App\Models\Category;
 use App\Models\Criterion;
 use App\Models\Guideline;

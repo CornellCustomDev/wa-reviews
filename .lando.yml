@@ -2,7 +2,7 @@ name: wa-reviews
 recipe: laravel
 config:
   webroot: ./public
-  php: 8.2
+  php: 8.3
   composer_version: 2-latest
 
 
