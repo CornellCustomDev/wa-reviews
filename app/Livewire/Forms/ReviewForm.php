@@ -31,11 +31,13 @@ class ReviewForm extends Form
         return $this->review;
     }
 
-    public function store(Project $project): void
+    public function store(Project $project): Review
     {
         $this->validate();
 
-        $project->reviews()->create($this->all());
+        $this->review = $project->reviews()->create($this->all());
+
+        return $this->review;
     }
 
     public function update(?string $field): void

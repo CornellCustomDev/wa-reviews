@@ -15,9 +15,9 @@ class CreateReview extends Component
     public function save()
     {
         $this->authorize('create', [Review::class, $this->project]);
-        $this->form->store($this->project);
+        $review = $this->form->store($this->project);
 
-        return redirect()->route('reviews.index', $this->project);
+        return redirect()->route('reviews.show', [$this->project, $review]);
     }
 
     public function render()

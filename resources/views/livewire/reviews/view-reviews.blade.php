@@ -31,7 +31,7 @@
                     @can('delete', $review)
                         <x-forms.link-button
                             route="#" title="Delete Issue {{ $review->id }}"
-                            wire:click.prevent="$parent.delete('{{ $review->id }}')"
+                            wire:click.prevent="delete('{{ $review->id }}')"
                             wire:confirm="Are you sure you want to delete the issue for &quot;{{ $review->target }}&quot;?"
                         >
                             <span class="zmdi zmdi-delete" style="margin-right: 0" />

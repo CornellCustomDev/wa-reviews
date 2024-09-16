@@ -1,7 +1,6 @@
 <div>
-    <h1>Add Review Item</h1>
+    <h1>Add Observation</h1>
 
-    <h2>Issue</h2>
     <table class="table bordered">
         <tr>
             <th>
@@ -24,7 +23,7 @@
     <form wire:submit="save">
         @include('livewire.review-items.fields')
 
-        <input type="submit" value="Create Review Item">
+        <input type="submit" value="Save Observation">
         <a href="{{ route('reviews.show', [$review->project, $review]) }}" >
             <input type="button" value="Cancel">
         </a>

@@ -1,10 +1,10 @@
 <div class="cwd-component">
     <form>
         <div class="align-right">
-            <x-forms.link-button route="{{ route('review-items.create', [$review->project, $review]) }}" title="Add Review Item" />
+            <x-forms.link-button route="{{ route('review-items.create', [$review->project, $review]) }}" title="Add Item" />
         </div>
 
-        <h1>Issue Details</h1>
+        <h1>Observations</h1>
 
         <table class="table striped bordered">
             <thead>
