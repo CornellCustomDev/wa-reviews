@@ -3,7 +3,7 @@
         <x-forms.link-button route="{{ route('reviews.index', $review->project) }}" title="Back to Reviews" />
     </div>
 
-    <h1>{{ $review->project->name }}: Review</h1>
+    <h1>{{ $review->project->name }}: Issue</h1>
 
     <table class="table bordered">
         <tr>

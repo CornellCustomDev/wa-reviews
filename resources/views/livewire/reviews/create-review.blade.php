@@ -1,5 +1,5 @@
 <div>
-    <h1>{{ $this->project->name }}: Create Review</h1>
+    <h1>{{ $this->project->name }}: Create Issue</h1>
 
     <form wire:submit="save">
         <x-cd.form.text label="Target" wire:model="form.target" />
