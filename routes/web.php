@@ -2,7 +2,7 @@
 
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
-use App\Livewire\Chat;
+use App\Livewire\AI\Chat;
 use App\Livewire\Criteria\ShowCriterion;
 use App\Livewire\Criteria\ViewCriteria;
 use App\Livewire\Guidelines\Doc;
@@ -12,15 +12,13 @@ use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Livewire\Projects\ViewProjects;
-use App\Livewire\ReviewItems\CreateItem;
-use App\Livewire\ReviewItems\UpdateItem;
-use App\Livewire\Reviews\CreateReview;
-use App\Livewire\Reviews\ShowReview;
-use App\Livewire\Reviews\UpdateReview;
-use App\Livewire\Reviews\ViewReviews;
+use App\Livewire\Items\CreateItem;
+use App\Livewire\Items\UpdateItem;
+use App\Livewire\Issues\CreateIssue;
+use App\Livewire\Issues\ShowIssue;
+use App\Livewire\Issues\UpdateIssue;
 use App\Models\Project;
-use App\Models\Review;
-use App\Models\ReviewItem;
+use App\Models\Issue;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,17 +43,16 @@ Route::prefix('projects')->name('projects.')->group(function () {
     Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
 });
 
-Route::prefix('projects/{project}/reviews')->name('reviews.')->group(function () {
-    Route::get('/', ViewReviews::class)->name('index')->can('viewAny', [Review::class, 'project']);
-    Route::get('/create', CreateReview::class)->name('create')->can('create', [Review::class, 'project']);
-    Route::get('/{review}', ShowReview::class)->name('show')->can('view', 'review');
-    Route::get('/{review}/edit', UpdateReview::class)->name('edit')->can('update', 'review');
+Route::prefix('projects/{project}/issues')->name('issues.')->group(function () {
+    Route::get('/', fn($project) => redirect()->route('projects.show', $project))->name('index');
+    Route::get('/create', CreateIssue::class)->name('create')->can('create', [Issue::class, 'project']);
+    Route::get('/{issue}', ShowIssue::class)->name('show')->can('view', 'issue');
+    Route::get('/{issue}/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
 });
 
-// Review Items
-Route::prefix('projects/{project}/reviews/{review}/items')->name('review-items.')->group(function () {
-    Route::get('/create', CreateItem::class)->name('create'); //->can('update', [Review::class, 'project']);
-    Route::get('/{reviewItem}/edit', UpdateItem::class)->name('edit'); //->can('update', [Review::class, 'project']);
+Route::prefix('projects/{project}/issues/{issue}/items')->name('items.')->group(function () {
+    Route::get('/create', CreateItem::class)->name('create'); //->can('update', [issue::class, 'project']);
+    Route::get('/{item}/edit', UpdateItem::class)->name('edit'); //->can('update', [issue::class, 'project']);
 });
 
 Route::prefix('guidelines')->name('guidelines.')->group(function () {

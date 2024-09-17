@@ -16,8 +16,8 @@ class Project extends Model
         'description',
     ];
 
-    public function reviews(): HasMany
+    public function issues(): HasMany
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(Issue::class);
     }
 }

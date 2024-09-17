@@ -24,5 +24,5 @@
         </tr>
     </table>
 
-    <livewire:reviews.view-reviews :project="$project" />
+    <livewire:issues.view-issues :project="$project" />
 </div>

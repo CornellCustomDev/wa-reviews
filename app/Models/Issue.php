@@ -7,26 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Guideline extends Model
+class Issue extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'number',
-        'name',
-        'criterion_id',
-        'category_id',
-        'notes',
+        'target',
+        'description',
+        'recommendation',
     ];
 
-    public function criterion(): BelongsTo
+    public function project(): BelongsTo
     {
-        return $this->belongsTo(Criterion::class);
-    }
-
-    public function category(): BelongsTo
-    {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Project::class);
     }
 
     public function items(): HasMany
