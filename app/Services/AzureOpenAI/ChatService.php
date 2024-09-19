@@ -61,8 +61,6 @@ class ChatService
 
         $response = $this->chat->create($parameters);
 
-        $this->lastAiResponse = $response->choices[0]->message->content;
-
         // Add the messages to the chat history
         foreach ($response->choices as $result) {
             $this->addMessage(message: $result->message->content, role: $result->message->role);
@@ -71,7 +69,9 @@ class ChatService
 
     public function getLastAiResponse(): string
     {
-        return $this->lastAiResponse;
+        $lastMessage = end($this->messages);
+
+        return $lastMessage['content'];
     }
 
     public function getPrompt(): string

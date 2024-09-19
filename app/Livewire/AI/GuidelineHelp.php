@@ -16,20 +16,17 @@ class GuidelineHelp extends Component
     public array $guidelines = [];
     public string $response;
 
+    public bool $showChat;
+    public array $chatMessages;
+    public string $userMessage = '';
+
     public function populateGuidelines(): void
     {
-        $contextMessage = sprintf(
-            "In the target location of \"%s\" the following issue was found: \n%s",
-            $this->issue->target,
-            $this->issue->description
-        );
-
         $chat = ChatService::make();
-        $prompt = $this->getPrompt().Storage::get('guidelines.md');
+        $prompt = $this->getGuidelinesPrompt();
         $chat->setPrompt($prompt);
-        $chat->addMessage($contextMessage);
+        $chat->addMessage($this->getIssueContext());
         $chat->send();
-        $this->messages = $chat->getMessages();
         $response = $chat->getLastAiResponse();
 
         // Parse the $response json
@@ -54,15 +51,27 @@ class GuidelineHelp extends Component
             dd($response);
         }
     }
+    public function sendChatMessage()
+    {
+        $chat = ChatService::make();
+        $chat->setPrompt($this->getChatPrompt());
+        if (!empty($this->chatMessages)) {
+            $chat->setMessages($this->chatMessages);
+        }
+        $chat->addMessage($this->userMessage);
+        $chat->send();
+        $this->chatMessages = $chat->getMessages();
+        $this->userMessage = '';
+    }
 
     public function render()
     {
         return view('livewire.ai.guideline-help');
     }
 
-    public function getPrompt(): string
+    public function getGuidelinesPrompt(): string
     {
-        return <<<PROMPT
+        $prompt = <<<PROMPT
 As an expert in web accessibility guidelines, your task is to assist users in identifying applicable guidelines for specific web accessibility issues.
 
 Instruction:
@@ -120,5 +129,43 @@ The final output should be informative and user-friendly, allowing users to easi
 The content of the Guidelines Document follows.
 
 PROMPT;
+        return $prompt . Storage::get('guidelines.md');
+    }
+
+    public function getChatPrompt(): string
+    {
+        $issueContext = $this->getIssueContext();
+        $itemsContext = $this->issue->items->isNotEmpty()
+            ? json_encode($this->issue->items, JSON_PRETTY_PRINT)
+            : json_encode('No applicable guidelines have been identified.');
+
+        $prompt = <<<PROMPT
+As an expert in web accessibility guidelines, your task is to assist users in understanding applicable guidelines for specific web accessibility issues.
+
+Context:
+- The user has provided an accessibility issue: $issueContext
+- If there are any applicable guidelines that have been identified, they are listed here:
+```JSON
+$itemsContext
+```
+
+Desired Outcome:
+The final output should be informative, succinct, and user-friendly, allowing users to easily understand the relevance and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your descriptions to facilitate quick comprehension.
+
+The content of the Guidelines Document follows.
+
+PROMPT;
+
+        return $prompt . Storage::get('guidelines.md');
+    }
+
+    private function getIssueContext(): string
+    {
+        $issueContext = sprintf(
+            "In the target location of \"%s\" the following issue was found: \n%s",
+            $this->issue->target,
+            $this->issue->description
+        );
+        return $issueContext;
     }
 }
