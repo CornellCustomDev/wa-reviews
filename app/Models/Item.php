@@ -20,6 +20,7 @@ class Item extends Model
         'description',
         'testing_method',
         'recommendation',
+        'testing',
         'image_links',
         'content_issue',
     ];

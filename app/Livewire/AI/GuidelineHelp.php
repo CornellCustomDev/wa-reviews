@@ -14,6 +14,7 @@ class GuidelineHelp extends Component
     public Issue $issue;
     public array $messages;
     public array $guidelines = [];
+    public string $response;
 
     public function populateGuidelines(): void
     {
@@ -33,6 +34,8 @@ class GuidelineHelp extends Component
 
         // Parse the $response json
         $response = json_decode($response);
+        $this->response = json_encode($response, JSON_PRETTY_PRINT);
+
         if (isset($response->guidelines)) {
             foreach ($response->guidelines as $response) {
                 Item::create([
@@ -40,9 +43,8 @@ class GuidelineHelp extends Component
                     'guideline_id' => $response->number,
                     'description' => $response->applicability,
                     'recommendation' => $response->recommendation,
+                    'testing' => $response->testing,
                     'assessment' => Assessment::Fail,
-                    // TODO: Change testing_method to testing and make it a text field
-                    //'testing_method' => substr($response->testing, 0, 255),
                 ]);
             }
             $this->dispatch('issues-updated');

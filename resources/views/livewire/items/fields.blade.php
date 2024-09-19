@@ -8,3 +8,5 @@
 <x-cd.form.text label="Applicability" wire:model="form.description" />
 
 <x-cd.form.text label="Recommendations" wire:model="form.recommendation" />
+
+<x-cd.form.text label="Testing" wire:model="form.testing" />

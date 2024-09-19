@@ -31,7 +31,7 @@
                             {{ $item->recommendation }}
                         </td>
                         <td>
-                            {{ $item->testing_method }}
+                            {{ $item->testing }}
                         </td>
                         <td class="text-nowrap">
                             <x-forms.link-button route="{{ route('items.edit', [$issue->project, $issue, $item]) }}" title="Edit Item {{ $item->id }}">
