@@ -37,17 +37,17 @@
         </form>
     </div>
 
-    <div x-show="!$wire.showChat">
-        <div x-show="!($wire.feedback == '')">
+    @if(!$showChat)
+        <div x-show="$wire.feedback != ''">
             <hr>
             <div class="panel">
                 <h3 class="h5">AI Response</h3>
                 {!! Str::of($feedback)->markdown() !!}
             </div>
         </div>
-    </div>
+    @endif
 
-    <div x-show="!($wire.response == '')">
+    <div x-show="$wire.response != null && $wire.response != ''">
         <hr>
         <div class="panel accent-gold fill">
             <h3>Debugging info</h3>

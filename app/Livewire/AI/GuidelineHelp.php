@@ -16,7 +16,7 @@ class GuidelineHelp extends Component
     public bool $useGuidelines = true;
     public array $guidelines = [];
     public string $response;
-    public string $feedback;
+    public string $feedback = '';
 
     public bool $showChat = false;
     public array $chatMessages;
@@ -32,6 +32,7 @@ class GuidelineHelp extends Component
         $chat->addMessage($this->getIssueContext());
         $chat->send();
         $response = $chat->getLastAiResponse();
+        $this->feedback = '';
 
         // Parse the $response json
         $response = json_decode($response);
@@ -96,9 +97,9 @@ Instruction:
    - recommendation: Brief remediation recommendations
    - testing: Very brief testing recommendations
 
-2. If the issue is not a direct failure of a guideline, provide a response named "feedback" with brief explanation and suggest alternative resources or approaches to address the issue.
+2. If the issue is not a direct failure of a guideline, provide a response named "feedback" with a brief explanation, including suggesting alternative resources or approaches to address the issue.
 
-3. If you need more information about the user-provided accessibility issue to provide accurate guidance, provide a response named "feedback" asking the user for clarification before providing the list of relevant guidelines.
+3. If you need more information about the user-provided accessibility issue to provide accurate guidance, provide a response named "feedback" asking the user for the required clarification.
 
 Output Formatting:
   - All responses should be formatted as a JSON array, not markdown.
