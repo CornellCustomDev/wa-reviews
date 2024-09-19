@@ -16,6 +16,7 @@ class GuidelineHelp extends Component
     public bool $useGuidelines = true;
     public array $guidelines = [];
     public string $response;
+    public string $feedback;
 
     public bool $showChat = false;
     public array $chatMessages;
@@ -23,6 +24,8 @@ class GuidelineHelp extends Component
 
     public function populateGuidelines(): void
     {
+        $this->showChat = false;
+
         $chat = ChatService::make();
         $prompt = $this->getGuidelinesPrompt();
         $chat->setPrompt($prompt);
@@ -47,7 +50,7 @@ class GuidelineHelp extends Component
             }
             $this->dispatch('issues-updated');
         } elseif (isset($response->feedback)) {
-            dd($response->feedback);
+            $this->feedback = $response->feedback;
         } else {
             dd($response);
         }
@@ -62,6 +65,14 @@ class GuidelineHelp extends Component
         $chat->addMessage($this->userMessage);
         $chat->send();
         $this->chatMessages = $chat->getMessages();
+        $this->response = $chat->getLastAiResponse();
+        $this->userMessage = '';
+    }
+
+    public function clearChat()
+    {
+        $this->chatMessages = [];
+        $this->response = '';
         $this->userMessage = '';
     }
 
