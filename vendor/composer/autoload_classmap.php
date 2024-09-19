@@ -25,6 +25,7 @@ return array(
     'App\\Http\\Middleware\\VerifyCsrfToken' => $baseDir . '/app/Http/Middleware/VerifyCsrfToken.php',
     'App\\Livewire\\AI\\Chat' => $baseDir . '/app/Livewire/AI/Chat.php',
     'App\\Livewire\\AI\\GuidelineHelp' => $baseDir . '/app/Livewire/AI/GuidelineHelp.php',
+    'App\\Livewire\\AI\\Prompt' => $baseDir . '/app/Livewire/AI/Prompt.php',
     'App\\Livewire\\Categories\\ShowCategory' => $baseDir . '/app/Livewire/Categories/ShowCategory.php',
     'App\\Livewire\\Categories\\ViewCategories' => $baseDir . '/app/Livewire/Categories/ViewCategories.php',
     'App\\Livewire\\Criteria\\ShowCriterion' => $baseDir . '/app/Livewire/Criteria/ShowCriterion.php',
