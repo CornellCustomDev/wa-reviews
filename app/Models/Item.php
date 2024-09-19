@@ -13,6 +13,7 @@ class Item extends Model
     use HasFactory;
 
     protected $fillable = [
+        'issue_id',
         'guideline_id',
         'assessment',
         'target',

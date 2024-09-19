@@ -11,17 +11,12 @@ class ViewItems extends Component
 {
     public Issue $issue;
 
-    public function add(): void
-    {
-        $this->authorize('create', $this->issue->project);
-
-    }
-
     public function delete(Item $item): void
     {
         $this->authorize('delete', $this->issue);
-
         $item->delete();
+
+        $this->dispatch('issues-updated');
     }
 
     public function render(): View

@@ -13,9 +13,9 @@ class CreateProject extends Component
     public function save()
     {
         $this->authorize('create', Project::class);
-        $this->form->store();
+        $project = $this->form->store();
 
-        return redirect()->route('projects.index');
+        return redirect()->route('projects.show', $project);
     }
 
     public function render()

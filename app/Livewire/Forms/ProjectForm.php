@@ -26,11 +26,11 @@ class ProjectForm extends Form
         $this->description = $project->description;
     }
 
-    public function store(): void
+    public function store(): Project
     {
         $this->validate();
 
-        Project::create($this->all());
+        return Project::create($this->all());
     }
 
     public function update(): void
