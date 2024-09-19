@@ -2,7 +2,6 @@
 
 namespace App\Services\AzureOpenAI;
 
-use Illuminate\Support\Facades\Storage;
 use OpenAI;
 use OpenAI\Exceptions\ErrorException;
 use OpenAI\Exceptions\TransporterException;
@@ -13,6 +12,7 @@ class ChatService
 {
     protected Chat $chat;
     protected array $messages = [];
+    private ?string $lastAiResponse;
 
     public function __construct(
         // Azure OpenAI resource connection
@@ -21,8 +21,7 @@ class ChatService
         string $apiVersion,
         string $model,
         // Chat parameters
-        public readonly string $prompt,
-        protected string $guidelinesFile = 'guidelines.md',
+        protected string $prompt = 'You are an AI chatbot. You are here to help users with web accessibility issues.',
         protected float $temperature = 0.7,
         protected float $top_p = 0.95,
         protected int $max_tokens = 800,
@@ -51,7 +50,7 @@ class ChatService
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => $this->prompt.Storage::get($this->guidelinesFile),
+                    'content' => $this->prompt,
                 ],
                 ...$this->messages,
             ],
@@ -66,6 +65,23 @@ class ChatService
         foreach ($response->choices as $result) {
             $this->addMessage(message: $result->message->content, role: $result->message->role);
         }
+    }
+
+    public function getLastAiResponse(): string
+    {
+        $lastMessage = end($this->messages);
+
+        return $lastMessage['content'];
+    }
+
+    public function getPrompt(): string
+    {
+        return $this->prompt;
+    }
+
+    public function setPrompt(string $prompt): void
+    {
+        $this->prompt = $prompt;
     }
 
     public function addMessage(string $message, string $role = 'user'): array

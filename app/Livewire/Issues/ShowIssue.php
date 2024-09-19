@@ -3,11 +3,18 @@
 namespace App\Livewire\Issues;
 
 use App\Models\Issue;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowIssue extends Component
 {
     public Issue $issue;
+
+    #[On('issues-updated')]
+    public function refreshIssue(): void
+    {
+        $this->issue->refresh();
+    }
 
     public function render()
     {

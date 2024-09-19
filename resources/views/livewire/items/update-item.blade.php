@@ -1,5 +1,5 @@
 <div>
-    <h1>Update Observation</h1>
+    <h1>Update Item</h1>
 
     <table class="table bordered">
         <tr>
@@ -24,7 +24,7 @@
         @include('livewire.items.fields')
 
         <input type="submit" value="Save Observation">
-        <a href="{{ route('projects.show', $issue->project) }}" >
+        <a href="{{ route('issues.show', [$issue->project, $issue]) }}" >
             <input type="button" value="Cancel">
         </a>
     </form>

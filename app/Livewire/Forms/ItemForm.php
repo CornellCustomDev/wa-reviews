@@ -27,6 +27,8 @@ class ItemForm extends Form
     #[Validate('string|nullable')]
     public ?string $recommendation;
     #[Validate('string|nullable')]
+    public ?string $testing;
+    #[Validate('string|nullable')]
     public ?string $image_links;
     #[Validate('boolean|nullable')]
     public ?bool $content_issue = false;
@@ -81,6 +83,7 @@ class ItemForm extends Form
         $this->description = $item->description;
         $this->testing_method = $item->testing_method;
         $this->recommendation = $item->recommendation;
+        $this->testing = $item->testing;
         $this->image_links = $item->image_links;
         $this->content_issue = $item->content_issue;
     }

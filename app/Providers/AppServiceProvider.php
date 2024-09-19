@@ -19,7 +19,6 @@ class AppServiceProvider extends ServiceProvider
                 apiKey: strval(config('azure_openai.api_key')),
                 apiVersion: strval(config('azure_openai.api_version')),
                 model: strval(config('azure_openai.model')),
-                prompt: strval(config('azure_openai.prompt')),
             ),
         );
     }

@@ -21,5 +21,5 @@
 
 {{-- Sidebar for AI help --}}
 <x-slot:sidebarPrimary>
-    <livewire:ai.guideline-help :$issue />
+    <livewire:a-i.guideline-help :$issue />
 </x-slot:sidebarPrimary>

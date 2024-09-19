@@ -605,6 +605,7 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
         'App\\Livewire\\AI\\Chat' => __DIR__ . '/../..' . '/app/Livewire/AI/Chat.php',
         'App\\Livewire\\AI\\GuidelineHelp' => __DIR__ . '/../..' . '/app/Livewire/AI/GuidelineHelp.php',
+        'App\\Livewire\\AI\\Prompt' => __DIR__ . '/../..' . '/app/Livewire/AI/Prompt.php',
         'App\\Livewire\\Categories\\ShowCategory' => __DIR__ . '/../..' . '/app/Livewire/Categories/ShowCategory.php',
         'App\\Livewire\\Categories\\ViewCategories' => __DIR__ . '/../..' . '/app/Livewire/Categories/ViewCategories.php',
         'App\\Livewire\\Criteria\\ShowCriterion' => __DIR__ . '/../..' . '/app/Livewire/Criteria/ShowCriterion.php',
