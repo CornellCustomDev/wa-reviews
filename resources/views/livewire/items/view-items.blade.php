@@ -10,7 +10,7 @@
             <thead>
                 <tr>
                     <th>Guideline</th>
-                    <th>Applicability</th>
+                    <th>Observations</th>
                     <th>Recommendations</th>
                     <th>Testing</th>
                     <th>Actions</th>
@@ -22,15 +22,15 @@
                         <td>
                             {{ $item->guideline->criterion->getNumberName() }} ({{ $item->assessment }})
                             <hr>
-                            {{ $item->guideline->name }} <a href="{{ route('guidelines.show', $item->guideline) }}">View guideline</a>
+                            {{ $item->guideline->name }} <a href="{{ route('guidelines.show', $item->guideline) }}">View guideline {{ $item->guideline->number }}</a>
                         </td>
-                        <td>
+                        <td style="vertical-align: top">
                             {{ $item->description }}
                         </td>
-                        <td>
+                        <td style="vertical-align: top">
                             {{ $item->recommendation }}
                         </td>
-                        <td>
+                        <td style="vertical-align: top">
                             {{ $item->testing }}
                         </td>
                         <td class="text-nowrap">
