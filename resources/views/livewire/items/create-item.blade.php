@@ -32,5 +32,5 @@
 </div>
 
 <x-slot:sidebarPrimary>
-    <livewire:a-i.guideline-help :$issue />
+    <livewire:a-i.guideline-help :$issue :use-guidelines="false" />
 </x-slot:sidebarPrimary>

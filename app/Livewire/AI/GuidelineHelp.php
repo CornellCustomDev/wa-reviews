@@ -12,11 +12,12 @@ use Livewire\Component;
 class GuidelineHelp extends Component
 {
     public Issue $issue;
-    public array $messages;
+
+    public bool $useGuidelines = true;
     public array $guidelines = [];
     public string $response;
 
-    public bool $showChat;
+    public bool $showChat = false;
     public array $chatMessages;
     public string $userMessage = '';
 
