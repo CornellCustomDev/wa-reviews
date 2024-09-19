@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\AI\Prompt;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
 use App\Livewire\AI\Chat;
@@ -74,3 +75,4 @@ Route::prefix('categories')->name('categories.')->group(function () {
 // Livewire route
 Route::get('chat', Chat::class)->name('chat');
 Route::get('guidelines.md', Doc::class)->name('guidelines.md');
+Route::get('prompt', Prompt::class)->name('prompt');

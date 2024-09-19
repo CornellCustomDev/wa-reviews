@@ -8,6 +8,7 @@
                 <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('categories.index') }}">Categories</a></li>
                 <li><a href="{{ route('chat') }}">Chat</a></li>
+                <li><a href="{{ route('prompt') }}">Prompt</a></li>
             </ul>
         </div>
     </nav>

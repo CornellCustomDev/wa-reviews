@@ -4,18 +4,15 @@
             <x-forms.link-button route="{{ route('items.create', [$issue->project, $issue]) }}" title="Add Item" />
         </div>
 
-        <h1>Observations</h1>
+        <h2>Applicable Guidelines</h2>
 
         <table class="table striped bordered">
             <thead>
                 <tr>
-                    <th>Observation</th>
-                    <th>WCAG Criteria</th>
-                    <th>Assessment</th>
-                    <th>Test Method</th>
-                    <th>Recommendation for Remediation</th>
-                    <th>Image Links</th>
-                    <th>CE Issue</th>
+                    <th>Guideline</th>
+                    <th>Applicability</th>
+                    <th>Recommendations</th>
+                    <th>Testing</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -23,25 +20,18 @@
                 @foreach($items as $item)
                     <tr wire:key="{{ $item->id }}">
                         <td>
-                            <livewire:items.item-field :key="$item->id . '-description'" :$item field="description" label="Description" />
+                            {{ $item->guideline->criterion->getNumberName() }} ({{ $item->assessment }})
+                            <hr>
+                            {{ $item->guideline->name }} <a href="{{ route('guidelines.show', $item->guideline) }}">View guideline</a>
                         </td>
                         <td>
-                            <a href="{{ route('criteria.show', $item->guideline->criterion) }}">{{ $item->guideline->criterion->getNumberName() }}</a>
+                            {{ $item->description }}
                         </td>
                         <td>
-                            <livewire:items.item-field :key="$item->id . '-assessment'" :$item field="assessment" label="Assessment" field-type="select" />
+                            {{ $item->recommendation }}
                         </td>
                         <td>
-                            <livewire:items.item-field :key="$item->id . '-testing_method'" :$item field="testing_method" label="Test Method" field-type="select"/>
-                        </td>
-                        <td>
-                            <livewire:items.item-field :key="$item->id . '-recommendation'" :$item field="recommendation" label="Recommendation" />
-                        </td>
-                        <td>
-                            <livewire:items.item-field :key="$item->id . '-image_links'" :$item field="image_links" label="Image Links" />
-                        </td>
-                        <td>
-                            <livewire:items.item-field-checkbox :key="$item->id . '-content_issue'" :$item field="content_issue" label="CE Issue" field-type="checkbox"/>
+                            {{ $item->testing_method }}
                         </td>
                         <td class="text-nowrap">
                             <x-forms.link-button route="{{ route('items.edit', [$issue->project, $issue, $item]) }}" title="Edit Item {{ $item->id }}">
