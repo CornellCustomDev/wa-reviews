@@ -24,7 +24,7 @@
         @include('livewire.items.fields')
 
         <input type="submit" value="Save Observation">
-        <a href="{{ route('issues.show', [$issue->project, $issue]) }}" >
+        <a href="{{ route('issue.show', $issue) }}" >
             <input type="button" value="Cancel">
         </a>
     </form>

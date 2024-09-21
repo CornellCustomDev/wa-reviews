@@ -18,8 +18,10 @@ use App\Livewire\Items\UpdateItem;
 use App\Livewire\Issues\CreateIssue;
 use App\Livewire\Issues\ShowIssue;
 use App\Livewire\Issues\UpdateIssue;
+use App\Livewire\Scopes\CreateScope;
+use App\Livewire\Scopes\ShowScope;
+use App\Livewire\Scopes\UpdateScope;
 use App\Models\Project;
-use App\Models\Issue;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -37,29 +39,30 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::prefix('projects')->name('projects.')->group(function () {
-    Route::get('/', ViewProjects::class)->name('index')->can('viewAny', Project::class);
+Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
+Route::prefix('project')->name('project.')->group(function () {
     Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
     Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
     Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
+    Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
 });
 
-Route::prefix('projects/{project}/issues')->name('issues.')->group(function () {
-    Route::get('/', fn($project) => redirect()->route('projects.show', $project))->name('index');
-    Route::get('/create', CreateIssue::class)->name('create')->can('create', [Issue::class, 'project']);
-    Route::get('/{issue}', ShowIssue::class)->name('show')->can('view', 'issue');
-    Route::get('/{issue}/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
+Route::prefix('scope/{scope}')->name('scope.')->group(function () {
+    Route::get('', ShowScope::class)->name('show')->can('view', 'scope');
+    Route::get('/edit', UpdateScope::class)->name('edit')->can('update', 'scope');
+    Route::get('/issue/create', CreateIssue::class)->name('issue.create')->can('update', 'scope');
 });
 
-Route::prefix('projects/{project}/issues/{issue}/items')->name('items.')->group(function () {
-    Route::get('/create', CreateItem::class)->name('create'); //->can('update', [issue::class, 'project']);
-    Route::get('/{item}/edit', UpdateItem::class)->name('edit'); //->can('update', [issue::class, 'project']);
+Route::prefix('issue/{issue}')->name('issue.')->group(function () {
+    Route::get('', ShowIssue::class)->name('show')->can('view', 'issue');
+    Route::get('/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
+    Route::get('/item/create', CreateItem::class)->name('item.create')->can('update', 'issue');
+    Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
 });
 
 Route::prefix('guidelines')->name('guidelines.')->group(function () {
     Route::get('/', ViewGuidelines::class)->name('index');
     Route::get('/{guideline}', ShowGuideline::class)->name('show');
-//    Route::get('/{guideline}/edit', UpdateGuideline::class)->name('edit')->can('update', 'guideline');
 });
 
 Route::prefix('criteria')->name('criteria.')->group(function () {

@@ -1,6 +1,6 @@
 @props([
     'title' => null,
-    'sidebar' => true,
+    'sidebar' => false,
     'supplementary' => false,
     'footer' => false,
     'breadcrumbs' => [],

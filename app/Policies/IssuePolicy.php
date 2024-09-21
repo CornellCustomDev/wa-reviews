@@ -11,7 +11,7 @@ class IssuePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(?User $user, Project $project): bool
+    public function viewAny(?User $user): bool
     {
         return true;
     }
@@ -21,7 +21,7 @@ class IssuePolicy
      */
     public function view(?User $user, Issue $issue): bool
     {
-        return true;
+        return $user?->can('view', $issue->project) ?? true;
     }
 
     /**
@@ -29,7 +29,7 @@ class IssuePolicy
      */
     public function create(?User $user, Project $project): bool
     {
-        return true;
+        return $user?->can('update', $project) ?? true;
     }
 
     /**
@@ -37,7 +37,7 @@ class IssuePolicy
      */
     public function update(?User $user, Issue $issue): bool
     {
-        return true;
+        return $user?->can('update', $issue->project) ?? true;
     }
 
     /**
@@ -45,7 +45,7 @@ class IssuePolicy
      */
     public function delete(?User $user, Issue $issue): bool
     {
-        return true;
+        return $user?->can('update', $issue->project) ?? true;
     }
 
     /**
@@ -59,7 +59,7 @@ class IssuePolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(Issue $issue, User $user): bool
+    public function forceDelete(User $user, Issue $issue): bool
     {
         return false;
     }

@@ -7,7 +7,7 @@
         <x-cd.form.text label="Description" wire:model="form.description" />
 
         <input type="submit" value="Create Project">
-        <a href="{{ route('projects.index') }}" >
+        <a href="{{ route('projects') }}" >
             <input type="button" value="Cancel">
         </a>
     </form>

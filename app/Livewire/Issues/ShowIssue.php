@@ -10,7 +10,7 @@ class ShowIssue extends Component
 {
     public Issue $issue;
 
-    #[On('issues-updated')]
+    #[On('items-updated')]
     public function refreshIssue(): void
     {
         $this->issue->refresh();
@@ -22,11 +22,17 @@ class ShowIssue extends Component
         return view('livewire.issues.show-issue')
             ->layout('components.layouts.app', [
                 'sidebar' => true,
-                'breadcrumbs' => [
-                    'Projects' => route('projects.index'),
-                    $this->issue->project->name => route('projects.show', $this->issue->project),
-                    'Viewing Issue' => 'active'
-                ],
+                'breadcrumbs' => $this->getBreadcrumbs(),
             ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->issue->project->name => route('project.show', $this->issue->project),
+            $this->issue->scope->title => route('scope.show', $this->issue->scope),
+            'Viewing Issue' => 'active'
+        ];
     }
 }

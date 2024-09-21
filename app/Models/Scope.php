@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Issue extends Model
+class Scope extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'project_id',
-        'target',
-        'description',
-        'recommendation',
+    protected $fillable = ['title', 'url', 'notes', 'comments'];
+
+    protected $casts = [
+        'comments' => 'array',
     ];
 
     public function project(): BelongsTo
@@ -23,13 +22,8 @@ class Issue extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function scope(): BelongsTo
+    public function issues(): HasMany
     {
-        return $this->belongsTo(Scope::class);
-    }
-
-    public function items(): HasMany
-    {
-        return $this->hasMany(Item::class);
+        return $this->hasMany(Issue::class);
     }
 }

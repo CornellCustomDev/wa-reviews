@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component align-right">
-        @can('create', [App\Models\Issue::class, $project])
-            <x-forms.link-button route="{{ route('issues.create', $project) }}" title="Add Issue"/>
+        @can('update', $scope->project)
+            <x-forms.link-button route="{{ route('scope.issue.create', $scope) }}" title="Add Issue"/>
         @endcan
     </div>
 
@@ -9,25 +9,35 @@
 
     <table class="table striped bordered">
         <thead>
-        <tr>
-            <th>Target</th>
-            <th>Description</th>
-            <th>Actions</th>
-        </tr>
+            <tr>
+                <th>Target</th>
+                <th>Description</th>
+                <th>Observations</th>
+                <th style="width: 100px">Actions</th>
+            </tr>
         </thead>
         <tbody>
-        @foreach($issues as $issue)
+        @foreach($scope->issues as $issue)
             <tr wire:key="{{ $issue->id }}">
                 <td>
-                    <livewire:issues.issue-field :key="$issue->id . '-target'" :$issue field="target"
-                                                   label="Target"/>
+                    {{ $issue->target }}
+{{--                    <livewire:issues.issue-field :key="$issue->id.'-target'" :$issue field="target" label="Target"/>--}}
                 </td>
                 <td>
-                    <livewire:issues.issue-field :key="$issue->id . '-description'" :$issue field="description"
-                                                   label="Description"/>
+                    {{ $issue->description }}
+{{--                    <livewire:issues.issue-field :key="$issue->id.'-description'" :$issue field="description" label="Description"/>--}}
+                </td>
+                <td>
+                    @if($issue->items)
+                        <ul>
+                            @foreach($issue->items as $item)
+                                <li>{{ $item->guideline->criterion->getNumberName() }} ({{ $item->assessment }})</li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </td>
                 <td class="text-nowrap">
-                    <x-forms.link-button route="{{ route('issues.show', [$issue->project, $issue]) }}"
+                    <x-forms.link-button route="{{ route('issue.show', $issue) }}"
                                          title="View issue {{ $issue->id }}">
                         <span class="zmdi zmdi-eye" style="margin-right: 0"/>
                     </x-forms.link-button>
