@@ -34,8 +34,5 @@
 
         <h2>Test Cases</h2>
         {!! Str::of($rule->test_cases)->markdown() !!}
-
-        <h2>References</h2>
-        <pre>{{ $rule->references }}</pre>
     </div>
 </div>

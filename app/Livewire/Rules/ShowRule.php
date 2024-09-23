@@ -10,9 +10,4 @@ use Livewire\Component;
 class ShowRule extends Component
 {
     public ActRule $rule;
-
-    public function render()
-    {
-        return view('livewire.rules.show-rule');
-    }
 }

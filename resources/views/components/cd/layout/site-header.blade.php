@@ -10,6 +10,7 @@
                 <li><a href="{{ route('rules.index') }}">ACT Rules</a></li>
                 <li><a href="{{ route('chat') }}">Chat</a></li>
                 <li><a href="{{ route('prompt') }}">Prompt</a></li>
+                <li><a href="{{ route('analyze') }}">Analyze</a></li>
             </ul>
         </div>
     </nav>

@@ -1,5 +1,6 @@
 <?php
 
+use App\Livewire\AI\AnalyzePage;
 use App\Livewire\AI\Prompt;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
@@ -86,3 +87,4 @@ Route::prefix('act-rules')->name('rules.')->group(function () {
 Route::get('chat', Chat::class)->name('chat');
 Route::get('guidelines.md', Doc::class)->name('guidelines.md');
 Route::get('prompt', Prompt::class)->name('prompt');
+Route::get('analyze', AnalyzePage::class)->name('analyze');

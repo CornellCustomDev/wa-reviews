@@ -38,7 +38,7 @@ class ActRule extends Model
         return Criterion::whereIn('number', $refs)->get();
     }
 
-    public function getTestCases(): array
+    public function parseTestCases(): array
     {
         $examples = [];
         $cases = $this->test_cases;

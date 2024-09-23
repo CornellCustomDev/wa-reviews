@@ -124,7 +124,7 @@ class ParseActRules extends Command
                 'assumptions' => $rule->assumptions,
                 'accessibility_support' => $rule->accessibility_support,
                 'background' => $rule->background,
-                'test_cases' => $rule->getTestCases(),
+                'test_cases' => $rule->parseTestCases(),
                 'expectation' => $rule->expectation,
             ]);
             Storage::put('act-rules-yaml/' . $ruleName . '.yaml', $yaml);
