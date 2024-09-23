@@ -20,4 +20,9 @@ class Project extends Model
     {
         return $this->hasMany(Issue::class);
     }
+
+    public function scopes(): HasMany
+    {
+        return $this->hasMany(Scope::class);
+    }
 }

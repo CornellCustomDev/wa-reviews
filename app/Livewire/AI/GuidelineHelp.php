@@ -49,7 +49,7 @@ class GuidelineHelp extends Component
                     'assessment' => Assessment::Fail,
                 ]);
             }
-            $this->dispatch('issues-updated');
+            $this->dispatch('items-updated');
         } elseif (isset($response->feedback)) {
             $this->feedback = $response->feedback;
         } else {

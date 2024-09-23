@@ -4,8 +4,10 @@ namespace App\Livewire\Items;
 
 use App\Livewire\Forms\ItemForm;
 use App\Models\Issue;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app', ['sidebar' => true])]
 class CreateItem extends Component
 {
     public ItemForm $form;
@@ -16,17 +18,6 @@ class CreateItem extends Component
         $this->authorize('update', $this->issue->project);
         $this->form->store($this->issue);
 
-        return redirect()->route('issues.show', [$this->issue->project, $this->issue]);
-    }
-
-    public function render()
-    {
-        return view('livewire.items.create-item', [
-            'issue' => $this->issue,
-            'guidelineOptions' => $this->form->guidelineOptions,
-            'guidelines' => $this->form->guidelines,
-            'assessmentOptions' => $this->form->assessmentOptions,
-            'testingMethodOptions' => $this->form->testingMethodOptions
-        ])->layout('components.layouts.app');
+        return redirect()->route('issue.show', $this->issue);
     }
 }

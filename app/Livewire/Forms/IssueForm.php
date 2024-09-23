@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Forms;
 
-use App\Models\Project;
 use App\Models\Issue;
+use App\Models\Scope;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -31,11 +31,12 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function store(Project $project): Issue
+    public function store(Scope $scope): Issue
     {
         $this->validate();
 
-        $this->issue = $project->issues()->create($this->all());
+        $attributes = array_merge($this->all(), ['project_id' => $scope->project_id]);
+        $this->issue = $scope->issues()->create($attributes);
 
         return $this->issue;
     }

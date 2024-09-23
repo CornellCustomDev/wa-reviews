@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.link-button route="{{ route('projects.edit', $project) }}" title="Edit Project" />
+        <x-forms.link-button route="{{ route('project.edit', $project) }}" title="Edit" />
     </div>
 
     <h1>{{ $project->name }}</h1>
@@ -24,5 +24,6 @@
         </tr>
     </table>
 
-    <livewire:issues.view-issues :project="$project" />
+    <livewire:scopes.view-scopes :$project />
+
 </div>

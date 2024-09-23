@@ -6,7 +6,7 @@
         <x-cd.form.text label="Description" wire:model="form.description"/>
 
         <input type="submit" value="Update Issue">
-        <a href="{{ route('issues.show', [$form->issue->project, $form->issue]) }}">
+        <a href="{{ route('scopes.show', [$form->issue->scope->project, $form->issue->scope]) }}">
             <input type="button" value="Cancel">
         </a>
     </form>

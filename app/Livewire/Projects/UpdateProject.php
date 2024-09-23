@@ -4,8 +4,10 @@ namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ProjectForm;
 use App\Models\Project;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class UpdateProject extends Component
 {
     public ProjectForm $form;
@@ -20,12 +22,6 @@ class UpdateProject extends Component
         $this->authorize('update', $this->form->project);
         $this->form->update();
 
-        return redirect()->route('projects.show', $this->form->project);
-    }
-
-    public function render()
-    {
-        return view('livewire.projects.update-project')
-            ->layout('components.layouts.app');
+        return redirect()->route('project.show', $this->form->project);
     }
 }

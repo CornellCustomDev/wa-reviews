@@ -12,7 +12,7 @@ class ViewItems extends Component
 {
     public Issue $issue;
 
-    #[On('issues-updated')]
+    #[On('items-updated')]
     public function refreshIssue(): void
     {
         $this->issue->refresh();
@@ -23,13 +23,6 @@ class ViewItems extends Component
         $this->authorize('delete', $this->issue);
         $item->delete();
 
-        $this->dispatch('issues-updated');
-    }
-
-    public function render(): View
-    {
-        return view('livewire.items.view-items', [
-            'items' => $this->issue->items,
-        ]);
+        $this->dispatch('items-updated');
     }
 }

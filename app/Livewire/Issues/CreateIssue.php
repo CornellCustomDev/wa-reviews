@@ -3,26 +3,21 @@
 namespace App\Livewire\Issues;
 
 use App\Livewire\Forms\IssueForm;
-use App\Models\Project;
-use App\Models\Issue;
+use App\Models\Scope;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class CreateIssue extends Component
 {
     public IssueForm $form;
-    public Project $project;
+    public Scope $scope;
 
     public function save()
     {
-        $this->authorize('create', [Issue::class, $this->project]);
-        $issue = $this->form->store($this->project);
+        $this->authorize('update', $this->scope->project);
+        $this->form->store($this->scope);
 
-        return redirect()->route('issues.show', [$this->project, $issue]);
-    }
-
-    public function render()
-    {
-        return view('livewire.issues.create-issue')
-            ->layout('components.layouts.app');
+        return redirect()->route('scope.show', $this->scope);
     }
 }
