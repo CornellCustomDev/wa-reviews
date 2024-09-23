@@ -1,3 +1,4 @@
+machine_name: aria-hidden-no-focusable-content-6cfa84
 id: 6cfa84
 name: 'Element with aria-hidden has no content in sequential focus navigation'
 metadata:

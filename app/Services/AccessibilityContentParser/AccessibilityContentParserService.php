@@ -33,6 +33,16 @@ class AccessibilityContentParserService
         return new Crawler($html);
     }
 
+    public function getPageContent(string $pageUrl)
+    {
+        $cacheKey = 'page_body_' . md5($pageUrl);
+        return cache()->remember($cacheKey, 3600, function () use ($pageUrl) {
+            $html = $this->retrieveHtml($pageUrl);
+            $crawler = $this->parseDom($html);
+            return $crawler->filter('body')->html();
+        });
+    }
+
     public function getApplicableRules($html): array
     {
         $rules = self::getAllRules();
@@ -49,6 +59,7 @@ class AccessibilityContentParserService
             ->map(fn($file) => pathinfo($file, PATHINFO_FILENAME))
             ->mapWithKeys(function ($className) {
                 $ruleClass = 'App\Services\AccessibilityContentParser\ActRules\Rules\\' . $className;
+                /** @var ActRuleBase $rule */
                 $rule = new $ruleClass;
                 return [($rule)->getMachineName() => $rule];
             });

@@ -1,3 +1,4 @@
+machine_name: css-restrict-orientation-b33eff
 id: b33eff
 name: 'Orientation of the page is not restricted using CSS transforms'
 metadata:

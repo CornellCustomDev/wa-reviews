@@ -117,6 +117,7 @@ class ParseActRules extends Command
             // Also store the $rule as yaml in /act-rules-yaml/{id}.yaml
             echo $rule->name . " ({$yamlData['id']})\n";
             $yaml = Yaml::dump([
+                'machine_name' => $ruleName,
                 'id' => $yamlData['id'],
                 'name' => $rule->name,
                 'metadata' => $rule->metadata,

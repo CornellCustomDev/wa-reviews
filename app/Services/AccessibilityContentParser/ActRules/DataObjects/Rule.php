@@ -15,12 +15,12 @@ class Rule
         public readonly string $background,
         public readonly array $test_cases,
         public readonly string $expectation,
-    ) {}
+    ) { }
 
     public static function fromYaml($yaml): Rule
     {
         return new Rule(
-            machineName: $yaml['id'],
+            machineName: $yaml['machine_name'],
             id: $yaml['id'],
             name: $yaml['name'],
             metadata: $yaml['metadata'],
@@ -31,6 +31,16 @@ class Rule
             test_cases: $yaml['test_cases'],
             expectation: $yaml['expectation'],
         );
+    }
+
+    public function getCriteria(): array
+    {
+        $accessibility_requirements = collect($this->metadata['accessibility_requirements']);
+
+        // $key is of the format `wcag21:1.1.1`
+        return $accessibility_requirements->keys()
+            ->map(fn ($requirement) => explode(':', $requirement)[1])
+            ->toArray();
     }
 
     public function getPassedTestCases(): array

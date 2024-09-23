@@ -1,3 +1,4 @@
+machine_name: table-headers-attribute-refer-to-data-cells-a25f45
 id: a25f45
 name: 'Headers attribute specified on a cell refers to cells in the same table element'
 metadata:

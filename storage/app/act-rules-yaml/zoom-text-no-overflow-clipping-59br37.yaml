@@ -1,3 +1,4 @@
+machine_name: zoom-text-no-overflow-clipping-59br37
 id: 59br37
 name: 'Zoomed text node is not clipped with CSS overflow'
 metadata:

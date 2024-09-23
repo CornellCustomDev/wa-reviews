@@ -1,3 +1,4 @@
+machine_name: auto-play-audio-does-not-exceed-3-seconds-aaa1bf
 id: aaa1bf
 name: 'Audio or video element that plays automatically has no audio that lasts more than 3 seconds'
 metadata:

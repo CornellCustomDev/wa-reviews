@@ -1,3 +1,4 @@
+machine_name: iframe-with-interactive-content-in-tab-order-akn7bn
 id: akn7bn
 name: 'Iframe with interactive elements is not excluded from tab-order'
 metadata:

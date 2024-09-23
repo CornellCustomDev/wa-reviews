@@ -6,7 +6,7 @@
             <label for="pageUrl">Page URL:</label>
             <input type="text" id="pageUrl" wire:model="pageUrl">
         </div>
-        <button type="submit">Analyze</button>
+        <button type="submit">Analyze</button> <span wire:loading.delay>Processing...</span>
     </form>
 
     @if ($pageUrl)
