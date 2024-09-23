@@ -34,5 +34,13 @@
 
         <h2>Test Cases</h2>
         {!! Str::of($rule->test_cases)->markdown() !!}
+
+        <h2>AI Prompt</h2>
+        <aside class="panel">
+<pre>Create a PHP class in the namespace "App\Services\AccessibilityContentParser\ActRules\Rules"
+that extends "App\Services\AccessibilityContentParser\ActRules\ActRuleBase" and is called "{{ $rule->getClassName() }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler" for the following web accessibility rule:
+
+{{ $rule->getYaml() }}</pre>
+        </aside>
     </div>
 </div>

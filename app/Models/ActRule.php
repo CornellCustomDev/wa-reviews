@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ActRule extends Model
 {
@@ -64,5 +66,15 @@ class ActRule extends Model
         }
 
         return $examples;
+    }
+
+    public function getYaml(): string
+    {
+        return Storage::get('act-rules-yaml/' . $this->filename . '.yaml');
+    }
+
+    public function getClassName(): string
+    {
+        return Str::studly(substr($this->filename, 0, -6)) . $this->id;
     }
 }

@@ -10,12 +10,25 @@ class ButtonNonEmptyAccessibleName97a4e1 extends ActRuleBase
     public function findApplicableElements(Crawler $crawler): Crawler
     {
         return $crawler->filterXPath("
-            //button[not(@type='image') and not(@role='link')]
+            //button[not(@type='image') and not(@role='link') and not(@role='none' and @disabled)]
             | //input[
                 (@type='button' or @type='submit' or @type='reset')
                 and not(@type='image')
               ]
             | //*[@role='button']
         ");
+    }
+
+    public function hasApplicableElements(Crawler $crawler): bool
+    {
+        $elements = $this->findApplicableElements($crawler);
+
+        foreach ($elements as $element) {
+            if ($this->isElementIncludedInAccessibilityTree($element)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

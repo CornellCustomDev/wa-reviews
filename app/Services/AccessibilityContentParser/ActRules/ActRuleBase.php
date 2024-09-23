@@ -17,8 +17,8 @@ abstract class ActRuleBase
         $className = (new ReflectionClass($this))->getShortName();
         $slug = Str::of($className)->snake()->slug();
 
-        // Put a dash before the hex hash at the end of the class name
-        return preg_replace('/([0-9a-f]{6})$/', '-$1', $slug);
+        // Splice a dash before the 6 characters at the end of the name
+        return Str::replaceMatches('/(.{6})$/', '-$1', $slug);
     }
 
     public function getRuleData(): array
@@ -36,15 +36,8 @@ abstract class ActRuleBase
     public function doesRuleApply($htmlContent): bool
     {
         $crawler = new Crawler($htmlContent);
-        $elements = $this->findApplicableElements($crawler);
 
-        foreach ($elements as $element) {
-            if ($this->isElementIncludedInAccessibilityTree($element)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->hasApplicableElements($crawler);
     }
 
     /**
@@ -77,5 +70,5 @@ abstract class ActRuleBase
         return true;
     }
 
-    abstract protected function findApplicableElements(Crawler $crawler): Crawler;
+    abstract protected function hasApplicableElements(Crawler $crawler): bool;
 }

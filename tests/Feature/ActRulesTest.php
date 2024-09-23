@@ -44,9 +44,6 @@ class ActRulesTest extends FeatureTestCase
         $cases = $rule->getInapplicableTestCases();
 
         foreach ($cases as $case) {
-            if ($case['name'] != 'Inapplicable Example 3') {
-                continue;
-            }
             $ruleInfo = $case['name'].': '.$case['html'];
             $this->assertFalse($actRule->doesRuleApply($case['html']), $ruleInfo);
         }
