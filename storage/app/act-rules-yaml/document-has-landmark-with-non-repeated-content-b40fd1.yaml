@@ -1,0 +1,16 @@
+id: b40fd1
+name: 'Document has a landmark with non-repeated content'
+metadata:
+    id: b40fd1
+    name: 'Document has a landmark with non-repeated content'
+    rule_type: atomic
+    description: "This rule checks that each page has an element with a landmark semantic role starting with non-repeated content\n"
+    accessibility_requirements: null
+    input_aspects: ['Accessibility Tree', 'CSS styling', 'DOM Tree']
+    acknowledgments: { authors: ['Jean-Yves Moyen'], funding: [WAI-Tools], assets: ['_Romance of the Three Kingdoms_ by Luo Guanzhong, translation by Charles Henry Brewitt-Taylor (Tuttle Publishing, 1925, ISBN 9780804834674)', '_Three Kingdoms_ by Luo Guanzhong, translation by Moss Roberts (Foreign Language Press, 1976, ISBN 7-119-00590-1)', '_The Three Kingdoms_ by Luo Guanzhong, translation by Yu Sumei (Tuttle publishing, 2014, ISBN 9780804843935)'] }
+applicability: 'This rule applies to any HTML web page.'
+assumptions: '- This rule assumes that landmarks are intended to users of Assistive Technologies and are not necessarily rendered in a visible way. Therefore, it does not require the main landmark to be visible. Similarly, technique ARIA11: Using ARIA landmarks to identify regions of a page does not require landmarks to be visible or have visible content.'
+accessibility_support: 'Marking content with landmarks is sufficient to pass Success Criterion 2.4.1 Bypass blocks. However, this will only benefit users who can actually navigate using landmark roles (such a functionality is usually provided by assistive technologies, but could also be provided by browsers or browsers plugins). Users without any possibility for landmarks navigation will be left without way of bypassing blocks of repeated content and will still experience accessibility issues. Therefore, it is recommended to provide other ways of bypassing blocks.'
+background: 'Most of the time, this rule passes by enclosing the primary content of the page in a `main` landmark.'
+test_cases: {  }
+expectation: "Within each test target, either there is no non-repeated content after repeated content or there exists an element for which all the following are true:\n\n- the element is an inheriting semantic `landmark`; and\n- the first perceivable content (in tree order in the flat tree) which is an inclusive descendant of the element is non-repeated content after repeated content; and\n- the element is included in the accessibility tree."

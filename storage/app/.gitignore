@@ -1,3 +1,5 @@
-*
+/*
 !public/
 !.gitignore
+!act-rules-yaml
+!act-rules.github.io-develop

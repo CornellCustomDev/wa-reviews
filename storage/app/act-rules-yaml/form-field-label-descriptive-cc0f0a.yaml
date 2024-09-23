@@ -1,0 +1,16 @@
+id: cc0f0a
+name: 'Form field label is descriptive'
+metadata:
+    id: cc0f0a
+    name: 'Form field label is descriptive'
+    rule_type: atomic
+    description: "This rule checks that labels describe the purpose of form field elements.\n"
+    accessibility_requirements: { 'wcag20:2.4.6': { forConformance: true, failed: 'not satisfied', passed: 'further testing needed', inapplicable: 'further testing needed' }, 'wcag-technique:G131': { forConformance: false, failed: 'not satisfied', passed: 'further testing needed', inapplicable: 'further testing needed' } }
+    input_aspects: ['Accessibility Tree', 'DOM Tree', 'CSS Styling', Language]
+    acknowledgments: { authors: ['Jean-Yves Moyen', 'Wilco Fiers'], previous_authors: ['Dagfinn Rømen', 'Geir Sindre Fossøy'], funding: [WAI-Tools] }
+applicability: "This rule applies to any programmatic label of an element which has one of the following semantic roles:\n\n- `checkbox`\n- `combobox`\n- `listbox`\n- `menuitemcheckbox`\n- `menuitemradio`\n- `radio`\n- `searchbox`\n- `slider`\n- `spinbutton`\n- `switch`\n- `textbox`\n\nand where both the element and the programmatic label are visible."
+assumptions: "- This rule assumes that labels are intended for sighted users, and that hiding a visible label from assistive technologies, is a failure of Success Criterion 4.1.2: Name, Role and Value, but not of Success Criterion 2.4.6: Headings and Labels.\n- This rule assumes that the programmatic labels of an element are also part of its visual context."
+accessibility_support: '- Implementation of Presentational Roles Conflict Resolution varies from one browser or assistive technology to another. Depending on this, some elements can have one of the applicable semantic roles and fail this rule with some technology but users of other technologies would not experience any accessibility issue.'
+background: "The list of applicable semantic roles is derived by taking all the ARIA 1.2 roles that:\n\n- inherit from the `input`, `menuitem` or `select` role, and\n- are form field controls (this notably excludes `menu`, `option` or `tree`)."
+test_cases: {  }
+expectation: 'Each test target, together with its visual context, describes the purpose of the associated element.'
