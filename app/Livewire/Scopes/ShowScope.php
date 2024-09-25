@@ -2,17 +2,21 @@
 
 namespace App\Livewire\Scopes;
 
+use App\Models\ActRule;
 use App\Models\Criterion;
 use App\Models\Scope;
 use App\Services\AccessibilityContentParser\AccessibilityContentParserService;
 use App\Services\AccessibilityContentParser\ActRules\DataObjects\Rule;
+use App\Services\AzureOpenAI\ChatService;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowScope extends Component
 {
     public Scope $scope;
+    public bool $entirePage = false;
     public array $suggestedRules = [];
+    public string $response;
 
     #[On('issues-updated')]
     public function refreshScope(): void
@@ -26,6 +30,7 @@ class ShowScope extends Component
         return view('livewire.scopes.show-scope')
             ->layout('components.layouts.app', [
                 'breadcrumbs' => $this->getBreadcrumbs(),
+                'sidebar' => false,
             ]);
     }
 
@@ -42,14 +47,60 @@ class ShowScope extends Component
     {
         $parser = new AccessibilityContentParserService();
         $body = $parser->getPageContent($this->scope->url);
-        $rules = $parser->getApplicableRules($body);
+
+        if ($this->entirePage) {
+            $content = $body;
+        } else {
+            $sections = $parser->extractMajorSections($body);
+            $content = $sections['main']['element'];
+        }
+
+        $rules = $parser->getApplicableRules($content);
+        $nodes = $parser->getNodesWithApplicableRules($content);
+        $this->suggestedRules = [];
         /** @var Rule $rule */
         foreach ($rules as $rule) {
-            $this->suggestedRules[] = [
+            $ruleNodes = $nodes[$rule->getMachineName()] ?? [];
+            $this->suggestedRules[$rule->getMachineName()] = [
                 'rule' => $rule,
                 'criteria' => Criterion::whereIn('number', $rule->getCriteria())->get(),
+                'elements' => $ruleNodes['nodes'],
+                'cssSelectors' => $ruleNodes['cssSelectors'],
+                'results' => [],
             ];
         }
+    }
+
+    public function reviewElements(ActRule $rule, string $cssSelectors): void
+    {
+        // TODO - We need to use either the database or the yaml files, not both
+        $rule = Rule::fromYaml($rule->getYaml());
+        $machineName = $rule->getMachineName();
+
+        $parser = new AccessibilityContentParserService();
+        $html = $parser->getPageContent($this->scope->url);
+        $cssSelectorsList = explode(',', $cssSelectors);
+        $nodes = $parser->findNodes($html, $cssSelectorsList);
+
+        $chat = ChatService::make();
+        $chat->setPrompt($this->prompt);
+        $chat->send();
+
+        $json = $chat->getLastAiResponse();
+        $response = json_decode($json);
+
+        if (isset($response->elements)) {
+            $this->suggestedRules[$machineName]['results'] = [];
+            foreach ($response->elements as $element) {
+                $this->suggestedRules[$machineName]['results'][] = [
+                    'cssSelector' => $cssSelectorsList[$element->elementIndex],
+                    'assessment' => $element->assessment,
+                    'reasoning' => $element->reasoning,
+                ];
+            }
+        }
+
+        $this->response = json_encode($response, JSON_PRETTY_PRINT);
     }
 
     public function createIssues($ruleId): void

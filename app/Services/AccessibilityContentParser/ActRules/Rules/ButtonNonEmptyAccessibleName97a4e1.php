@@ -16,19 +16,8 @@ class ButtonNonEmptyAccessibleName97a4e1 extends ActRuleBase
                 and not(@type='image')
               ]
             | //*[@role='button']
-        ");
-    }
-
-    public function hasApplicableElements(Crawler $crawler): bool
-    {
-        $elements = $this->findApplicableElements($crawler);
-
-        foreach ($elements as $element) {
-            if ($this->isElementIncludedInAccessibilityTree($element)) {
-                return true;
-            }
-        }
-
-        return false;
+        ")->reduce(function (Crawler $node) {
+            return $this->isElementIncludedInAccessibilityTree($node->getNode(0));
+        });
     }
 }

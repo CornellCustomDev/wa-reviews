@@ -18,7 +18,12 @@
             <th>URL</th>
             <td>
                 <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
-                | <button wire:click="analyze" class="button">Analyze with AI</button>  <span wire:loading.delay>Processing...</span>
+                | <button wire:click="analyze" class="button">Analyze</button>
+                <label>
+                    <input type="checkbox" id="entirePage" wire:model="entirePage" />
+                    entire page
+                </label>
+                <span wire:loading.delay wire:target="analyze">| Processing...</span>
             </td>
         </tr>
         <tr>
@@ -46,7 +51,17 @@
                         )
                     @endif
 
-                    | <button wire:click="createIssues('{{ $suggestion['rule']->id }}')" class="button">Review with AI</button>  <span wire:loading.delay>Processing...</span>
+                    | <button wire:click="reviewElements('{{ $suggestion['rule']->id }}', '{{ $suggestion['cssSelectors'] }}')" class="button">Review {{ count($suggestion['elements']) }} elements with AI</button>  <span wire:loading.delay wire:target="reviewElements">Processing...</span>
+                    @if ($suggestion['results'])
+                        <ul>
+                            @foreach ($suggestion['results'] as $element)
+                                <li>
+                                    {{ $element['cssSelector'] }} <br>
+                                    <b>{{ ucfirst($element['assessment']) }}:</b> {{ $element['reasoning'] }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </li>
             @endforeach
         </ul>
@@ -54,3 +69,8 @@
 
     <livewire:issues.view-issues :$scope />
 </div>
+
+{{-- Sidebar for AI help --}}
+{{--<x-slot:sidebarPrimary>--}}
+{{--    <livewire:ai.scope-help :$response />--}}
+{{--</x-slot:sidebarPrimary>--}}
