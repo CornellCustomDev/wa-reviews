@@ -13,7 +13,7 @@ class ActRulesTest extends FeatureTestCase
     public function testPassedExamples(ActRuleBase $actRule)
     {
         $rule = $actRule->getRule();
-        $cases = $rule->getPassedTestCases();
+        $cases = $rule->getPassingTestCases();
 
         foreach ($cases as $case) {
             $ruleInfo = $case['name'].': '.$case['html'];
@@ -27,7 +27,7 @@ class ActRulesTest extends FeatureTestCase
     public function testFailedExamples(ActRuleBase $actRule)
     {
         $rule = $actRule->getRule();
-        $cases = $rule->getFailedTestCases();
+        $cases = $rule->getFailingTestCases();
 
         foreach ($cases as $case) {
             $ruleInfo = $case['name'].': '.$case['html'];
