@@ -3,7 +3,7 @@
 namespace App\Services\AccessibilityContentParser;
 
 use App\Models\ActRule;
-use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunner;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -61,8 +61,8 @@ class AccessibilityContentParserService
     {
         $rules = self::getAllRules();
 
-        return $rules->filter(fn(RuleRunnerBase $rule) => $rule->doesRuleApply($content))
-            ->map(fn(RuleRunnerBase $rule) => $rule->getActRule());
+        return $rules->filter(fn(RuleRunner $rule) => $rule->doesRuleApply($content))
+            ->map(fn(RuleRunner $rule) => $rule->getActRule());
     }
 
     public function getNodesWithApplicableRules($content): array
@@ -70,7 +70,7 @@ class AccessibilityContentParserService
         $rules = self::getAllRules();
 
         $nodes = [];
-        /** @var RuleRunnerBase $rule */
+        /** @var RuleRunner $rule */
         foreach ($rules as $rule) {
             $ruleNodes = $rule->getNodesWhereRuleApplies($content);
             if (!empty($ruleNodes)) {
@@ -166,7 +166,7 @@ class AccessibilityContentParserService
             // Add to result
             $result[$id ?? $descriptor] = [
                 'name' => $descriptor,
-                'css_selector' => RuleRunnerBase::getCssSelector($domElement),
+                'css_selector' => RuleRunner::getCssSelector($domElement),
                 'element' => $domElement, // DOMElement or DOMNode
             ];
         }

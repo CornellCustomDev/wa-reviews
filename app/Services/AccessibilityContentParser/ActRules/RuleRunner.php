@@ -7,18 +7,15 @@ use DOMElement;
 use ReflectionClass;
 use Symfony\Component\DomCrawler\Crawler;
 
-abstract class RuleRunnerBase
+abstract class RuleRunner
 {
     public readonly string $id;
-    public readonly string $machineName;
     private ActRule $actRule;
 
     public function __construct(
     ) {
-        $className = (new ReflectionClass($this))->getShortName();
-        $this->id = substr($className, -6);
-
-        $this->actRule = ActRule::find($this->id);
+        $id = substr((new ReflectionClass($this))->getShortName(), -6);
+        $this->actRule = ActRule::find($id);
     }
 
     public function getActRule(): ActRule
@@ -47,6 +44,8 @@ abstract class RuleRunnerBase
 
         return $this->findApplicableElements($crawler)->count() > 0;
     }
+
+    abstract protected function findApplicableElements(Crawler $crawler): Crawler;
 
     public function getNodesWhereRuleApplies(string|DOMElement $content = null): array
     {
@@ -85,7 +84,6 @@ abstract class RuleRunnerBase
         return true;
     }
 
-    abstract protected function findApplicableElements(Crawler $crawler): Crawler;
 
     protected function getApplicableNodes(Crawler $crawler): array
     {

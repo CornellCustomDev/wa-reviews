@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunner;
 
 class ActRulesTest extends FeatureTestCase
 {
@@ -12,7 +12,7 @@ class ActRulesTest extends FeatureTestCase
     public function testPassedExamples(string $className)
     {
         $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
-        /** @var RuleRunnerBase $ruleRunner */
+        /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
         $cases = $ruleRunner->getPassingTestCases();
@@ -29,7 +29,7 @@ class ActRulesTest extends FeatureTestCase
     public function testFailedExamples(string $className)
     {
         $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
-        /** @var RuleRunnerBase $ruleRunner */
+        /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
         $cases = $ruleRunner->getFailingTestCases();
@@ -46,7 +46,7 @@ class ActRulesTest extends FeatureTestCase
     public function testInapplicableExamples(string $className)
     {
         $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
-        /** @var RuleRunnerBase $ruleRunner */
+        /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
         $cases = $ruleRunner->getInapplicableTestCases();

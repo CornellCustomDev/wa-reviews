@@ -2,10 +2,10 @@
 
 namespace App\Services\AccessibilityContentParser\ActRules\Rules;
 
-use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunner;
 use Symfony\Component\DomCrawler\Crawler;
 
-class AriaHiddenNoFocusableContent6cfa84 extends RuleRunnerBase
+class AriaHiddenNoFocusableContent6cfa84 extends RuleRunner
 {
     protected function findApplicableElements(Crawler $crawler): Crawler
     {
