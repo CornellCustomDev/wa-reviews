@@ -5,7 +5,7 @@
     <ul>
         @foreach ($rules as $rule)
             <li>
-                <a href="{{ route('rules.show', $rule) }}">{{ $rule->name }}</a> ({!! $rule->getCriteria()->map(fn ($c) => '<a href="'.route('criteria.show', $c).'">'.$c->number.'</a>')->join(', ') !!})
+                <a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a> ({!! $rule->getCriteria()->map(fn ($c) => '<a href="'.route('criteria.show', $c).'">'.$c->number.'</a>')->join(', ') !!})
             </li>
         @endforeach
     </ul>

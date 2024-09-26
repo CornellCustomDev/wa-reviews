@@ -2,10 +2,10 @@
 
 namespace App\Services\AccessibilityContentParser\ActRules\Rules;
 
-use App\Services\AccessibilityContentParser\ActRules\ActRuleBase;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
 use Symfony\Component\DomCrawler\Crawler;
 
-class AutocompleteValidValue73f2c2 extends ActRuleBase
+class AutocompleteValidValue73f2c2 extends RuleRunnerBase
 {
     public function findApplicableElements(Crawler $crawler): Crawler
     {
@@ -163,16 +163,4 @@ class AutocompleteValidValue73f2c2 extends ActRuleBase
         return $applicableElements;
     }
 
-    public function hasApplicableElements(Crawler $crawler): bool
-    {
-        $elements = $this->findApplicableElements($crawler);
-
-        foreach ($elements as $element) {
-            if ($this->isElementIncludedInAccessibilityTree($element)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

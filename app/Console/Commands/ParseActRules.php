@@ -13,9 +13,7 @@ class ParseActRules extends Command
 
     public function handle()
     {
-        $directory = 'act-rules.github.io-develop/_rules';
-        // Get the list of files in the directory
-        $files = Storage::files($directory);
+        $files = Storage::files('act-rules.github.io-develop/_rules');
 
         $headings = $this->option('headings');
         if ($headings) {
@@ -24,8 +22,6 @@ class ParseActRules extends Command
         } else {
             $this->info('Truncating the act_rules table');
             ActRule::truncate();
-            $this->info('Empty the act-rules-yaml directory');
-            Storage::deleteDirectory('act-rules-yaml');
             $this->info('Parsing all of the rules');
             $this->parseRules($files);
             // Find out how many rules were parsed
@@ -71,13 +67,12 @@ class ParseActRules extends Command
 
     private function parseRules($files): void
     {
-        $keys = ['Applicability', 'Assumptions', 'Accessibility Support', 'Background', 'Test Cases'];
-        $expectation_keys = ['Expectation', 'Expectation 1', 'Expectation 2', 'Expectation 3', 'Expectations'];
-
         foreach ($files as $file) {
+            // Split the metadata and markdown content
             $content = Storage::get($file);
             if (preg_match('/^---\s*(.*?)\s*---\s*(.*)$/s', $content, $matches)) {
                 $yamlContent = $matches[1];
+                $yamlData = Yaml::parse($yamlContent);
                 $markdownContent = $matches[2];
                 if (preg_match('/(\n\[.*?]:\s*.*?)(?=\n\n|\z)/s', $markdownContent)) {
                     $markdownContent = preg_replace('/(\n\[.*?]:\s*.*?)(?=\n\n|\z)/s', '', $markdownContent);
@@ -88,47 +83,14 @@ class ParseActRules extends Command
                 continue;
             }
 
-            // Get the ruleName from the filename without the extension
-            $ruleName = pathinfo($file, PATHINFO_FILENAME);
-
-            $yamlData = Yaml::parse($yamlContent);
-
             $rule = new ActRule();
             $rule->id = $yamlData['id'];
-            $rule->filename = $ruleName;
+            $rule->machine_name = pathinfo($file, PATHINFO_FILENAME);
             $rule->name = $yamlData['name'];
-
             $rule->metadata = $yamlData;
-
-            // Get the key markdown sections
-            foreach ($keys as $key) {
-                $fieldname = str_replace(' ', '_', strtolower($key));
-                $rule->$fieldname = $this->getMarkdownSection($markdownContent, $key);
-            }
-
-            $expectations = '';
-            foreach ($expectation_keys as $key) {
-                $expectations .= $this->getMarkdownSection($markdownContent, $key);
-            }
-            $rule->expectation = $expectations;
-
+            $rule->markdown = $markdownContent;
+            $rule->test_cases = $this->parseTestCases($markdownContent);
             $rule->save();
-
-            // Also store the $rule as yaml in /act-rules-yaml/{id}.yaml
-            echo $rule->name . " ({$yamlData['id']})\n";
-            $yaml = Yaml::dump([
-                'machine_name' => $ruleName,
-                'id' => $yamlData['id'],
-                'name' => $rule->name,
-                'metadata' => $rule->metadata,
-                'applicability' => $rule->applicability,
-                'assumptions' => $rule->assumptions,
-                'accessibility_support' => $rule->accessibility_support,
-                'background' => $rule->background,
-                'test_cases' => $rule->parseTestCases(),
-                'expectation' => $rule->expectation,
-            ]);
-            Storage::put('act-rules-yaml/' . $ruleName . '.yaml', $yaml);
         }
     }
 
@@ -152,5 +114,35 @@ class ParseActRules extends Command
         }
 
         return '';
+    }
+
+    private function parseTestCases(string $markdownContent): array
+    {
+        $casesContent = $this->getMarkdownSection($markdownContent, 'Test Cases');
+        $test_cases = [];
+        while (preg_match('/^####\s*(.*?)\s*$(.*?)```html\n(.*?)\n```/ms', $casesContent, $matches)) {
+            $name = $matches[1];
+            $description = trim($matches[2]);
+            $html = $matches[3];
+            // Remove the matched test case from the string
+            $casesContent = str_replace($matches[0], '', $casesContent);
+
+            // get the first word of the name
+            $type = explode(' ', $name)[0];
+            // match to the test case type
+            $testType = match($type) {
+                'Passed' => 'passed',
+                'Failed' => 'failed',
+                'Inapplicable' => 'inapplicable',
+                default => 'unknown',
+            };
+            $test_cases[$testType][] = [
+                'name' => $name,
+                'description' => $description,
+                'html' => $html,
+            ];
+        }
+
+        return $test_cases;
     }
 }

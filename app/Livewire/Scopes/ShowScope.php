@@ -3,10 +3,8 @@
 namespace App\Livewire\Scopes;
 
 use App\Models\ActRule;
-use App\Models\Criterion;
 use App\Models\Scope;
 use App\Services\AccessibilityContentParser\AccessibilityContentParserService;
-use App\Services\AccessibilityContentParser\ActRules\DataObjects\Rule;
 use App\Services\AzureOpenAI\ChatService;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -58,12 +56,12 @@ class ShowScope extends Component
         $rules = $parser->getApplicableRules($content);
         $nodes = $parser->getNodesWithApplicableRules($content);
         $this->suggestedRules = [];
-        /** @var Rule $rule */
+        /** @var ActRule $rule */
         foreach ($rules as $rule) {
             $ruleNodes = $nodes[$rule->getMachineName()] ?? [];
             $this->suggestedRules[$rule->getMachineName()] = [
                 'rule' => $rule,
-                'criteria' => Criterion::whereIn('number', $rule->getCriteria())->get(),
+                'criteria' => $rule->getCriteria(),
                 'elements' => $ruleNodes['nodes'],
                 'cssSelectors' => $ruleNodes['cssSelectors'],
                 'results' => [],
@@ -73,17 +71,16 @@ class ShowScope extends Component
 
     public function reviewElements(ActRule $rule, string $cssSelectors): void
     {
-        // TODO - We need to use either the database or the yaml files, not both
-        $rule = Rule::fromYaml($rule->getYaml());
         $machineName = $rule->getMachineName();
 
         $parser = new AccessibilityContentParserService();
         $html = $parser->getPageContent($this->scope->url);
         $cssSelectorsList = explode(',', $cssSelectors);
         $nodes = $parser->findNodes($html, $cssSelectorsList);
+        $prompt = $parser->getNodesPrompt($rule, $nodes, $html);
 
         $chat = ChatService::make();
-        $chat->setPrompt($this->prompt);
+        $chat->setPrompt($prompt);
         $chat->send();
 
         $json = $chat->getLastAiResponse();

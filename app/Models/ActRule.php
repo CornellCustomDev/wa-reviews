@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ActRule extends Model
@@ -14,7 +13,13 @@ class ActRule extends Model
     public $casts = [
         'id' => 'string',
         'metadata' => 'array',
+        'test_cases' => 'array',
     ];
+
+    public function getMachineName(): string
+    {
+        return $this->machine_name;
+    }
 
     public function getDescription(): string
     {
@@ -32,6 +37,7 @@ class ActRule extends Model
 
     public function getCriteria(): Collection
     {
+        // TODO Confirm the key format is correct
         $accessibility_requirements = collect($this->metadata['accessibility_requirements']);
         // $key is of the format `wcag21:1.1.1`
 
@@ -40,41 +46,29 @@ class ActRule extends Model
         return Criterion::whereIn('number', $refs)->get();
     }
 
-    public function parseTestCases(): array
+    public function getLongDescription(): string
     {
-        $examples = [];
-        $cases = $this->test_cases;
-        while (preg_match('/^####\s*(.*?)\s*$(.*?)```html\n(.*?)\n```/ms', $cases, $matches)) {
-            $name = $matches[1];
-            $description = trim($matches[2]);
-            $html = $matches[3];
-            $cases = str_replace($matches[0], '', $cases);
-            // get the first word of the name
-            $type = explode(' ', $name)[0];
-            // match to the test case type
-            $testType = match($type) {
-                'Passed' => 'passed',
-                'Failed' => 'failed',
-                'Inapplicable' => 'inapplicable',
-                default => 'unknown',
-            };
-            $examples[$testType][] = [
-                'name' => $name,
-                'description' => $description,
-                'html' => $html,
-            ];
-        }
-
-        return $examples;
+        // Split the markdown at "## Test Cases", removing everything after that
+        return explode('## Test Cases', $this->markdown)[0];
     }
 
-    public function getYaml(): string
+    public function getPassingTestCases(): array
     {
-        return Storage::get('act-rules-yaml/' . $this->filename . '.yaml');
+        return $this->test_cases['passed'];
     }
 
-    public function getClassName(): string
+    public function getFailingTestCases(): array
     {
-        return Str::studly(substr($this->filename, 0, -6)) . $this->id;
+        return $this->test_cases['failed'];
+    }
+
+    public function getInapplicableTestCases(): array
+    {
+        return $this->test_cases['inapplicable'];
+    }
+
+    public function getRuleRunnerName(): string
+    {
+        return Str::studly($this->machine_name);
     }
 }

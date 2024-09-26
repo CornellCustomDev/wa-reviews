@@ -2,29 +2,43 @@
 
 namespace App\Services\AccessibilityContentParser\ActRules;
 
-use App\Services\AccessibilityContentParser\ActRules\DataObjects\Rule;
+use App\Models\ActRule;
 use DOMElement;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use ReflectionClass;
 use Symfony\Component\DomCrawler\Crawler;
 
-abstract class ActRuleBase
+abstract class RuleRunnerBase
 {
-    public function getMachineName(): string
-    {
-        $className = (new ReflectionClass($this))->getShortName();
-        $slug = Str::of($className)->snake()->slug();
+    public readonly string $id;
+    public readonly string $machineName;
+    private ActRule $actRule;
 
-        // Splice a dash before the 6 characters at the end of the name
-        return Str::replaceMatches('/(.{6})$/', '-$1', $slug);
+    public function __construct(
+    ) {
+        $className = (new ReflectionClass($this))->getShortName();
+        $this->id = substr($className, -6);
+
+        $this->actRule = ActRule::find($this->id);
     }
 
-    public function getRule(): Rule
+    public function getActRule(): ActRule
     {
-        $yaml = Storage::get('act-rules-yaml/' . $this->getMachineName() . '.yaml');
+        return $this->actRule;
+    }
 
-        return Rule::fromYaml($yaml);
+    public function getPassingTestCases(): array
+    {
+        return $this->actRule->getPassingTestCases();
+    }
+
+    public function getFailingTestCases(): array
+    {
+        return $this->actRule->getFailingTestCases();
+    }
+
+    public function getInapplicableTestCases(): array
+    {
+        return $this->actRule->getInapplicableTestCases();
     }
 
     public function doesRuleApply(string|DOMElement $content): bool
@@ -173,32 +187,6 @@ abstract class ActRuleBase
             $textContent,
             $tagName
         );
-    }
-
-    /**
-     * Retrieves information about applicable elements.
-     *
-     * @param Crawler $crawler The DomCrawler instance.
-     * @return array An array of information about each applicable element.
-     */
-    public function getElementInfo(Crawler $crawler): array
-    {
-        $elements = $this->findApplicableElements($crawler);
-        $info = [];
-
-        foreach ($elements as $element) {
-            /** @var \DOMElement $element */
-            $cssSelector = $this->getCssSelector($element);
-            $description = $this->describeElement($element);
-
-            $info[] = [
-                'css_selector' => $cssSelector,
-                'description' => $description,
-                'line_number' => $element->getLineNo(),
-            ];
-        }
-
-        return $info;
     }
 
 }

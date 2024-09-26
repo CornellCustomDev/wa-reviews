@@ -19,8 +19,8 @@ use App\Livewire\Items\UpdateItem;
 use App\Livewire\Issues\CreateIssue;
 use App\Livewire\Issues\ShowIssue;
 use App\Livewire\Issues\UpdateIssue;
-use App\Livewire\Rules\ShowRule;
-use App\Livewire\Rules\ViewRules;
+use App\Livewire\ActRules\ShowRule;
+use App\Livewire\ActRules\ViewRules;
 use App\Livewire\Scopes\CreateScope;
 use App\Livewire\Scopes\ShowScope;
 use App\Livewire\Scopes\UpdateScope;
@@ -78,7 +78,7 @@ Route::prefix('categories')->name('categories.')->group(function () {
     Route::get('/{category}', ShowCategory::class)->name('show');
 });
 
-Route::prefix('act-rules')->name('rules.')->group(function () {
+Route::prefix('act-rules')->name('act-rules.')->group(function () {
     Route::get('/', ViewRules::class)->name('index');
     Route::get('/{rule}', ShowRule::class)->name('show');
 });

@@ -41,7 +41,7 @@
         <ul>
             @foreach ($suggestedRules as $suggestion)
                 <li>
-                    <a href="{{ route('rules.show', $suggestion['rule']->id) }}">{{ $suggestion['rule']->name }}</a>
+                    <a href="{{ route('act-rules.show', $suggestion['rule']->id) }}">{{ $suggestion['rule']->name }}</a>
 
                     @if($suggestion['criteria']->isNotEmpty())
                         (

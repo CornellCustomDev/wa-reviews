@@ -4,9 +4,8 @@ namespace App\Livewire\AI;
 
 use App\Models\ActRule;
 use App\Services\AccessibilityContentParser\AccessibilityContentParserService;
-use App\Services\AccessibilityContentParser\ActRules\DataObjects\Rule;
 use App\Services\AzureOpenAI\ChatService;
-use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -16,7 +15,7 @@ class AnalyzePage extends Component
     public string $pageUrl = '';
     public bool $entirePage = false;
     public string $pageContent;
-    public array $rules;
+    public Collection $rules;
     public array $ruleNodes;
     public array $candidateIssues;
     public string $issuesResponse;
@@ -46,18 +45,15 @@ class AnalyzePage extends Component
 
         $this->rules = $parser->getApplicableRules($content);
         $this->ruleNodes = $parser->getNodesWithApplicableRules($content);
-        // $this->findIssues(head($this->rules));
+        $this->issuesResponse = '';
     }
 
-    public function reviewElementsWithAI(ActRule $rule, string $cssSelectors): void
+    public function reviewElementsWithAI(ActRule $actRule, string $cssSelectors): void
     {
-        // TODO - We need to use either the database or the yaml files, not both
-        $rule = Rule::fromYaml($rule->getYaml());
-
         $parser = new AccessibilityContentParserService();
         $html = $parser->getPageContent($this->pageUrl);
         $nodes = $parser->findNodes($html, explode(',', $cssSelectors));
-        $this->prompt = $parser->getNodesPrompt($rule, $nodes, '');
+        $this->prompt = $parser->getNodesPrompt($actRule, $nodes, '');
 
         $chat = ChatService::make();
         $chat->setPrompt($this->prompt.$html);

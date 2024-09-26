@@ -2,57 +2,69 @@
 
 namespace Tests\Feature;
 
-use App\Services\AccessibilityContentParser\AccessibilityContentParserService;
-use App\Services\AccessibilityContentParser\ActRules\ActRuleBase;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
 
 class ActRulesTest extends FeatureTestCase
 {
     /**
-     * @dataProvider rules
+     * @dataProvider ruleRunners
      */
-    public function testPassedExamples(ActRuleBase $actRule)
+    public function testPassedExamples(string $className)
     {
-        $rule = $actRule->getRule();
-        $cases = $rule->getPassingTestCases();
+        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        /** @var RuleRunnerBase $ruleRunner */
+        $ruleRunner = new $fullyQualifiedClassName;
+
+        $cases = $ruleRunner->getPassingTestCases();
 
         foreach ($cases as $case) {
             $ruleInfo = $case['name'].': '.$case['html'];
-            $this->assertTrue($actRule->doesRuleApply($case['html']), $ruleInfo);
+            $this->assertTrue($ruleRunner->doesRuleApply($case['html']), $ruleInfo);
         }
     }
 
     /**
-     * @dataProvider rules
+     * @dataProvider ruleRunners
      */
-    public function testFailedExamples(ActRuleBase $actRule)
+    public function testFailedExamples(string $className)
     {
-        $rule = $actRule->getRule();
-        $cases = $rule->getFailingTestCases();
+        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        /** @var RuleRunnerBase $ruleRunner */
+        $ruleRunner = new $fullyQualifiedClassName;
+
+        $cases = $ruleRunner->getFailingTestCases();
 
         foreach ($cases as $case) {
             $ruleInfo = $case['name'].': '.$case['html'];
-            $this->assertTrue($actRule->doesRuleApply($case['html']), $ruleInfo);
+            $this->assertTrue($ruleRunner->doesRuleApply($case['html']), $ruleInfo);
         }
     }
 
     /**
-     * @dataProvider rules
+     * @dataProvider ruleRunners
      */
-    public function testInapplicableExamples(ActRuleBase $actRule)
+    public function testInapplicableExamples(string $className)
     {
-        $rule = $actRule->getRule();
-        $cases = $rule->getInapplicableTestCases();
+        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        /** @var RuleRunnerBase $ruleRunner */
+        $ruleRunner = new $fullyQualifiedClassName;
+
+        $cases = $ruleRunner->getInapplicableTestCases();
 
         foreach ($cases as $case) {
             $ruleInfo = $case['name'].': '.$case['html'];
-            $this->assertFalse($actRule->doesRuleApply($case['html']), $ruleInfo);
+            $this->assertFalse($ruleRunner->doesRuleApply($case['html']), $ruleInfo);
         }
     }
 
-    public static function rules(): array
+    protected static function ruleRunners(): array
     {
-        $rules = AccessibilityContentParserService::getAllRules();
-
-        return $rules->map(fn ($rule) => [$rule])->toArray();
+        return collect(scandir(__DIR__.'/../../app/Services/AccessibilityContentParser/ActRules/Rules'))
+            ->filter(fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'php')
+            ->mapWithKeys(function ($file) {
+                $name = pathinfo($file, PATHINFO_FILENAME);
+                return [$name => [$name]];
+            })
+            ->toArray();
     }
 }

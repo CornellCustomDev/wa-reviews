@@ -13,15 +13,11 @@ return new class extends Migration
     {
         Schema::create('act_rules', function (Blueprint $table) {
             $table->string('id', 7)->primary();
-            $table->string('filename');
+            $table->string('machine_name');
             $table->string('name');
             $table->json('metadata');
-            $table->text('applicability');
-            $table->text('expectation');
-            $table->text('assumptions');
-            $table->text('accessibility_support');
-            $table->text('background');
-            $table->text('test_cases');
+            $table->text('markdown');
+            $table->json('test_cases');
             $table->timestamps();
         });
     }

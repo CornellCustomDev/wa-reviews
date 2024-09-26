@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Rules;
+namespace App\Livewire\ActRules;
 
 use App\Models\ActRule;
 use Livewire\Attributes\Layout;

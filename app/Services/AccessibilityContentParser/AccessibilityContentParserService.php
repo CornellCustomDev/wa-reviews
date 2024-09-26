@@ -2,12 +2,8 @@
 
 namespace App\Services\AccessibilityContentParser;
 
-use App\Services\AccessibilityContentParser\ActRules\ActRuleBase;
-use App\Services\AccessibilityContentParser\ActRules\DataObjects\Rule;
-use App\Services\AzureOpenAI\ChatService;
-use DOMDocument;
-use DOMElement;
-use DOMNode;
+use App\Models\ActRule;
+use App\Services\AccessibilityContentParser\ActRules\RuleRunnerBase;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
@@ -61,13 +57,12 @@ class AccessibilityContentParserService
         });
     }
 
-    public function getApplicableRules($content = null): array
+    public function getApplicableRules($content = null): Collection
     {
         $rules = self::getAllRules();
 
-        return $rules->filter(fn(ActRuleBase $rule) => $rule->doesRuleApply($content))
-            ->map(fn(ActRuleBase $rule) => $rule->getRule())
-            ->toArray();
+        return $rules->filter(fn(RuleRunnerBase $rule) => $rule->doesRuleApply($content))
+            ->map(fn(RuleRunnerBase $rule) => $rule->getActRule());
     }
 
     public function getNodesWithApplicableRules($content): array
@@ -75,12 +70,12 @@ class AccessibilityContentParserService
         $rules = self::getAllRules();
 
         $nodes = [];
-        /** @var ActRuleBase $rule */
+        /** @var RuleRunnerBase $rule */
         foreach ($rules as $rule) {
             $ruleNodes = $rule->getNodesWhereRuleApplies($content);
             if (!empty($ruleNodes)) {
                 $combinedSelectors = collect($ruleNodes)->map(fn($node) => $node['css_selector'])->join(',');
-                $nodes[$rule->getMachineName()] = [
+                $nodes[$rule->getActRule()->getMachineName()] = [
                     'cssSelectors' => $combinedSelectors,
                     'nodes' => $ruleNodes,
                 ];
@@ -171,7 +166,7 @@ class AccessibilityContentParserService
             // Add to result
             $result[$id ?? $descriptor] = [
                 'name' => $descriptor,
-                'css_selector' => ActRuleBase::getCssSelector($domElement),
+                'css_selector' => RuleRunnerBase::getCssSelector($domElement),
                 'element' => $domElement, // DOMElement or DOMNode
             ];
         }
@@ -179,27 +174,23 @@ class AccessibilityContentParserService
         return $result;
     }
 
-
-
     public static function getAllRules(): Collection
     {
         return collect(scandir(__DIR__.'/ActRules/Rules'))
             ->filter(fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'php')
             ->map(fn($file) => pathinfo($file, PATHINFO_FILENAME))
-            ->mapWithKeys(function ($className) {
-                $ruleClass = 'App\Services\AccessibilityContentParser\ActRules\Rules\\' . $className;
-                /** @var ActRuleBase $rule */
-                $rule = new $ruleClass;
-                return [($rule)->getMachineName() => $rule];
+            ->map(function ($className) {
+                $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\' . $className;
+                return new $fullyQualifiedClassName;
             });
     }
 
-    public function getNodesPrompt(Rule $rule, array $nodes, string $html): string
+    public function getNodesPrompt(ActRule $actRule, array $nodes, string $html): string
     {
         // Extract rule details
-        $ruleDescription = $rule->getLongDescription();
-        $passingTestCases = $rule->getPassingTestCases();
-        $failingTestCases = $rule->getFailingTestCases();
+        $ruleDescription = $actRule->getLongDescription();
+        $passingTestCases = $actRule->getPassingTestCases();
+        $failingTestCases = $actRule->getFailingTestCases();
 
         // Prepare passing test cases
         $passingCasesText = "";
