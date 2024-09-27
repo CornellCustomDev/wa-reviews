@@ -20,7 +20,7 @@
         </tr>
         <tr>
             <th>Notes</th>
-            <td>{!! Str::of($scope->notes)->markdown() !!}</td>
+            <td>{!! $scope->notes !!}</td>
         </tr>
         <tr>
             <th>Created</th>

@@ -30,6 +30,26 @@
     <link href="{{ asset('cwd-framework/fonts/material-design-iconic-font.min.css') }}" rel="stylesheet">
 
     @livewireStyles
+
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
+    <script type="text/javascript" src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
+    <style>
+        trix-toolbar [data-trix-button-group="file-tools"] {
+            display: none;
+        }
+        .trix-content ul,
+        .trix-content ol {
+            margin: 1em 0;
+            padding: 0 0 0 40px;
+        }
+        .trix-content ul {
+            list-style: disc;
+        }
+        .trix-content ul li {
+            background: none;
+        }
+    </style>
+
 </head>
 <body @class([
     'cu-seal',

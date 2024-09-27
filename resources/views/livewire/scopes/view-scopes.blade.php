@@ -27,7 +27,7 @@
                     {{ $scope->url }}
                 </td>
                 <td>
-                    {!! Str::of($scope->notes)->markdown() !!}
+                    {!! $scope->notes !!}
                 </td>
                 <td>
                     {{ $scope->issues()->count() }}
