@@ -1,0 +1,101 @@
+wcag_criteria,guideline_number,guideline_name,act_rule_name,act_rule_id
+1.1.1 Non-text Content (A),1,Informative and grouped images must contain alternative text describing the purpose or meaning of the image(s).,Image accessible name is descriptive,qt1vmo
+1.1.1 Non-text Content (A),1,Informative and grouped images must contain alternative text describing the purpose or meaning of the image(s).,"Image has non-empty accessible name",23a2a8
+1.1.1 Non-text Content (A),1,Informative and grouped images must contain alternative text describing the purpose or meaning of the image(s).,SVG element with explicit role has non-empty accessible name,7d6734
+1.1.1 Non-text Content (A),2,Decorative images must have empty alternative text or be otherwise hidden from assistive technology.,Element marked as decorative is not exposed,46ca7f
+1.1.1 Non-text Content (A),2,Decorative images must have empty alternative text or be otherwise hidden from assistive technology.,"Image has non-empty accessible name",23a2a8
+1.1.1 Non-text Content (A),3,Functional images must have alternative text describing the input's purpose.,Image button has non-empty accessible name,59796f
+1.1.1 Non-text Content (A),4,"Complex images (graphs, maps, charts) must have a text description of all relevant information.",Object element rendering non-text content has non-empty accessible name,8fc3b6
+1.1.1 Non-text Content (A),5,CAPTCHAs must be identified with alternative text.,,
+1.1.1 Non-text Content (A),6,"CAPTCHAs which require user input offer at least two different modalities (e.g., visual and auditory).",,
+1.1.1 Non-text Content (A),7,Adjacent text and images which navigate to the same destination should be presented and announced as one link.,,
+1.2.1 Audio-only and Video-only (Prerecorded) (A),8,Audio-only content must supply a text transcript. The location must be referenced in the accessible name of the audio content.,,
+1.2.1 Audio-only and Video-only (Prerecorded) (A),9,Video-only content supplies either a descriptive text transcript or audio description.  The location must be referenced in the accessible name of the video content.,,
+1.2.2 Captions (Prerecorded) (A),10,"Multimedia content must have caption support for audio.  Captions must be accurate, must include dialogue, the individual speaking, and any relevant audio information.",,
+1.2.3 Audio Description or Media Alternative (Prerecorded) (A),11,Multimedia content must supply a text transcript OR an audio description.,,
+1.2.4 Captions (Live) (AA),12,"Live multimedia content must be captioned.  Captions must be accurate, must include dialogue, the individual speaking, and any relevant audio information.",,
+1.2.5 Audio Description (Prerecorded) (AA),13,"Multimedia content must supply an audio description, which accurately informs the user of any important visual information not already conveyed through audio.",,
+1.3.1 Info and Relationships (A),14,"Landmarks present on the page are used to organize the correct type of content.  If landmarks are given names, they need to be uniquely named.",,
+1.3.1 Info and Relationships (A),15,"Wherever text appearance (i.e., bold, italics, size) is used to convey information, that information must also be presented in text alone.",,
+1.3.1 Info and Relationships (A),16,Headings must have an appropriate relative hierarchy to other headings on the same page.,,
+1.3.1 Info and Relationships (A),17,Page structure is implemented with HTML.  Visual appearance is implemented with CSS.  Meaningful HTML is not used to solely achieve a visual effect or appearance.,,
+1.3.1 Info and Relationships (A),18,Form inputs must have labels which are readable (programmatically determinable) by assistive technology.,,
+1.3.1 Info and Relationships (A),19,"Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",,
+1.3.1 Info and Relationships (A),20,"Data tables are used to present tabular data.  Data tables must include table headers, which are associated with the correct table cells.  Descriptions for tables must be programmatically associated.",Headers attribute specified on a cell refers to cells in the same table element,a25f45
+1.3.1 Info and Relationships (A),21,"Layout tables must not include table headers, captions, or summaries.  They should be marked with role=""presentation"".",,
+1.3.1 Info and Relationships (A),22,"All elements use the proper semantic roles, and contain all required parent and child elements. (e.g., a ""list"" must contain ""listitem"").",,
+1.3.1 Info and Relationships (A),23,Element IDs do not repeat more than once per page.,,
+1.3.1 Info and Relationships (A),24,All content is available to (readable by) assistive technology.,,
+1.3.2 Meaningful Sequence (A),25,The order in which content is presented in DOM must be logical.,,
+1.3.2 Meaningful Sequence (A),26,Whitespace is not utilized to create text spacing within a word.  Whitespace is not utilized to create columns or tables visually in plain text.,,
+1.3.3 Sensory Characteristics (A),27,"Instructions for operating web-based content and cues for identifying content does not rely exclusively on color, shape, size, position, or sound. (Above/Below references are allowed.)",,
+1.3.4 Orientation (AA),28,"Content is viewable in portrait and landscape device orientations, and the user is not prompted to switch orientation unless a specific orientation is essential.",,
+1.3.5 Identify Input Purpose (AA),29,The purpose of any form input about the user is identified in code when the purpose is defined in HTML (https://www.w3.org/TR/WCAG22/#input-purposes) ,Autocomplete attribute has valid value,73f2c2
+1.4.1 Use of Color (A),30,Color may not exclusively distinguish between plain text and interactive text or distinguish one type of content from another without a 3:1 color contrast difference.,,
+1.4.1 Use of Color (A),31,"Color may not exclusively identify content or distinguish differences in any content (e.g., red items are invalid, green items are valid).",,
+1.4.2 Audio Control (A),32,Auto-playing audio that lasts longer than 3 seconds must be pausable OR have an independent volume control.,,
+1.4.3 Contrast (Minimum) (AA),33,"Large-scale (24px or 19px bold) text must have a color contrast ratio of 3:1.  Logos, inactive components, and pure decoration are excluded.",Text has minimum contrast,afw4f7
+1.4.3 Contrast (Minimum) (AA),34,"Non Large-scale text must have a color contrast ratio of 4.5:1. Logos, inactive components, and pure decoration are excluded.",Text has minimum contrast,afw4f7
+1.4.4 Resize Text (AA),35,Text can be resized up to 200% without page content disappearing or losing functionality.,Meta viewport allows for zoom,b4f0c3
+1.4.4 Resize Text (AA),36,Text can be resized up to 200% without text clipping through other elements.,,
+1.4.5 Images of Text (AA),37,Images of text are not used when the same presentation can be made with native HTML/CSS.  Logos and branding are excluded.,,
+1.4.10 Reflow (AA),38,"Content may only scroll in one dimension (horizontal or vertical) at a width and height equivalent of 320x256 pixels or larger.  Excluded is content where a two-dimensional layout is necessary (video, data tables, maps, diagrams)",,
+1.4.11 Non-text Contrast (AA),39,"Active user interface components must meet a 3:1 color contrast ratio.  (This includes buttons, inputs, custom focus indicators, dropdowns, checkboxes, and radio buttons.) ",,
+1.4.11 Non-text Contrast (AA),40,"Graphical objects which describe important content must meet a 3:1 color contrast ratio; except flags, real life imagery, branding, reference screencaps, and heatmaps.",,
+1.4.12 Text Spacing (AA),41,"No content or functionality may be lost when text is set to: line spacing of 1.5x font size, letter spacing at 0.12x font size, word spacing at 0.16x font size, and paragraph spacing 2x the font size.",Important letter spacing in style attributes is wide enough,24afc2
+1.4.12 Text Spacing (AA),41,"No content or functionality may be lost when text is set to: line spacing of 1.5x font size, letter spacing at 0.12x font size, word spacing at 0.16x font size, and paragraph spacing 2x the font size.",Important line height in style attributes is wide enough,78fd32
+1.4.12 Text Spacing (AA),41,"No content or functionality may be lost when text is set to: line spacing of 1.5x font size, letter spacing at 0.12x font size, word spacing at 0.16x font size, and paragraph spacing 2x the font size.",Important word spacing in style attributes is wide enough,9e45ec
+1.4.13 Content on Hover or Focus (AA),42,Content generated by hover or focus can be dismissed without moving hover or focus.,,
+1.4.13 Content on Hover or Focus (AA),43,Content generated by hover or focus of an element can be hovered over without the content disappearing.,,
+1.4.13 Content on Hover or Focus (AA),44,"Content generated by hover or focus of an element does not disappear until dismissed, is no longer valid, or hover or focus is removed.",,
+2.1.1 Keyboard (A),45,All interactive elements must be able to be navigated to and interacted with using a keyboard only.,Iframe with interactive elements is not excluded from tab-order,akn7bn
+2.1.1 Keyboard (A),46,Timing of keystrokes must not be required for interacting with any functionality.,,
+2.1.1 Keyboard (A),47,Functionality available when hovering with a cursor must be available to keyboard input.,Scrollable content can be reached with sequential focus navigation,0ssw9k
+2.1.2 No Keyboard Trap (A),48,"Focus that enters any element must be able to leave that element.  If the method requires more than ESC, Arrow Keys, or Tab, the user must be informed of the method.",,
+2.1.4 Character Key Shortcuts (A),49,"If any keyboard shortcut only requires letter, number, punctuation, or symbol characters, an option exists to turn it off, OR to remap it to include CTRL or ALT modifiers, OR it is only active on focus.",,
+2.2.1 Timing Adjustable (A),50,"Any time limit may be disabled, extended (with a 20-second warning), or adjusted; unless it is part of a current real-life event, it is essential, or it has a time limit of 20 hours or more.",Meta element has no refresh delay,bc659a
+"2.2.2 Pause, Stop, Hide (A)",51,"Any moving, blinking, or scrolling information that starts automatically, lasts over 5 seconds, and is part of other content must include a pause, stop, or hide mechanism.",,
+"2.2.2 Pause, Stop, Hide (A)",52,"Any automatically updating content that starts automatically and is part of other content must include a pause, stop, or hide mechanism.",,
+2.3.1 Three Flashes or Below Threshold (A),53,No content may flash more than 3 times per any 1-second period.,,
+2.4.1 Bypass Blocks (A),54,Content which repeats on multiple webpages has a mechanism to skip over it.,,
+2.4.2 Page Titled (A),55,"All pages have a title, which details the topic or purpose of the page.  Titles should be organized from most-specific to least-specific.",HTML page has non-empty title,2779a5
+2.4.2 Page Titled (A),55,"All pages have a title, which details the topic or purpose of the page.  Titles should be organized from most-specific to least-specific.",HTML page title is descriptive,c4a8a4
+2.4.3 Focus Order (A),56,Focus order must follow a logical sequence. Tabindex values must not interfere with the proper tab sequence of the page.,,
+2.4.3 Focus Order (A),57,Dialog content must gain focus immediately or as the next press of TAB once activated.  Dismissing dialog content returns focus to the trigger or to the next element in DOM after the trigger.,,
+2.4.4 Link Purpose (In Context) (A),58,Link destination is described by link text on its own or by link text programmatically associated with other text on the page (except where the destination is ambiguous to all users).,Link has non-empty accessible name,c487ae
+2.4.5 Multiple Ways (AA),59,"Two or more mechanisms of finding a webpage are available, unless the page is accessed as part of a step in a process.",,
+2.4.6 Headings and Labels (AA),60,Headings that exist describe the topic or purpose of the content following after.,,
+2.4.6 Headings and Labels (AA),61,Each label describes the purpose of its associated input.,,
+2.4.7 Focus Visible (A),62,Every focusable element has a focus indicator.,Element in sequential focus order has visible focus,oj04fd
+2.4.11 Focus Not Obscured (Minimum) (AA),63,Elements that currently have focus may never be hidden by other elements (such as a sticky header).,,
+2.5.1 Pointer Gestures (A),64,"All functionality that uses multipoint or path-based gestures can be operated with a single pointer without a path-based gesture, unless a multipoint or path-based gesture is essential.",,
+2.5.2 Pointer Cancellation (A),65,"Functionality operated with a single pointer must: not fire on the down event; fire on the up-event along with a way to abort or undo; reverse the function on the up-event, or complete an essetial function on the down event.",,
+2.5.3 Label in Name (A),66,"For user interface components with labels that include text or images of text, the accessible name contains the text that is presented visually.",,
+2.5.4 Motion Actuation (A),67,Any functionality activated by device motion can be performed with a user interface component that does not require motion.,,
+2.5.4 Motion Actuation (A),68,Any functionality activated by device motion can be disabled.,,
+2.5.7 Dragging Movements (AA),69,Any functionality that can be achieved by dragging (click and hold then move) must be operable without the need for dragging.,,
+2.5.8 Target Size (Minimum) (AA),70,"All elements must have a clickable target size of at least 24x24 pixels unless the element is inline, controlled by the browser, or the ""target offset"" to all adjacent clickable elements is at least 24px. ",,
+3.1.1 Language of Page (A),71,The default language of each page must be defined in the html tag.,HTML page has lang attribute,b5c3f8
+3.1.1 Language of Page (A),71,The default language of each page must be defined in the html tag.,HTML page lang attribute has valid language tag,bf051a
+3.1.2 Language of Parts (AA),72,"Text in a different language than the page default must be identified in HTML; aside from proper names, technical terms, words without a defined language, and words that are part of the vernacular of the immediately surrounding text.",Element with lang attribute has valid language tag,de46e4
+3.2.1 On Focus (A),73,"When a user interface component gains focus, it may not trigger a change of context.  (e.g., on focus must not submit a form, launch a new window, cause an immediate change of focus, or change the purpose of any page content.)",,
+3.2.2 On Input (A),74,"If a change of context is triggered by a change in a setting or value of a user interface component (for example, changing the option of a select box), the user must be warned beforehand.",,
+3.2.3 Consistent Navigation (AA),75,"Navigations which are utilized on multiple pages keep the same relative order on all pages, unless the user initiates the change. (Items can be removed or added, but they must maintain the same order relative to each other.)",,
+3.2.4 Consistent Identification (AA),76,Any components with similar functionality used on multiple pages must be labeled identically and function identically. (e.g. a header Search field must be labeled the same on all pages),,
+3.2.6 Consistent Help (A),77,"Help mechanisms such as contact details, messaging, chat, or self-help options must be in the same relative order on all pages where the information is present.",,
+3.3.1 Error Identification (A),78,"Whenever an input error is detected through validation, the user is informed of the error, and what was incorrect in the input. ",,
+3.3.2 Labels or Instructions (A),79,Visible labels or instructions are available for all inputs and input groupings.,,
+3.3.2 Labels or Instructions (A),80,Labels describe any required fields or required formatting requirements.  (e.g. If a MM/DD/YYYY format is required),,
+3.3.3 Error Suggestion (AA),81,"If an input error was detected due to a blank input on a required field, the user is informed of the fields which were left blank in the error message.",,
+3.3.3 Error Suggestion (AA),82,"If an input error was detected due to an input that did not follow required formatting, the user is informed of the proper formatting in the error message.",,
+3.3.3 Error Suggestion (AA),83,"If an input error was detected that was outside of the allowable range of values, the user is informed of the proper range in the error message.",,
+"3.3.4 Error Prevention (Legal, Financial, Data) (AA)",84,"Any legal or financial data input must be reversible, validated for input errors, or include a mechanism for reviewing, confirming, or correcting information before submission.",,
+3.3.7 Redundant Entry (A),85,"Users are not required to refill the same information in the same process unless it is available as a selection, is essential, is ensuring security, or the original information is no longer valid.",,
+3.3.8 Accessible Authentication (AA),86,Login processes must not solely rely on cognitive tests.  All steps in a login process must support some method that does not rely on memory or knowledge.,,
+"4.1.2 Name, Role, Value (A)",87,All elements have appropriate accessible names and roles assigned.,Button has non-empty accessible name,97a4e1
+"4.1.2 Name, Role, Value (A)",87,All elements have appropriate accessible names and roles assigned.,Form field has non-empty accessible name,e086e5
+"4.1.2 Name, Role, Value (A)",87,All elements have appropriate accessible names and roles assigned.,Menuitem has non-empty accessible name,m6b1q3
+"4.1.2 Name, Role, Value (A)",88,Video and audio content or iframes which present user-readable content require a title or description.,,
+"4.1.2 Name, Role, Value (A)",89,"All custom functionality utilizes the appropriate ARIA features for states, properties, and values. (e.g. aria-expanded, aria-haspopup)",Element with aria-hidden has no content in sequential focus navigation,6cfa84
+"4.1.2 Name, Role, Value (A)",89,"All custom functionality utilizes the appropriate ARIA features for states, properties, and values. (e.g. aria-expanded, aria-haspopup)",Element with presentational children has no focusable content,307n5z
+4.1.3 Status Messages (AA),90,Status messages which change without a page reload notify users of assistive technologies without requiring the user to send focus to the message.,,
