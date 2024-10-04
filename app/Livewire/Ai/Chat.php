@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\AI;
+namespace App\Livewire\Ai;
 
 use App\Services\AzureOpenAI\ChatService;
 use Exception;

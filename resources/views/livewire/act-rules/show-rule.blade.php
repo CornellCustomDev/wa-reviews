@@ -30,8 +30,11 @@
 
         <h2>AI Prompt</h2>
         <aside class="panel">
-<pre>Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\ActRules"
-that extends "App\Services\AccessibilityAnalyzer\RuleRunner" and is called "{{ $rule->getRuleRunnerName() }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler" for the following web accessibility rule:
+            <button style="float:right" onclick="navigator.clipboard.writeText(document.getElementById('ai-prompt').innerText).then(() => {alert('Prompt copied to clipboard!')})">Copy to Clipboard</button>
+            <pre id="ai-prompt">Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\ActRules"
+that extends "App\Services\AccessibilityAnalyzer\ActRuleRunner" and is called "{{ $rule->getRuleRunnerName() }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler". The base class includes the function "protected function isElementIncludedInAccessibilityTree(\DOMNode $element): bool" for determining if an element is included in the accessibility tree.
+
+Web accessibility rule:
 
 # {{ $rule->name }}
 
@@ -41,7 +44,7 @@ echo \Symfony\Component\Yaml\Yaml::dump([
 ])
 @endphp
 
-{!! $rule->markdown !!}
+{!! e($rule->markdown) !!}
 </pre>
 
         </aside>

@@ -1,10 +1,10 @@
 <?php
 
-use App\Livewire\AI\AnalyzePage;
-use App\Livewire\AI\Prompt;
+use App\Livewire\Ai\AnalyzePage;
+use App\Livewire\Ai\Prompt;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
-use App\Livewire\AI\Chat;
+use App\Livewire\Ai\Chat;
 use App\Livewire\Criteria\ShowCriterion;
 use App\Livewire\Criteria\ViewCriteria;
 use App\Livewire\Guidelines\Doc;
