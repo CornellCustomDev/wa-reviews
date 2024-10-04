@@ -13,12 +13,13 @@
             <th>Title</th>
             <th>URL</th>
             <th>Notes</th>
+            <th style="width: 125px">Progress</th>
             <th style="width: 125px">Issues Found</th>
             <th style="width: 100px">Actions</th>
         </tr>
         </thead>
         <tbody>
-        @foreach($scopes as $scope)
+        @foreach($this->scopes as $scope)
             <tr wire:key="{{ $scope->id }}">
                 <td>
                     {{ $scope->title }}
@@ -28,6 +29,9 @@
                 </td>
                 <td>
                     {!! Str::of($scope->notes)->markdown() !!}
+                </td>
+                <td>
+                    {{ $this->scopesProgress[$scope->id] ?? 'Not Started' }}
                 </td>
                 <td>
                     {{ $scope->issues()->count() }}

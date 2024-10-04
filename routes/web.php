@@ -1,9 +1,10 @@
 <?php
 
-use App\Livewire\AI\Prompt;
+use App\Livewire\Ai\AnalyzePage;
+use App\Livewire\Ai\Prompt;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
-use App\Livewire\AI\Chat;
+use App\Livewire\Ai\Chat;
 use App\Livewire\Criteria\ShowCriterion;
 use App\Livewire\Criteria\ViewCriteria;
 use App\Livewire\Guidelines\Doc;
@@ -18,6 +19,8 @@ use App\Livewire\Items\UpdateItem;
 use App\Livewire\Issues\CreateIssue;
 use App\Livewire\Issues\ShowIssue;
 use App\Livewire\Issues\UpdateIssue;
+use App\Livewire\ActRules\ShowRule;
+use App\Livewire\ActRules\ViewRules;
 use App\Livewire\Scopes\CreateScope;
 use App\Livewire\Scopes\ShowScope;
 use App\Livewire\Scopes\UpdateScope;
@@ -75,7 +78,13 @@ Route::prefix('categories')->name('categories.')->group(function () {
     Route::get('/{category}', ShowCategory::class)->name('show');
 });
 
+Route::prefix('act-rules')->name('act-rules.')->group(function () {
+    Route::get('/', ViewRules::class)->name('index');
+    Route::get('/{rule}', ShowRule::class)->name('show');
+});
+
 // Livewire route
 Route::get('chat', Chat::class)->name('chat');
 Route::get('guidelines.md', Doc::class)->name('guidelines.md');
 Route::get('prompt', Prompt::class)->name('prompt');
+Route::get('analyze', AnalyzePage::class)->name('analyze');

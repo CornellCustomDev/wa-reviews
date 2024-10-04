@@ -14,7 +14,9 @@
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.3",
         "laravel/tinker": "^2.8",
-        "openai-php/client": "^0.10.1"
+        "openai-php/client": "^0.10.1",
+        "symfony/dom-crawler": "^7.1",
+        "ext-dom": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

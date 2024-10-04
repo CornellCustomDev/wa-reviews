@@ -19,8 +19,10 @@ class ShowScope extends Component
     public function render()
     {
         $this->authorize('view', $this->scope);
+
         return view('livewire.scopes.show-scope')
             ->layout('components.layouts.app', [
+                'sidebar' => true,
                 'breadcrumbs' => $this->getBreadcrumbs(),
             ]);
     }

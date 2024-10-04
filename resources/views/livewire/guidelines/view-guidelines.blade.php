@@ -7,6 +7,7 @@
                 <th>Number</th>
                 <th>Guideline</th>
                 <th>Name</th>
+                <th>ACT Rules</th>
                 <th>Category</th>
             </tr>
         </thead>
@@ -21,6 +22,9 @@
                     </td>
                     <td>
                         <a href="{{ route('criteria.show', $guideline->criterion) }}">{{ $guideline->criterion->getLongName() }}</a>
+                    </td>
+                    <td>
+                        {{ $guideline->actRules->isNotEmpty() ? $guideline->actRules->count() : '' }}
                     </td>
                     <td>
                         <a href="{{ route('categories.show', $guideline->category) }}">
