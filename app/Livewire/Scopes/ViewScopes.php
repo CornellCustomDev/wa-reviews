@@ -4,17 +4,33 @@ namespace App\Livewire\Scopes;
 
 use App\Models\Project;
 use App\Models\Scope;
+use App\Models\ScopeGuideline;
+use Illuminate\Support\Collection;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 
 class ViewScopes extends Component
 {
     public Project $project;
 
-    public function render()
+    #[Computed]
+    public function scopes(): mixed
     {
-        return view('livewire.scopes.view-scopes', [
-            'scopes' => $this->project->scopes,
-        ]);
+        return $this->project->scopes;
+    }
+
+    #[Computed]
+    public function scopesProgress(): Collection
+    {
+        $scopeGuidelines = ScopeGuideline::whereIn('scope_id', $this->scopes->pluck('id'))->get();
+
+        return $scopeGuidelines->groupBy('scope_id')
+            ->mapWithKeys(function ($group) {
+                $count = $group->filter(fn($g) => $g->completed)->count();
+                $total = $group->count();
+                $progress = round($total ? $count / $total * 100 : 0).'%';
+                return [$group->first()->scope_id => $progress];
+            });
     }
 
     public function delete(Scope $scope): void
