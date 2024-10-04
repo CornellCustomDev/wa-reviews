@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services\AccessibilityContentParser\ActRules\Rules;
+namespace App\Services\AccessibilityAnalyzer\ActRules;
 
-use App\Services\AccessibilityContentParser\ActRules\RuleRunner;
+use App\Services\AccessibilityAnalyzer\ActRuleRunner;
 use Symfony\Component\DomCrawler\Crawler;
 
-class ButtonNonEmptyAccessibleName97a4e1 extends RuleRunner
+class ButtonNonEmptyAccessibleName97a4e1 extends ActRuleRunner
 {
     public function findApplicableElements(Crawler $crawler): Crawler
     {

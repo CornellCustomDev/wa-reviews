@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\ActRule;
+use App\Models\Criterion;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Yaml\Yaml;
 
@@ -20,8 +22,10 @@ class ParseActRules extends Command
             $this->info('Finding all of the headings');
             $this->findHeadings($files);
         } else {
-            $this->info('Truncating the act_rules table');
-            ActRule::truncate();
+            $this->info('Resetting the act_rules table');
+            // Delete all the existing rules and reset the auto-increment (cannot truncate because foreign key)
+            ActRule::query()->delete();
+
             $this->info('Parsing all of the rules');
             $this->parseRules($files);
             // Find out how many rules were parsed
@@ -83,14 +87,23 @@ class ParseActRules extends Command
                 continue;
             }
 
-            $rule = new ActRule();
-            $rule->id = $yamlData['id'];
-            $rule->machine_name = pathinfo($file, PATHINFO_FILENAME);
-            $rule->name = $yamlData['name'];
-            $rule->metadata = $yamlData;
-            $rule->markdown = $markdownContent;
-            $rule->test_cases = $this->parseTestCases($markdownContent);
-            $rule->save();
+            $actRuleId = $yamlData['id'];
+            ActRule::create([
+                'id' => $actRuleId,
+                'machine_name' => pathinfo($file, PATHINFO_FILENAME),
+                'name' => $yamlData['name'],
+                'metadata' => $yamlData,
+                'markdown' => $markdownContent,
+                'test_cases' => $this->parseTestCases($markdownContent),
+            ]);
+
+            // Get the stored version of the rule
+            $rule = ActRule::find($actRuleId);
+
+            $criteriaIds = $this->parseCriteria($rule)
+                ->map(fn ($criterion) => $criterion->id)
+                ->toArray();
+            $rule->criteria()->sync($criteriaIds);
         }
     }
 
@@ -144,5 +157,16 @@ class ParseActRules extends Command
         }
 
         return $test_cases;
+    }
+
+    private function parseCriteria(ActRule $rule): Collection
+    {
+        // TODO Confirm the key format is correct
+        $accessibility_requirements = collect($rule->metadata['accessibility_requirements']);
+        // $key is of the format `wcag21:1.1.1`
+
+        $refs = $accessibility_requirements->keys()->map(fn ($key) => explode(':', $key)[1]);
+
+        return Criterion::whereIn('number', $refs)->get();
     }
 }

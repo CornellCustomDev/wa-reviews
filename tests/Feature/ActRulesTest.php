@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Services\AccessibilityContentParser\ActRules\RuleRunner;
+use App\Services\AccessibilityAnalyzer\RuleRunner;
 
 class ActRulesTest extends FeatureTestCase
 {
@@ -11,7 +11,7 @@ class ActRulesTest extends FeatureTestCase
      */
     public function testPassedExamples(string $className)
     {
-        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        $fullyQualifiedClassName = 'App\Services\AccessibilityAnalyzer\ActRules\\'.$className;
         /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
@@ -28,7 +28,7 @@ class ActRulesTest extends FeatureTestCase
      */
     public function testFailedExamples(string $className)
     {
-        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        $fullyQualifiedClassName = 'App\Services\AccessibilityAnalyzer\ActRules\\'.$className;
         /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
@@ -45,7 +45,7 @@ class ActRulesTest extends FeatureTestCase
      */
     public function testInapplicableExamples(string $className)
     {
-        $fullyQualifiedClassName = 'App\Services\AccessibilityContentParser\ActRules\Rules\\'.$className;
+        $fullyQualifiedClassName = 'App\Services\AccessibilityAnalyzer\ActRules\\'.$className;
         /** @var RuleRunner $ruleRunner */
         $ruleRunner = new $fullyQualifiedClassName;
 
@@ -59,7 +59,7 @@ class ActRulesTest extends FeatureTestCase
 
     protected static function ruleRunners(): array
     {
-        return collect(scandir(__DIR__.'/../../app/Services/AccessibilityContentParser/ActRules/Rules'))
+        return collect(scandir(__DIR__.'/../../app/Services/AccessibilityAnalyzer/ActRules'))
             ->filter(fn($file) => pathinfo($file, PATHINFO_EXTENSION) === 'php')
             ->mapWithKeys(function ($file) {
                 $name = pathinfo($file, PATHINFO_FILENAME);

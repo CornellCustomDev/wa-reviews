@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Services\AccessibilityAnalyzer\RuleRunner;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -15,6 +17,16 @@ class ActRule extends Model
         'metadata' => 'array',
         'test_cases' => 'array',
     ];
+
+    public function criteria(): BelongsToMany
+    {
+        return $this->belongsToMany(Criterion::class);
+    }
+
+    public function guidelines(): BelongsToMany
+    {
+        return $this->belongsToMany(Guideline::class);
+    }
 
     public function getMachineName(): string
     {
@@ -70,5 +82,12 @@ class ActRule extends Model
     public function getRuleRunnerName(): string
     {
         return Str::studly($this->machine_name);
+    }
+
+    public function getRuleRunner(): RuleRunner
+    {
+        $fullyQualifiedClassName = 'App\Services\AccessibilityAnalyzer\ActRules\\'.$this->getRuleRunnerName();
+
+        return new $fullyQualifiedClassName;
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Livewire\AI;
 
 use App\Models\ActRule;
-use App\Services\AccessibilityContentParser\AccessibilityContentParserService;
+use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
 use App\Services\AzureOpenAI\ChatService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
@@ -25,7 +25,7 @@ class AnalyzePage extends Component
 
     public function analyze(): void
     {
-        $parser = new AccessibilityContentParserService();
+        $parser = new AccessibilityAnalyzerService();
         $html = $parser->getPageContent($this->pageUrl);
 
         $this->pageContent = $html;
@@ -50,10 +50,10 @@ class AnalyzePage extends Component
 
     public function reviewElementsWithAI(ActRule $actRule, string $cssSelectors): void
     {
-        $parser = new AccessibilityContentParserService();
+        $parser = new AccessibilityAnalyzerService();
         $html = $parser->getPageContent($this->pageUrl);
         $nodes = $parser->findNodes($html, explode(',', $cssSelectors));
-        $this->prompt = $parser->getNodesPrompt($actRule, $nodes, '');
+        $this->prompt = $parser->getNodesPrompt($actRule->getRuleRunner(), $nodes, '');
 
         $chat = ChatService::make();
         $chat->setPrompt($this->prompt.$html);

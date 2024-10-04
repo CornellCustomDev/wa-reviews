@@ -11,15 +11,27 @@
         <aside class="panel">
             <header>Rule Mapping</header>
             <p>{{ $rule->getMapping() }}</p>
-            <p>{!! $rule->getCriteria()->map(fn ($c) => '<a href="'.route('criteria.show', $c).'">'.$c->getLongName().'</a>')->join(', ') !!}</p>
+            <p>{!! $rule->criteria?->map(fn ($c) => '<a href="'.route('criteria.show', $c).'">'.$c->getLongName().'</a>')->join(', ') !!}</p>
         </aside>
+        @if ($rule->guidelines->isNotEmpty())
+        <aside class="panel">
+            <header>Guidelines</header>
+            @foreach($rule->guidelines as $guideline)
+                <div>
+                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}" title="{{ $guideline->number }}" />
+                    {{ $guideline->name }}
+                    (<a href="{{ route('criteria.show', $guideline->criterion) }}">{{ $guideline->criterion->getLongName() }}</a>)
+                </div>
+            @endforeach
+        </aside>
+        @endif
 
         {!! Str::markdown($rule->markdown) !!}
 
         <h2>AI Prompt</h2>
         <aside class="panel">
-<pre>Create a PHP class in the namespace "App\Services\AccessibilityContentParser\ActRules\Rules"
-that extends "App\Services\AccessibilityContentParser\ActRules\ActRuleBase" and is called "{{ $rule->getRuleRunnerName() }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler" for the following web accessibility rule:
+<pre>Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\ActRules"
+that extends "App\Services\AccessibilityAnalyzer\RuleRunner" and is called "{{ $rule->getRuleRunnerName() }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler" for the following web accessibility rule:
 
 # {{ $rule->name }}
 

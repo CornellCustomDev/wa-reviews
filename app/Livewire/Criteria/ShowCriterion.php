@@ -12,10 +12,9 @@ class ShowCriterion extends Component
     public function render()
     {
         return view('livewire.criteria.show-criterion', [
-                'guidelines' => $this->criterion->guidelines,
+                'actRules' => $this->criterion->actRules()->get()->sortBy('name'),
             ])
             ->layout('components.layouts.app', [
-                'sidebar' => false,
                 'breadcrumbs' => [
                     'Criteria' => route('criteria.index'),
                     $this->criterion->name => 'active'

@@ -28,7 +28,7 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($guidelines as $guideline)
+        @foreach($criterion->guidelines as $guideline)
             <tr>
                 <th>
                     <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}" title="{{ $guideline->number }}" />
@@ -38,6 +38,29 @@
                 </td>
             </tr>
         @endforeach
+        </tbody>
+    </table>
+
+    <h2>Related ACT Rules</h2>
+
+    <table class="table bordered">
+        <thead>
+        <tr>
+            <th style="width: 100px">Id</th>
+            <th>ACT Rule</th>
+        </tr>
+        </thead>
+        <tbody>
+            @foreach($actRules as $rule)
+                <tr>
+                    <th>
+                        {{ $rule->id }}
+                    </th>
+                    <td>
+                        <a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a>
+                    </td>
+                </tr>
+            @endforeach
         </tbody>
     </table>
 

@@ -1,42 +1,27 @@
 <?php
 
-namespace App\Services\AccessibilityContentParser\ActRules;
+namespace App\Services\AccessibilityAnalyzer;
 
-use App\Models\ActRule;
 use DOMElement;
-use ReflectionClass;
 use Symfony\Component\DomCrawler\Crawler;
 
 abstract class RuleRunner
 {
-    public readonly string $id;
-    private ActRule $actRule;
+    abstract public function getRuleType(): string;
 
-    public function __construct(
-    ) {
-        $id = substr((new ReflectionClass($this))->getShortName(), -6);
-        $this->actRule = ActRule::find($id);
-    }
+    abstract public function getRuleId(): string;
 
-    public function getActRule(): ActRule
-    {
-        return $this->actRule;
-    }
+    abstract public function getName(): string;
 
-    public function getPassingTestCases(): array
-    {
-        return $this->actRule->getPassingTestCases();
-    }
+    abstract public function getMachineName(): string;
 
-    public function getFailingTestCases(): array
-    {
-        return $this->actRule->getFailingTestCases();
-    }
+    abstract public function getGuidelineIds(): array;
 
-    public function getInapplicableTestCases(): array
-    {
-        return $this->actRule->getInapplicableTestCases();
-    }
+    abstract public function getPassingTestCases(): array;
+    abstract public function getFailingTestCases(): array;
+    abstract public function getInapplicableTestCases(): array;
+
+    abstract public function getAiPromptDescription(): string;
 
     public function doesRuleApply(string|DOMElement $content): bool
     {
@@ -109,9 +94,6 @@ abstract class RuleRunner
 
     /**
      * Generates a unique CSS selector for a given DOMElement.
-     *
-     * @param \DOMElement $element The DOM element.
-     * @return string The CSS selector string.
      */
     public static function getCssSelector(\DOMElement $element): string
     {
@@ -157,11 +139,8 @@ abstract class RuleRunner
 
     /**
      * Provides a brief description of the element.
-     *
-     * @param \DOMElement $element The DOM element.
-     * @return string A brief description of the element.
      */
-    protected function describeElement(\DOMElement $element): string
+    public static function describeElement(\DOMElement $element): string
     {
         $tagName = $element->tagName;
         $attributes = [];

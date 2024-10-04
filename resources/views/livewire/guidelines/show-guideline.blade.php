@@ -19,7 +19,7 @@
 
     <table class="table bordered">
         <tr>
-            <th>WGAC 2 criterion</th>
+            <th style="width: 200px">WGAC 2 criterion</th>
             <td><a href="{{ route('criteria.show', [$guideline->criterion]) }}">{{ $guideline->criterion->getLongName() }}</a></td>
         </tr>
         <tr>
@@ -30,7 +30,32 @@
                 </a>
             </td>
         </tr>
+        <tr>
+            <th>ACT Rules</th>
+            <td>
+                @if($guideline->actRules->isNotEmpty())
+                    <ul>
+                        @foreach($guideline->actRules as $rule)
+                            <li><a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a></li>
+                        @endforeach
+                    </ul>
+                @endif
+            </td>
+        </tr>
     </table>
 
-    {!! Str::of($guideline->notes)->markdown() !!}
+    {!! Str::markdown($guideline->notes) !!}
+
+
+    <h2>AI Prompt</h2>
+    <aside class="panel">
+<pre>Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\GuidelineRules"
+that extends "App\Services\AccessibilityAnalyzer\RuleRunner" and is called "Guideline{{ $guideline->id }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler" for the following web accessibility guideline:
+
+## {{ $guideline->name }}
+
+{!! $guideline->notes !!}
+</pre>
+
+    </aside>
 </div>
