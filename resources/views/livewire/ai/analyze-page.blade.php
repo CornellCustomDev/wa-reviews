@@ -18,7 +18,7 @@
     @if ($pageUrl)
         <hr>
 
-        <h2>Sections</h2>
+        <h2>Sections Found</h2>
         <ul>
             @foreach ($sections as $section)
                 <li>
@@ -43,7 +43,7 @@
                             <ul>
                                 @foreach ($ruleNodes[$rule->getMachineName()]['nodes'] as $node)
                                     <li>
-                                        {{ $node['css_selector'] }}: {{ $node['description'] }} (~line {{ $node['line_number'] }})
+                                        {{ $node['description'] }} (~line {{ $node['line_number'] }})
                                     </li>
                                 @endforeach
                             </ul>
@@ -69,11 +69,6 @@
                 {!! $issuesResponse !!}
             </div>
         @endif
-
-{{--        <h2>Page</h2>--}}
-{{--        <div class="panel accent-blue-green">--}}
-{{--            {!! $pageContent !!}--}}
-{{--        </div>--}}
 
         @if ($prompt)
             <h2>Prompt</h2>
