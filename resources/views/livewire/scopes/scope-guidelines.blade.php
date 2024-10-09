@@ -50,7 +50,7 @@
                         $guideline = $scopeGuideline->guideline
                     @endphp
                     <tr wire:key="{{ $id }}">
-                        <td x-data @click="$dispatch('show-guideline', {number: {{ $guideline->number }} })" style="cursor: pointer;">
+                        <td x-data x-on:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })" style="cursor: pointer;">
                             {{ $guideline->number }}: {{ $guideline->name }}
                             ({{ $guideline->criterion->number }})
                             <br>
@@ -59,8 +59,8 @@
                                 <span class="panel fill" style="font-size: 80%">{{ $tool }}</span>
                             @endforeach
                         </td>
-                        <td>
-                            <input type="checkbox" wire:click="toggleCompleted({{ $id }})" @checked($scopeGuideline->completed) />
+                        <td wire:click="toggleCompleted({{ $id }})" style="cursor: pointer;">
+                            <input type="checkbox" @checked($scopeGuideline->completed) />
                             @if($guideline->hasAutomatedAssessment())
                                 (Automated)
                             @endif

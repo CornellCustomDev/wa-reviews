@@ -144,4 +144,16 @@ class ScopeGuidelines extends Component
     {
         $this->guideline = $number;
     }
+
+    #[On('complete-siteimprove')]
+    public function completeSiteimprove(): void
+    {
+        $this->scope->guidelines()
+            ->whereHas('guideline', fn ($q) => $q->whereJsonContains('tools', GuidelineTools::Siteimprove))
+            ->update(['completed' => true]);
+        $this->loadScopeGuidelines();
+
+        unset($this->completedPercentage);
+        unset($this->filteredGuidelines);
+    }
 }
