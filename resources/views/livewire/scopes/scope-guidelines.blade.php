@@ -1,7 +1,7 @@
 <div>
     <p>Progress: {{ $this->completedPercentage }}% complete</p>
 
-    <div x-data="{ open: false }">
+    <div x-data="{ open: $wire.entangle('showGuidelines') }">
         @if($scopeGuidelines->isEmpty())
             <button x-on:click="$wire.generateGuidelines; open = true">Generate Guidelines</button>
         @else

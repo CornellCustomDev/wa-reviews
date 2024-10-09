@@ -9,6 +9,7 @@ use App\Models\ScopeRule;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ScopeGuidelines extends Component
@@ -16,10 +17,18 @@ class ScopeGuidelines extends Component
     public Scope $scope;
     public Collection $scopeGuidelines;
 
+    #[Url(as: 'rt')]
     public $ruleTypes = '';
+    #[Url(as: 't')]
     public $tool = '';
+    #[Url(as: 'c')]
     public $category = '';
+    #[Url(as: 'd')]
     public $completed = '';
+    #[Url(as: 'g')]
+    public $guideline = '';
+    #[Url(as: 'show')]
+    public $showGuidelines = false;
 
     public ?string $response;
 
@@ -128,5 +137,11 @@ class ScopeGuidelines extends Component
     public function loadScopeRules(): void
     {
         unset($this->applicableRules);
+    }
+
+    #[On('show-guideline')]
+    public function showGuideline($number): void
+    {
+        $this->guideline = $number;
     }
 }
