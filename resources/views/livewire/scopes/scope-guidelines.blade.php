@@ -20,6 +20,11 @@
                             <option value="automated">Automated rules</option>
                             <option value="manual">Manual check</option>
                         </select>
+                        <select id="tool" wire:model.live="tool">
+                            <option value="">All Tools</option>
+                            @foreach(App\Enums\GuidelineTools::cases() as $tool)
+                                <option value="{{ $tool->name }}">{{ $tool->name }}</option>
+                            @endforeach
                     </th>
                     <th>Category
                         <select id="category" wire:model.live="category">
@@ -45,7 +50,10 @@
                         <td>
                             {{ $guideline->number }}: {{ $guideline->name }}
                             ({{ $guideline->criterion->number }})
-                            <button x-on:click="$dispatch('show-guideline', {number: {{ $guideline->number }} }); open = false;" >Show</button>
+                            <button x-on:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })" >Show</button><br>
+                            @foreach($guideline->tools as $tool)
+                                <span class="panel fill" style="font-size: 80%">{{ $tool }}</span>
+                            @endforeach
                         </td>
                         <td>
                             {{ $guideline->category->name }}

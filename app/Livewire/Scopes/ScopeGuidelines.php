@@ -1,6 +1,7 @@
 <?php
 namespace App\Livewire\Scopes;
 
+use App\Enums\GuidelineTools;
 use App\Models\Category;
 use App\Models\Scope;
 use App\Models\ScopeGuideline;
@@ -16,6 +17,7 @@ class ScopeGuidelines extends Component
     public Collection $scopeGuidelines;
 
     public $ruleTypes = '';
+    public $tool = '';
     public $category = '';
     public $completed = '';
 
@@ -44,6 +46,12 @@ class ScopeGuidelines extends Component
     }
 
     #[Computed]
+    public function tools(): array
+    {
+        return GuidelineTools::cases();
+    }
+
+    #[Computed]
     public function completedPercentage(): int
     {
         $count = $this->scopeGuidelines
@@ -61,6 +69,10 @@ class ScopeGuidelines extends Component
     public function filteredGuidelines(): Collection
     {
         return $this->scopeGuidelines
+            ->filter(function ($scopeGuideline) {
+                return empty($this->tool)
+                    || $scopeGuideline->guideline->tools->contains(GuidelineTools::tryFrom($this->tool));
+            })
             ->filter(function ($scopeGuideline) {
                 return empty($this->category) || $scopeGuideline->guideline->category_id == $this->category;
             })
