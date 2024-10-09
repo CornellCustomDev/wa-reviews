@@ -3,7 +3,7 @@
 
     <div style="margin-bottom: 2em;">
         <h3>Scope Analysis</h3>
-        <p>Analyze the page to find applicable automated guideline and compliance testing rules. Currently there are {{ $this->rulesCount }} automated rules.</p>
+        <p>Analyze the page to find applicable automated guideline and compliance testing rules. Currently there are {{ $this->rulesCount }} AI-assisted rules.</p>
 
         <livewire:scopes.analyze-scope :$scope />
     </div>

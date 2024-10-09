@@ -46,4 +46,9 @@ class Guideline extends Model
     {
         return $this->hasMany(Item::class);
     }
+
+    public function hasAutomatedAssessment(): bool
+    {
+        return $this->tools->contains(GuidelineTools::Siteimprove);
+    }
 }

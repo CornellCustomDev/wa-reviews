@@ -31,10 +31,12 @@ class ScopeGuidelines extends Component
     private function loadScopeGuidelines(): void
     {
         $this->scopeGuidelines = $this->scope->guidelines()
-            ->with(['guideline', 'guideline.criterion', 'guideline.category'])
+            ->with(['guideline', 'guideline.criterion'])
             ->orderBy('guideline_id')
             ->get()
             ->mapWithKeys(function (ScopeGuideline $scopeGuideline) {
+                // TODO Deal with this in the query
+                $scopeGuideline->guideline->notes = null;
                 return [$scopeGuideline->id => $scopeGuideline];
             });
     }
@@ -81,10 +83,12 @@ class ScopeGuidelines extends Component
             })
             ->filter(function ($scopeGuideline) {
                 if ($this->ruleTypes === 'automated') {
-                    return $this->applicableRules->has($scopeGuideline->guideline->id);
+                    return $scopeGuideline->guideline->hasAutomatedAssessment()
+                        || $this->applicableRules->has($scopeGuideline->guideline->id);
                 }
                 if ($this->ruleTypes === 'manual') {
-                    return !$this->applicableRules->has($scopeGuideline->guideline->id);
+                    return !$scopeGuideline->guideline->hasAutomatedAssessment()
+                        && !$this->applicableRules->has($scopeGuideline->guideline->id);
                 }
                 return true;
             });
