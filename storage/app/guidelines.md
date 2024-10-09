@@ -1672,7 +1672,7 @@ If you are unable to discern a focus indicator, then mark a failure.  If you can
 
 * Manual Evaluation
 
-**Test procedure**  
+### Test procedure
 For any focusable element on the page, check to ensure that at least some portion of the element's focus indicator is visible when focus is granted to it.
 
 If focus is "visible" behind a semi-opaque overlay, it is not a failure of this particular criterion.  Instead, in these situations, you would likely want to consider a failure against 2.4.3 Focus Order (\#56) because focus should not leave an overlay without it dismissing or 1.4.11 Non-Text Contrast (\#39) because the focus indicator is far less likely to have a 3:1 contrast ratio when hidden behind a semi-opaque background.
@@ -1790,7 +1790,8 @@ Finding functionality using gyroscope motion is going to be quite rare.  Most si
 
 * Manual Assessment
 
-**Test procedure**  
+### Test procedure
+
 This criterion does not apply to **essential** functionality.  
 
 **Essential or out-of-scope functionality** includes
@@ -1823,7 +1824,7 @@ Any identified examples must have an option to achieve the same goal without req
 * Manual Assessment (for now).  
 * Note: This can (and should) theoretically be automatically tested for, but no testing agents support this feature yet.
 
-**Test procedure**  
+### Test procedure
 Note: This is a complex criterion.  Please refer to the official WCAG 2.2 Documentation for details. [https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) 
 
 The ***minimum target size*** (the minimum size of the clickable area) of all interactive elements must be at least 24 x 24 pixels with **exceptions.**  
@@ -2203,7 +2204,7 @@ There are **important limited** **exceptions** to the rule.  These include
 
 * Manual Evaluation
 
-## Test procedure
+### Test procedure
 
 Logins must support some method of entry that does not solely rely on memory.  Most often, you will encounter logins that are password/username combos.  This criterion is not saying those are forbidden, rather that there must be some way of providing authentication that doesn't require the user to memorize anything.
 
