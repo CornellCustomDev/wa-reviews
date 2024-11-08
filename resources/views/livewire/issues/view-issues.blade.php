@@ -29,11 +29,9 @@
                 </td>
                 <td>
                     @if($issue->items)
-                        <ul>
-                            @foreach($issue->items as $item)
-                                <li>{{ $item->guideline->criterion->getNumberName() }} ({{ $item->assessment }})</li>
-                            @endforeach
-                        </ul>
+                        @foreach($issue->items as $item)
+                            Guideline {{ $item->guideline->number }} ({{ $item->assessment }})
+                        @endforeach
                     @endif
                 </td>
                 <td class="text-nowrap">

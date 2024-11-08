@@ -1,6 +1,4 @@
 <div>
-    <p>Progress: {{ $this->completedPercentage }}% complete</p>
-
     <div x-data="{ open: $wire.entangle('showGuidelines') }">
         @if($scopeGuidelines->isEmpty())
             <button x-on:click="$wire.generateGuidelines; open = true">Generate Guidelines</button>
@@ -34,7 +32,7 @@
                             @endforeach
                         </select>
                     </th>
-                    <th>Completed
+                    <th>Assessed
                         <select id="status" wire:model.live="completed">
                             <option value="">All</option>
                             <option value="true">Completed</option>

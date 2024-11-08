@@ -134,12 +134,11 @@ class AccessibilityAnalyzerService
 
     public function reviewRuleWithAI(RuleRunner $ruleRunner, Collection $scopeRules, string $html): array
     {
-        $parser = new AccessibilityAnalyzerService();
         $ruleIds = $scopeRules->pluck('id')->toArray();
         $cssSelectors = $scopeRules->pluck('css_selector')->toArray();
 
-        $nodes = $parser->findNodes($html, $cssSelectors);
-        $prompt = $parser->getNodesPrompt($ruleRunner, $nodes, $html);
+        $nodes = $this->findNodes($html, $cssSelectors);
+        $prompt = $this->getNodesPrompt($ruleRunner, $nodes, $html);
         $chat = ChatService::make();
         $chat->setPrompt($prompt);
         $chat->send();
@@ -229,6 +228,7 @@ class AccessibilityAnalyzerService
             'section' => 'Section',
             'article' => 'Article',
             'form' => 'Form',
+            'div' => 'Division',
         ];
 
         // Build XPath expressions for ARIA landmarks
@@ -256,6 +256,8 @@ class AccessibilityAnalyzerService
         foreach ($elements as $domElement) {
             $node = new Crawler($domElement);
 
+            $tagName = $domElement->nodeName;
+
             // Initialize descriptor
             $descriptor = null;
 
@@ -267,7 +269,6 @@ class AccessibilityAnalyzerService
 
             // Check for semantic element
             if (!$descriptor) {
-                $tagName = $domElement->nodeName;
                 if (isset($semanticElements[$tagName])) {
                     $descriptor = $semanticElements[$tagName];
                 }
@@ -281,7 +282,7 @@ class AccessibilityAnalyzerService
             $id = $node->attr('id');
 
             // Add to result
-            $result[$id ?? $descriptor] = [
+            $result[$id ?? $tagName] = [
                 'name' => $descriptor,
                 'css_selector' => RuleRunner::getCssSelector($domElement),
                 'element' => $domElement, // DOMElement or DOMNode

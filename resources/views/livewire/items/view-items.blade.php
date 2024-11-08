@@ -20,9 +20,9 @@
                 @foreach($issue->items as $item)
                     <tr wire:key="{{ $item->id }}">
                         <td>
-                            {{ $item->guideline->criterion->getNumberName() }} ({{ $item->assessment }})
+                            <a href="{{ route('guidelines.show', $item->guideline) }}">Guideline {{ $item->guideline->number }}</a> {{ $item->guideline->name }} ({{ $item->assessment }})
                             <hr>
-                            {{ $item->guideline->name }} <a href="{{ route('guidelines.show', $item->guideline) }}">View guideline {{ $item->guideline->number }}</a>
+                            {{ $item->guideline->criterion->getNumberName() }}
                         </td>
                         <td style="vertical-align: top">
                             {{ $item->description }}
