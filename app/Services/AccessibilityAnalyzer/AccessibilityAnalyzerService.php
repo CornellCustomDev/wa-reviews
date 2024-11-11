@@ -258,18 +258,20 @@ class AccessibilityAnalyzerService
 
             $tagName = $domElement->nodeName;
 
-            // Initialize descriptor
+            $identifier = null;
             $descriptor = null;
 
             // Check for ARIA role
             $role = $node->attr('role');
             if ($role && isset($ariaLandmarks[$role])) {
+                $identifier = $role;
                 $descriptor = $ariaLandmarks[$role];
             }
 
             // Check for semantic element
             if (!$descriptor) {
                 if (isset($semanticElements[$tagName])) {
+                    $identifier = $tagName;
                     $descriptor = $semanticElements[$tagName];
                 }
             }
@@ -279,10 +281,8 @@ class AccessibilityAnalyzerService
                 continue;
             }
 
-            $id = $node->attr('id');
-
             // Add to result
-            $result[$id ?? $tagName] = [
+            $result[$identifier] = [
                 'name' => $descriptor,
                 'css_selector' => RuleRunner::getCssSelector($domElement),
                 'element' => $domElement, // DOMElement or DOMNode
