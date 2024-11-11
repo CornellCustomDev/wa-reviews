@@ -33,6 +33,7 @@ class ParseGuidelineTools extends Command
                         ($tool == '* siteimprove (next-gen)'),
                         ($tool == '* siteimprove helps (policy)'),
                         str_contains($tool, '* siteimprove (policy)') => GuidelineTools::Siteimprove,
+                        str_contains($tool, 'manual *'),
                         str_contains($tool, '* manual') => GuidelineTools::Manual,
                         ($tool == '* keyboard') => GuidelineTools::Keyboard,
                         ($tool == '* screen reader') => GuidelineTools::ScreenReader,
