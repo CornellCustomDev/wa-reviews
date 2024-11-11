@@ -28,7 +28,7 @@ class ParseGuidelineTools extends Command
                 // Parse the tools into a list of standard tool names
                 $tools = array_map(function($tool) {
                     $tool = strtolower($tool);
-                    return match (true) {
+                    $guidelineTool =  match (true) {
                         ($tool == '* siteimprove'),
                         ($tool == '* siteimprove (next-gen)'),
                         ($tool == '* siteimprove helps (policy)'),
@@ -47,6 +47,7 @@ class ParseGuidelineTools extends Command
                         ($tool == '* color contrast analyzer tool') => GuidelineTools::ColorContrastAnalyzer,
                         default => GuidelineTools::Other,
                     };
+                    return $guidelineTool->value();
                 }, $tools);
                 // Remove any duplicates
                 $tools = array_unique($tools);
