@@ -96,6 +96,7 @@ return array(
     'App\\Services\\AccessibilityAnalyzer\\GuidelineRuleRunner' => $baseDir . '/app/Services/AccessibilityAnalyzer/GuidelineRuleRunner.php',
     'App\\Services\\AccessibilityAnalyzer\\RuleRunner' => $baseDir . '/app/Services/AccessibilityAnalyzer/RuleRunner.php',
     'App\\Services\\AzureOpenAI\\ChatService' => $baseDir . '/app/Services/AzureOpenAI/ChatService.php',
+    'App\\Services\\SiteImprove\\SiteimproveService' => $baseDir . '/app/Services/SiteImprove/SiteimproveService.php',
     'Attribute' => $vendorDir . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
     'Brick\\Math\\BigDecimal' => $vendorDir . '/brick/math/src/BigDecimal.php',
     'Brick\\Math\\BigInteger' => $vendorDir . '/brick/math/src/BigInteger.php',

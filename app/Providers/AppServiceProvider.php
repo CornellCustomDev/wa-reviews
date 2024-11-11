@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Services\AzureOpenAI\ChatService;
+use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +20,12 @@ class AppServiceProvider extends ServiceProvider
                 apiKey: strval(config('azure_openai.api_key')),
                 apiVersion: strval(config('azure_openai.api_version')),
                 model: strval(config('azure_openai.model')),
+            ),
+        );
+        $this->app->singleton(
+            abstract: SiteimproveService::class,
+            concrete: fn() => new SiteimproveService(
+                apiKey: strval(config('siteimprove.api_key')),
             ),
         );
     }

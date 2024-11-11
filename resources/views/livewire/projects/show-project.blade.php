@@ -19,6 +19,16 @@
             <td>{!! $project->description !!}</td>
         </tr>
         <tr>
+            <th>Siteimprove Report</th>
+            <td>
+                @if ($project->siteimprove_url)
+                    <a href="{{ $project->siteimprove_url }}" target="_blank">View Report</a>
+                @else
+                    No report available
+                @endif
+            </td>
+        </tr>
+        <tr>
             <th>Created</th>
             <td>{{ $project->created_at->toFormattedDateString() }}</td>
         </tr>

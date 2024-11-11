@@ -14,10 +14,10 @@
         </td>
     </tr>
     <tr>
-        <th>Siteimprove Report</th>
+        <th>Siteimprove Page Report</th>
         <td>
-            @if ($scope->siteimprove_url)
-                <a href="{{ $scope->siteimprove_url}}" target="_blank">View Report</a>
+            @if ($this->siteimproveUrl())
+                <a href="{{ $this->siteimproveUrl() }}" target="_blank">View Report</a> ({{ $this->siteimproveIssueCount() }} {{ Str::plural('issue', $this->siteimproveIssueCount()) }} )
             @else
                 No report available
             @endif
@@ -33,4 +33,13 @@
     </tr>
 </table>
 
-
+@if ($this->siteimproveIssues())
+    <div style="margin-bottom: 2em">
+        <h2>Siteimprove Issues</h2>
+        <ul>
+            @foreach ($this->siteimproveIssues() as $issue)
+                <li>{{ $issue['title'] }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif

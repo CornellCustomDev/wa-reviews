@@ -3,12 +3,46 @@
 namespace App\Livewire\Scopes;
 
 use App\Models\Scope;
+use App\Services\SiteImprove\SiteimproveService;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowScope extends Component
 {
     public Scope $scope;
+
+    #[Computed('siteimproveUrl')]
+    public function siteimproveUrl(): string
+    {
+        // TODO - Do not reach in to get the siteimprove_id from project
+        $siteId = $this->scope->project->siteimprove_id;
+        $siteimproveService = SiteimproveService::make($siteId);
+
+        return Cache::rememberForever(
+            key: "siteimprove_url_{$this->scope->url}",
+            callback: fn() => $siteimproveService->getPageReportUrl($this->scope->url) ?? ''
+        );
+    }
+
+    #[Computed('siteimproveIssueCount')]
+    public function siteimproveIssueCount(): string
+    {
+        $siteId = $this->scope->project->siteimprove_id;
+        $siteimproveService = SiteimproveService::make($siteId);
+
+        return $siteimproveService->getPageIssuesCount($this->scope->url) ?? 0;
+    }
+
+    #[Computed('siteimproveIssues')]
+    public function siteImproveIssues(): array
+    {
+        $siteId = $this->scope->project->siteimprove_id;
+        $siteimproveService = SiteimproveService::make($siteId);
+
+        return $siteimproveService->getPageIssues($this->scope->url) ?? [];
+    }
 
     #[On('issues-updated')]
     public function refreshScope(): void

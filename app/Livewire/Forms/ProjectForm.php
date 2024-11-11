@@ -17,6 +17,10 @@ class ProjectForm extends Form
     public string $site_url = '';
     #[Validate('nullable|string')]
     public string $description = '';
+    #[Validate('nullable|string')]
+    public string $siteimprove_url = '';
+    #[Validate('nullable|string')]
+    public string $siteimprove_id = '';
 
     public function setModel(Project $project): void
     {
@@ -24,6 +28,8 @@ class ProjectForm extends Form
         $this->name = $project->name;
         $this->site_url = $project->site_url;
         $this->description = $project->description;
+        $this->siteimprove_url = $project->siteimprove_url ?? '';
+        $this->siteimprove_id = $project->siteimprove_id ?? '';
     }
 
     public function store(): Project
