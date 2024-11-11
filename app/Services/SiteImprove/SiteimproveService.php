@@ -85,7 +85,7 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    private function getPagesWithIssues(string $urlQuery = null): ?array
+    public function getPagesWithIssues(string $urlQuery = null): ?array
     {
         $parameters = [
             'conformance' => join(',', $this->conformance)
