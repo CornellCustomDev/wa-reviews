@@ -62,6 +62,11 @@ abstract class RuleRunner
                 return false;
             }
 
+            // Check if the element is an <img> with an empty alt attribute
+            if ($element->tagName === 'img' && $element->hasAttribute('alt') && $element->getAttribute('alt') === '') {
+                return false;
+            }
+
             // Recurse up the DOM tree
             $element = $element->parentNode instanceof DOMElement ? $element->parentNode : null;
         }
@@ -164,6 +169,57 @@ abstract class RuleRunner
             $textContent,
             $tagName
         );
+    }
+
+    /**
+     * Retrieves the accessible name of an element.
+     *
+     * @param DOMElement $element
+     * @return string
+     */
+    protected function getAccessibleName(DOMElement $element): string
+    {
+        // Check for aria-label attribute
+        if ($element->hasAttribute('aria-label')) {
+            return $element->getAttribute('aria-label');
+        }
+
+        // Check for aria-labelledby attribute
+        if ($element->hasAttribute('aria-labelledby')) {
+            $labelIds = preg_split('/\s+/', $element->getAttribute('aria-labelledby'));
+            $labels = [];
+            foreach ($labelIds as $id) {
+                $labelElement = $element->ownerDocument->getElementById($id);
+                if ($labelElement) {
+                    $labels[] = trim($labelElement->textContent);
+                }
+            }
+            return implode(' ', $labels);
+        }
+
+        // Check for associated <label> element with "for" attribute
+        if ($element->hasAttribute('id')) {
+            $id = $element->getAttribute('id');
+            $labels = $element->ownerDocument->getElementsByTagName('label');
+            foreach ($labels as $label) {
+                if ($label->getAttribute('for') === $id) {
+                    return trim($label->textContent);
+                }
+            }
+        }
+
+        // Check if the element is within a <label> element
+        $parent = $element->parentNode;
+        if ($parent && $parent->nodeName === 'label') {
+            return trim($parent->textContent);
+        }
+
+        // For <img> elements, use the alt attribute
+        if ($element->tagName === 'img' && $element->hasAttribute('alt')) {
+            return $element->getAttribute('alt');
+        }
+
+        return '';
     }
 
 }

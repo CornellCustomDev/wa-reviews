@@ -1,6 +1,7 @@
 <?php
 namespace App\Livewire\Scopes;
 
+use App\Enums\GuidelineTools;
 use App\Models\Category;
 use App\Models\Scope;
 use App\Models\ScopeGuideline;
@@ -8,6 +9,7 @@ use App\Models\ScopeRule;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ScopeGuidelines extends Component
@@ -15,9 +17,18 @@ class ScopeGuidelines extends Component
     public Scope $scope;
     public Collection $scopeGuidelines;
 
+    #[Url(as: 'rt')]
     public $ruleTypes = '';
+    #[Url(as: 't')]
+    public $tool = '';
+    #[Url(as: 'c')]
     public $category = '';
+    #[Url(as: 'd')]
     public $completed = '';
+    #[Url(as: 'g')]
+    public $guideline = '';
+    #[Url(as: 'show')]
+    public $showGuidelines = false;
 
     public ?string $response;
 
@@ -29,10 +40,12 @@ class ScopeGuidelines extends Component
     private function loadScopeGuidelines(): void
     {
         $this->scopeGuidelines = $this->scope->guidelines()
-            ->with(['guideline', 'guideline.criterion', 'guideline.category'])
+            ->with(['guideline', 'guideline.criterion'])
             ->orderBy('guideline_id')
             ->get()
             ->mapWithKeys(function (ScopeGuideline $scopeGuideline) {
+                // TODO Deal with this in the query
+                $scopeGuideline->guideline->notes = null;
                 return [$scopeGuideline->id => $scopeGuideline];
             });
     }
@@ -41,6 +54,12 @@ class ScopeGuidelines extends Component
     public function categories(): Collection
     {
         return Category::all();
+    }
+
+    #[Computed]
+    public function tools(): array
+    {
+        return GuidelineTools::cases();
     }
 
     #[Computed]
@@ -62,6 +81,10 @@ class ScopeGuidelines extends Component
     {
         return $this->scopeGuidelines
             ->filter(function ($scopeGuideline) {
+                return empty($this->tool)
+                    || $scopeGuideline->guideline->tools->contains(GuidelineTools::tryFrom($this->tool));
+            })
+            ->filter(function ($scopeGuideline) {
                 return empty($this->category) || $scopeGuideline->guideline->category_id == $this->category;
             })
             ->filter(function ($scopeGuideline) {
@@ -69,10 +92,12 @@ class ScopeGuidelines extends Component
             })
             ->filter(function ($scopeGuideline) {
                 if ($this->ruleTypes === 'automated') {
-                    return $this->applicableRules->has($scopeGuideline->guideline->id);
+                    return $scopeGuideline->guideline->hasAutomatedAssessment()
+                        || $this->applicableRules->has($scopeGuideline->guideline->id);
                 }
                 if ($this->ruleTypes === 'manual') {
-                    return !$this->applicableRules->has($scopeGuideline->guideline->id);
+                    return !$scopeGuideline->guideline->hasAutomatedAssessment()
+                        && !$this->applicableRules->has($scopeGuideline->guideline->id);
                 }
                 return true;
             });
@@ -112,5 +137,23 @@ class ScopeGuidelines extends Component
     public function loadScopeRules(): void
     {
         unset($this->applicableRules);
+    }
+
+    #[On('show-guideline')]
+    public function showGuideline($number): void
+    {
+        $this->guideline = $number;
+    }
+
+    #[On('complete-siteimprove')]
+    public function completeSiteimprove(): void
+    {
+        $this->scope->guidelines()
+            ->whereHas('guideline', fn ($q) => $q->whereJsonContains('tools', GuidelineTools::Siteimprove))
+            ->update(['completed' => true]);
+        $this->loadScopeGuidelines();
+
+        unset($this->completedPercentage);
+        unset($this->filteredGuidelines);
     }
 }

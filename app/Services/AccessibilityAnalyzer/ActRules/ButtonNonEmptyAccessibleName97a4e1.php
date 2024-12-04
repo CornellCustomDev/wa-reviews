@@ -16,8 +16,6 @@ class ButtonNonEmptyAccessibleName97a4e1 extends ActRuleRunner
                 and not(@type='image')
               ]
             | //*[@role='button']
-        ")->reduce(function (Crawler $node) {
-            return $this->isElementIncludedInAccessibilityTree($node->getNode(0));
-        });
+        ")->reduce(fn (Crawler $node) => $this->isElementIncludedInAccessibilityTree($node->getNode(0)));
     }
 }

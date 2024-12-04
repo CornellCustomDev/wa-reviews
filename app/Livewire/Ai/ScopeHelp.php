@@ -11,18 +11,23 @@ use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ScopeHelp extends Component
 {
     public Scope $scope;
     public ?Guideline $guideline;
+    #[Url(as: 'g')]
+    public $guidelineNumber = '';
 
     public ?string $response;
 
-    public function render()
+    public function mount()
     {
-        return view('livewire.ai.scope-help');
+        if ($this->guidelineNumber) {
+            $this->guideline = Guideline::find($this->guidelineNumber);
+        }
     }
 
     #[Computed]
@@ -61,6 +66,7 @@ class ScopeHelp extends Component
     #[On('show-guideline')]
     public function showGuideline($number): void
     {
+        $this->guidelineNumber = $number;
         $this->guideline = Guideline::find($number);
 
         unset($this->scopeGuidelineRules);

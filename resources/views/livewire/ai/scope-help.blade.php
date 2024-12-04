@@ -1,17 +1,21 @@
 <div>
     <h2>Assistance</h2>
 
+    <h3>Scope Analysis</h3>
     <div style="margin-bottom: 2em;">
-        <h3>Scope Analysis</h3>
-        <p>Analyze the page to find applicable automated guideline and compliance testing rules. Currently there are {{ $this->rulesCount }} automated rules.</p>
+        <p>Analyze the page to find applicable automated guideline and compliance testing rules. Currently there are {{ $this->rulesCount }} AI-assisted rules.</p>
 
         <livewire:scopes.analyze-scope :$scope />
+    </div>
+    <div>
+        <button wire:click="$dispatch('complete-siteimprove')" class="button">Complete Siteimprove</button>
     </div>
 
     @if ($guideline)
         <hr>
 
-        <h3 style="font-size: 125%">Guideline {{ $guideline->number }}: {{ $guideline->name }}</h3>
+        <h3 style="font-size: 125%">
+            <a href="{{ route('guidelines.show', $guideline) }}">Guideline {{ $guideline->number }}</a>: {{ $guideline->name }}</h3>
 
         <button wire:click="hideGuideline" style="float:right">Hide</button>
 

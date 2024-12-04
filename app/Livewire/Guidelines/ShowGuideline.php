@@ -13,7 +13,7 @@ class ShowGuideline extends Component
     {
         return view('livewire.guidelines.show-guideline')
             ->layout('components.layouts.app', [
-                'sidebar' => false,
+                'sidebar' => true,
                 'breadcrumbs' => [
                     'Guidelines' => route('guidelines.index'),
                     $this->guideline->name => 'active'

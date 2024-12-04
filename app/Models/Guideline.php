@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\GuidelineTools;
+use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +20,11 @@ class Guideline extends Model
         'criterion_id',
         'category_id',
         'notes',
+        'tools',
+    ];
+
+    protected $casts = [
+        'tools' => AsEnumCollection::class.':'.GuidelineTools::class,
     ];
 
     public function criterion(): BelongsTo
@@ -38,5 +45,10 @@ class Guideline extends Model
     public function items(): HasMany
     {
         return $this->hasMany(Item::class);
+    }
+
+    public function hasAutomatedAssessment(): bool
+    {
+        return $this->tools->contains(GuidelineTools::Siteimprove);
     }
 }

@@ -22,7 +22,7 @@
         <ul>
             @foreach ($sections as $section)
                 <li>
-                    {{ $section['name'] }}: {{ $section['css_selector'] }}
+                    {{ $section['name'] }}
                 </li>
             @endforeach
         </ul>
@@ -37,7 +37,7 @@
             <ul>
                 @foreach ($rules as $rule)
                     <li>
-                        <a href="{{ route('act-rules.show', $rule->id) }}">{{ $rule->name }}</a>
+                        {{ $rule->name }}
                         @if (isset($ruleNodes[$rule->getMachineName()]))
                             | <button wire:click="reviewElementsWithAI('{{ $rule->id }}', '{{ $ruleNodes[$rule->getMachineName()]['cssSelectors'] }}')" class="button">Review with AI</button>  <span wire:loading.delay wire:target="reviewElementsWithAI">Processing...</span>
                             <ul>
