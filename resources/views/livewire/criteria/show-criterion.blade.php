@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component">
         <div class="align-right">
-            <x-forms.link-button route="{{ route('criteria.index') }}" title="All Criteria" />
+            <x-forms.link-button route="{{ route('criteria.index') }}" title="All Criteria"/>
         </div>
 
         <div class="metadata-set metadata-blocks accent-red-dark">
@@ -28,10 +28,11 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($criterion->guidelines as $guideline)
+        @foreach($this->guidelines as $guideline)
             <tr>
                 <th>
-                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}" title="{{ $guideline->number }}" />
+                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}"
+                                         title="{{ $guideline->number }}"/>
                 </th>
                 <td>
                     {{ $guideline->name }}
@@ -41,26 +42,27 @@
         </tbody>
     </table>
 
-    <h2>Related ACT Rules</h2>
+    <h2>Siteimprove Rules</h2>
 
     <table class="table bordered">
         <thead>
         <tr>
-            <th style="width: 100px">Id</th>
-            <th>ACT Rule</th>
+            <th style="width: 100px">Rule Id</th>
+            <th>Issues</th>
         </tr>
         </thead>
         <tbody>
-            @foreach($actRules as $rule)
-                <tr>
-                    <th>
-                        {{ $rule->id }}
-                    </th>
-                    <td>
-                        <a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a>
-                    </td>
-                </tr>
-            @endforeach
+        @foreach($this->siteimproveRules() as $rule)
+            <tr>
+                <th>
+                    {{ $rule->rule_id }}
+                </th>
+                <td>
+                    {{ $rule->issues }}
+                    {{--                        <a href="{{ route('siteimprove-check-rules.show', $rule) }}">{{ $rule->issues }}</a>--}}
+                </td>
+            </tr>
+        @endforeach
         </tbody>
     </table>
 

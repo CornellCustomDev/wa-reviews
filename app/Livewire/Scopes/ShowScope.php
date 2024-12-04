@@ -3,7 +3,9 @@
 namespace App\Livewire\Scopes;
 
 use App\Models\Scope;
+use App\Models\SiteimproveRule;
 use App\Services\SiteImprove\SiteimproveService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -42,6 +44,18 @@ class ShowScope extends Component
         $siteimproveService = SiteimproveService::make($siteId);
 
         return $siteimproveService->getPageIssues($this->scope->url) ?? [];
+    }
+
+    #[Computed]
+    public function siteimproveRelatedGuidelines($ruleId): Collection
+    {
+        // only get the rules that have criteria
+        $rules = SiteimproveRule::where('rule_id', $ruleId)
+            ->whereHas('criterion')
+            ->get();
+
+        // For each rule, get the criteria, for each criterion, get the guidelines as objects
+        return $rules->map(fn($rule) => $rule->criterion->guidelines)->flatten();
     }
 
     #[On('issues-updated')]

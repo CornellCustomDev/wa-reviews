@@ -30,6 +30,26 @@ class SiteimproveService
         return $siteimproveService;
     }
 
+    public static function findSite(string $url, ?bool $bustCache = false): ?string
+    {
+        $siteimproveService = app(SiteimproveService::class);
+
+        if ($bustCache) {
+            Cache::forget('siteimprove_sites');
+        }
+
+        $json_response = Cache::remember(
+            key: 'siteimprove_sites',
+            ttl: 60,
+            callback: fn() => ($siteimproveService->get('sites', ['page_size' => 1000]))->json()
+        );
+
+        $domain = parse_url($url, PHP_URL_HOST);
+        $site = collect($json_response['items'])->first(fn($item) => parse_url($item['url'], PHP_URL_HOST) === $domain);
+
+        return $site ? $site['id'] : null;
+    }
+
     public function setSite(string $siteId): void
     {
         $this->siteId = $siteId;

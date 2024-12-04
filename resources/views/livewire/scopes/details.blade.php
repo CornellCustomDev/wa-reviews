@@ -33,13 +33,3 @@
     </tr>
 </table>
 
-@if ($this->siteimproveIssues())
-    <div style="margin-bottom: 2em">
-        <h2>Siteimprove Issues</h2>
-        <ul>
-            @foreach ($this->siteimproveIssues() as $issue)
-                <li>{{ $issue['title'] }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif

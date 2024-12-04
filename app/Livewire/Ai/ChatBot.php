@@ -13,7 +13,7 @@ abstract class ChatBot extends Component
     public string $response;
     public string $feedback = '';
 
-    public function sendChatMessage()
+    public function sendChatMessage(): void
     {
         $chat = ChatService::make();
         $chat->setPrompt($this->getChatPrompt());
@@ -27,7 +27,7 @@ abstract class ChatBot extends Component
         $this->userMessage = '';
     }
 
-    public function clearChat()
+    public function clearChat(): void
     {
         $this->chatMessages = [];
         $this->response = '';

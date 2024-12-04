@@ -22,6 +22,11 @@ class Criterion extends Model
         return $this->hasMany(Guideline::class);
     }
 
+    public function siteimproveRules(): HasMany
+    {
+        return $this->hasMany(SiteimproveRule::class);
+    }
+
     public function actRules(): BelongsToMany
     {
         return $this->belongsToMany(ActRule::class, 'act_rule_criterion');

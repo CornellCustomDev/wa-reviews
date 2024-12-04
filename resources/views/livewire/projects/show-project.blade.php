@@ -35,6 +35,10 @@
         </tr>
     </table>
 
+    <div style="margin-bottom: 2em">
+        <livewire:scopes.view-scopes :$project />
+    </div>
+
     @if ($this->siteimprovePagesWithIssues)
         <div style="margin-bottom: 2em">
             <h2>Siteimprove Pages with Issues</h2>
@@ -48,7 +52,5 @@
             </ul>
         </div>
     @endif
-
-    <livewire:scopes.view-scopes :$project />
 
 </div>

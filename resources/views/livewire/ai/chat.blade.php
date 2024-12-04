@@ -25,6 +25,14 @@
         <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
         <button type="submit">Send</button>
     </form>
+
+    <div x-show="$wire.response != null && $wire.response != ''">
+        <hr>
+        <div class="panel accent-gold fill">
+            <h3>Debugging info</h3>
+            <pre>{{ print_r($messages, true) }}</pre>
+        </div>
+    </div>
 </div>
 
 <x-slot:sidebarPrimary>

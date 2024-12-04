@@ -5,8 +5,8 @@
 
 <x-cd.form.radios label="Assessment" :radiobuttons="$form->assessmentOptions" wire:model="form.assessment" inline="true" />
 
-<x-cd.form.text label="Observations" wire:model="form.description" />
+<x-forms.textarea label="Observations" wire:model="form.description" />
 
-<x-cd.form.text label="Recommendations" wire:model="form.recommendation" />
+<x-forms.textarea label="Recommendations" wire:model="form.recommendation" />
 
-<x-cd.form.text label="Testing" wire:model="form.testing" />
+<x-cd.form.select label="Testing Method" :options="$form->testingMethodOptions" wire:model="form.testing" />

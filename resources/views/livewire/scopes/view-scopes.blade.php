@@ -13,7 +13,6 @@
             <th>Title</th>
             <th>URL</th>
             <th>Notes</th>
-            <th style="width: 125px">Progress</th>
             <th style="width: 125px">Issues Found</th>
             <th style="width: 100px">Actions</th>
         </tr>
@@ -29,9 +28,6 @@
                 </td>
                 <td>
                     {!! Str::of($scope->notes)->markdown() !!}
-                </td>
-                <td>
-                    {{ $this->scopesProgress[$scope->id] ?? 'Not Started' }}
                 </td>
                 <td>
                     {{ $scope->issues()->count() }}
