@@ -74,15 +74,19 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    private function siteGet(string $endpoint, array $parameters = [], int $ttl_minutes = 5): array
+    private function siteGet(string $endpoint, array $parameters = [], int $ttlMinutes = 5, bool $bustCache = false): array
     {
         if (empty($this->siteId)) {
             throw new ErrorException('Site ID is not set');
         }
 
+        if ($bustCache) {
+            Cache::forget('siteimprove_' . $this->siteId . '_' . $endpoint . '_' . md5(serialize($parameters)));
+        }
+
         return Cache::remember(
             key: "siteimprove_" . $this->siteId . "_" . $endpoint . "_" . md5(serialize($parameters)),
-            ttl: now()->addMinutes($ttl_minutes),
+            ttl: now()->addMinutes($ttlMinutes),
             callback: fn() => $this->get("sites/$this->siteId/$endpoint", $parameters)->json()
         );
     }
@@ -105,7 +109,7 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    public function getPagesWithIssues(string $urlQuery = null): ?array
+    public function getPagesWithIssues(string $urlQuery = null, bool $bustCache = false): ?array
     {
         $parameters = [
             'conformance' => join(',', $this->conformance)
@@ -116,7 +120,7 @@ class SiteimproveService
             $parameters['query'] = $urlQuery;
         }
 
-        $response = $this->siteGet("a11y/issue_kinds/confirmed/pages", $parameters);
+        $response = $this->siteGet("a11y/issue_kinds/confirmed/pages", $parameters, bustCache: $bustCache);
 
         $pages = [];
         foreach ($response['items'] as $item) {

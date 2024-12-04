@@ -40,7 +40,7 @@
         </div>
     @endif
 
-    <div x-show="$wire.response != null && $wire.response != ''">
+    <div x-show="$wire.response != null && $wire.response != ''" class="hidden">
         <hr>
         <div class="panel accent-gold fill">
             <h3>Debugging info</h3>
