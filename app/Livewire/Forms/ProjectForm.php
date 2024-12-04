@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Project;
+use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -29,7 +30,7 @@ class ProjectForm extends Form
         $this->site_url = $project->site_url;
         $this->description = $project->description;
         $this->siteimprove_url = $project->siteimprove_url ?? '';
-        $this->siteimprove_id = $project->siteimprove_id ?? '';
+        $this->siteimprove_id = $project->siteimprove_id ?: (SiteimproveService::findSite($project->site_url) ?? '');
     }
 
     public function store(): Project
