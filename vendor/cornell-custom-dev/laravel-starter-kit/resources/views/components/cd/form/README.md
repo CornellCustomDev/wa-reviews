@@ -13,10 +13,10 @@ Here is an example of a simple form:
 
 ```
 <x-cd.form.form legend="Simple form" wire:submit="submit">
-  <x-cd.form.text label="Name" wire:model="name"/>
+  <x-cd.form.text label="Name" wire:model.live="name"/>
   <div>
-    <x-cd.form.submitbutton/>
-    <x-cd.form.resetbutton/>
+    <x-cd.form.submit-button/>
+    <x-cd.form.reset-button/>
   </div>
 </x-cd.form.form>
 ```
@@ -38,7 +38,7 @@ To adjust the width of the text input, use the `size` attribute and add the clas
 
 Example:
 ```
-    <x-cd.form.text label="Text Input" wire:model="name"/>
+    <x-cd.form.text label="Text Input" wire:model.live="name"/>
 ```
 ## Select
 
@@ -56,7 +56,8 @@ $this->roleoptions = [
 ```
 
 ```
-    <x-cd.form.select :options="$roleoptions" required="1" label="Select" wire:model="role" />
+    <x-cd.form.select :options="$roleoptions" required="1" label="Select" 
+        wire:model.live="role" />
 ```
 You may add the attribute `multiple="multiple"` to create a multiselect.  Multiselect with groups are not yet supported.
 
@@ -67,12 +68,25 @@ The checkbox component needs a value to return when the box is checked.  The che
 
 Note: single checkboxes cannot be required.
 
-```
-    <x-cd.form.checkbox label="Subscription" text="Subscribe" value="1" wire:model="subscribe" />
-```
+Note: In Livewire 3, wire:model passes a boolean value to the server based on whether a checkbox is clicked or not.  If you need to pass a different (e.g., numeric) value, use wire:click instead. 
 
 ```
-    <x-cd.form.checkbox-inline name="inline" value="1" label="Select me" description="description" wire:model="subscribe"/>
+    <x-cd.form.checkbox label="Subscription" text="Subscribe" 
+        wire:model.live="subscribe" 
+    />
+```
+Alternately, specify the text value using the component slot:
+
+```
+    <x-cd.form.checkbox label="Subscription" wire:model.live="subscribe"/>
+    Subscribe
+    </x-cd-form.checkbox>
+```
+
+When using checkbox-inline, the label is displayed alongside the checkbox.
+
+```
+    <x-cd.form.checkbox-inline name="inline"  label="Select me" description="description" wire:model.live="subscribe"/>
 ```
 ## Checkboxes
 
@@ -89,7 +103,7 @@ An array of options define the set of checkboxes as demonstrated here.
 ```
 
 ```
-    <x-cd.form.checkboxes :checkboxes="$checkboxoptions" wire:model="toppings" label="Topping Choices"/>
+    <x-cd.form.checkboxes :checkboxes="$checkboxoptions" wire:model.live="toppings" label="Topping Choices"/>
 ```
 
 ## Special text inputs
@@ -99,18 +113,18 @@ using the `type` attribute, as in the following examples:
 
 
 ```
-    <x-cd.form.text type="search" label="Search" wire:model="search"/>
-    <x-cd.form.text type="telephone" label="Telephone" wire:model="telephone"/>
-    <x-cd.form.text type="url" label="URL" wire:model="url"/>
-    <x-cd.form.text type="email" label="Email" wire:model="email"/>
-    <x-cd.form.text type="password" label="Password" wire:model="password"/>
-    <x-cd.form.text type="number" label="Number" wire:model="number"/>
-    <x-cd.form.text type="datetime" label="Datetime" wire:model="datetime"/>
-    <x-cd.form.text type="datetimelocal" label="Datetime Local" wire:model="datetimelocal"/>
-    <x-cd.form.text type="date" label="Date" wire:model="date"/>
-    <x-cd.form.text type="month" label="Month" wire:model="month"/>
-    <x-cd.form.text type="week" label="Week" wire:model="week"/>
-    <x-cd.form.text type="time" label="Time" wire:model="time"/>
+    <x-cd.form.text type="search" label="Search" wire:model.live="search"/>
+    <x-cd.form.text type="telephone" label="Telephone" wire:model.live="telephone"/>
+    <x-cd.form.text type="url" label="URL" wire:model.live="url"/>
+    <x-cd.form.text type="email" label="Email" wire:model.live="email"/>
+    <x-cd.form.text type="password" label="Password" wire:model.live="password"/>
+    <x-cd.form.text type="number" label="Number" wire:model.live="number"/>
+    <x-cd.form.text type="datetime" label="Datetime" wire:model.live="datetime"/>
+    <x-cd.form.text type="datetimelocal" label="Datetime Local" wire:model.live="datetimelocal"/>
+    <x-cd.form.text type="date" label="Date" wire:model.live="date"/>
+    <x-cd.form.text type="month" label="Month" wire:model.live="month"/>
+    <x-cd.form.text type="week" label="Week" wire:model.live="week"/>
+    <x-cd.form.text type="time" label="Time" wire:model.live="time"/>
 ```
 ## Range
 
@@ -118,14 +132,14 @@ A range input rendered as a slider may be specified using this special text inpu
 `max` and `min` attributes.
 
 ```
-    <x-cd.form.text type="range" required="1" label="Range" min="1" max="10" wire:model="range"/>
+    <x-cd.form.text type="range" required="1" label="Range" min="1" max="10" wire:model.live="range"/>
 ```       
 
 ## File
 
 The file selector input is also a variant of the text input.
 ```
-    <x-cd.form.text type="file" required="1" label="File" wire:model="file"/>
+    <x-cd.form.text type="file" required="1" label="File" wire:model.live="file"/>
 ```
 
 ## Color
@@ -133,7 +147,8 @@ The file selector input is also a variant of the text input.
 The color picker is also a variant of the text input.  Take care to initialize the value of this
 input to a valid `value`, which is a hash (#) character followed by six hexadecimal digits. 
 ```
-        <x-cd.form.text type="color" label="Color" wire:model="color" value="#ff0000"/>
+        <x-cd.form.text type="color" label="Color" wire:model.live="color" 
+           value="#ff0000"/>
 ```
         
 # Radio Buttons
@@ -141,8 +156,9 @@ input to a valid `value`, which is a hash (#) character followed by six hexadeci
 The `radios` component implements a set of related radio buttons defined by an array of options, as demonstrated below.</p>
 
 ```
-    <x-cd.form.radios label="Radios" wire:model="radios" :radiobuttons="$radiooptions" />
+    <x-cd.form.radios label="Radios" wire:model.live="radios" :radiobuttons="$radiooptions" />
 ```
+Using `inline=1` alows the radio buttons to be displayed inline with flexbox. 
 
 # Submit, Reset and Cancel Buttons
 
@@ -155,9 +171,9 @@ The cancel button requires a `wire:click` or `x-on:click` attribute to specify t
 taken when the button is pressed. 
 
 ```
-    <x-cd.form.submitbutton />
-    <x-cd.form.resetbutton />
-    <x-cd.form.cancelbutton wire:click"closemodal">
+    <x-cd.form.submit-button />
+    <x-cd.form.reset-button />
+    <x-cd.form.cancel-button wire:click"closemodal">
 ```
 
 

@@ -5,7 +5,7 @@
   "type": "library",
   "require": {
     "php": "^8.1",
-    "livewire/livewire": "^3.3",
+    "livewire/livewire": "^3.4",
     "spatie/laravel-package-tools": "^1.16",
     "cubear/cwd_framework_lite": "^3.0",
     "propaganistas/laravel-phone": "^5.0"

@@ -20,7 +20,7 @@
         @endif
     />
     @foreach ($options as $opt)
-        <option value="{{$opt['value']}}" @if ($opt['disabled']??false) disabled="disabled" @endif >{{$opt['option']}}</option>
+        <option value="{{$opt['value']}}" @disabled($opt['disabled'] ?? false) @selected($opt["selected"] ?? false)>{{$opt['option']}}</option>
     @endforeach
     </select>
 </x-cd.form.form-item>

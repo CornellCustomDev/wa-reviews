@@ -6,8 +6,8 @@ use function Livewire\wrap;
 use function Livewire\store;
 use function Livewire\invade;
 use Livewire\Features\SupportAttributes\AttributeLevel;
-use Livewire\Features\SupportAttributes\AttributeCollection;
 use Livewire\ComponentHook;
+use Livewire\Exceptions\EventHandlerDoesNotExist;
 use Livewire\Mechanisms\HandleComponents\BaseRenderless;
 
 class SupportEvents extends ComponentHook
@@ -20,7 +20,7 @@ class SupportEvents extends ComponentHook
             $names = static::getListenerEventNames($this->component);
 
             if (! in_array($name, $names)) {
-                throw new \Exception('EventHandlerDoesNotExist'); // @todo...
+                throw new EventHandlerDoesNotExist($name);
             }
 
             $method = static::getListenerMethodName($this->component, $name);
@@ -86,7 +86,7 @@ class SupportEvents extends ComponentHook
 
         $listeners = array_merge($fromClass, $fromAttributes);
 
-        return static::replaceDynamicEventNamePlaceholers($listeners, $component);
+        return static::replaceDynamicEventNamePlaceholders($listeners, $component);
     }
 
     function getServerDispatchedEvents($component)
@@ -96,7 +96,7 @@ class SupportEvents extends ComponentHook
             ->toArray();
     }
 
-    static function replaceDynamicEventNamePlaceholers($listeners, $component)
+    static function replaceDynamicEventNamePlaceholders($listeners, $component)
     {
         foreach ($listeners as $event => $method) {
             if (is_numeric($event)) continue;
