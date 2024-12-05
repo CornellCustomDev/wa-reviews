@@ -14,6 +14,8 @@ class Project extends Model
         'name',
         'site_url',
         'description',
+        'siteimprove_url',
+        'siteimprove_id',
     ];
 
     public function issues(): HasMany

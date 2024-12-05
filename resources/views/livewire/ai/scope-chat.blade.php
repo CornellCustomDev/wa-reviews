@@ -1,15 +1,8 @@
 <div>
     <div>
-        <h2>AI Help</h2>
-        @if ($useGuidelines)
-            <button type="button" wire:click="populateGuidelines">
-                Populate Guidelines
-            </button>
-        @endif
         <button type="button" wire:click="$toggle('showChat')">
             <span x-text="$wire.showChat ? 'Hide ' : ''"></span>Chat
         </button>
-        <span wire:loading.delay wire:target="populateGuidelines"> Analyzing...</span>
     </div>
 
     <div x-show="$wire.showChat">
@@ -17,7 +10,7 @@
         <h3>AI Assistance Chat</h3>
 
         <p>
-            This chatbot can answer questions about applicable guidelines and recommendations.
+            This chatbot can answer questions for this scope.
             <button type="button" wire:click="clearChat">Clear Chat</button>
         </p>
 

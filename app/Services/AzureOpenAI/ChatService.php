@@ -22,7 +22,7 @@ class ChatService
         string $model,
         // Chat parameters
         protected string $prompt = 'You are an AI chatbot. You are here to help users with web accessibility issues.',
-        protected float $temperature = 0.7,
+        protected float $temperature = 0.0, // Try setting to 0.0 for deterministic responses
         protected float $top_p = 0.95,
         protected int $max_tokens = 800,
     )

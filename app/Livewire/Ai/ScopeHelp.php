@@ -20,6 +20,7 @@ class ScopeHelp extends Component
     public ?Guideline $guideline;
     #[Url(as: 'g')]
     public $guidelineNumber = '';
+    public bool $showChat = false;
 
     public ?string $response;
 

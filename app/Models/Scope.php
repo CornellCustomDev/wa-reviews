@@ -17,7 +17,6 @@ class Scope extends Model
         'url',
         'page_content',
         'retrieved_at',
-        'siteimprove_url',
         'notes',
         'comments'
     ];

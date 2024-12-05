@@ -8,10 +8,10 @@ enum TestingMethod: string
 
     case ANDI = 'ANDI';
     case AXE = 'aXe Extension';
-    case CCA = 'Color Contract Analyzer';
+    case CCA = 'Color Contrast Analyzer';
     case KEYBOARD = 'Keyboard';
     case MANUAL = 'Manual Test (Other)';
     case SR = 'Screen Reader';
-    case SI = 'Site Improve';
+    case SI = 'Siteimprove';
     case WAVE = 'WAVE Extension';
 }

@@ -30,7 +30,14 @@
                 <td>
                     @if($issue->items)
                         @foreach($issue->items as $item)
-                            Guideline {{ $item->guideline->number }} ({{ $item->assessment }})
+                            <x-forms.link-button
+                                route="#" title="{{ $item->guideline->number }}"
+                                x-data x-on:click.prevent="$dispatch('show-guideline', {number: {{ $item->guideline->number }} })"
+                            />
+                            ({{ $item->assessment }})
+                            @if(!$loop->last)
+                                <br>
+                            @endif
                         @endforeach
                     @endif
                 </td>

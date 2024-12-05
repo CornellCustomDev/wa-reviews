@@ -30,7 +30,7 @@
                 </a>
             </td>
         </tr>
-        <tr>
+        <tr class="hidden">
             <th>ACT Rules</th>
             <td>
                 @if($guideline->actRules->isNotEmpty())
@@ -46,10 +46,10 @@
 
     {!! Str::markdown($guideline->notes) !!}
 
-
-    <h2>AI Prompt</h2>
-    <aside class="panel">
-        <button style="float:right" onclick="navigator.clipboard.writeText(document.getElementById('ai-prompt').innerText).then(() => {alert('Prompt copied to clipboard!')})">Copy to Clipboard</button>
+    <div class="hidden">
+        <h2>AI Prompt</h2>
+        <aside class="panel">
+            <button style="float:right" onclick="navigator.clipboard.writeText(document.getElementById('ai-prompt').innerText).then(() => {alert('Prompt copied to clipboard!')})">Copy to Clipboard</button>
 <pre id="ai-prompt">Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\GuidelineRules"
 that extends "App\Services\AccessibilityAnalyzer\GuidelineRuleRunner" and is called "Guideline{{ $guideline->id }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler". The base class includes the function "protected function isElementIncludedInAccessibilityTree(\DOMNode $element): bool" for determining if an element is included in the accessibility tree.
 
@@ -59,8 +59,9 @@ Web accessibility guideline:
 
 {!! e($guideline->notes) !!}
 </pre>
+        </aside>
+    </div>
 
-    </aside>
 </div>
 
 {{-- Sidebar for AI help --}}

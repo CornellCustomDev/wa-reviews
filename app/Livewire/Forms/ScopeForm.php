@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Models\Scope;
 use App\Models\Project;
+use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -15,8 +16,6 @@ class ScopeForm extends Form
     public string $title = '';
     #[Validate('url|max:255')]
     public string $url = '';
-    #[Validate('url|max:255')]
-    public string $siteimprove_url = '';
     #[Validate('string')]
     public string $notes = '';
 
@@ -25,7 +24,6 @@ class ScopeForm extends Form
         $this->scope = $scope;
         $this->title = $scope->title;
         $this->url = $scope->url;
-        $this->siteimprove_url = $scope->siteimprove_url ?? '';
         $this->notes = $scope->notes;
     }
 
@@ -39,6 +37,7 @@ class ScopeForm extends Form
         $this->validate();
 
         $this->scope = $project->scopes()->create($this->all());
+        $this->updatePageContent();
 
         return $this->scope;
     }
@@ -52,5 +51,16 @@ class ScopeForm extends Form
         } else {
             $this->scope->update($this->all());
         }
+        $this->updatePageContent();
+    }
+
+    protected function updatePageContent(): void
+    {
+        $parser = new AccessibilityAnalyzerService();
+        $body = $parser->getPageContent($this->scope->url, true);
+        $this->scope->update([
+            'page_content' => $body,
+            'retrieved_at' => now(),
+        ]);
     }
 }

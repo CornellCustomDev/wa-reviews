@@ -686,6 +686,7 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'App\\Services\\AccessibilityAnalyzer\\GuidelineRuleRunner' => __DIR__ . '/../..' . '/app/Services/AccessibilityAnalyzer/GuidelineRuleRunner.php',
         'App\\Services\\AccessibilityAnalyzer\\RuleRunner' => __DIR__ . '/../..' . '/app/Services/AccessibilityAnalyzer/RuleRunner.php',
         'App\\Services\\AzureOpenAI\\ChatService' => __DIR__ . '/../..' . '/app/Services/AzureOpenAI/ChatService.php',
+        'App\\Services\\SiteImprove\\SiteimproveService' => __DIR__ . '/../..' . '/app/Services/SiteImprove/SiteimproveService.php',
         'Attribute' => __DIR__ . '/..' . '/symfony/polyfill-php80/Resources/stubs/Attribute.php',
         'Brick\\Math\\BigDecimal' => __DIR__ . '/..' . '/brick/math/src/BigDecimal.php',
         'Brick\\Math\\BigInteger' => __DIR__ . '/..' . '/brick/math/src/BigInteger.php',
