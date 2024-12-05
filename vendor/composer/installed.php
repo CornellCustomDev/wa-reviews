@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '4b00c0e8b4a969396959f515e877c9b199140abb',
+        'reference' => '2c8b6a775a721d4d479dfcf57f48c5ffd6b4ccca',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -46,7 +46,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '4b00c0e8b4a969396959f515e877c9b199140abb',
+            'reference' => '2c8b6a775a721d4d479dfcf57f48c5ffd6b4ccca',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -514,6 +514,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'livewire/flux' => array(
+            'pretty_version' => 'v1.0.29',
+            'version' => '1.0.29.0',
+            'reference' => 'c319126594bb4023e01a69cf0a039b853d35bb8d',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../livewire/flux',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'livewire/livewire' => array(
             'pretty_version' => 'v3.5.16',
             'version' => '3.5.16.0',
@@ -805,8 +814,8 @@
         'psr/http-client-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-factory' => array(
@@ -821,8 +830,8 @@
         'psr/http-factory-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-message' => array(
@@ -837,8 +846,8 @@
         'psr/http-message-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/log' => array(
@@ -853,8 +862,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0|2.0|3.0',
-                1 => '3.0.0',
+                0 => '3.0.0',
+                1 => '1.0|2.0|3.0',
             ),
         ),
         'psr/simple-cache' => array(
