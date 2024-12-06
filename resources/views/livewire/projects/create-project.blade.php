@@ -8,9 +8,7 @@
         <x-cd.form.text label="Siteimprove Report URL" wire:model="form.siteimprove_url" />
         <x-cd.form.text label="Siteimprove ID" wire:model="form.siteimprove_id" />
 
-        <input type="submit" value="Create Project">
-        <a href="{{ route('projects') }}" >
-            <input type="button" value="Cancel">
-        </a>
+        <x-forms.button type="submit">Create Project</x-forms.button>
+        <x-forms.button :href="route('projects')" variant="cds-secondary">Cancel</x-forms.button>
     </form>
 </div>

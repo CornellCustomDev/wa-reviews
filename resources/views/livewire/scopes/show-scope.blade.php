@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.link-button route="{{ route('scope.edit', $scope) }}" title="Edit" />
+        <x-forms.button :href="route('scope.edit', $scope)">Edit</x-forms.button>
     </div>
 
     <h1>{{ $scope->project->name }}: {{ $scope->title }}</h1>
@@ -21,10 +21,9 @@
                            target="_blank">{{ $issue['title'] }}</a> ({{ $issue['occurrences'] }} occurrences)
 
                         @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
-                            <x-forms.link-button
-                                route="#" title="{{ $guideline->number }}"
+                            <x-forms.button
                                 x-data x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
-                            />
+                            >{{ $guideline->number }}</x-forms.button>
                         @endforeach
                     </li>
                 @endforeach

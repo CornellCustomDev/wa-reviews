@@ -8,7 +8,7 @@
         @foreach($guidelines as $guideline)
             <tr>
                 <th>
-                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}" title="{{ $guideline->number }}" />
+                    <x-forms.button :href="route('guidelines.show', $guideline)">{{ $guideline->number }}</x-forms.button>
                 </th>
                 <td>
                     {{ $guideline->criterion->getLongName() }}

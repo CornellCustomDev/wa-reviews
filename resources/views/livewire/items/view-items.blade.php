@@ -1,7 +1,7 @@
 <div class="cwd-component">
     <form>
         <div class="align-right">
-            <x-forms.link-button route="{{ route('issue.item.create', $issue) }}" title="Add Item" />
+            <x-forms.button :href="route('issue.item.create', $issue)">Add Item</x-forms.button>
         </div>
 
         <h2>Applicable Guidelines</h2>
@@ -34,17 +34,17 @@
                             {{ $item->testing }}
                         </td>
                         <td class="text-nowrap">
-                            <x-forms.link-button route="{{ route('issue.item.edit', [$issue, $item]) }}" title="Edit Item {{ $item->id }}">
+                            <x-forms.button :href="route('issue.item.edit', [$issue, $item])" title="Edit Item {{ $item->id }}">
                                 <span class="zmdi zmdi-edit" style="margin-right: 0" />
-                            </x-forms.link-button>
+                            </x-forms.button>
                             @can('delete', $issue)
-                                <x-forms.link-button
-                                    route="#" title="Delete Item {{ $item->id }}"
+                                <x-forms.button
+                                    title="Delete Item {{ $item->id }}"
                                     wire:click.prevent="delete('{{ $item->id }}')"
                                     wire:confirm="Are you sure you want to delete this item?"
                                 >
                                     <span class="zmdi zmdi-delete" style="margin-right: 0" />
-                                </x-forms.link-button>
+                                </x-forms.button>
                             @endcan
                         </td>
                     </tr>

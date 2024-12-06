@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component">
         <div class="align-right">
-            <x-forms.link-button route="{{ route('act-rules.index') }}" title="All ACT Rules" />
+            <x-forms.button :href="route('act-rules.index')">All ACT Rules</x-forms.button>
         </div>
 
         <h1>
@@ -18,7 +18,7 @@
             <header>Guidelines</header>
             @foreach($rule->guidelines as $guideline)
                 <div>
-                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}" title="{{ $guideline->number }}" />
+                    <x-forms.button :href="route('guidelines.show', $guideline)">{{ $guideline->number }}</x-forms.button>
                     {{ $guideline->name }}
                     (<a href="{{ route('criteria.show', $guideline->criterion) }}">{{ $guideline->criterion->getLongName() }}</a>)
                 </div>

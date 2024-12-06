@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.link-button route="{{ route('project.edit', $project) }}" title="Edit" />
+        <x-forms.button :href="route('project.edit', $project)">Edit</x-forms.button>
     </div>
 
     <h1>{{ $project->name }}</h1>

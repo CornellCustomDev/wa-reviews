@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component">
         <div class="align-right">
-            <x-forms.link-button route="{{ route('criteria.index') }}" title="All Criteria"/>
+            <x-forms.button :href="route('criteria.index')">All Criteria</x-forms.button>
         </div>
 
         <div class="metadata-set metadata-blocks accent-red-dark">
@@ -31,8 +31,7 @@
         @foreach($this->guidelines as $guideline)
             <tr>
                 <th>
-                    <x-forms.link-button route="{{ route('guidelines.show', $guideline) }}"
-                                         title="{{ $guideline->number }}"/>
+                    <x-forms.button :href="route('guidelines.show', $guideline)">{{ $guideline->number }}</x-forms.button>
                 </th>
                 <td>
                     {{ $guideline->name }}
