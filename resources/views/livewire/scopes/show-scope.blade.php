@@ -22,7 +22,8 @@
 
                         @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
                             <x-forms.button
-                                x-data x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
+                                size="xs"
+                                x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
                             >{{ $guideline->number }}</x-forms.button>
                         @endforeach
                     </li>

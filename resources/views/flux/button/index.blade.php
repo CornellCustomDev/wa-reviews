@@ -10,6 +10,8 @@
     'inset' => null,
     'icon' => null,
     'kbd' => null,
+    'background' => null,
+    'textColor' => null,
 ])
 
 @php
@@ -31,13 +33,41 @@ if ($loading && $type !== 'submit') {
     $attributes = $attributes->merge(['wire:loading.attr' => 'data-flux-loading']);
 }
 
+// If the variant is cds, cds-secondary, set the background to the variant color...
+$background ??= match ($variant) {
+    'cds' => 'bg-cds-blue-600 hover:bg-[#2471a7]',
+    'cds-secondary' => 'bg-cds-gray-500 hover:bg-cds-gray-400',
+    default => null,
+};
+// And if the variant is cds, cds-secondary, set the text to white...
+$textColor ??= match ($variant) {
+    'cds',
+    'cds-secondary' => 'text-white',
+    default => null,
+};
+
 $classes = Flux::classes()
     ->add('relative items-center font-medium justify-center gap-2 whitespace-nowrap')
     ->add('disabled:opacity-75 dark:disabled:opacity-75 disabled:cursor-default disabled:pointer-events-none')
     ->add(match ($size) { // Size...
-        'base' => 'h-10 text-sm rounded-lg' . ' ' . ($square ? 'w-10' : 'px-4'),
-        'sm' => 'h-8 text-sm rounded-md' . ' ' . ($square ? 'w-8' : 'px-3'),
-        'xs' => 'h-6 text-xs rounded-md' . ' ' . ($square ? 'w-6' : 'px-2'),
+        'base' => join(' ', [
+            'h-10',
+            'text-sm',
+             (in_array($variant, ['cds', 'cds-secondary']) ? 'rounded-none' : 'rounded-lg'),
+             ($square ? 'w-10' : 'px-4')
+         ]),
+        'sm' => join(' ', [
+            'h-8',
+            'text-sm',
+             (in_array($variant, ['cds', 'cds-secondary']) ? 'rounded-none' : 'rounded-md'),
+            ($square ? 'w-8' : 'px-3')
+        ]),
+        'xs' => join(' ', [
+            'h-6',
+            'text-xs',
+             (in_array($variant, ['cds', 'cds-secondary']) ? 'rounded-none' : 'rounded-md'),
+            ($square ? 'w-6' : 'px-2')
+        ]),
     })
     ->add($inset ? 'flex' : 'inline-flex') // inline-flex is weird with negative margins...
     ->add($inset ? match ($size) { // Inset...
@@ -58,8 +88,8 @@ $classes = Flux::classes()
         'danger' => 'bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-500',
         'ghost' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
         'subtle' => 'bg-transparent hover:bg-zinc-800/5 dark:hover:bg-white/15',
-        'cds' => 'bg-[#2d668e] hover:bg-[#2471a7]',
-        'cds-secondary' => 'bg-[#767676] hover:bg-[#888888]',
+        'cds',
+        'cds-secondary' => $background,
     })
     ->add(match ($variant) { // Text color...
         'primary' => 'text-white dark:text-zinc-800',
@@ -68,8 +98,8 @@ $classes = Flux::classes()
         'danger' => 'text-white',
         'ghost' => 'text-zinc-800 dark:text-white',
         'subtle' => 'text-zinc-400 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-white',
-        'cds' => 'text-white',
-        'cds-secondary' => 'text-white',
+        'cds',
+        'cds-secondary' => $textColor,
     })
     ->add(match ($variant) { // Border color...
         'outline' => 'border border-zinc-200 hover:border-zinc-200 border-b-zinc-300/80 dark:border-zinc-600 dark:hover:border-zinc-600',
