@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.button :href="route('scope.show', $issue->scope)">Back to Scope</x-forms.button>
+        <x-forms.button.back :href="route('scope.show', $issue->scope)">Back to Scope</x-forms.button.back>
     </div>
 
     <h1>{{ $issue->project->name }}: Issue</h1>

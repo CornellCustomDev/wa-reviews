@@ -1,9 +1,7 @@
 <div>
     <div>
         <h2>AI Chat</h2>
-        <button type="button" wire:click="$toggle('showChat')">
-            <span x-text="$wire.showChat ? 'Hide ' : ''"></span>Chat
-        </button>
+        <x-forms.button.chat wire:click="$toggle('showChat')" :$showChat />
     </div>
 
     <div x-show="$wire.showChat">
@@ -12,7 +10,7 @@
 
         <p>
             This chatbot can answer questions about this guideline.
-            <button type="button" wire:click="clearChat">Clear Chat</button>
+            <x-forms.button variant="cds-secondary" size="xs" wire:click="clearChat">Clear Chat</x-forms.button>
         </p>
 
         @foreach ($chatMessages as $message)
@@ -26,7 +24,7 @@
         <form wire:submit="sendChatMessage">
             <label for="userMessage">Chat:</label>
             <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
-            <button type="submit">Send</button>
+            <x-forms.button size="sm" type="submit">Send</x-forms.button>
             <span wire:loading.delay wire:target="sendChatMessage"> Analyzing...</span>
         </form>
     </div>

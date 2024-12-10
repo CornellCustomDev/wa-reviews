@@ -1,6 +1,6 @@
 <div class="cwd-component">
     <div class="align-right">
-        <x-forms.button :href="route('guidelines.index')">All Guidelines</x-forms.button>
+        <x-forms.button.back :href="route('guidelines.index')">All Guidelines</x-forms.button.back>
     </div>
 
     <div class="metadata-set metadata-blocks accent-red-dark">

@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component align-right">
         @can('update', $project)
-            <x-forms.button :href="route('project.scope.create', $project)">Add Scope</x-forms.button>
+            <x-forms.button.add :href="route('project.scope.create', $project)">Add Scope</x-forms.button.add>
         @endcan
     </div>
 
@@ -33,17 +33,14 @@
                     {{ $scope->issues()->count() }}
                 </td>
                 <td class="text-nowrap">
-                    <x-forms.button :href="route('scope.show', $scope)" title="View scope {{ $scope->id }}">
-                        <span class="zmdi zmdi-eye" style="margin-right: 0"/>
-                    </x-forms.button>
+                    <x-forms.button.view size="xs" :href="route('scope.show', $scope)" title="View scope {{ $scope->id }}" />
                     @can('update', $project)
-                        <x-forms.button
+                        <x-forms.button.delete
+                            size="xs"
                             title="Delete Scope {{ $scope->id }}"
                             wire:click.prevent="delete('{{ $scope->id }}')"
                             wire:confirm="Are you sure you want to delete the scope titled &quot;{{ $scope->title }}&quot;?"
-                        >
-                            <span class="zmdi zmdi-delete" style="margin-right: 0"/>
-                        </x-forms.button>
+                        />
                     @endcan
                 </td>
             </tr>

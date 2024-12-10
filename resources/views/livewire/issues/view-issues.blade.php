@@ -1,7 +1,7 @@
 <div>
     <div class="cwd-component align-right">
         @can('update', $scope->project)
-            <x-forms.button :href="route('scope.issue.create', $scope)">Add Issue</x-forms.button>
+            <x-forms.button.add :href="route('scope.issue.create', $scope)" icon="plus-circle">Add Issue</x-forms.button.add>
         @endcan
     </div>
 
@@ -35,9 +35,14 @@
                     @endif
                 </td>
                 <td class="text-nowrap">
-                    <x-forms.button-view :href="route('issue.show', $issue)" title="View Issue {{ $issue->id }}" />
+                    <x-forms.button.view
+                        size="xs"
+                        :href="route('issue.show', $issue)"
+                        title="View Issue {{ $issue->id }}"
+                    />
                     @can('delete', $issue)
-                        <x-forms.button-delete
+                        <x-forms.button.delete
+                            size="xs"
                             title="Delete Issue {{ $issue->id }}"
                             wire:click.prevent="delete('{{ $issue->id }}')"
                             wire:confirm="Are you sure you want to delete the issue for &quot;{{ $issue->target }}&quot;?"

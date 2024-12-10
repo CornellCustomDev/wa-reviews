@@ -1,6 +1,3 @@
-@props([
-    'title',
-])
 @php
     $attributes = $attributes->merge([
         'variant' => 'cds-secondary',
@@ -8,4 +5,4 @@
         'size' => 'sm',
     ])
 @endphp
-<x-forms.button :$title :$attributes />
+<x-forms.button :$attributes>{!! trim($slot) !!}</x-forms.button>

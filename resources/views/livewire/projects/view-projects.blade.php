@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.button :href="route('project.create')">Create New Project</x-forms.button>
+        <x-forms.button.add :href="route('project.create')">Create New Project</x-forms.button.add>
     </div>
 
     <h1>Projects</h1>
@@ -21,17 +21,18 @@
                 <td><a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
                 <td>
-                    <x-forms.button href="{{ route('project.show', $project) }}" title="View project {{ $project->id }}">
-                        <span class="zmdi zmdi-eye" style="margin-right: 0"/>
-                    </x-forms.button>
+                    <x-forms.button.view
+                        size="xs"
+                        :href="route('project.show', $project)"
+                        title="View project {{ $project->id }}"
+                    />
                     @can('delete', $project)
-                        <x-forms.button
+                        <x-forms.button.delete
+                            size="xs"
                             title="Delete Project {{ $project->id }}"
                             wire:click.prevent="delete('{{ $project->id }}')"
                             wire:confirm="Are you sure you want to delete the project &quot;{{ $project->name }}&quot;?"
-                        >
-                            <span class="zmdi zmdi-delete" style="margin-right: 0"/>
-                        </x-forms.button>
+                        />
                     @endcan
                 </td>
             </tr>

@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.button :href="route('scope.edit', $scope)">Edit</x-forms.button>
+        <x-forms.button size="sm" :href="route('scope.edit', $scope)" icon="pencil-square" title="Edit Scope">Edit</x-forms.button>
     </div>
 
     <h1>{{ $scope->project->name }}: {{ $scope->title }}</h1>
@@ -22,6 +22,7 @@
 
                         @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
                             <x-forms.button
+                                title="View Guideline {{ $guideline->number }}"
                                 size="xs"
                                 x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
                             >{{ $guideline->number }}</x-forms.button>

@@ -2,13 +2,11 @@
     <div>
         <h2>AI Help</h2>
         @if ($useGuidelines)
-            <button type="button" wire:click="populateGuidelines">
+            <x-forms.button size="sm" wire:click="populateGuidelines" icon="check">
                 Populate Guidelines
-            </button>
+            </x-forms.button>
         @endif
-        <button type="button" wire:click="$toggle('showChat')">
-            <span x-text="$wire.showChat ? 'Hide ' : ''"></span>Chat
-        </button>
+        <x-forms.button.chat wire:click="$toggle('showChat')" :$showChat />
         <span wire:loading.delay wire:target="populateGuidelines"> Analyzing...</span>
     </div>
 
@@ -32,7 +30,7 @@
         <form wire:submit="sendChatMessage">
             <label for="userMessage">Chat:</label>
             <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
-            <button type="submit">Send</button>
+            <x-forms.button type="submit" size="sm">Send</x-forms.button>
             <span wire:loading.delay wire:target="sendChatMessage"> Analyzing...</span>
         </form>
     </div>
