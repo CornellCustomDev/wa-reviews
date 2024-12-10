@@ -36,14 +36,12 @@
                 </td>
                 <td class="text-nowrap">
                     <x-forms.button.view
-                        size="xs"
-                        :href="route('issue.show', $issue)"
-                        title="View Issue {{ $issue->id }}"
+                        :href="route('issue.show', $issue)" title="View Issue {{ $issue->id }}" size="xs"
                     />
                     @can('delete', $issue)
                         <x-forms.button.delete
-                            size="xs"
                             title="Delete Issue {{ $issue->id }}"
+                            size="xs"
                             wire:click.prevent="delete('{{ $issue->id }}')"
                             wire:confirm="Are you sure you want to delete the issue for &quot;{{ $issue->target }}&quot;?"
                         />

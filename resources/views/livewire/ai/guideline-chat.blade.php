@@ -24,7 +24,7 @@
         <form wire:submit="sendChatMessage">
             <label for="userMessage">Chat:</label>
             <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
-            <x-forms.button size="sm" type="submit">Send</x-forms.button>
+            <x-forms.button type="submit">Send</x-forms.button>
             <span wire:loading.delay wire:target="sendChatMessage"> Analyzing...</span>
         </form>
     </div>

@@ -22,14 +22,12 @@
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
                 <td>
                     <x-forms.button.view
-                        size="xs"
-                        :href="route('project.show', $project)"
-                        title="View project {{ $project->id }}"
+                        :href="route('project.show', $project)" title="View project {{ $project->id }}" size="xs"
                     />
                     @can('delete', $project)
                         <x-forms.button.delete
-                            size="xs"
                             title="Delete Project {{ $project->id }}"
+                            size="xs"
                             wire:click.prevent="delete('{{ $project->id }}')"
                             wire:confirm="Are you sure you want to delete the project &quot;{{ $project->name }}&quot;?"
                         />

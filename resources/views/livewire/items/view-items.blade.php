@@ -35,14 +35,14 @@
                         </td>
                         <td class="text-nowrap">
                             <x-forms.button.edit
-                                size="xs"
                                 :href="route('issue.item.edit', [$issue, $item])"
                                 title="Edit Item {{ $item->id }}"
+                                size="xs"
                             />
                             @can('delete', $issue)
                                 <x-forms.button.delete
-                                    size="xs"
                                     title="Delete Item {{ $item->id }}"
+                                    size="xs"
                                     wire:click.prevent="delete('{{ $item->id }}')"
                                     wire:confirm="Are you sure you want to delete this item?"
                                 />

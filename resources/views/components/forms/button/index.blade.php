@@ -1,5 +1,6 @@
 @props([
-    // Default all buttons to cds variant
+    // Default all buttons to "cds" variant, size "sm"
     'variant' => 'cds',
+    'size' => 'sm',
 ])
-<flux:button :$variant :$attributes>{!! trim($slot) !!}</flux:button>
+<flux:button :$variant :$size :$attributes>{!! trim($slot) !!}</flux:button>

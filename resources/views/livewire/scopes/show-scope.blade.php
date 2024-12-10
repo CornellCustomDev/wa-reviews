@@ -1,6 +1,6 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.button size="sm" :href="route('scope.edit', $scope)" icon="pencil-square" title="Edit Scope">Edit</x-forms.button>
+        <x-forms.button :href="route('scope.edit', $scope)" icon="pencil-square" title="Edit Scope">Edit</x-forms.button>
     </div>
 
     <h1>{{ $scope->project->name }}: {{ $scope->title }}</h1>

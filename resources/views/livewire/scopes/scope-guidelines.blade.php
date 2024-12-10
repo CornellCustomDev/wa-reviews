@@ -5,7 +5,6 @@
         @else
             <div style="float: right">
                 <x-forms.button
-                    size="sm"
                     variant="{{ $showGuidelines ? 'cds-secondary' : 'cds' }}"
                     icon="{{ $showGuidelines ? 'arrow-up' : 'arrow-down' }}"
                     x-on:click="open = !open"

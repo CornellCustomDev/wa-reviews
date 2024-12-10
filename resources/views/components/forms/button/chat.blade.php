@@ -5,7 +5,6 @@
     $attributes = $attributes->merge([
         'variant' => $showChat ? 'cds-secondary' : 'cds',
         'icon' => 'chat-bubble-left-right',
-        'size' => 'sm',
     ]);
 @endphp
 <x-forms.button :$attributes>{{ $showChat ? 'Hide Chat' : 'Chat' }}</x-forms.button>

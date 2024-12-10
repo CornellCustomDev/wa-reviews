@@ -33,11 +33,13 @@
                     {{ $scope->issues()->count() }}
                 </td>
                 <td class="text-nowrap">
-                    <x-forms.button.view size="xs" :href="route('scope.show', $scope)" title="View scope {{ $scope->id }}" />
+                    <x-forms.button.view
+                        size="xs" :href="route('scope.show', $scope)" title="View scope {{ $scope->id }}"
+                    />
                     @can('update', $project)
                         <x-forms.button.delete
-                            size="xs"
                             title="Delete Scope {{ $scope->id }}"
+                            size="xs"
                             wire:click.prevent="delete('{{ $scope->id }}')"
                             wire:confirm="Are you sure you want to delete the scope titled &quot;{{ $scope->title }}&quot;?"
                         />

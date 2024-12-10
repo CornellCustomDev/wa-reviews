@@ -2,7 +2,7 @@
     <div>
         <h2>AI Help</h2>
         @if ($useGuidelines)
-            <x-forms.button size="sm" wire:click="populateGuidelines" icon="check">
+            <x-forms.button wire:click="populateGuidelines" icon="check">
                 Populate Guidelines
             </x-forms.button>
         @endif
@@ -30,7 +30,7 @@
         <form wire:submit="sendChatMessage">
             <label for="userMessage">Chat:</label>
             <textarea wire:model="userMessage" placeholder="Type your message here..."></textarea>
-            <x-forms.button type="submit" size="sm">Send</x-forms.button>
+            <x-forms.button type="submit">Send</x-forms.button>
             <span wire:loading.delay wire:target="sendChatMessage"> Analyzing...</span>
         </form>
     </div>
