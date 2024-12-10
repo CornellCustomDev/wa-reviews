@@ -1,15 +1,11 @@
 @props(['breadcrumbs' => []])
 <div id="breadcrumb-navigation" {{ $attributes }}>
     <nav class="breadcrumb" aria-label="Breadcrumb">
-        <ul class="list-menu">
-            <li><a href="/"><span class="limiter">Home</span></a></li>
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item :href="route('welcome')" class="text-xs" icon="home" />
             @foreach($breadcrumbs as $breadcrumb => $route)
-                @if ($route == 'active')
-                    <li><span class="limiter">{{ $breadcrumb }}</span></li>
-                @else
-                    <li><a href="{{ $route }}"><span class="limiter">{{ $breadcrumb }}</span></a></li>
-                @endif
+                <flux:breadcrumbs.item :href="$route">{{ $breadcrumb }}</flux:breadcrumbs.item>
             @endforeach
-        </ul>
+        </flux:breadcrumbs>
     </nav>
 </div>
