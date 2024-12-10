@@ -11,7 +11,7 @@
     @foreach ($checkboxes as $cb) 
         <div class="form-item">
             <input type="checkbox" id="{{$field}}-{{$loop->index}}" name="{{ $field }}" value="{{ $cb['value']}}" 
-                {{ $attributes->whereStartsWith('wire:model') }}
+                {{ $attributes->whereStartsWith('wire') }}
                 {{ $attributes->whereStartsWIth('aria') }}
                 @if (!empty($description))
                     aria-describedby="{{ $field }}_desc"

@@ -2,7 +2,7 @@
 
 NOTE: you must add the component
 ```
-    <x-cd.component-scripts />
+    <x-cd.dialog.component-scripts />
 ```
 to the head element of the page before using the `cd.dialog` component.
 

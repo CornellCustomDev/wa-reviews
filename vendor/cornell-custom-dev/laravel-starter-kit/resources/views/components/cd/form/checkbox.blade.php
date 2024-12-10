@@ -7,17 +7,15 @@
   $field = $name ?? $attributes->whereStartsWith('wire:model')->first();
 @endphp
     <x-slot name="field_title">{!! $label !!}</x-slot>
-    <div class="form-item">
-        <input type="checkbox" id="{{ $id ?? $field }}" 
-            name="{{ $field }}"
-            value="{{ $value }}" 
-            {{ $attributes->whereStartsWith('wire:model') }}
-            {{ $attributes->whereStartsWith('aria')  }}
-            {{ $attributes->whereStartsWith('checked')  }}
-            @if (!empty($description))
-                aria-describedby="{{ $field }}_desc"
-            @endif
-        />
-        <span class="option-label" for="{{$field}}">{!!$text??''!!}</span>
-    </div>
+    <input type="checkbox" id="{{ $id ?? $field }}" 
+        name="{{ $field }}"
+        value="{{ $value }}" 
+        {{ $attributes->whereStartsWith('wire') }}
+        {{ $attributes->whereStartsWith('aria')  }}
+        {{ $attributes->whereStartsWith('checked')  }}
+        @if (!empty($description))
+            aria-describedby="{{ $field }}_desc"
+        @endif
+    />
+    <span class="option-label" for="{{$field}}">{!!$text??''!!}</span>
 </x-cd.form.form-item>
