@@ -1,9 +1,5 @@
 @props([
+    // Default all buttons to cds variant
     'variant' => 'cds',
 ])
-@php
-    $attributes = $attributes->merge([
-        'variant' => $variant,
-    ])
-@endphp
-<flux:button :$attributes>{!! trim($slot) !!}</flux:button>
+<flux:button :$variant :$attributes>{!! trim($slot) !!}</flux:button>
