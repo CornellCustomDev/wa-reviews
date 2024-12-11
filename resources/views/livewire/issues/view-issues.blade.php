@@ -13,11 +13,9 @@
             <tr wire:key="{{ $issue->id }}">
                 <td>
                     {{ $issue->target }}
-{{--                    <livewire:issues.issue-field :key="$issue->id.'-target'" :$issue field="target" label="Target"/>--}}
                 </td>
                 <td>
                     {{ $issue->description }}
-{{--                    <livewire:issues.issue-field :key="$issue->id.'-description'" :$issue field="description" label="Description"/>--}}
                 </td>
                 <td>
                     @if($issue->items)

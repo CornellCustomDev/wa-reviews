@@ -1,8 +1,9 @@
 <div>
     @if ($project->siteimprove_url)
         <flux:subheading class="mb-4">
-            <flux:icon.arrow-right-start-on-rectangle class="inline-block -mt-1" variant="mini"/>
-            <a href="{{ $project->siteimprove_url }}" target="_blank">View Siteimprove Report</a>
+            <a href="{{ $project->siteimprove_url }}" target="_blank">
+                <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700" />
+            View Siteimprove Report</a>
         </flux:subheading>
 
         @if ($siteimprovePages)
@@ -19,20 +20,22 @@
                         <td class="align-middle">
                             {{ $page['url'] }}
                             ({{ $page['issues'] }} {{ Str::plural('issue', $page['issues']) }},
-                            <a href="{{ $page['page_report'] }}" target="_blank">Page Report</a>
-                            <flux:icon.arrow-right-start-on-rectangle class="inline-block -mt-1" variant="mini"/>
+                            <a href="{{ $page['page_report'] }}" target="_blank">
+                                Page Report
+                                <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
+                            </a>
                             )
                         </td>
                         <td>
                             @if($scope = $this->pageInScope($page['url']))
-    {{--                            view scope --}}
                                 <x-forms.button.view
                                     :href="route('scope.show', $scope)"
-                                    size="xs" icon="eye" title="View scope {{ $scope->id }}" />
+                                    size="sm" icon="eye" title="View scope {{ $scope->id }}" />
                             @else
                                 <x-forms.button
                                     :href="route('project.scope.create', ['project' => $project, 'url' => $page['url']])"
-                                    size="xs" icon="plus-circle" title="Add Row {{ $loop->iteration }} to Scope" />
+                                    variant="cds-secondary"
+                                    size="sm" icon="plus" title="Add Row {{ $loop->iteration }} to Scope" />
                             @endif
                         </td>
                     </tr>

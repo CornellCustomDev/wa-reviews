@@ -1,8 +1,9 @@
 <div>
     @if ($this->siteimproveUrl())
         <flux:subheading class="mb-4">
-            <flux:icon.arrow-right-start-on-rectangle class="inline-block -mt-1" variant="mini"/>
-            <a href="{{ $this->siteimproveUrl() }}" target="_blank">View Siteimprove Page Report</a>
+            <a href="{{ $this->siteimproveUrl() }}" target="_blank">
+                <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700" />
+                View Siteimprove Page Report</a>
         </flux:subheading>
 
         @if (!empty($this->siteImproveIssues()))
@@ -20,8 +21,9 @@
                                 {{ $issue['title'] }}
                                 ({{ $issue['occurrences'] }} {{ Str::plural('occurence', $issue['occurrences']) }},
                                 <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue['rule_id'] }}/failed"
-                                   target="_blank">Issue Detail</a>
-                                <flux:icon.arrow-right-start-on-rectangle class="inline-block -mt-1" variant="mini"/>
+                                   target="_blank">Issue Detail
+                                    <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
+                                </a>
                                 )
                             </td>
                             <td>

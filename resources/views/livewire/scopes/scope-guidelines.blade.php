@@ -44,7 +44,12 @@
                     @endphp
                     <tr wire:key="{{ $id }}">
                         <td x-data x-on:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })" style="cursor: pointer;">
-                            {{ $guideline->number }}: {{ $guideline->name }}
+                            <x-forms.button
+                                title="View Guideline {{ $guideline->number }}"
+                                size="xs"
+                            >{{ $guideline->number }}</x-forms.button>
+
+                             {{ $guideline->name }}
                             ({{ $guideline->criterion->number }})
                             <br>
                             Tools:
