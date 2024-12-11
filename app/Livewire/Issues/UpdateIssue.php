@@ -5,8 +5,10 @@ namespace App\Livewire\Issues;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Scope;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
+#[Layout('components.layouts.app')]
 class UpdateIssue extends Component
 {
     public IssueForm $form;
@@ -20,9 +22,9 @@ class UpdateIssue extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->scope->project);
+        $this->authorize('update', $this->form->issue);
         $this->form->update();
 
-        return redirect()->route('scopes.show', $this->scope);
+        return redirect()->route('issue.show', $this->form->issue);
     }
 }

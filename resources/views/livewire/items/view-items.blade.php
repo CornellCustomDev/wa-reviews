@@ -1,8 +1,10 @@
 <div class="cwd-component">
     <form>
-        <div class="align-right">
-            <x-forms.button.add :href="route('issue.item.create', $issue)" title="Add Item" />
-        </div>
+        @can('update', $issue)
+            <div class="align-right">
+                <x-forms.button.add :href="route('issue.item.create', $issue)" title="Add Item" />
+            </div>
+        @endcan
 
         <h2>Applicable Guidelines</h2>
 

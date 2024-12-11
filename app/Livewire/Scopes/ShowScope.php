@@ -7,6 +7,7 @@ use App\Models\SiteimproveRule;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
@@ -18,6 +19,8 @@ class ShowScope extends Component
 
     #[Url]
     public string $tab = 'issues';
+    #[Url(as: 'e', history: true)]
+    public bool $showEdit = false;
 
     #[Computed('siteimproveIssueCount')]
     public function siteimproveIssueCount(): string
@@ -33,9 +36,19 @@ class ShowScope extends Component
         $this->scope->refresh();
     }
 
+    public function updated($name, $value): void
+    {
+        if ($name !== 'showEdit') {
+            $this->showEdit = false;
+        }
+    }
+
     public function render()
     {
         $this->authorize('view', $this->scope);
+        if ($this->showEdit === true && !Gate::allows('update', $this->scope)) {
+            $this->showEdit = false;
+        }
 
         return view('livewire.scopes.show-scope')
             ->layout('components.layouts.app', [

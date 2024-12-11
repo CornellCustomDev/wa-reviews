@@ -8,7 +8,7 @@
     @include('livewire.scopes.details')
 
     <flux:tab.group class="mt-8">
-        <flux:tabs wire:model="tab">
+        <flux:tabs wire:model.live="tab">
             <flux:tab name="issues">Issues ({{ count($scope->issues) }})</flux:tab>
             <flux:tab name="siteimprove">Siteimprove ({{ $this->siteimproveIssueCount() }})</flux:tab>
             <flux:tab name="guidelines">Guidelines</flux:tab>
