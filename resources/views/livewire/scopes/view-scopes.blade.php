@@ -1,12 +1,4 @@
 <div>
-    <div class="cwd-component align-right">
-        @can('update', $project)
-            <x-forms.button.add :href="route('project.scope.create', $project)">Add Scope</x-forms.button.add>
-        @endcan
-    </div>
-
-    <h2>Scope</h2>
-
     <table class="table striped bordered">
         <thead>
         <tr>
@@ -49,4 +41,8 @@
         @endforeach
         </tbody>
     </table>
+
+    @can('update', $project)
+        <x-forms.button.add :href="route('project.scope.create', $project)">Add Scope</x-forms.button.add>
+    @endcan
 </div>
