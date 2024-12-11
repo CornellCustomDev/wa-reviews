@@ -1,9 +1,13 @@
 <div>
+    <div class="cwd-component align-right">
+        <x-forms.button.back :href="route('project.show', $scope->project)" title="Back to Project" />
+    </div>
+
     <h1>{{ $scope->project->name }}: {{ $scope->title }}</h1>
 
     @include('livewire.scopes.details')
 
-    <flux:tab.group>
+    <flux:tab.group class="mt-8">
         <flux:tabs wire:model="tab">
             <flux:tab name="issues">Issues ({{ count($scope->issues) }})</flux:tab>
             <flux:tab name="siteimprove">Siteimprove ({{ $this->siteimproveIssueCount() }})</flux:tab>

@@ -1,4 +1,4 @@
-<div class="mb-4 max-w-screen-md">
+<div>
     <div class="col-span-2 border rounded border-cds-gray-200 p-4">
         <x-forms.button.edit class="float-right" :href="route('scope.edit', $scope)" title="Edit Scope" />
 
