@@ -6,11 +6,15 @@ use App\Models\Project;
 use App\Services\SiteImprove\SiteimproveService;
 use Exception;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ShowProject extends Component
 {
     public Project $project;
+
+    #[Url]
+    public string $tab = 'scope';
 
     #[Computed('siteimprovePagesWithIssues')]
     public function siteimprovePagesWithIssues(): array

@@ -1,42 +1,25 @@
 <div>
-    <div class="cwd-component align-right">
-        <x-forms.button :href="route('scope.edit', $scope)" icon="pencil-square" title="Edit Scope">Edit</x-forms.button>
-    </div>
-
     <h1>{{ $scope->project->name }}: {{ $scope->title }}</h1>
 
     @include('livewire.scopes.details')
 
-    <div style="margin-bottom: 2em">
-        <livewire:issues.view-issues :$scope />
-    </div>
+    <flux:tab.group>
+        <flux:tabs wire:model="tab">
+            <flux:tab name="issues">Issues ({{ count($scope->issues) }})</flux:tab>
+            <flux:tab name="siteimprove">Siteimprove ({{ $this->siteimproveIssueCount() }})</flux:tab>
+            <flux:tab name="guidelines">Guidelines</flux:tab>
+        </flux:tabs>
 
-    @if ($this->siteimproveIssues())
-        <div style="margin-bottom: 2em">
-            <h2>Siteimprove Issues</h2>
-            <ul>
-                @foreach ($this->siteimproveIssues() as $issue)
-                    <li>
-                        <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue['rule_id'] }}/failed"
-                           target="_blank">{{ $issue['title'] }}</a> ({{ $issue['occurrences'] }} occurrences)
-
-                        @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
-                            <x-forms.button
-                                title="View Guideline {{ $guideline->number }}"
-                                size="xs"
-                                x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
-                            >{{ $guideline->number }}</x-forms.button>
-                        @endforeach
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <div style="margin-bottom: 2em;">
-        <h2>Guidelines Review</h2>
-        <livewire:scopes.scope-guidelines :$scope />
-    </div>
+        <flux:tab.panel name="issues" class="!pt-6">
+            <livewire:issues.view-issues :$scope />
+        </flux:tab.panel>
+        <flux:tab.panel name="siteimprove" class="!pt-6">
+            <livewire:scopes.siteimprove-issues :$scope />
+        </flux:tab.panel>
+        <flux:tab.panel name="guidelines" class="!pt-6">
+            <livewire:scopes.scope-guidelines :$scope />
+        </flux:tab.panel>
+    </flux:tab.group>
 </div>
 
 <x-slot:sidebarPrimary>
