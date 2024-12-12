@@ -2,8 +2,8 @@
     @if ($this->siteimproveUrl())
         <flux:subheading class="mb-4">
             <a href="{{ $this->siteimproveUrl() }}" target="_blank">
-                <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700" />
                 View Siteimprove Page Report</a>
+            <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
         </flux:subheading>
 
         @if (!empty($this->siteImproveIssues()))
@@ -19,18 +19,22 @@
                         <tr>
                             <td>
                                 {{ $issue['title'] }}
+                                <span class="text-nowrap">
                                 ({{ $issue['occurrences'] }} {{ Str::plural('occurence', $issue['occurrences']) }},
                                 <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue['rule_id'] }}/failed"
-                                   target="_blank">Issue Detail
+                                   target="_blank" title="View Siteimprove report for {{ $issue['title'] }}">
+                                    Issue Detail
                                     <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
                                 </a>
                                 )
+                                </span>
                             </td>
                             <td>
                                 @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
                                     <x-forms.button
                                         title="View Guideline {{ $guideline->number }}"
                                         size="xs"
+                                        class="mb-1"
                                         x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
                                     >{{ $guideline->number }}</x-forms.button>
                                 @endforeach
