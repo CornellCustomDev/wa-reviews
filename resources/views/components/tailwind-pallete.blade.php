@@ -30,3 +30,9 @@
 <flux.button class="bg-wa-warn" icon="eye" />
 <flux.button class="bg-wa-fail" icon="eye" />
 <flux.button class="bg-wa-na" icon="eye" />
+
+<h2>flux:editor</h2>
+<flux:editor class="[&_[data-slot=content]]:min-h-24" />
+<flux:editor class="[&_[data-slot=content]]:min-h-44" />
+<flux:editor class="[&_[data-slot=content]]:min-h-64" />
+<flux:editor class="[&_[data-slot=content]]:last:!mb-0" />

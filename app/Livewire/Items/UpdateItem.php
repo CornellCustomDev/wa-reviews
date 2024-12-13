@@ -22,9 +22,9 @@ class UpdateItem extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->issue->project);
+        $this->authorize('update', $this->form->item->issue);
         $this->form->update();
 
-        return redirect()->route('issue.show', $this->issue);
+        return redirect()->route('issue.show', $this->form->item->issue);
     }
 }
