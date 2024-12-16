@@ -10,7 +10,7 @@
     <table class="table striped bordered">
         <thead>
         <tr>
-            <th>Guideline</th>
+            <th>Assessment</th>
             <th>Observations</th>
             <th>Recommendations</th>
             <th>Testing</th>
@@ -21,9 +21,7 @@
         @foreach($issue->items as $item)
             <tr wire:key="{{ $item->id }}">
                 <td>
-                    <a href="{{ route('guidelines.show', $item->guideline) }}">Guideline {{ $item->guideline->number }}</a> {{ $item->guideline->name }} ({{ $item->assessment }})
-                    <hr>
-                    {{ $item->guideline->criterion->getNumberName() }}
+                    @include('livewire.issues.item-observation', ['item' => $item])
                 </td>
                 <td style="vertical-align: top">
                     {!! $item->description !!}

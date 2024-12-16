@@ -36,4 +36,5 @@
 {{-- Sidebar for AI help --}}
 <x-slot:sidebarPrimary>
     <livewire:ai.guideline-help :$issue />
+    <livewire:guidelines.sidebar />
 </x-slot:sidebarPrimary>
