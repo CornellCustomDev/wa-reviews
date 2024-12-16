@@ -12,6 +12,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @vite('resources/css/app.css')
 
     <title>{{ $title }}</title>
 
@@ -29,14 +30,20 @@
     <link href="{{ asset('cwd-framework/fonts/font-awesome.min.css') }}" rel="stylesheet">
     <link href="{{ asset('cwd-framework/fonts/material-design-iconic-font.min.css') }}" rel="stylesheet">
 
+    <!-- Inter font -->
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
+
     @livewireStyles
+    @fluxStyles
 </head>
 <body @class([
     'cu-seal',
     'sidebar' => $sidebar,
     'sidebar-right' => $sidebar,
     'sidebar-tint' => $sidebar,
-    'sidebar-tint-edge' => $sidebar
+    'sidebar-tint-edge' => $sidebar,
+    'light',
 ])>
 
 <div id="skipnav"><a href="#main">Skip to main content</a></div>
@@ -86,5 +93,6 @@
 </script>
 
 @livewireScripts
+@fluxScripts
 </body>
 </html>

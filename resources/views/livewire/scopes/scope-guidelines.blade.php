@@ -1,10 +1,14 @@
 <div>
-    <div x-data="{ open: $wire.entangle('showGuidelines') }">
+    <div x-data="{ open: $wire.entangle('showGuidelines').live }">
         @if($scopeGuidelines->isEmpty())
             <button x-on:click="$wire.generateGuidelines; open = true">Generate Guidelines</button>
         @else
             <div style="float: right">
-                <button x-on:click="open = !open"><span x-text="open ? 'Hide' : 'Show'"></span> Guidelines</button>
+                <x-forms.button
+                    variant="{{ $showGuidelines ? 'cds-secondary' : 'cds' }}"
+                    icon="{{ $showGuidelines ? 'arrow-up' : 'arrow-down' }}"
+                    x-on:click="open = !open"
+                ><span x-text="open ? 'Hide Guidelines' : 'Show Guidelines'"></span></x-forms.button>
             </div>
             <h3>Guidelines</h3>
         @endif

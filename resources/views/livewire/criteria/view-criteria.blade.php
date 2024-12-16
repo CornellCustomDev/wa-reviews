@@ -13,8 +13,7 @@
         @foreach($criteria as $criterion)
             <tr>
                 <th>
-                    <x-forms.link-button route="{{ route('criteria.show', $criterion) }}"
-                                         title="{{ $criterion->number }}"/>
+                    <x-forms.button :href="route('criteria.show', $criterion)">{{ $criterion->number }}</x-forms.button>
                 </th>
                 <td>
                     <a href="{{ route('criteria.show', $criterion) }}">{{ $criterion->getLongName() }}</a>

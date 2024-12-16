@@ -1,6 +1,6 @@
 <div class="cwd-component">
     <div class="align-right">
-        <x-forms.link-button route="{{ route('guidelines.index') }}" title="All Guidelines" />
+        <x-forms.button.back :href="route('guidelines.index')">All Guidelines</x-forms.button.back>
     </div>
 
     <div class="metadata-set metadata-blocks accent-red-dark">

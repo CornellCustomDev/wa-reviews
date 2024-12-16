@@ -23,10 +23,8 @@
     <form wire:submit="save">
         @include('livewire.items.fields')
 
-        <input type="submit" value="Add Item">
-        <a href="{{ route('issue.show', $issue) }}" >
-            <input type="button" value="Cancel">
-        </a>
+        <x-forms.button type="submit">Add Item</x-forms.button>
+        <x-forms.button :href="route('issue.show', $issue)" variant="cds-secondary">Cancel</x-forms.button>
     </form>
 
 </div>

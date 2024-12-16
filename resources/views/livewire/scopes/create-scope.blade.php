@@ -6,9 +6,7 @@
         <x-cd.form.text label="URL" wire:model="form.url" />
         <x-forms.textarea label="Notes" wire:model="form.notes" />
 
-        <input type="submit" value="Add Scope">
-        <a href="{{ route('project.show', $this->project) }}" >
-            <input type="button" value="Cancel">
-        </a>
+        <x-forms.button type="submit" variant="cds">Add Scope</x-forms.button>
+        <x-forms.button :href="route('project.show', $this->project)" variant="cds-secondary">Cancel</x-forms.button>
     </form>
 </div>

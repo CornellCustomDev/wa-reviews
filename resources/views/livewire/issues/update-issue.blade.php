@@ -5,9 +5,7 @@
         <x-cd.form.text label="Target" wire:model="form.target"/>
         <x-cd.form.text label="Description" wire:model="form.description"/>
 
-        <input type="submit" value="Update Issue">
-        <a href="{{ route('scopes.show', [$form->issue->scope->project, $form->issue->scope]) }}">
-            <input type="button" value="Cancel">
-        </a>
+        <x-forms.button type="submit">Update Issue</x-forms.button>
+        <x-forms.button :href="route('scopes.show', [$form->issue->scope->project, $form->issue->scope])">Cancel</x-forms.button>
     </form>
 </div>
