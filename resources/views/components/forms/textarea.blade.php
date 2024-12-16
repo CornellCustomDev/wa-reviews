@@ -1,6 +1,5 @@
 @props([
     'label',
-    'id' => $attributes->whereStartsWith('wire:model')->first(),
     'toolbar' => 'heading bold italic underline | bullet ordered blockquote | link code ~ undo redo',
     'variant' => 'cds',
     'size' => 'base',
@@ -15,4 +14,4 @@ $classes = Flux::classes()
         'lg' => 'min-h-64',
     })
 @endphp
-<flux:editor :$label :$variant :attributes="$attributes->class($classes)" />
+<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" />

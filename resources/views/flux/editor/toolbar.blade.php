@@ -10,9 +10,7 @@ $border ??= match ($variant) {
 };
 
 $classes = Flux::classes()
-    ->add('block overflow-x-auto bg-zinc-50')
-    ->add('border-b ' . $border)
-    ->add('w-full')
+    ->add('block overflow-x-auto border-b bg-zinc-50' . $border . 'w-full')
     ->add('dark:bg-white/[6%]')
     ->add('dark:border-white/5')
 ;
