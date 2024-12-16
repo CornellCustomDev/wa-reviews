@@ -152,21 +152,27 @@ PROMPT;
         $itemsContext = $this->issue->items->isNotEmpty()
             ? json_encode($this->issue->items, JSON_PRETTY_PRINT)
             : json_encode('No applicable guidelines have been identified.');
+        $pageContent = $this->issue->scope->page_content ?? '';
 
         $prompt = <<<PROMPT
 As an expert in web accessibility guidelines, your task is to assist users in understanding applicable guidelines for specific web accessibility issues.
 
-Context:
+## Context:
 - The user has provided an accessibility issue: $issueContext
 - If there are any applicable guidelines that have been identified, they are listed here:
 ```JSON
 $itemsContext
 ```
 
-Desired Outcome:
+## Desired Outcome:
 The final output should be informative, succinct, and user-friendly, allowing users to easily understand the relevance and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your descriptions to facilitate quick comprehension.
 
-The content of the Guidelines Document follows.
+## Page content:
+```html
+{$pageContent}
+```
+
+## The content of the Guidelines Document follows.
 
 PROMPT;
 

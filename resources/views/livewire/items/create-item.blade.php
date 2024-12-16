@@ -15,7 +15,7 @@
                 Description
             </th>
             <td>
-                {{ $issue->description }}
+                {!! $issue->description !!}
             </td>
         </tr>
     </table>
