@@ -15,7 +15,7 @@
                     {{ $issue->target }}
                 </td>
                 <td>
-                    {{ $issue->description }}
+                    {!! $issue->description !!}
                 </td>
                 <td>
                     @if($issue->items)
