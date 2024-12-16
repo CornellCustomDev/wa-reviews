@@ -1420,8 +1420,8 @@ table.sectioned tbody:before {
 /* Forms */
 #main form p, #main form ul, #main form ol,
 form.form p, form.form ul, form.form ol {
-  margin-bottom: 1.25em; }
-
+    /*margin-bottom: 1.25em; }*/
+}
 #main form .description p, #main form .description ul, #main form .description ol,
 #form.form .description p, form.form .description ul, form.form .description ol {
   margin-bottom: 0.5em; }

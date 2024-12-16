@@ -17,7 +17,7 @@ class ItemForm extends Form
     public ?Item $item;
 
     #[Validate('required')]
-    public ?int $guideline_id = null;
+    public $guideline_id = '';
     #[Validate('required')]
     public Assessment $assessment = Assessment::Fail;
     #[Validate('string|nullable|max:255')]
@@ -27,7 +27,7 @@ class ItemForm extends Form
     #[Validate('string|nullable')]
     public ?string $recommendation;
     #[Validate('string|nullable')]
-    public ?string $testing;
+    public ?string $testing = '';
     #[Validate('string|nullable')]
     public ?string $image_links;
     #[Validate('boolean|nullable')]
