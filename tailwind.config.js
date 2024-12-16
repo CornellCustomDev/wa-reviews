@@ -8,8 +8,9 @@ export default {
     ],
     theme: {
         fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-        },
+            sans: ['Avenir Next', '-apple-system', 'system-ui', 'BlinkMacSystemFont',
+                'Segoe UI Semibold', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serf']
+    },
         extend: {
             colors: {
                 'cds-blue': {
@@ -45,8 +46,11 @@ export default {
                     'na':   '#9fc5e8',
                 },
             },
+            backgroundImage: {
+                'radio-checked': "url('/cwd-framework/images/layout/checked-radio.svg')",
+            }
         },
     },
-    darkMode: ['variant', '&:not(.light *)'],
+    darkMode: null,
     plugins: [],
 }

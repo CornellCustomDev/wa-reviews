@@ -1,12 +1,6 @@
 <div>
-    <h1>Edit Scope</h1>
-
     <form wire:submit="save">
-        <x-cd.form.text label="Title" wire:model="form.title" />
-        <x-cd.form.text label="URL" wire:model="form.url" />
-        <x-forms.textarea label="Notes" wire:model="form.notes" />
-
-        <x-forms.button type="submit">Update Scope</x-forms.button>
-        <x-forms.button :href="route('scope.show', $form->scope)" variant="cds-secondary">Cancel</x-forms.button>
+        @include('fields')
+        <x-forms.button.submit-group submitName="Update Scope" />
     </form>
 </div>

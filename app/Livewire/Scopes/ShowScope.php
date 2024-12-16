@@ -7,55 +7,27 @@ use App\Models\SiteimproveRule;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ShowScope extends Component
 {
     public Scope $scope;
 
-    #[Computed('siteimproveUrl')]
-    public function siteimproveUrl(): string
-    {
-        // TODO - Do not reach in to get the siteimprove_id from project
-        $siteId = $this->scope->project->siteimprove_id;
-        $siteimproveService = SiteimproveService::make($siteId);
-
-        return Cache::rememberForever(
-            key: "siteimprove_url_{$this->scope->url}",
-            callback: fn() => $siteimproveService->getPageReportUrl($this->scope->url) ?? ''
-        );
-    }
+    #[Url]
+    public string $tab = 'issues';
+    #[Url(as: 'e', history: true)]
+    public bool $showEdit = false;
 
     #[Computed('siteimproveIssueCount')]
     public function siteimproveIssueCount(): string
     {
-        $siteId = $this->scope->project->siteimprove_id;
-        $siteimproveService = SiteimproveService::make($siteId);
+        $siteimproveService = SiteimproveService::fromScope($this->scope);
 
         return $siteimproveService->getPageIssuesCount($this->scope->url) ?? 0;
-    }
-
-    #[Computed('siteimproveIssues')]
-    public function siteImproveIssues(): array
-    {
-        $siteId = $this->scope->project->siteimprove_id;
-        $siteimproveService = SiteimproveService::make($siteId);
-
-        return $siteimproveService->getPageIssues($this->scope->url) ?? [];
-    }
-
-    #[Computed]
-    public function siteimproveRelatedGuidelines($ruleId): Collection
-    {
-        // only get the rules that have criteria
-        $rules = SiteimproveRule::where('rule_id', $ruleId)
-            ->whereHas('criterion')
-            ->get();
-
-        // For each rule, get the criteria, for each criterion, get the guidelines as objects
-        return $rules->map(fn($rule) => $rule->criterion->guidelines)->flatten();
     }
 
     #[On('issues-updated')]
@@ -64,9 +36,19 @@ class ShowScope extends Component
         $this->scope->refresh();
     }
 
+    public function updated($name, $value): void
+    {
+        if ($name !== 'showEdit') {
+            $this->showEdit = false;
+        }
+    }
+
     public function render()
     {
         $this->authorize('view', $this->scope);
+        if ($this->showEdit === true && !Gate::allows('update', $this->scope)) {
+            $this->showEdit = false;
+        }
 
         return view('livewire.scopes.show-scope')
             ->layout('components.layouts.app', [

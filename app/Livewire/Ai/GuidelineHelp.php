@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Item;
 use App\Services\AzureOpenAI\ChatService;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class GuidelineHelp extends Component
@@ -43,9 +44,9 @@ class GuidelineHelp extends Component
                 Item::create([
                     'issue_id' => $this->issue->id,
                     'guideline_id' => $response->number,
-                    'description' => $response->applicability,
-                    'recommendation' => $response->recommendation,
-                    'testing' => $response->testing,
+                    'description' => Str::markdown($response->applicability),
+                    'recommendation' => Str::markdown($response->recommendation),
+                    'testing' => Str::markdown($response->testing),
                     'assessment' => Assessment::Fail,
                 ]);
             }
@@ -111,8 +112,8 @@ Example Response when Applicable Guidelines are Found:
       "number": "19",
       "heading": "Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",
       "criteria": "1.3.1 Info and Relationships (Level A)",
-      "applicability": "The fieldset must contain a <legend> or be properly labeled using ARIA to describe the grouping of checkboxes.",
-      "recommendation": "Add a <legend> element to the fieldset to describe the grouping of checkboxes.",
+      "applicability": "The fieldset must contain a `<legend>` or be properly labeled using ARIA to describe the grouping of checkboxes.",
+      "recommendation": "Add a `<legend>` element to the fieldset to describe the grouping of checkboxes.",
       "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies."
     },
     {

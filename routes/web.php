@@ -41,7 +41,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
 
 Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
 Route::prefix('project')->name('project.')->group(function () {

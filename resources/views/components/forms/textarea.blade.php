@@ -1,8 +1,17 @@
 @props([
     'label',
-    'id' => $attributes->whereStartsWith('wire:model')->first(),
+    'toolbar' => 'heading bold italic underline | bullet ordered blockquote | link code ~ undo redo',
+    'variant' => 'cds',
+    'size' => 'base',
 ])
-<x-cd.form.form-item field="{{ $id }}">
-    <x-slot name="field_title">{{ $label }}</x-slot>
-    <textarea {{ $attributes->merge(['id' => $id]) }}>{{ $slot }}</textarea>
-</x-cd.form.form-item>
+@php
+$classes = Flux::classes()
+    ->add('max-w-[600px] mb-4')
+    ->add('[&_[data-slot=content]]:last:!mb-0')
+    ->add('[&_[data-slot=content]]:' . match ($size) {
+        'base' => 'min-h-44',
+        'sm' => 'min-h-24',
+        'lg' => 'min-h-64',
+    })
+@endphp
+<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" />

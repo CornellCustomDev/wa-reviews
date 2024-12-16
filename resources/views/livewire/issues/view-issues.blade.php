@@ -1,12 +1,4 @@
 <div>
-    <div class="cwd-component align-right">
-        @can('update', $scope->project)
-            <x-forms.button.add :href="route('scope.issue.create', $scope)" icon="plus-circle">Add Issue</x-forms.button.add>
-        @endcan
-    </div>
-
-    <h2>Issues</h2>
-
     <table class="table striped bordered">
         <thead>
             <tr>
@@ -21,11 +13,9 @@
             <tr wire:key="{{ $issue->id }}">
                 <td>
                     {{ $issue->target }}
-{{--                    <livewire:issues.issue-field :key="$issue->id.'-target'" :$issue field="target" label="Target"/>--}}
                 </td>
                 <td>
                     {{ $issue->description }}
-{{--                    <livewire:issues.issue-field :key="$issue->id.'-description'" :$issue field="description" label="Description"/>--}}
                 </td>
                 <td>
                     @if($issue->items)
@@ -51,4 +41,8 @@
         @endforeach
         </tbody>
     </table>
+
+    @can('update', $scope->project)
+        <x-forms.button.add :href="route('scope.issue.create', $scope)" icon="plus-circle">Add Issue</x-forms.button.add>
+    @endcan
 </div>

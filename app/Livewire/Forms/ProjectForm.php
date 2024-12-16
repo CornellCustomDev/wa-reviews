@@ -11,7 +11,7 @@ class ProjectForm extends Form
 {
     public ?Project $project;
 
-    #[Validate('required|string|max:255')]
+    #[Validate('required|string|max:255', as: 'Project Name')]
     public string $name = '';
     #[Validate('required')]
     #[Validate('url', message: 'The Site URL must be a valid URL')]

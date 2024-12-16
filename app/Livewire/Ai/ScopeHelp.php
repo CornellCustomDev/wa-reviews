@@ -17,19 +17,10 @@ use Livewire\Component;
 class ScopeHelp extends Component
 {
     public Scope $scope;
-    public ?Guideline $guideline;
-    #[Url(as: 'g')]
-    public $guidelineNumber = '';
+
     public bool $showChat = false;
 
     public ?string $response;
-
-    public function mount()
-    {
-        if ($this->guidelineNumber) {
-            $this->guideline = Guideline::find($this->guidelineNumber);
-        }
-    }
 
     #[Computed]
     public function rulesCount(): int
@@ -62,20 +53,6 @@ class ScopeHelp extends Component
     {
         return $this->scopeGuidelineRules()
             ->filter(fn (ScopeRule $rule) => $rule->hasAiAssessment());
-    }
-
-    #[On('show-guideline')]
-    public function showGuideline($number): void
-    {
-        $this->guidelineNumber = $number;
-        $this->guideline = Guideline::find($number);
-
-        unset($this->scopeGuidelineRules);
-    }
-
-    public function hideGuideline(): void
-    {
-        $this->guideline = null;
     }
 
     #[On('scope-rules-updated')]

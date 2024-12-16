@@ -1,15 +1,5 @@
 <footer>
     <div class="main-footer">
-        <div class="container-fluid sidebar-left">
-            <div class="row">
-                <div class="primary">
-                    <h2 class="h4">Footer Primary</h2>
-                </div>
-                <div class="secondary">
-                    <h2 class="h4">Footer Secondary</h2>
-                </div>
-            </div>
-        </div>
     </div>
     <div class="sub-footer">
         <div class="container-fluid sidebar-left">

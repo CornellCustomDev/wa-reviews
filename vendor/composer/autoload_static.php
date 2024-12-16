@@ -9,15 +9,15 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
     public static $files = array (
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         '320cde22f66dd4f5d3fd621d3e88b98f' => __DIR__ . '/..' . '/symfony/polyfill-ctype/bootstrap.php',
+        'e69f7f6ee287b969198c3c9d6777bd38' => __DIR__ . '/..' . '/symfony/polyfill-intl-normalizer/bootstrap.php',
         '8825ede83f2f289127722d4e842cf7e8' => __DIR__ . '/..' . '/symfony/polyfill-intl-grapheme/bootstrap.php',
         'b6b991a57620e2fb6b2f66f03fe9ddc2' => __DIR__ . '/..' . '/symfony/string/Resources/functions.php',
         '667aeda72477189d0494fecd327c3641' => __DIR__ . '/..' . '/symfony/var-dumper/Resources/functions/dump.php',
         '662a729f963d39afe703c9d9b7ab4a8c' => __DIR__ . '/..' . '/symfony/polyfill-php83/bootstrap.php',
         'f598d06aa772fa33d905e87be6398fb1' => __DIR__ . '/..' . '/symfony/polyfill-intl-idn/bootstrap.php',
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '47e1160838b5e5a10346ac4084b58c23' => __DIR__ . '/..' . '/laravel/prompts/src/helpers.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '40275907c8566c390185147049ef6e5d' => __DIR__ . '/..' . '/livewire/livewire/src/helpers.php',
         '35a6ad97d21e794e7e22a17d806652e4' => __DIR__ . '/..' . '/nunomaduro/termwind/src/Functions.php',
         '7b11c4dc42b3b3023073cb14e519683c' => __DIR__ . '/..' . '/ralouphie/getallheaders/src/getallheaders.php',
@@ -34,6 +34,7 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'f57d353b41eb2e234b26064d63d8c5dd' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Filesystem/functions.php',
         'f0906e6318348a765ffb6eb24e0d0938' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Foundation/helpers.php',
         '58571171fd5812e6e447dce228f52f4d' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Support/helpers.php',
+        '7574a4dc8fe5e660478870e55ff04aab' => __DIR__ . '/..' . '/livewire/flux-pro/src/helpers.php',
         'c72349b1fe8d0deeedd3a52e8aa814d8' => __DIR__ . '/..' . '/mockery/mockery/library/helpers.php',
         'ce9671a430e4846b44e1c68c7611f9f5' => __DIR__ . '/..' . '/mockery/mockery/library/Mockery.php',
         'a1cfe24d14977df6878b9bf804af2d1c' => __DIR__ . '/..' . '/nunomaduro/collision/src/Adapters/Phpunit/Autoload.php',
@@ -168,6 +169,7 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         array (
             'Fruitcake\\Cors\\' => 15,
             'Flux\\' => 5,
+            'FluxPro\\' => 8,
             'Faker\\' => 6,
         ),
         'E' => 
@@ -531,6 +533,10 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         array (
             0 => __DIR__ . '/..' . '/livewire/flux/src',
         ),
+        'FluxPro\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/livewire/flux-pro/src',
+        ),
         'Faker\\' => 
         array (
             0 => __DIR__ . '/..' . '/fakerphp/faker/src/Faker',
@@ -653,12 +659,14 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'App\\Livewire\\Items\\ViewItems' => __DIR__ . '/../..' . '/app/Livewire/Items/ViewItems.php',
         'App\\Livewire\\Projects\\CreateProject' => __DIR__ . '/../..' . '/app/Livewire/Projects/CreateProject.php',
         'App\\Livewire\\Projects\\ShowProject' => __DIR__ . '/../..' . '/app/Livewire/Projects/ShowProject.php',
+        'App\\Livewire\\Projects\\SiteimprovePages' => __DIR__ . '/../..' . '/app/Livewire/Projects/SiteimprovePages.php',
         'App\\Livewire\\Projects\\UpdateProject' => __DIR__ . '/../..' . '/app/Livewire/Projects/UpdateProject.php',
         'App\\Livewire\\Projects\\ViewProjects' => __DIR__ . '/../..' . '/app/Livewire/Projects/ViewProjects.php',
         'App\\Livewire\\Scopes\\AnalyzeScope' => __DIR__ . '/../..' . '/app/Livewire/Scopes/AnalyzeScope.php',
         'App\\Livewire\\Scopes\\CreateScope' => __DIR__ . '/../..' . '/app/Livewire/Scopes/CreateScope.php',
         'App\\Livewire\\Scopes\\ScopeGuidelines' => __DIR__ . '/../..' . '/app/Livewire/Scopes/ScopeGuidelines.php',
         'App\\Livewire\\Scopes\\ShowScope' => __DIR__ . '/../..' . '/app/Livewire/Scopes/ShowScope.php',
+        'App\\Livewire\\Scopes\\SiteimproveIssues' => __DIR__ . '/../..' . '/app/Livewire/Scopes/SiteimproveIssues.php',
         'App\\Livewire\\Scopes\\UpdateScope' => __DIR__ . '/../..' . '/app/Livewire/Scopes/UpdateScope.php',
         'App\\Livewire\\Scopes\\ViewScopes' => __DIR__ . '/../..' . '/app/Livewire/Scopes/ViewScopes.php',
         'App\\Livewire\\SiteimproveRules\\ViewSiteimproveRules' => __DIR__ . '/../..' . '/app/Livewire/SiteimproveRules/ViewSiteimproveRules.php',
@@ -1533,6 +1541,9 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'Faker\\Provider\\zh_TW\\Text' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/Provider/zh_TW/Text.php',
         'Faker\\UniqueGenerator' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/UniqueGenerator.php',
         'Faker\\ValidGenerator' => __DIR__ . '/..' . '/fakerphp/faker/src/Faker/ValidGenerator.php',
+        'FluxPro\\FluxPro' => __DIR__ . '/..' . '/livewire/flux-pro/src/FluxPro.php',
+        'FluxPro\\FluxProManager' => __DIR__ . '/..' . '/livewire/flux-pro/src/FluxProManager.php',
+        'FluxPro\\FluxProServiceProvider' => __DIR__ . '/..' . '/livewire/flux-pro/src/FluxProServiceProvider.php',
         'Flux\\AssetManager' => __DIR__ . '/..' . '/livewire/flux/src/AssetManager.php',
         'Flux\\ClassBuilder' => __DIR__ . '/..' . '/livewire/flux/src/ClassBuilder.php',
         'Flux\\Concerns\\InteractsWithComponents' => __DIR__ . '/..' . '/livewire/flux/src/Concerns/InteractsWithComponents.php',

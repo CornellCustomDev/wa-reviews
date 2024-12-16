@@ -23,8 +23,7 @@
     <form wire:submit="save">
         @include('livewire.items.fields')
 
-        <x-forms.button type="submit">Add Item</x-forms.button>
-        <x-forms.button :href="route('issue.show', $issue)" variant="cds-secondary">Cancel</x-forms.button>
+        <x-forms.button.submit-group submitName="Add Item" />
     </form>
 
 </div>

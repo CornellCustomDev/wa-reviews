@@ -1,56 +1,49 @@
 <div>
-    <div class="cwd-component align-right">
-        <x-forms.button.edit :href="route('project.edit', $project)">Edit</x-forms.button.edit>
-    </div>
-
     <h1>{{ $project->name }}</h1>
 
-    <table class="table bordered">
-        <tr>
-            <th>Project</th>
-            <td>{{ $project->name }}</td>
-        </tr>
-        <tr>
-            <th>Site</th>
-            <td><a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a></td>
-        </tr>
-        <tr>
-            <th>Description</th>
-            <td>{!! $project->description !!}</td>
-        </tr>
-        <tr>
-            <th>Siteimprove Report</th>
-            <td>
-                @if ($project->siteimprove_url)
-                    <a href="{{ $project->siteimprove_url }}" target="_blank">View Report</a>
-                    ({{ count($this->siteimprovePagesWithIssues) }} {{ Str::plural('page', count($this->siteimprovePagesWithIssues)) }} with issues)
-                @else
-                    No report available
-                @endif
-            </td>
-        </tr>
-        <tr>
-            <th>Created</th>
-            <td>{{ $project->created_at->toFormattedDateString() }}</td>
-        </tr>
-    </table>
+    <div class="mb-4 max-w-screen-md" x-data="{ edit: $wire.entangle('showEdit').live }">
+        <div class="col-span-2 border rounded border-cds-gray-200 p-4">
+            @can('update', $project)
+                <x-forms.button icon="pencil-square" class="float-right" x-on:click="edit = !edit" title="Edit Project" />
+            @endcan
 
-    <div style="margin-bottom: 2em">
-        <livewire:scopes.view-scopes :$project />
+            <div x-show="!edit">
+                <flux:subheading class="items-center">
+                    <a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a>
+                    <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
+                </flux:subheading>
+                <flux:subheading class="text-xs">
+                    <flux:icon.calendar class="inline -mt-0.5" variant="micro" />Created {{ $project->created_at->toFormattedDateString() }}
+                </flux:subheading>
+
+                @if($project->description)
+                    <hr class="mt-2">
+
+                    <div>
+                        {!! $project->description !!}
+                    </div>
+                @endif
+            </div>
+
+            <div x-show="edit">
+                <livewire:projects.update-project :$project />
+            </div>
+        </div>
     </div>
 
-    @if ($this->siteimprovePagesWithIssues)
-        <div style="margin-bottom: 2em">
-            <h2>Siteimprove Pages with Issues</h2>
-            <ul>
-                @foreach ($this->siteimprovePagesWithIssues as $page)
-                    <li>
-                        <a href="{{ $page['page_report'] }}" target="_blank">{{ $page['url'] }}</a>
-                        ({{ $page['issues'] }} {{ Str::plural('issue', $page['issues']) }})
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+
+    <flux:tab.group>
+        <flux:tabs wire:model.live="tab">
+            <flux:tab name="scope">Scope ({{ count($project->issues) }})</flux:tab>
+            <flux:tab name="siteimprove">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
+        </flux:tabs>
+
+        <flux:tab.panel name="scope" class="!pt-6">
+            <livewire:scopes.view-scopes :$project />
+        </flux:tab.panel>
+        <flux:tab.panel name="siteimprove" class="!pt-6">
+            <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />
+        </flux:tab.panel>
+    </flux:tab.group>
 
 </div>

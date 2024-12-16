@@ -1,0 +1,46 @@
+@props([
+    'name' => $attributes->whereStartsWith('wire:model')->first(),
+    'toolbar' => null,
+    'invalid' => null,
+    'variant' => null,
+])
+
+@php
+$invalid ??= ($name && $errors->has($name));
+
+$border ??= $invalid ? 'border-red-500' : match ($variant) {
+    default => 'border-zinc-200 border-b-zinc-300/80 dark:border-white/10',
+    'cds' => 'border-cds-gray-400 border-b-gray-400',
+};
+
+$classes = Flux::classes()
+    ->add('block w-full')
+    ->add('shadow-sm [&[disabled]]:shadow-none border')
+    ->add(match ($variant) {
+        default => 'rounded-lg',
+        'cds' => 'rounded-none',
+    })
+    ->add('bg-white dark:bg-white/10 dark:[&[disabled]]:bg-white/[7%]')
+    ->add('[&_[data-slot=content]]:text-sm')
+    ->add('[&_[data-slot=content]]:text-zinc-700 dark:[&_[data-slot=content]]:text-zinc-300')
+    ->add('[&[disabled]_[data-slot=content]]:text-zinc-500 dark:[&[disabled]_[data-slot=content]]:text-zinc-400')
+    ->add($invalid ? 'border-red-500' : $border)
+    ;
+@endphp
+
+<flux:with-field :$attributes>
+    <ui-editor {{ $attributes->class($classes) }} aria-label="{{ __('Rich text editor') }}" wire:ignore data-flux-control data-flux-editor>
+        <?php if ($slot->isEmpty()): ?>
+            <flux:editor.toolbar :$variant :items="$toolbar" />
+
+            <flux:editor.content />
+        <?php else: ?>
+            {{ $slot }}
+        <?php endif; ?>
+    </ui-editor>
+</flux:with-field>
+
+@assets
+<flux:editor.scripts />
+<flux:editor.styles />
+@endassets

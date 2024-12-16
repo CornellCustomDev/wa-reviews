@@ -1,35 +1,29 @@
-<table class="table bordered">
-    <tr>
-        <th>Project</th>
-        <td>{{ $scope->project->name }}</td>
-    </tr>
-    <tr>
-        <th>Scope</th>
-        <td>{{ $scope->title }}</td>
-    </tr>
-    <tr>
-        <th>URL</th>
-        <td>
-            <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
-        </td>
-    </tr>
-    <tr>
-        <th>Siteimprove Page Report</th>
-        <td>
-            @if ($this->siteimproveUrl())
-                <a href="{{ $this->siteimproveUrl() }}" target="_blank">View Report</a> ({{ $this->siteimproveIssueCount() }} {{ Str::plural('issue', $this->siteimproveIssueCount()) }} )
-            @else
-                No report available
-            @endif
-        </td>
-    </tr>
-    <tr>
-        <th>Notes</th>
-        <td>{!! Str::markdown($scope->notes) !!}</td>
-    </tr>
-    <tr>
-        <th>Created</th>
-        <td>{{ $scope->created_at->toFormattedDateString() }}</td>
-    </tr>
-</table>
+<div x-data="{ edit: $wire.entangle('showEdit').live }">
+    <div class="col-span-2 border rounded border-cds-gray-200 p-4">
+        @can('update', $scope)
+            <x-forms.button icon="pencil-square" class="float-right" x-on:click="edit = !edit" title="Edit Scope" />
+        @endcan
 
+        <div x-show="!edit">
+            <flux:subheading class="items-center">
+                <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
+                <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
+            </flux:subheading>
+            <flux:subheading class="text-xs">
+                <flux:icon.calendar class="inline -mt-0.5" variant="micro" />Created {{ $scope->created_at->toFormattedDateString() }}
+            </flux:subheading>
+
+            @if($scope->notes)
+                <hr class="mt-2">
+
+                <div>
+                    {!! $scope->notes !!}
+                </div>
+            @endif
+        </div>
+
+        <div x-show="edit">
+            <livewire:scopes.update-scope :$scope />
+        </div>
+    </div>
+</div>

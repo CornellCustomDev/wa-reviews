@@ -2,6 +2,7 @@
 
 namespace App\Services\SiteImprove;
 
+use App\Models\Scope;
 use ErrorException;
 use Exception;
 use Illuminate\Http\Client\Response;
@@ -28,6 +29,12 @@ class SiteimproveService
         }
 
         return $siteimproveService;
+    }
+
+    public static function fromScope(Scope $scope): SiteimproveService
+    {
+        $siteId = $scope->project->siteimprove_id;
+        return self::make($siteId);
     }
 
     public static function findSite(string $url, ?bool $bustCache = false): ?string

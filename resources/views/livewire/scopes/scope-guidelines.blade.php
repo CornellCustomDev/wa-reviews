@@ -1,18 +1,9 @@
 <div>
-    <div x-data="{ open: $wire.entangle('showGuidelines').live }">
+    <div>
         @if($scopeGuidelines->isEmpty())
             <button x-on:click="$wire.generateGuidelines; open = true">Generate Guidelines</button>
-        @else
-            <div style="float: right">
-                <x-forms.button
-                    variant="{{ $showGuidelines ? 'cds-secondary' : 'cds' }}"
-                    icon="{{ $showGuidelines ? 'arrow-up' : 'arrow-down' }}"
-                    x-on:click="open = !open"
-                ><span x-text="open ? 'Hide Guidelines' : 'Show Guidelines'"></span></x-forms.button>
-            </div>
-            <h3>Guidelines</h3>
         @endif
-        <div x-show="open">
+        <div>
             <p>Showing {{ count($this->filteredGuidelines) }} of {{ $scopeGuidelines->count() }} guidelines. Click on a guideline to view more details.</p>
             <table class="table bordered">
                 <thead>
@@ -53,7 +44,12 @@
                     @endphp
                     <tr wire:key="{{ $id }}">
                         <td x-data x-on:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })" style="cursor: pointer;">
-                            {{ $guideline->number }}: {{ $guideline->name }}
+                            <x-forms.button
+                                title="View Guideline {{ $guideline->number }}"
+                                size="xs"
+                            >{{ $guideline->number }}</x-forms.button>
+
+                             {{ $guideline->name }}
                             ({{ $guideline->criterion->number }})
                             <br>
                             Tools:
