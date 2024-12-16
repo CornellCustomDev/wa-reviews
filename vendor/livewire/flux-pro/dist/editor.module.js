@@ -20012,6 +20012,12 @@ var UIEditor = class extends UIControl {
           placeholder: this.getAttribute("placeholder")
         })
       ],
+      onBlur: () => {
+        this.dispatchEvent(new Event("blur", {
+          bubbles: false,
+          cancelable: true
+        }));
+      },
       onUpdate: () => {
         this._controllable.dispatch();
       },
@@ -20039,6 +20045,7 @@ var UIEditor = class extends UIControl {
       }
     });
     let getValue = () => {
+      if (this.editor.isEmpty) return "";
       return this.editor.getHTML();
     };
     let setValue = (value) => {

@@ -13,6 +13,8 @@ $classes = Flux::classes()
     ->add('outline-none')
     ->add('border-b border-zinc-200 dark:border-zinc-600')
     ->add('bg-white dark:bg-zinc-700')
+    // The below reverts styles added by Tailwind Forms plugin
+    ->add('border-t-0 border-l-0 border-r-0 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-600')
     ;
 @endphp
 

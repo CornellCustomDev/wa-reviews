@@ -55,6 +55,13 @@ class UIEditor extends UIControl {
                 }),
             ],
 
+            onBlur: () => {
+                this.dispatchEvent(new Event('blur', {
+                    bubbles: false,
+                    cancelable: true,
+                }))
+            },
+
             onUpdate: () => {
                 this._controllable.dispatch()
             },
@@ -90,6 +97,9 @@ class UIEditor extends UIControl {
         })
 
         let getValue = () => {
+            // Otherwise, an empty state will return <p></p>...
+            if (this.editor.isEmpty) return ''
+
             return this.editor.getHTML()
         }
 

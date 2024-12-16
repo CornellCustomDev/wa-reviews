@@ -25,3 +25,6 @@ import './toast.js'
 import './radio.js'
 import './menu.js'
 import './tabs.js'
+
+/** Flux global store object */
+import './store.js'

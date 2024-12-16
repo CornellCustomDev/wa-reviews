@@ -34,3 +34,22 @@ composer require livewire/flux:dev-main --dev
 ```
 
 > Note: You might have to change your app's "minimum-stability" to "dev" in your `composer.json` file.
+
+### Testing components with playwright
+
+Use valet or herd to link and open the project in a browser. URL should be http://flux-pro.test/. If you are using valet you can run the following commands.
+```
+valet link && valet open
+```
+
+Test webpages are located in the tests directory as html files. Example link: http://flux-pro.test/tests/select.html
+
+Open playwright tool to run your tests:
+```
+npm run test
+```
+
+Install the required playwright browser resources to run tests:
+```
+npx playwright install
+```

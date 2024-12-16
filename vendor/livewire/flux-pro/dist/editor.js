@@ -20013,6 +20013,12 @@ img.ProseMirror-separator {
             placeholder: this.getAttribute("placeholder")
           })
         ],
+        onBlur: () => {
+          this.dispatchEvent(new Event("blur", {
+            bubbles: false,
+            cancelable: true
+          }));
+        },
         onUpdate: () => {
           this._controllable.dispatch();
         },
@@ -20040,6 +20046,7 @@ img.ProseMirror-separator {
         }
       });
       let getValue = () => {
+        if (this.editor.isEmpty) return "";
         return this.editor.getHTML();
       };
       let setValue = (value) => {

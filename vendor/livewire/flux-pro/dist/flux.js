@@ -6347,6 +6347,108 @@ ${useLayer ? "}" : ""}
   element("tab-group", UITabGroup);
   element("tabs", UITabs);
 
+  // js/store.js
+  var selectorDarkMode = isUsingSelectorForDarkModeInTailwind();
+  if (selectorDarkMode) {
+    inject(({ css }) => css`:root:has(body.dark) { color-scheme: dark; }`);
+  }
+  document.addEventListener("alpine:init", () => {
+    let flux = Alpine.reactive({
+      toast(...params) {
+        let detail = { slots: {}, dataset: {} };
+        if (typeof params[0] === "string") {
+          detail.slots.text = params.shift();
+        }
+        if (typeof params[0] === "string") {
+          detail.slots.heading = detail.slots.text;
+          detail.slots.text = params.shift();
+        }
+        let options = params.shift() || {};
+        if (options.text) detail.slots.text = options.text;
+        if (options.heading) detail.slots.heading = options.heading;
+        if (options.variant) detail.dataset.variant = options.variant;
+        if (options.position) detail.dataset.position = options.position;
+        document.dispatchEvent(new CustomEvent("toast-show", { detail }));
+      },
+      modal(name) {
+        return {
+          show() {
+            document.dispatchEvent(new CustomEvent("modal-show", { detail: { name } }));
+          },
+          close() {
+            document.dispatchEvent(new CustomEvent("modal-close", { detail: { name } }));
+          }
+        };
+      },
+      modals() {
+        return { close() {
+          document.dispatchEvent(new CustomEvent("modal-close", { detail: {} }));
+        } };
+      },
+      appearance: window.localStorage.getItem("flux.appearance") || "system",
+      systemAppearanceChanged: 1,
+      // A counter to trigger reactivity when the system appearance changes...
+      get dark() {
+        JSON.stringify(flux.systemAppearanceChanged);
+        if (flux.appearance === "system") {
+          let media2 = window.matchMedia("(prefers-color-scheme: dark)");
+          return media2.matches;
+        } else {
+          return flux.appearance === "dark";
+        }
+      },
+      set dark(value) {
+        let current = this.dark;
+        if (value === current) return;
+        if (value) {
+          flux.appearance = "dark";
+        } else {
+          flux.appearance = "light";
+        }
+      }
+    });
+    window.Flux = flux;
+    Alpine.magic("flux", () => flux);
+    selectorDarkMode && Alpine.effect(() => {
+      applyAppearance(flux.appearance);
+    });
+    selectorDarkMode && document.addEventListener("livewire:navigated", () => {
+      applyAppearance(flux.appearance);
+    });
+    let media = window.matchMedia("(prefers-color-scheme: dark)");
+    selectorDarkMode && media.addEventListener("change", () => {
+      flux.systemAppearanceChanged++;
+      applyAppearance(flux.appearance);
+    });
+  });
+  function applyAppearance(appearance) {
+    let applyDark = () => document.body.classList.add("dark");
+    let applyLight = () => document.body.classList.remove("dark");
+    if (appearance === "system") {
+      let media = window.matchMedia("(prefers-color-scheme: dark)");
+      window.localStorage.removeItem("flux.appearance");
+      media.matches ? applyDark() : applyLight();
+    } else if (appearance === "dark") {
+      window.localStorage.setItem("flux.appearance", "dark");
+      applyDark();
+    } else if (appearance === "light") {
+      window.localStorage.setItem("flux.appearance", "light");
+      applyLight();
+    }
+  }
+  function isUsingSelectorForDarkModeInTailwind() {
+    let beacon = document.createElement("div");
+    beacon.setAttribute("data-flux-dark-mode-beacon", "");
+    beacon.classList.add("dark:[&[data-flux-dark-mode-beacon]]:hidden");
+    document.body.appendChild(beacon);
+    let beforeDarkClass = getComputedStyle(beacon).display === "none";
+    beacon.classList.add("dark");
+    let afterDarkClass = getComputedStyle(beacon).display === "none";
+    let result = !beforeDarkClass && afterDarkClass;
+    beacon.remove();
+    return result;
+  }
+
   // js/index.js
   if (!isSupported2() && !isPolyfilled()) {
     apply2();
