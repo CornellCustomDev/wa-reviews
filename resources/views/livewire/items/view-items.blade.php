@@ -30,7 +30,7 @@
                     {!! $item->recommendation !!}
                 </td>
                 <td style="vertical-align: top">
-                    {{ $item->testing }}
+                    {!! $item->testing !!}
                 </td>
                 <td class="text-nowrap">
                     <x-forms.button
