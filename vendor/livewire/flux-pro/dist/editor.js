@@ -19973,7 +19973,7 @@ img.ProseMirror-separator {
   // js/editor.js
   var UIEditor = class extends UIControl {
     boot() {
-      let content = this.querySelector("ui-editor-content").innerHTML;
+      let content = this.value ?? this.querySelector("ui-editor-content").innerHTML;
       this.querySelector("ui-editor-content").innerHTML = "";
       this._controllable = new Controllable(this);
       this._disableable = new Disableable(this);
@@ -20035,8 +20035,9 @@ img.ProseMirror-separator {
           initializeToolbar(editor, this.querySelector("ui-toolbar"));
         }
       });
+      let shouldEmitUpdate = false;
       this._disableable.onInitAndChange((disabled) => {
-        this.editor.setEditable(!disabled);
+        this.editor.setEditable(!disabled, shouldEmitUpdate);
         if (disabled) {
           setAttribute2(this, "aria-disabled", "true");
           setAttribute2(this.querySelector("ui-toolbar"), "disabled", "disabled");
@@ -20045,6 +20046,7 @@ img.ProseMirror-separator {
           removeAndReleaseAttribute(this.querySelector("ui-toolbar"), "disabled");
         }
       });
+      shouldEmitUpdate = true;
       let getValue = () => {
         if (this.editor.isEmpty) return "";
         return this.editor.getHTML();

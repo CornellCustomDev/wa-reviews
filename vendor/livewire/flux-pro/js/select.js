@@ -207,6 +207,7 @@ export class UISelect extends UIControl {
             controlPopoverWithKeyboard(button, this._popoverable, this._activatable, this._selectable)
             togglePopoverWithMouse(button, this._popoverable)
             handleKeyboardNavigation(input, this._activatable)
+            handleKeyboardSearchNavigation(button, this._activatable, this._popoverable)
             handleKeyboardSelection(this, input, this._activatable)
             handleMouseSelection(this, this._activatable)
             controlActivationWithPopover(this._popoverable, this._activatable, this._selectable)
@@ -243,7 +244,7 @@ export class UISelect extends UIControl {
             controlPopoverWithKeyboard(button, this._popoverable, this._activatable, this._selectable)
             togglePopoverWithMouse(button, this._popoverable)
             handleKeyboardNavigation(button, this._activatable)
-            handleKeybaordSearchNavigation(button, this._activatable)
+            handleKeyboardSearchNavigation(button, this._activatable, this._popoverable)
             handleKeyboardSelection(this, button, this._activatable)
             handleMouseSelection(this, this._activatable)
             controlActivationWithPopover(this._popoverable, this._activatable, this._selectable)
@@ -385,9 +386,15 @@ function handleKeyboardNavigation(el, activatable) {
     })
 }
 
-function handleKeybaordSearchNavigation(el, activatable) {
+function handleKeyboardSearchNavigation(el, activatable, popoverable) {
     search(el, query => {
         activatable.activateBySearch(query)
+
+        // If the popover is closed, we want to mimic native select behavior,
+        // by changing the selection when a user types on the button trigger...
+        if (! popoverable.getState()) {
+            activatable.getActive()?.click()
+        }
     })
 }
 

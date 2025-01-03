@@ -6,6 +6,7 @@
     'badgeColor' => null,
     'variant' => null,
     'iconDot' => null,
+    'accent' => true,
     'badge' => null,
     'icon' => null,
 ])
@@ -21,14 +22,24 @@ $classes = Flux::classes()
     ->add('px-3 h-8 flex items-center rounded-lg')
     ->add('relative') // This is here for the "active" bar at the bottom to be positioned correctly...
     ->add($square ? '!px-2.5' : '')
-    ->add('text-zinc-500 dark:text-white/80 hover:text-zinc-800 hover:dark:text-white')
-    ->add('hover:bg-zinc-100 hover:dark:bg-white/10')
+    ->add('text-zinc-500 dark:text-white/80 ')
     // Styles for when this link is the "current" one...
-    ->add(match ($variant) {
-        default => [
-            'data-[current]:text-zinc-800 data-[current]:dark:text-zinc-100',
-            'data-[current]:after:absolute data-[current]:after:-bottom-3 data-[current]:after:inset-x-0 data-[current]:after:h-[2px] data-[current]:after:bg-zinc-800 data-[current]:after:dark:bg-white',
-        ]
+    ->add('data-[current]:after:absolute data-[current]:after:-bottom-3 data-[current]:after:inset-x-0 data-[current]:after:h-[2px]')
+    ->add([
+        '[--hover-fill:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)]',
+
+    ])
+    ->add(match ($accent) {
+        true => [
+            'hover:text-zinc-800 dark:hover:text-white',
+            'data-[current]:text-[var(--color-accent-content)] hover:data-[current]:text-[var(--color-accent-content)] hover:bg-zinc-800/5 hover:dark:bg-white/10 hover:data-[current]:bg-[var(--hover-fill)]',
+            'data-[current]:after:bg-[var(--color-accent-content)]',
+        ],
+        false => [
+            'hover:text-zinc-800 hover:dark:text-white',
+            'data-[current]:text-zinc-800 data-[current]:dark:text-zinc-100 hover:bg-zinc-100 hover:dark:bg-white/10',
+            'data-[current]:after:bg-zinc-800 data-[current]:after:dark:bg-white',
+        ],
     })
     ;
 @endphp

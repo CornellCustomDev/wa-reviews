@@ -4933,6 +4933,7 @@ ${useLayer ? "}" : ""}
         controlPopoverWithKeyboard(button2, this._popoverable, this._activatable, this._selectable);
         togglePopoverWithMouse(button2, this._popoverable);
         handleKeyboardNavigation(input2, this._activatable);
+        handleKeyboardSearchNavigation(button2, this._activatable, this._popoverable);
         handleKeyboardSelection(this, input2, this._activatable);
         handleMouseSelection(this, this._activatable);
         controlActivationWithPopover(this._popoverable, this._activatable, this._selectable);
@@ -4965,7 +4966,7 @@ ${useLayer ? "}" : ""}
         controlPopoverWithKeyboard(button2, this._popoverable, this._activatable, this._selectable);
         togglePopoverWithMouse(button2, this._popoverable);
         handleKeyboardNavigation(button2, this._activatable);
-        handleKeybaordSearchNavigation(button2, this._activatable);
+        handleKeyboardSearchNavigation(button2, this._activatable, this._popoverable);
         handleKeyboardSelection(this, button2, this._activatable);
         handleMouseSelection(this, this._activatable);
         controlActivationWithPopover(this._popoverable, this._activatable, this._selectable);
@@ -5073,9 +5074,12 @@ ${useLayer ? "}" : ""}
       }
     });
   }
-  function handleKeybaordSearchNavigation(el, activatable) {
+  function handleKeyboardSearchNavigation(el, activatable, popoverable) {
     search(el, (query) => {
       activatable.activateBySearch(query);
+      if (!popoverable.getState()) {
+        activatable.getActive()?.click();
+      }
     });
   }
   function handleKeyboardSelection(root, el, activatable) {
@@ -5916,7 +5920,7 @@ ${useLayer ? "}" : ""}
         this.el.addEventListener("click", (e) => {
           if (e.target !== this.el) return;
           if (clickHappenedOutside(this.el, e)) {
-            this.hide();
+            this.cancel();
             e.preventDefault();
             e.stopPropagation();
           }
@@ -5936,6 +5940,13 @@ ${useLayer ? "}" : ""}
     }
     hide() {
       this.el.close();
+    }
+    cancel() {
+      let event = new Event("cancel", { bubbles: false, cancelable: true });
+      this.el.dispatchEvent(event);
+      if (!event.defaultPrevented) {
+        this.hide();
+      }
     }
     getState() {
       return this.state;
@@ -6267,6 +6278,8 @@ ${useLayer ? "}" : ""}
       }
       new MutationObserver((mutations) => {
         this.initializeTabs();
+        let selected = this._selectableGroup.selected();
+        selected.el.closest("ui-tab-group").showPanel(selected.value);
       }).observe(this, { childList: true });
     }
     initializeTabs() {
@@ -6350,7 +6363,7 @@ ${useLayer ? "}" : ""}
   // js/store.js
   var selectorDarkMode = isUsingSelectorForDarkModeInTailwind();
   if (selectorDarkMode) {
-    inject(({ css }) => css`:root:has(body.dark) { color-scheme: dark; }`);
+    inject(({ css }) => css`:root.dark { color-scheme: dark; }`);
   }
   document.addEventListener("alpine:init", () => {
     let flux = Alpine.reactive({
@@ -6422,8 +6435,8 @@ ${useLayer ? "}" : ""}
     });
   });
   function applyAppearance(appearance) {
-    let applyDark = () => document.body.classList.add("dark");
-    let applyLight = () => document.body.classList.remove("dark");
+    let applyDark = () => document.documentElement.classList.add("dark");
+    let applyLight = () => document.documentElement.classList.remove("dark");
     if (appearance === "system") {
       let media = window.matchMedia("(prefers-color-scheme: dark)");
       window.localStorage.removeItem("flux.appearance");
@@ -6439,9 +6452,9 @@ ${useLayer ? "}" : ""}
   function isUsingSelectorForDarkModeInTailwind() {
     let beacon = document.createElement("div");
     beacon.setAttribute("data-flux-dark-mode-beacon", "");
-    beacon.classList.add("dark:[&[data-flux-dark-mode-beacon]]:hidden");
     document.body.appendChild(beacon);
     let beforeDarkClass = getComputedStyle(beacon).display === "none";
+    beacon.classList.add("dark:[&[data-flux-dark-mode-beacon]]:hidden");
     beacon.classList.add("dark");
     let afterDarkClass = getComputedStyle(beacon).display === "none";
     let result = !beforeDarkClass && afterDarkClass;

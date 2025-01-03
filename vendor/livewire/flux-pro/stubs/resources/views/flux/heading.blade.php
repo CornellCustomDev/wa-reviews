@@ -1,12 +1,16 @@
 @props([
     'size' => 'base',
+    'accent' => false,
     'level' => null,
 ])
 
 @php
 $classes = Flux::classes()
     ->add('font-medium')
-    ->add('text-zinc-800 dark:text-white')
+    ->add(match ($accent) {
+        true => 'text-[var(--color-accent-content)]',
+        default => 'text-zinc-800 dark:text-white',
+    })
     ->add(match ($size) {
         'xl' => 'text-2xl [&:has(+[data-flux-subheading])]:mb-2 [[data-flux-subheading]+&]:mt-2',
         'lg' => 'text-base [&:has(+[data-flux-subheading])]:mb-2 [[data-flux-subheading]+&]:mt-2',

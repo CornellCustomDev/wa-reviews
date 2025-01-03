@@ -4,6 +4,7 @@
     'iconTrailing' => null,
     'iconVariant' => null,
     'variant' => null,
+    'accent' => true,
     'name' => null,
     'icon' => null,
     'size' => null,
@@ -13,8 +14,15 @@
 if ($variant === 'pills') {
     $classes = Flux::classes()
         ->add('flex whitespace-nowrap gap-2 items-center px-3 rounded-full text-sm font-medium')
-        ->add('bg-zinc-800/5 dark:bg-white/5 data-[selected]:bg-zinc-800 data-[selected]:dark:bg-white')
-        ->add('text-zinc-600 hover:text-zinc-800 dark:hover:text-white dark:text-white/50 data-[selected]:text-white data-[selected]:dark:text-zinc-800')
+        ->add('bg-zinc-800/5 dark:bg-white/5 hover:bg-zinc-800/10 dark:hover:bg-white/10 text-zinc-600 hover:text-zinc-800 dark:text-white/70 dark:hover:text-white')
+        ->add(match ($accent) {
+            true => 'data-[selected]:bg-[var(--color-accent)]',
+            false => 'data-[selected]:bg-zinc-800 dark:data-[selected]:bg-white',
+        })
+        ->add(match ($accent) {
+            true => 'data-[selected]:text-[var(--color-accent-foreground)] hover:data-[selected]:text-[var(--color-accent-foreground)]',
+            false => 'data-[selected]:text-white dark:data-[selected]:text-zinc-800',
+        })
         ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
         ;
 
@@ -39,8 +47,12 @@ if ($variant === 'pills') {
     $classes = Flux::classes()
         ->add('flex whitespace-nowrap gap-2 items-center px-2')
         ->add('-mb-px') // We want the "selected" tab's bottom border to overlap the tab group's bottom border...
-        ->add('border-b-[2px] border-transparent data-[selected]:border-zinc-800 data-[selected]:dark:border-white')
-        ->add('text-sm font-medium text-zinc-400 hover:text-zinc-800 dark:hover:text-white dark:text-white/50 data-[selected]:text-zinc-800 data-[selected]:dark:text-white')
+        ->add('border-b-[2px] border-transparent')
+        ->add('text-sm font-medium text-zinc-400 dark:text-white/50')
+        ->add(match($accent) {
+            true => 'data-[selected]:border-[var(--color-accent-content)] data-[selected]:text-[var(--color-accent-content)] hover:data-[selected]:text-[var(--color-accent-content)] hover:text-zinc-800 dark:hover:text-white',
+            false => 'data-[selected]:border-zinc-800 data-[selected]:text-zinc-800 dark:data-[selected]:border-white dark:data-[selected]:text-white hover:text-zinc-800 dark:hover:text-white',
+        })
         ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
         ;
 

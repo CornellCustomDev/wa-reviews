@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '8d6b17517603154ce4db739c2fb3c9e9f3a8b7b3',
+        'reference' => '98dfe853ea7831bda51bb67d78eb00fd092733f4',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -46,7 +46,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '8d6b17517603154ce4db739c2fb3c9e9f3a8b7b3',
+            'reference' => '98dfe853ea7831bda51bb67d78eb00fd092733f4',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -515,18 +515,18 @@
             'dev_requirement' => false,
         ),
         'livewire/flux' => array(
-            'pretty_version' => 'v1.0.32',
-            'version' => '1.0.32.0',
-            'reference' => '9e68e7a4e51c2cd8257d873acef7c63ced05e8e4',
+            'pretty_version' => 'v1.1.2',
+            'version' => '1.1.2.0',
+            'reference' => 'd6b3db107835b42690f163e34863024393ec642e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../livewire/flux',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
         'livewire/flux-pro' => array(
-            'pretty_version' => '1.0.32',
-            'version' => '1.0.32.0',
-            'reference' => '4503a294405afbb68b04e257e3fdfa272968868b',
+            'pretty_version' => '1.1.2',
+            'version' => '1.1.2.0',
+            'reference' => 'b91883bff52d812bf1e1175224d65abaf21885ce',
             'type' => 'library',
             'install_path' => __DIR__ . '/../livewire/flux-pro',
             'aliases' => array(),
@@ -823,8 +823,8 @@
         'psr/http-client-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-factory' => array(
@@ -839,8 +839,8 @@
         'psr/http-factory-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/http-message' => array(
@@ -855,8 +855,8 @@
         'psr/http-message-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '*',
-                1 => '1.0',
+                0 => '1.0',
+                1 => '*',
             ),
         ),
         'psr/log' => array(
@@ -871,8 +871,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0|2.0|3.0',
-                1 => '3.0.0',
+                0 => '3.0.0',
+                1 => '1.0|2.0|3.0',
             ),
         ),
         'psr/simple-cache' => array(
