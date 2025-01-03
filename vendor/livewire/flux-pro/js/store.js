@@ -4,7 +4,7 @@ let selectorDarkMode = isUsingSelectorForDarkModeInTailwind()
 
 if (selectorDarkMode) {
     // Make scrollbars dark in dark mode...
-    inject(({ css }) => css`:root:has(body.dark) { color-scheme: dark; }`)
+    inject(({ css }) => css`:root.dark { color-scheme: dark; }`)
 }
 
 document.addEventListener('alpine:init', () => {
@@ -101,8 +101,8 @@ document.addEventListener('alpine:init', () => {
 })
 
 function applyAppearance(appearance) {
-    let applyDark = () => document.body.classList.add('dark')
-    let applyLight = () => document.body.classList.remove('dark')
+    let applyDark = () => document.documentElement.classList.add('dark')
+    let applyLight = () => document.documentElement.classList.remove('dark')
 
     if (appearance === 'system') {
         let media = window.matchMedia('(prefers-color-scheme: dark)')
@@ -128,12 +128,12 @@ function isUsingSelectorForDarkModeInTailwind() {
     // Add attribute so that the selector will be applied...
     beacon.setAttribute('data-flux-dark-mode-beacon', '')
 
-    // Add the actual selector so that "&" will work...
-    beacon.classList.add('dark:[&[data-flux-dark-mode-beacon]]:hidden')
-
     document.body.appendChild(beacon)
 
     let beforeDarkClass = getComputedStyle(beacon).display === 'none'
+
+    // Add the actual selector so that "&" will work...
+    beacon.classList.add('dark:[&[data-flux-dark-mode-beacon]]:hidden')
 
     // Add .dark to detect if the selector was applied
     beacon.classList.add('dark')

@@ -3,18 +3,37 @@
 @props([
     'description' => null,
     'indicator' => true,
+    'accent' => true,
     'label' => null,
     'icon' => null,
 ])
 
 @php
 $classes = Flux::classes()
-    ->add('flex justify-between gap-3 flex-1 p-4')
+    ->add('relative flex justify-between gap-3 flex-1 p-4')
     ->add('rounded-lg shadow-sm')
-    ->add('bg-white hover:bg-zinc-50 data-[checked]:bg-zinc-50')
-    ->add('dark:bg-white/10 dark:hover:bg-white/15 dark:data-[checked]:bg-white/15')
-    ->add('border border-zinc-800/15 data-[checked]:border-zinc-800')
-    ->add('dark:border-white/10 dark:data-[checked]:border-white')
+    ->add('bg-white dark:bg-white/10 dark:hover:bg-white/15 dark:data-[checked]:bg-white/15')
+    ->add('after:absolute after:-inset-px after:rounded-lg *:relative')
+    ->add('border border-zinc-800/15 dark:border-white/10')
+    ->add([
+        '[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_97.5%)]',
+        '[--haze-border:color-mix(in_oklab,_var(--color-accent-content),_transparent_80%)]',
+        '[--haze-light:color-mix(in_oklab,_var(--color-accent),_transparent_98%)]',
+        'dark:[--haze:color-mix(in_oklab,_var(--color-accent-content),_transparent_90%)]',
+    ])
+    ->add(match ($accent) {
+        true => [
+            '[&:hover_[data-flux-checkbox-indicator]]:border-[var(--haze-border)] dark:[&:hover_[data-flux-checkbox-indicator]]:border-white/10',
+            'hover:border-[var(--haze-border)] dark:hover:border-white/10',
+
+            'data-[checked]:border-[var(--color-accent)] hover:data-[checked]:border-[var(--color-accent)] dark:data-[checked]:bg-white/15 ',
+            'hover:after:bg-[var(--haze-light)] dark:hover:after:bg-white/[4%] data-[checked]:after:bg-[var(--haze)] hover:data-[checked]:after:bg-[var(--haze)]',
+        ],
+        false => [
+            'data-[checked]:bg-zinc-50 dark:data-[checked]:bg-white/15 data-[checked]:border-zinc-800 dark:data-[checked]:border-white',
+            'hover:bg-zinc-50 dark:hover:bg-white/15',
+        ],
+    })
     ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
     ;
 @endphp

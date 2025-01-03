@@ -1,18 +1,25 @@
 @props([
-    'variant' => null,
     'external' => null,
+    'accent' => true,
+    'variant' => null,
 ])
 
 @php
 $classes = Flux::classes()
-    ->add('inline text-inherit font-medium')
-    ->add('underline-offset-[6px] decoration-zinc-800/20 hover:decoration-current')
+    ->add('inline font-medium')
+    ->add('underline-offset-[6px] hover:decoration-current')
     ->add(match ($variant) {
-        'ghost' => 'no-underline hover:underline text-zinc-800 dark:text-white',
-        'subtle' => 'no-underline text-zinc-500 dark:text-white/70 hover:text-zinc-800 dark:hover:text-white',
-        default => 'underline text-zinc-800 dark:text-white',
+        'ghost' => 'no-underline hover:underline',
+        'subtle' => 'no-underline',
+        default => 'underline',
     })
-    ->add('dark:decoration-white/20')
+    ->add(match ($variant) {
+        'subtle' => 'text-zinc-500 dark:text-white/70 hover:text-zinc-800 dark:hover:text-white',
+        default => match ($accent) {
+            true => 'text-[var(--color-accent-content)] decoration-[color-mix(in_oklab,var(--color-accent-content),transparent_80%)]',
+            false => 'text-zinc-800 dark:text-white decoration-zinc-800/20 dark:decoration-white/20',
+        },
+    })
     ;
 @endphp
 {{-- NOTE: It's important that this file has NO newline at the end of the file. --}}

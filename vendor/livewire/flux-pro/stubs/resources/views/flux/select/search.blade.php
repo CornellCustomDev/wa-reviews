@@ -11,7 +11,7 @@ if ($closable !== null) $clearable = null;
 
 $classes = Flux::classes()
     ->add('h-10 w-full flex items-center px-3 py-2')
-    ->add('font-medium text-sm text-zinc-800 dark:text-white')
+    ->add('font-medium text-base sm:text-sm text-zinc-800 dark:text-white')
     ->add('pl-9') // Make room for magnifying glass icon...
     ->add('pr-9') // Make room for clear/clos button and loading indicator...
     ->add('outline-none')

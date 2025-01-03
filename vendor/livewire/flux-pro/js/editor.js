@@ -14,8 +14,10 @@ import { Editor } from '@tiptap/core'
 
 class UIEditor extends UIControl {
     boot() {
-        // Extract initial content...
-        let content = this.querySelector('ui-editor-content').innerHTML
+        // Extract initial content. If the content is coming from Livewire, we need to use
+        // the value attribute, otherwise load it from the editor content element...
+        let content = this.value ?? this.querySelector('ui-editor-content').innerHTML
+
         this.querySelector('ui-editor-content').innerHTML = ''
 
         this._controllable = new Controllable(this)
@@ -84,8 +86,13 @@ class UIEditor extends UIControl {
             }
         })
 
+        // This ensures that Tiptap doesn't emit an update event when the editor component is being booted. This
+        // fixes an issue with `wire:model.live` is dispatching an update request on editor load, and fixes the
+        // editor content being set to empty when Livewire and Alpine are manually bundled in `app.js`...
+        let shouldEmitUpdate = false
+
         this._disableable.onInitAndChange(disabled => {
-            this.editor.setEditable(! disabled)
+            this.editor.setEditable(! disabled, shouldEmitUpdate)
 
             if (disabled) {
                 setAttribute(this, 'aria-disabled', 'true')
@@ -95,6 +102,8 @@ class UIEditor extends UIControl {
                 removeAndReleaseAttribute(this.querySelector('ui-toolbar'), 'disabled')
             }
         })
+
+        shouldEmitUpdate = true
 
         let getValue = () => {
             // Otherwise, an empty state will return <p></p>...

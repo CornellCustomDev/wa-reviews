@@ -8,7 +8,7 @@
 
     <div popover="manual" class="min-w-[360px] p-[5px] rounded-lg border border-zinc-200 dark:border-zinc-600 shadow-sm bg-white dark:bg-zinc-700">
         <div class="h-8 flex justify-between gap-2 pl-2 pr-1" data-flux-editor-link>
-            <input data-editor="link:url" type="text" form="" placeholder="https://..." class="flex-1 text-sm outline-none bg-transparent" autofocus>
+            <input data-editor="link:url" type="text" form="" placeholder="https://..." class="flex-1 text-base sm:text-sm outline-none bg-transparent" autofocus>
 
             <div class="flex gap-2 items-center">
                 <flux:tooltip content="{{ __('Insert link') }}" class="contents">
