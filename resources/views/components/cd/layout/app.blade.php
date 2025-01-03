@@ -35,6 +35,9 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
     @livewireStyles
+    <script>
+        window.localStorage.setItem('flux.appearance', 'none');
+    </script>
     @fluxStyles
 </head>
 <body @class([
