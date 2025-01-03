@@ -3,6 +3,7 @@
 namespace App\Livewire\Scopes;
 
 use App\Models\Scope;
+use App\Models\SiaRule;
 use App\Models\SiteimproveRule;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Collection;
@@ -42,14 +43,8 @@ class SiteimproveIssues extends Component
     }
 
     #[Computed]
-    public function siteimproveRelatedGuidelines($ruleId): Collection
+    public function siteimproveRelatedGuidelines(int $ruleId): ?Collection
     {
-        // only get the rules that have criteria
-        $rules = SiteimproveRule::where('rule_id', $ruleId)
-            ->whereHas('criterion')
-            ->get();
-
-        // For each rule, get the criteria, for each criterion, get the guidelines as objects
-        return $rules->map(fn($rule) => $rule->criterion->guidelines)->flatten();
+        return SiaRule::find($ruleId)?->actRule?->guidelines ?? collect();
     }
 }

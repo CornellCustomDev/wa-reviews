@@ -42,6 +42,11 @@ class Guideline extends Model
         return $this->belongsToMany(ActRule::class);
     }
 
+    public function siteimproveRules(): BelongsToMany
+    {
+        return $this->belongsToMany(SiteimproveRule::class, 'siteimprove_rule_guideline');
+    }
+
     public function items(): HasMany
     {
         return $this->hasMany(Item::class);

@@ -41,24 +41,23 @@
         </tbody>
     </table>
 
-    <h2>Siteimprove Rules</h2>
+    <h2>Siteimprove Alfa Rules</h2>
 
     <table class="table bordered">
         <thead>
         <tr>
-            <th style="width: 100px">Rule Id</th>
+            <th style="width: 100px">SIA ID</th>
             <th>Issues</th>
         </tr>
         </thead>
         <tbody>
-        @foreach($this->siteimproveRules() as $rule)
+        @foreach($this->siaRules() as $rule)
             <tr>
                 <th>
-                    {{ $rule->rule_id }}
+                    <a href="{{ route('sia-rules.show', $rule) }}">{{ $rule->alfa }}</a>
                 </th>
                 <td>
-                    {{ $rule->issues }}
-                    {{--                        <a href="{{ route('siteimprove-check-rules.show', $rule) }}">{{ $rule->issues }}</a>--}}
+                    {!! $rule->name_html !!}
                 </td>
             </tr>
         @endforeach

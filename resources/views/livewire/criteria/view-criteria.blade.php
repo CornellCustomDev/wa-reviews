@@ -10,7 +10,7 @@
             </tr>
         </thead>
         <tbody>
-        @foreach($criteria as $criterion)
+        @foreach($this->criteria as $criterion)
             <tr>
                 <th>
                     <x-forms.button :href="route('criteria.show', $criterion)">{{ $criterion->number }}</x-forms.button>

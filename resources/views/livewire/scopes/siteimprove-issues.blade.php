@@ -11,6 +11,7 @@
                 <thead>
                     <tr>
                         <th>Siteimprove Issue</th>
+                        <th>SIA ID</th>
                         <th>Related Guidelines</th>
                     </tr>
                 </thead>
@@ -30,13 +31,21 @@
                                 </span>
                             </td>
                             <td>
+                                <a href="{{ route('sia-rules.show', $issue['rule_id']) }}">{{ $issue['rule_id'] }}</a>
+                            </td>
+                            <td>
                                 @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
-                                    <x-forms.button
-                                        title="View Guideline {{ $guideline->number }}"
-                                        size="xs"
-                                        class="mb-1"
-                                        x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
-                                    >{{ $guideline->number }}</x-forms.button>
+                                    <flux:dropdown wire:key="$issue->id .':'. $guideline->number">
+                                        <x-forms.button size="xs">{{ $guideline->number }}</x-forms.button>
+                                        <x-forms.menu>
+                                            <x-forms.menu.item icon="eye" wire:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })">
+                                                View Guideline
+                                            </x-forms.menu.item>
+                                            <x-forms.menu.item icon="plus" wire:click="$dispatch('create-issue', {siaRuleId: {{ $issue['rule_id'] }}, guidelineId: {{ $guideline->id }} })">
+                                                New Issue
+                                            </x-forms.menu.item>
+                                        </x-forms.menu>
+                                    </flux:dropdown>
                                 @endforeach
                             </td>
                         </tr>
