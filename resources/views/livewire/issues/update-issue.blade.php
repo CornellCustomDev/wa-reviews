@@ -1,5 +1,12 @@
 <div>
     <form wire:submit="save">
+        <x-forms.select
+            variant="combobox"
+            label="Scope"
+            placeholder="Choose scope..."
+            wire:model="form.scope_id"
+            :options="$this->form->scopeOptions"
+        />
         <x-forms.input label="Target" wire:model="form.target"/>
         <x-forms.textarea label="Description" wire:model="form.description"/>
 

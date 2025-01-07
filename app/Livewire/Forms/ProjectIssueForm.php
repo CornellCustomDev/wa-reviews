@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Models\Issue;
+use App\Models\Project;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Collection;
@@ -10,7 +11,7 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\Form;
 
-class IssueForm extends Form
+class ProjectIssueForm extends Form
 {
     public ?Issue $issue;
 
@@ -26,6 +27,25 @@ class IssueForm extends Form
 
     public Collection $scopeOptions;
 
+    public function __construct(
+        protected Component $component,
+        protected $propertyName
+    )
+    {
+        parent::__construct($component, $this->propertyName);
+
+        if (isset($this->component->project)) {
+            $this->scopeOptions = Scope::where('project_id', $this->component->project->id)
+                ->get()
+                ->map(fn($scope) => [
+                    'value' => $scope->id,
+                    'option' => $scope->title,
+                ]);
+        } else {
+            $this->scopeOptions = collect();
+        }
+    }
+
     public function setModel(Issue $issue): void
     {
         $this->issue = $issue;
@@ -33,12 +53,6 @@ class IssueForm extends Form
         $this->target = $issue->target;
         $this->description = $issue->description;
         $this->recommendation = $issue->recommendation;
-
-        $this->scopeOptions = $this->issue->project->scopes
-            ->map(fn($scope) => [
-                'value' => $scope->id,
-                'option' => $scope->title,
-            ]);
     }
 
     public function getModel(): Issue
@@ -46,12 +60,13 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function store(Scope $scope): Issue
+    public function store(Project $project): Issue
     {
         $this->validate();
 
-        $attributes = array_merge($this->except('generateGuidelines'), ['project_id' => $scope->project_id]);
-        $this->issue = $scope->issues()->create($attributes);
+        $attributes = $this->except('generateGuidelines');
+        $attributes['scope_id'] = $attributes['scope_id'] ?: null;
+        $this->issue = $project->issues()->create($attributes);
 
         if ($this->generateGuidelines) {
             GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
@@ -60,16 +75,4 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function update(?string $field = null): void
-    {
-        $this->validate();
-
-        if ($field) {
-            $this->issue->update([$field => $this->$field]);
-        } else {
-            $attributes = $this->all();
-            $attributes['scope_id'] = $attributes['scope_id'] ?: null;
-            $this->issue->update($attributes);
-        }
-    }
 }

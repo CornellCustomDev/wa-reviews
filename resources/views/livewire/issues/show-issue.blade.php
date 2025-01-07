@@ -1,6 +1,10 @@
 <div>
     <div class="cwd-component align-right">
-        <x-forms.button.back :href="route('scope.show', $issue->scope)" title="Back to Scope" />
+        @if($issue->scope)
+            <x-forms.button.back :href="route('scope.show', $issue->scope)" title="Back to Scope" />
+        @else
+            <x-forms.button.back :href="route('project.show', ['project' => $issue->project, 'tab' => 'issues'])" title="Back to Project" />
+        @endif
     </div>
 
     <h1>{{ $issue->project->name }}: Issue</h1>
@@ -11,10 +15,12 @@
         @endcan
 
         <div x-show="!edit">
+            @if($issue->scope)
             <flux:subheading class="items-center">
                 <a href="{{ $issue->scope->url }}" target="_blank">{{ $issue->scope->url }}</a>
                 <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
             </flux:subheading>
+            @endif
             <flux:heading class="mb-4">
                 <flux:icon.cursor-arrow-ripple class="inline-block" variant="mini" />
                 {!! $issue->target !!}

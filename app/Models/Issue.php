@@ -13,6 +13,7 @@ class Issue extends Model
 
     protected $fillable = [
         'project_id',
+        'scope_id',
         'target',
         'description',
         'recommendation',
