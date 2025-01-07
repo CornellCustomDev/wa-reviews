@@ -3,7 +3,7 @@
     'name' => $attributes->whereStartsWith('wire:model')->first(),
     'description' => null,
 ])
-<flux:field class="mb-4">
+<flux:field class="mb-4 max-w-[600px]">
     <flux:label class="!mb-1">{{ $label }}</flux:label>
 
     @if ($description)

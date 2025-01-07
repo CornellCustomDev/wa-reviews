@@ -5,6 +5,7 @@
 
 @php
 $classes = Flux::classes()
+    ->add('max-w-[600px]')
     ->add('!mb-4')
     ;
 @endphp
