@@ -52,8 +52,12 @@ class AccessibilityAnalyzerService
         return $nodes;
     }
 
-    public function getPageContent(string $pageUrl, bool $bustCache = false)
+    public function getPageContent(string $pageUrl, bool $bustCache = false): ?string
     {
+        if (empty($pageUrl)) {
+            return null;
+        }
+
         $cacheKey = 'page_body_' . md5($pageUrl);
         if ($bustCache) {
             cache()->forget($cacheKey);
