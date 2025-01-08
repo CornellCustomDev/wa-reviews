@@ -1,5 +1,7 @@
 <x-forms.select
     label="Guideline"
+    variant="listbox"
+    searchable
     :options="$form->guidelineOptions"
     placeholder="Select a guideline..."
     wire:model="form.guideline_id"
@@ -13,6 +15,7 @@
 
 <x-forms.select
     label="Testing Method"
+    variant="listbox"
     :options="$form->testingMethodOptions"
     placeholder="Select a testing method..."
     wire:model="form.testing"
