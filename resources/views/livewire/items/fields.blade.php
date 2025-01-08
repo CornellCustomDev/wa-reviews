@@ -7,7 +7,24 @@
     wire:model="form.guideline_id"
 />
 
-<x-forms.radios label="Assessment" :values="$form->assessmentOptions" wire:model="form.assessment" />
+<flux:radio.group label="Assessment" class="max-w-[600px] mb-4" variant="cards" :indicator="false" size="sm" wire:model="form.assessment">
+    @foreach ($form->assessmentOptions as $option)
+        @switch(Str::of($option['value'])->lower()->replace('/', ''))
+            @case('pass')
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-pass"/>
+                @break
+            @case('warn')
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-warn"/>
+                @break
+            @case('fail')
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-fail"/>
+                @break
+            @case('na')
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-na"/>
+                @break
+        @endswitch
+    @endforeach
+</flux:radio.group>
 
 <x-forms.textarea label="Observations" wire:model="form.description" size="sm" />
 
