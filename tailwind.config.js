@@ -11,6 +11,7 @@ export default {
             sans: ['Avenir Next', '-apple-system', 'system-ui', 'BlinkMacSystemFont',
                 'Segoe UI Semibold', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
             verdana: ['Verdana, sans-serif'],
+            systemUi: ['-apple-system, system-ui, BlinkMacSystemFont, Avenir Next, "Segoe UI", Roboto, Helvetica Neue, sans-serif']
     },
         extend: {
             colors: {
