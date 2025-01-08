@@ -1,6 +1,6 @@
 @props([
     'label',
-    'options'
+    'options',
 ])
 
 @php
