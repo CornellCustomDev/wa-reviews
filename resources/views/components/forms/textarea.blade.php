@@ -3,6 +3,7 @@
     'toolbar' => 'heading bold italic underline | bullet ordered blockquote | link code ~ undo redo',
     'variant' => 'cds',
     'size' => 'base',
+    'badge' => null,
 ])
 @php
 $classes = Flux::classes()
@@ -14,5 +15,7 @@ $classes = Flux::classes()
     })
     ->add('[[data-flux-field]:has(>&)]:mb-4')
     ;
+
+$badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
 @endphp
-<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" />
+<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" :$badge />

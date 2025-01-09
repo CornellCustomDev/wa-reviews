@@ -5,9 +5,10 @@
     :options="$form->guidelineOptions"
     placeholder="Select a guideline..."
     wire:model="form.guideline_id"
+    required
 />
 
-<flux:radio.group label="Assessment" class="max-w-[600px] mb-4" variant="cards" :indicator="false" size="sm" wire:model="form.assessment">
+<flux:radio.group label="Assessment" class="max-w-[600px] mb-4" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
     @foreach ($form->assessmentOptions as $option)
         @switch(Str::of($option['value'])->lower()->replace('/', ''))
             @case('pass')
@@ -26,7 +27,7 @@
     @endforeach
 </flux:radio.group>
 
-<x-forms.textarea label="Observations" wire:model="form.description" size="sm" />
+<x-forms.textarea label="Observations" wire:model="form.description" size="sm" required />
 
 <x-forms.textarea label="Recommendations" wire:model="form.recommendation" size="lg" />
 

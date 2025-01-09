@@ -8,9 +8,13 @@
             placeholder="Choose scope..."
             wire:model="form.scope_id"
             :options="$this->form->scopeOptions"
-            description="(Optional) Specify the page this is on."
+            description="Specify the page this is on."
         />
-        <x-forms.input label="Target" wire:model="form.target" required />
+        <x-forms.input
+            label="Target"
+            wire:model="form.target"
+            required
+        />
         <x-forms.textarea label="Description" wire:model="form.description" />
         <x-forms.checkbox
             label="Generate guideline observations with AI"
