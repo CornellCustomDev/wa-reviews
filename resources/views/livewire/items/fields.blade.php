@@ -37,3 +37,8 @@
     placeholder="Select a testing method..."
     wire:model="form.testing"
 />
+
+<x-forms.checkbox
+    label="Content entry issue"
+    wire:model="form.content_issue"
+/>
