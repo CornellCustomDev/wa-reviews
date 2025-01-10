@@ -40,7 +40,7 @@ class ShowIssue extends Component
         return [
             'Projects' => route('projects'),
             $this->issue->project->name => route('project.show', $this->issue->project),
-            $this->issue->scope->title => route('scope.show', $this->issue->scope),
+            ...($this->issue->scope ? [$this->issue->scope->title => route('scope.show', $this->issue->scope)] : []),
             'Viewing Issue' => 'active'
         ];
     }

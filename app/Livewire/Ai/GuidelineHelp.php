@@ -5,7 +5,9 @@ namespace App\Livewire\Ai;
 use App\Enums\Assessment;
 use App\Models\Issue;
 use App\Models\Item;
+use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
 use App\Services\AzureOpenAI\ChatService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -26,37 +28,19 @@ class GuidelineHelp extends Component
     public function populateGuidelines(): void
     {
         $this->showChat = false;
-
-        $chat = ChatService::make();
-        $prompt = $this->getGuidelinesPrompt();
-        $chat->setPrompt($prompt);
-        $chat->addMessage($this->getIssueContext());
-        $chat->send();
-        $response = $chat->getLastAiResponse();
         $this->feedback = '';
 
-        // Parse the $response json
-        $response = json_decode($response);
-        $this->response = json_encode($response, JSON_PRETTY_PRINT);
+        $result = GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
 
-        if (isset($response->guidelines)) {
-            foreach ($response->guidelines as $response) {
-                Item::create([
-                    'issue_id' => $this->issue->id,
-                    'guideline_id' => $response->number,
-                    'description' => Str::markdown($response->applicability),
-                    'recommendation' => Str::markdown($response->recommendation),
-                    'testing' => Str::markdown($response->testing),
-                    'assessment' => Assessment::Fail,
-                ]);
-            }
-            $this->dispatch('items-updated');
-        } elseif (isset($response->feedback)) {
-            $this->feedback = $response->feedback;
-        } else {
-            dd($response);
+        if (isset($result['feedback'])) {
+            $this->response = json_encode($result, JSON_PRETTY_PRINT);
+            $this->feedback = $result['feedback'];
+            return;
         }
+
+        $this->dispatch('items-updated');
     }
+
     public function sendChatMessage()
     {
         $chat = ChatService::make();
@@ -81,69 +65,6 @@ class GuidelineHelp extends Component
     public function render()
     {
         return view('livewire.ai.guideline-help');
-    }
-
-    public function getGuidelinesPrompt(): string
-    {
-        $prompt = <<<PROMPT
-As an expert in web accessibility guidelines, your task is to assist users in identifying applicable guidelines for specific web accessibility issues.
-
-Instruction:
-
-1. When a user presents an accessibility issue, if the issue appears to be a failure of any accessibility issues based on the Guidelines Document referenced below, provide a list named "guidelines" with an element for each relevant guideline that includes these elements:
-   - number: Guideline number
-   - heading: Guideline heading
-   - criteria: WCAG criteria
-   - applicability: Brief description of how the guideline applies to the issue
-   - recommendation: Brief remediation recommendations
-   - testing: Very brief testing recommendations
-
-2. If the issue is not a direct failure of a guideline, provide a response named "feedback" with a brief explanation, including suggesting alternative resources or approaches to address the issue.
-
-3. If you need more information about the user-provided accessibility issue to provide accurate guidance, provide a response named "feedback" asking the user for the required clarification.
-
-Output Formatting:
-  - All responses should be formatted as a JSON array, not markdown.
-
-Example Response when Applicable Guidelines are Found:
-{
-  "guidelines": [
-    {
-      "number": "19",
-      "heading": "Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",
-      "criteria": "1.3.1 Info and Relationships (Level A)",
-      "applicability": "The fieldset must contain a `<legend>` or be properly labeled using ARIA to describe the grouping of checkboxes.",
-      "recommendation": "Add a `<legend>` element to the fieldset to describe the grouping of checkboxes.",
-      "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies."
-    },
-    {
-      "number": "61",
-      "heading": "Labels describe the purpose of the inputs they are associated with.",
-      "criteria": "2.4.6 Headings and Labels (Level AA)",
-      "applicability": "The absence of a legend or ARIA label means that the purpose of the checkboxes is not clearly communicated to users.",
-      "recommendation": "Add a clear label to each checkbox to describe its purpose.",
-      "testing": "Check that each checkbox has a clear label that describes its purpose."
-    }
-  ]
-}
-
-Example Response when No Applicable Guidelines are Found:
-{
-  "feedback": "The issue you described does not appear to be a direct failure of a specific guideline. However, you can improve accessibility by ensuring that all form elements have clear labels and are properly grouped."
-}
-
-Example Response Requesting Clarification:
-{
-  "feedback": "To provide accurate guidance, could you please provide more information about the issue you are experiencing?"
-}
-
-Desired Outcome:
-The final output should be informative and user-friendly, allowing users to easily understand the relevance and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your descriptions to facilitate quick comprehension.
-
-The content of the Guidelines Document follows.
-
-PROMPT;
-        return $prompt . Storage::get('guidelines.md');
     }
 
     public function getChatPrompt(): string

@@ -1,8 +1,9 @@
 
-<x-forms.input label="Project Name" wire:model="form.name" />
+<x-forms.input label="Project Name" wire:model="form.name" required />
 <x-forms.input
     label="Site URL" wire:model="form.site_url"
     description="This URL should be identical to the URL used in Siteimprove."
+    required
 />
 <x-forms.textarea label="Description" wire:model="form.description" />
 <x-forms.input label="Siteimprove Report URL" wire:model="form.siteimprove_url" />

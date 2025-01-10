@@ -9,7 +9,9 @@ export default {
     theme: {
         fontFamily: {
             sans: ['Avenir Next', '-apple-system', 'system-ui', 'BlinkMacSystemFont',
-                'Segoe UI Semibold', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serf']
+                'Segoe UI Semibold', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+            verdana: ['Verdana, sans-serif'],
+            systemUi: ['-apple-system, system-ui, BlinkMacSystemFont, Avenir Next, "Segoe UI", Roboto, Helvetica Neue, sans-serif']
     },
         extend: {
             colors: {
@@ -48,7 +50,8 @@ export default {
             },
             backgroundImage: {
                 'radio-checked': "url('/cwd-framework/images/layout/checked-radio.svg')",
-            }
+                'checked': "url('/cwd-framework/images/layout/checked.svg')",
+            },
         },
     },
     darkMode: null,

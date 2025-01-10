@@ -19,7 +19,7 @@ class ItemForm extends Form
     #[Validate('required')]
     public $guideline_id = '';
     #[Validate('required')]
-    public Assessment $assessment = Assessment::Fail;
+    public Assessment $assessment;
     #[Validate('string|nullable|max:255')]
     public ?string $description;
     #[Validate('nullable')]
