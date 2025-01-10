@@ -11,6 +11,7 @@ use App\Livewire\Guidelines\Doc;
 use App\Livewire\Guidelines\ShowGuideline;
 use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Issues\CreateProjectIssue;
+use App\Livewire\Issues\CreateSiteimproveIssue;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
@@ -59,6 +60,7 @@ Route::prefix('scope/{scope}')->name('scope.')->group(function () {
     Route::get('', ShowScope::class)->name('show')->can('view', 'scope');
     Route::get('/edit', UpdateScope::class)->name('edit')->can('update', 'scope');
     Route::get('/issue/create', CreateIssue::class)->name('issue.create')->can('update', 'scope');
+    Route::get('/issue/siteimprove/create/{rule}/{guideline}', CreateSiteimproveIssue::class)->name('issue.siteimprove.create');
 });
 
 Route::prefix('issue/{issue}')->name('issue.')->group(function () {

@@ -37,7 +37,7 @@ class GuidelinesAnalyzerService
                 ];
             }
         } elseif (isset($response->feedback)) {
-            $results[] = ['feedback' => $response->feedback];
+            $results['feedback'] = $response->feedback;
         }
 
         return $results;

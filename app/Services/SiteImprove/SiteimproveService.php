@@ -180,6 +180,15 @@ class SiteimproveService
         return $pages[$url]['page_report'] ?? null;
     }
 
+    public static function getPageReportUrlForScope(Scope $scope): ?string
+    {
+        $siteimproveService = SiteimproveService::fromScope($scope);
+        return Cache::rememberForever(
+            key: "siteimprove_url_$scope->url",
+            callback: fn() => $siteimproveService->getPageReportUrl($scope->url) ?? ''
+        );
+    }
+
     public function getPageIssuesCount(string $url): ?int
     {
         try {

@@ -28,4 +28,9 @@ class SiteimproveRule extends Model
     {
         return $this->belongsToMany(Guideline::class, 'siteimprove_rule_guideline');
     }
+
+    public function siaRule(): BelongsTo
+    {
+        return $this->belongsTo(SiaRule::class, 'rule_id', 'id');
+    }
 }

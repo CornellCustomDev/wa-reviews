@@ -17,9 +17,9 @@ As an expert in web accessibility guidelines and web development, your task is t
 questions a user might have about the web page content below. If you need more information,
 please ask the user for clarification.
 
---
-{$this->scope->url}
+Page Url: {$this->scope->url}
 
+Page Content:
 ```html
 {$context}
 ```

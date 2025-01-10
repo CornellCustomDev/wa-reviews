@@ -14,6 +14,7 @@ class Issue extends Model
     protected $fillable = [
         'project_id',
         'scope_id',
+        'sia_rule_id',
         'target',
         'description',
         'recommendation',
@@ -27,6 +28,11 @@ class Issue extends Model
     public function scope(): BelongsTo
     {
         return $this->belongsTo(Scope::class);
+    }
+
+    public function siaRule(): BelongsTo
+    {
+        return $this->belongsTo(SiaRule::class);
     }
 
     public function items(): HasMany

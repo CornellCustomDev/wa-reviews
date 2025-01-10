@@ -29,7 +29,7 @@ $classes = Flux::classes()
             '[&_[data-flux-menu-item-icon]]:text-zinc-400 dark:[&_[data-flux-menu-item-icon]]:text-white/60 [&[data-active]_[data-flux-menu-item-icon]]:text-current',
         ],
         'cds' => [
-            'text-white bg-cds-blue-600 data-[active]:cds-gray-900 data-[active]:bg-[#2471a7]',
+            'text-white bg-cds-gray-600 data-[active]:cds-gray-900 data-[active]:bg-[#2471a7]',
             '[&_[data-flux-menu-item-icon]]:text-white',
             '[&[data_active]_[data-flux-menu-item-icon]]:text-current',
         ],

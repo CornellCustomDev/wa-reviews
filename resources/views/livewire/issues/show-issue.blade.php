@@ -21,6 +21,14 @@
                     <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
                 </flux:subheading>
             @endif
+            @if($issue->siaRule)
+                <flux:subheading class="items-center">
+                    <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue->siaRule->id }}/failed" target="_blank">
+                        Siteimprove Issue Detail
+                        <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
+                    </a>
+                </flux:subheading>
+            @endif
             <flux:heading class="mb-4">
                 <flux:icon.cursor-arrow-ripple class="inline-block" variant="mini" />
                 {!! $issue->target !!}
