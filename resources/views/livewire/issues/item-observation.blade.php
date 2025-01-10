@@ -1,4 +1,4 @@
-<div>
+<div class="inline-block">
     <flux:tooltip position="bottom" class="align-middle">
         <x-forms.button
             size="xs"
