@@ -3,7 +3,7 @@
         <x-forms.button.chat wire:click="$toggle('showChat')" :$showChat />
     </div>
 
-    <div x-show="$wire.showChat">
+    <div x-show="$wire.showChat" x-cloak>
         <hr>
         <h3>AI Assistance Chat</h3>
 
@@ -29,7 +29,7 @@
     </div>
 
     @if(!$showChat)
-        <div x-show="$wire.feedback != ''">
+        <div x-show="$wire.feedback != ''" x-cloak>
             <hr>
             <div class="panel">
                 <h3 class="h5">AI Response</h3>

@@ -1,4 +1,4 @@
-<div x-show="$wire.guidelineNumber">
+<div x-show="$wire.guidelineNumber" x-cloak>
     <hr>
 
     <flux:button size="xs" variant="cds-secondary" wire:click="hideGuideline" style="float:right">Hide</flux:button>
