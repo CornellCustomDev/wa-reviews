@@ -3,7 +3,9 @@
 namespace App\Livewire\Issues;
 
 use App\Models\Issue;
+use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -19,6 +21,12 @@ class ShowIssue extends Component
     public function refreshIssue(): void
     {
         $this->issue->refresh();
+    }
+
+    #[Computed('siteimproveUrl')]
+    public function siteimproveUrl(): string
+    {
+        return SiteimproveService::getPageReportUrlForScope($this->issue->scope);
     }
 
     public function render()

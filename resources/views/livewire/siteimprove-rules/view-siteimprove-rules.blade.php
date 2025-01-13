@@ -9,23 +9,26 @@
                 <th style="width: 100px;">Rule Id</th>
                 <th>WCAG Criteria</th>
                 <th>Issues</th>
+                <th>Guidelines</th>
             </tr>
         </thead>
         <tbody>
-        @foreach($rules as $rule)
+        @foreach($this->getRuleCategories() as $rule)
             <tr>
                 <th>
                     {{ $rule->rule_id }}
                 </th>
                 <td>
-                    @if($rule->criterion)
-                        <a href="{{ route('criteria.show', $rule->criterion) }}">{{ $rule->criterion->getLongName() }}</a>
-                    @else
-                        {{ $rule->category }}
-                    @endif
+                    {{ $rule->category }}
+
                 </td>
                 <td>
                     {{ $rule->issues }}
+                </td>
+                <td>
+                    @foreach($rule->guidelines as $guideline)
+                        <x-forms.button size="xs" :href="route('guidelines.show', $guideline)">{{ $guideline->number }}</x-forms.button>
+                    @endforeach
                 </td>
             </tr>
         @endforeach

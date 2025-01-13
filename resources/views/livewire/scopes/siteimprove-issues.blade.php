@@ -11,6 +11,7 @@
                 <thead>
                     <tr>
                         <th>Siteimprove Issue</th>
+                        <th>SIA ID</th>
                         <th>Related Guidelines</th>
                     </tr>
                 </thead>
@@ -20,7 +21,7 @@
                             <td>
                                 {{ $issue['title'] }}
                                 <span class="text-nowrap">
-                                ({{ $issue['occurrences'] }} {{ Str::plural('occurence', $issue['occurrences']) }},
+                                ({{ $issue['occurrences'] }} {{ Str::plural('occurrence', $issue['occurrences']) }},
                                 <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue['rule_id'] }}/failed"
                                    target="_blank" title="View Siteimprove report for {{ $issue['title'] }}">
                                     Issue Detail
@@ -30,13 +31,27 @@
                                 </span>
                             </td>
                             <td>
-                                @foreach ($this->siteimproveRelatedGuidelines($issue['rule_id']) as $guideline)
-                                    <x-forms.button
-                                        title="View Guideline {{ $guideline->number }}"
-                                        size="xs"
-                                        class="mb-1"
-                                        x-on:click.prevent="$dispatch('show-guideline', {number: {{ $guideline->number }} })"
-                                    >{{ $guideline->number }}</x-forms.button>
+                                <a href="{{ route('sia-rules.show', $issue['rule_id']) }}">{{ $issue['rule_id'] }}</a>
+                            </td>
+                            <td>
+                                @foreach ($this->siaRelatedGuidelines($issue['rule_id']) as $guideline)
+                                    <flux:dropdown wire:key="$issue->id .':'. $guideline->number" gap="1">
+                                        <x-forms.button size="xs">{{ $guideline->number }}</x-forms.button>
+                                        <x-forms.menu>
+                                            <x-forms.menu.item icon="eye" wire:click="$dispatch('show-guideline', {number: {{ $guideline->number }} })">
+                                                View Guideline
+                                            </x-forms.menu.item>
+                                            @if($existingIssueId = $this->siaRelatedIssues($issue['rule_id']))
+                                                <x-forms.menu.item icon="eye" wire:click="$dispatch('show-issue', {issue: {{ $existingIssueId }} })">
+                                                    View Issue
+                                                </x-forms.menu.item>
+                                            @else
+                                                <x-forms.menu.item icon="plus" wire:click="$dispatch('create-issue', {rule: {{ $issue['rule_id'] }}, guideline: {{ $guideline->id }} })">
+                                                    New Issue
+                                                </x-forms.menu.item>
+                                            @endif
+                                        </x-forms.menu>
+                                    </flux:dropdown>
                                 @endforeach
                             </td>
                         </tr>

@@ -22,9 +22,16 @@ class ShowCriterion extends Component
         return $this->criterion->actRules()->get()->sortBy('name');
     }
 
+    #[Computed]
     public function siteimproveRules()
     {
         return $this->criterion->siteimproveRules()->get()->sortBy('rule_id');
+    }
+
+    #[Computed]
+    public function siaRules()
+    {
+        return $this->criterion->siaRules()->get()->sortBy('alfa');
     }
 
     public function render()

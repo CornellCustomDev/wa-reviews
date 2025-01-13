@@ -71,7 +71,7 @@ wcag_criteria,guideline_number,guideline_name,act_rule_name,act_rule_id
 2.5.1 Pointer Gestures (A),64,"All functionality that uses multipoint or path-based gestures can be operated with a single pointer without a path-based gesture, unless a multipoint or path-based gesture is essential.",,
 2.5.2 Pointer Cancellation (A),65,"Functionality operated with a single pointer must: not fire on the down event; fire on the up-event along with a way to abort or undo; reverse the function on the up-event, or complete an essetial function on the down event.",,
 2.5.3 Label in Name (A),66,"For user interface components with labels that include text or images of text, the accessible name contains the text that is presented visually.",,
-2.5.4 Motion Actuation (A),67,Any functionality activated by device motion can be performed with a user interface component that does not require motion.,,
+2.5.4 Motion Actuation (A),67,Any functionality activated by device motion can be performed with a user interface component that does not require motion.,"Visible label is part of accessible name",2ee8b8
 2.5.4 Motion Actuation (A),68,Any functionality activated by device motion can be disabled.,,
 2.5.7 Dragging Movements (AA),69,Any functionality that can be achieved by dragging (click and hold then move) must be operable without the need for dragging.,,
 2.5.8 Target Size (Minimum) (AA),70,"All elements must have a clickable target size of at least 24x24 pixels unless the element is inline, controlled by the browser, or the ""target offset"" to all adjacent clickable elements is at least 24px. ",,

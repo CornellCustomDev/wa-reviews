@@ -10,7 +10,7 @@
         <span wire:loading.delay wire:target="populateGuidelines"> Analyzing...</span>
     </div>
 
-    <div x-show="$wire.showChat">
+    <div x-show="$wire.showChat" x-cloak>
         <hr>
         <h3>AI Assistance Chat</h3>
 
@@ -36,7 +36,7 @@
     </div>
 
     @if(!$showChat)
-        <div x-show="$wire.feedback != ''">
+        <div x-show="$wire.feedback != ''" x-cloak>
             <hr>
             <div class="panel">
                 <h3 class="h5">AI Response</h3>
@@ -45,7 +45,7 @@
         </div>
     @endif
 
-    <div x-show="$wire.response != null && $wire.response != ''" class="hidden">
+    <div x-show="$wire.response != null && $wire.response != ''" class="hidden" x-cloak>
         <hr>
         <div class="panel accent-gold fill">
             <h3>Debugging info</h3>

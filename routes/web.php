@@ -11,6 +11,7 @@ use App\Livewire\Guidelines\Doc;
 use App\Livewire\Guidelines\ShowGuideline;
 use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Issues\CreateProjectIssue;
+use App\Livewire\Issues\CreateSiteimproveIssue;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
@@ -25,6 +26,8 @@ use App\Livewire\ActRules\ViewRules;
 use App\Livewire\Scopes\CreateScope;
 use App\Livewire\Scopes\ShowScope;
 use App\Livewire\Scopes\UpdateScope;
+use App\Livewire\SiaRules\ShowSiaRule;
+use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
 use App\Models\Project;
 use Illuminate\Support\Facades\Route;
@@ -57,6 +60,7 @@ Route::prefix('scope/{scope}')->name('scope.')->group(function () {
     Route::get('', ShowScope::class)->name('show')->can('view', 'scope');
     Route::get('/edit', UpdateScope::class)->name('edit')->can('update', 'scope');
     Route::get('/issue/create', CreateIssue::class)->name('issue.create')->can('update', 'scope');
+    Route::get('/issue/siteimprove/create/{rule}/{guideline}', CreateSiteimproveIssue::class)->name('issue.siteimprove.create');
 });
 
 Route::prefix('issue/{issue}')->name('issue.')->group(function () {
@@ -88,6 +92,11 @@ Route::prefix('act-rules')->name('act-rules.')->group(function () {
 
 Route::prefix('siteimprove-rules')->name('siteimprove-rules.')->group(function () {
     Route::get('/', ViewSiteimproveRules::class)->name('index');
+});
+
+Route::prefix('sia-rules')->name('sia-rules.')->group(function () {
+    Route::get('/', ViewSiaRules::class)->name('index');
+    Route::get('/{rule}', ShowSiaRule::class)->name('show');
 });
 
 // Livewire route

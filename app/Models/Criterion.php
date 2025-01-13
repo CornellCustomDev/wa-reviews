@@ -32,6 +32,11 @@ class Criterion extends Model
         return $this->belongsToMany(ActRule::class, 'act_rule_criterion');
     }
 
+    public function siaRules(): BelongsToMany
+    {
+        return $this->belongsToMany(SiaRule::class, 'sia_rule_criterion');
+    }
+
     public function getNumberName(): string
     {
         return "$this->number $this->name";

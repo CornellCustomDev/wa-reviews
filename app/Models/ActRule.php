@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Services\AccessibilityAnalyzer\RuleRunner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
@@ -26,6 +27,11 @@ class ActRule extends Model
     public function guidelines(): BelongsToMany
     {
         return $this->belongsToMany(Guideline::class);
+    }
+
+    public function siaRule(): HasOne
+    {
+        return $this->hasOne(SiaRule::class);
     }
 
     public function getMachineName(): string

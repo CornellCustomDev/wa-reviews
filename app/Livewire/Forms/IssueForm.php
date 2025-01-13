@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Models\Issue;
 use App\Models\Scope;
+use App\Models\SiaRule;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Validate;
@@ -46,11 +47,14 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function store(Scope $scope): Issue
+    public function store(Scope $scope, ?SiaRule $rule = null): Issue
     {
         $this->validate();
 
-        $attributes = array_merge($this->except('generateGuidelines'), ['project_id' => $scope->project_id]);
+        $attributes = array_merge($this->except('generateGuidelines'), [
+            'project_id' => $scope->project_id,
+            'sia_rule_id' => $rule?->id,
+        ]);
         $this->issue = $scope->issues()->create($attributes);
 
         if ($this->generateGuidelines) {

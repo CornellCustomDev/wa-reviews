@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Scopes;
 
+use App\Models\Guideline;
+use App\Models\Issue;
 use App\Models\Scope;
-use App\Models\SiteimproveRule;
+use App\Models\SiaRule;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class SiteimproveIssues extends Component
@@ -17,12 +19,7 @@ class SiteimproveIssues extends Component
     #[Computed('siteimproveUrl')]
     public function siteimproveUrl(): string
     {
-        $siteimproveService = SiteimproveService::fromScope($this->scope);
-
-        return Cache::rememberForever(
-            key: "siteimprove_url_{$this->scope->url}",
-            callback: fn() => $siteimproveService->getPageReportUrl($this->scope->url) ?? ''
-        );
+        return SiteimproveService::getPageReportUrlForScope($this->scope);
     }
 
     #[Computed('siteimproveIssueCount')]
@@ -42,14 +39,35 @@ class SiteimproveIssues extends Component
     }
 
     #[Computed]
-    public function siteimproveRelatedGuidelines($ruleId): Collection
+    public function siaRelatedGuidelines(int $ruleId): ?Collection
     {
-        // only get the rules that have criteria
-        $rules = SiteimproveRule::where('rule_id', $ruleId)
-            ->whereHas('criterion')
-            ->get();
+        return SiaRule::find($ruleId)?->actRule?->guidelines ?? collect();
+    }
 
-        // For each rule, get the criteria, for each criterion, get the guidelines as objects
-        return $rules->map(fn($rule) => $rule->criterion->guidelines)->flatten();
+    public function siaRelatedIssues(int $ruleId): ?Issue
+    {
+        return $this->scope->issues->filter(fn($issue) => $issue->sia_rule_id === $ruleId)->first();
+    }
+
+    #[On('create-issue')]
+    public function createIssue(SiaRule $rule, Guideline $guideline): void
+    {
+        $this->redirect(route('scope.issue.siteimprove.create', [
+            'scope' => $this->scope,
+            'rule' => $rule,
+            'guideline' => $guideline,
+        ]));
+    }
+
+    #[On('show-issue')]
+    public function showIssue(Issue $issue): void
+    {
+        $this->redirect(route('issue.show', $issue));
+    }
+
+    #[On('issues-updated')]
+    public function refreshIssues(): void
+    {
+        unset($this->siteImproveIssues);
     }
 }
