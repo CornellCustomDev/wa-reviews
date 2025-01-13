@@ -3,6 +3,7 @@
 $classes = Flux::classes()
     ->add('shrink-0 size-[1.125rem] rounded-full')
     ->add('text-sm text-zinc-700 dark:text-zinc-800')
+    ->add('[ui-option[disabled]_&]:opacity-75 [ui-option[data-selected][disabled]_&]:opacity-50')
     ->add('flex justify-center items-center [ui-option[data-selected]_&>div]:block')
     ->add([
         'border',
@@ -13,15 +14,13 @@ $classes = Flux::classes()
     ])
     ->add([
         'bg-white dark:bg-white/10',
-        'dark:[ui-option[disabled]_&]:bg-white/5',
-        '[ui-option[data-selected]_&]:bg-zinc-800 dark:[ui-option[data-selected]_&]:bg-white',
-        '[ui-option[disabled][data-selected]_&]:bg-zinc-500 dark:[ui-option[disabled][data-selected]_&]:bg-white/60',
-        '[ui-option[data-selected]_&]:hover:bg-zinc-800 dark:[ui-option[data-selected]_&]:hover:bg-white',
-        '[ui-option[data-selected]_&]:focus:bg-zinc-800 dark:[ui-option[data-selected]_&]:focus:bg-white',
+        '[ui-option[data-selected]_&]:bg-[var(--color-accent)]',
+        '[ui-option[data-selected]_&]:hover:bg-[var(--color-accent)]',
+        '[ui-option[data-selected]_&]:focus:bg-[var(--color-accent)]',
     ])
     ;
 @endphp
 
 <div {{ $attributes->class($classes) }}>
-    <div class="hidden size-2 rounded-full bg-white dark:bg-zinc-800"></div>
+    <div class="hidden size-2 rounded-full bg-[var(--color-accent-foreground)]"></div>
 </div>

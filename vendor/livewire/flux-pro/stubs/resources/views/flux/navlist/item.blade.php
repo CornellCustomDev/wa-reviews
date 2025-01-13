@@ -6,6 +6,7 @@
     'badgeColor' => null,
     'variant' => null,
     'iconDot' => null,
+    'accent' => true,
     'badge' => null,
     'icon' => null,
 ])
@@ -20,12 +21,34 @@ $iconClasses = Flux::classes($square ? '!size-5' : '!size-4');
 $classes = Flux::classes()
     ->add('h-10 lg:h-8 relative flex items-center gap-3 rounded-lg')
     ->add($square ? '!px-2.5' : '')
-    ->add('py-0 text-left w-full px-3 my-px border-zinc-200')
-    ->add('text-zinc-500 dark:text-white/80 hover:text-zinc-800 hover:dark:text-white')
-    ->add('hover:bg-zinc-100 hover:dark:bg-white/10')
+    ->add('py-0 text-left w-full px-3 my-px')
+    ->add('text-zinc-500 dark:text-white/80')
     ->add(match ($variant) {
-        'outline' => 'data-[current]:text-zinc-800 data-[current]:dark:text-zinc-100 data-[current]:bg-white data-[current]:dark:bg-white/10 data-[current]:border data-[current]:border-zinc-200 data-[current]:dark:border-white/10 data-[current]:shadow-sm',
-        default => 'data-[current]:text-zinc-800 data-[current]:dark:text-zinc-100 data-[current]:bg-zinc-800/5 data-[current]:dark:bg-white/10',
+        'outline' => match ($accent) {
+            true => [
+                'data-[current]:text-[var(--color-accent-content)] hover:data-[current]:text-[var(--color-accent-content)]',
+                'data-[current]:bg-white dark:data-[current]:bg-white/[7%] data-[current]:border data-[current]:border-zinc-200 dark:data-[current]:border-transparent',
+                'hover:text-zinc-800 dark:hover:text-white dark:hover:bg-white/[7%] hover:bg-zinc-800/5 ',
+                'border border-transparent',
+            ],
+            false => [
+                'data-[current]:text-zinc-800 data-[current]:dark:text-zinc-100 data-[current]:border-zinc-200',
+                'data-[current]:bg-white data-[current]:dark:bg-white/10 data-[current]:border data-[current]:border-zinc-200 data-[current]:dark:border-white/10 data-[current]:shadow-sm',
+                'hover:text-zinc-800 dark:hover:text-white',
+            ],
+        },
+        default => match ($accent) {
+            true => [
+                'data-[current]:text-[var(--color-accent-content)] hover:data-[current]:text-[var(--color-accent-content)]',
+                'data-[current]:bg-zinc-800/[4%] dark:data-[current]:bg-white/[7%]',
+                'hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-800/[4%] dark:hover:bg-white/[7%]',
+            ],
+            false => [
+                'data-[current]:text-zinc-800 dark:data-[current]:text-zinc-100',
+                'data-[current]:bg-zinc-800/[4%] dark:data-[current]:bg-white/10',
+                'hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-800/[4%] dark:hover:bg-white/10',
+            ],
+        },
     })
     ;
 @endphp

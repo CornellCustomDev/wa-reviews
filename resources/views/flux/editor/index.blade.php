@@ -10,7 +10,7 @@ $invalid ??= ($name && $errors->has($name));
 
 $border ??= $invalid ? 'border-red-500' : match ($variant) {
     default => 'border-zinc-200 border-b-zinc-300/80 dark:border-white/10',
-    'cds' => 'border-cds-gray-400 border-b-gray-400',
+    'cds' => 'border-cds-gray-400 border-b-cds-gray-400',
 };
 
 $classes = Flux::classes()

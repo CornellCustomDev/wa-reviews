@@ -29,8 +29,8 @@ class CreateScope extends Component
     public function save()
     {
         $this->authorize('update', $this->project);
-        $this->form->store($this->project);
+        $scope = $this->form->store($this->project);
 
-        return redirect()->route('project.show', $this->project);
+        return redirect()->route('scope.show', $scope);
     }
 }

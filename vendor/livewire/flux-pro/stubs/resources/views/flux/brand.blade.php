@@ -8,6 +8,10 @@
 $classes = Flux::classes()
     ->add('h-10 flex items-center mr-4')
     ;
+
+$textClasses = Flux::classes()
+    ->add('text-sm font-medium truncate [:where(&)]:text-zinc-800 [:where(&)]:dark:text-zinc-100')
+    ;
 @endphp
 
 <?php if ($name): ?>
@@ -20,7 +24,7 @@ $classes = Flux::classes()
             <?php endif; ?>
         </div>
 
-        <div class="text-sm text-zinc-900 dark:text-zinc-100 font-medium truncate">{{ $name }}</div>
+        <div class="{{ $textClasses }}">{{ $name }}</div>
     </a>
 <?php else: ?>
     <a href="{{ $href }}" {{ $attributes->class($classes)->except('alt') }} data-flux-brand>

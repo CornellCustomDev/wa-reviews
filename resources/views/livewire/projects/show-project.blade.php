@@ -34,10 +34,14 @@
 
     <flux:tab.group>
         <flux:tabs wire:model.live="tab">
-            <flux:tab name="scope">Scope ({{ count($project->issues) }})</flux:tab>
-            <flux:tab name="siteimprove">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
+            <flux:tab name="issues" :accent="false">Issues ({{ $project->issues()->count() }})</flux:tab>
+            <flux:tab name="scope" :accent="false">Scope ({{ $project->scopes()->count() }})</flux:tab>
+            <flux:tab name="siteimprove" :accent="false">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
         </flux:tabs>
 
+        <flux:tab.panel name="issues" class="!pt-6">
+            <livewire:projects.issues :$project />
+        </flux:tab.panel>
         <flux:tab.panel name="scope" class="!pt-6">
             <livewire:scopes.view-scopes :$project />
         </flux:tab.panel>

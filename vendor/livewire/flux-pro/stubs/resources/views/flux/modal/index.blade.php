@@ -22,7 +22,7 @@ $classes = Flux::classes()
         'bare' => '',
     })
     ->add(match ($variant) {
-        default => 'bg-white dark:bg-zinc-800 borderborder-transparent dark:border-zinc-700',
+        default => 'bg-white dark:bg-zinc-800 border border-transparent dark:border-zinc-700',
         'flyout' => 'bg-white dark:bg-zinc-800 border-transparent dark:border-zinc-700',
         'bare' => 'bg-transparent',
     });
@@ -34,11 +34,18 @@ if ($attributes['@close'] ?? null) {
     unset($attributes['@close']);
 }
 
+// Support <flux:modal ... @cancel="?"> syntax...
+if ($attributes['@cancel'] ?? null) {
+    $attributes['wire:cancel'] = $attributes['@cancel'];
+
+    unset($attributes['@cancel']);
+}
+
 if ($dismissible === false) {
     $attributes = $attributes->merge(['disable-click-outside' => '']);
 }
 
-[ $styleAttributes, $attributes ] = Flux::splitAttributes($attributes, ['class', 'style', 'wire:close', 'x-on:close']);
+[ $styleAttributes, $attributes ] = Flux::splitAttributes($attributes, ['class', 'style', 'wire:close', 'x-on:close', 'wire:cancel', 'x-on:cancel']);
 @endphp
 
 <ui-modal {{ $attributes }} data-flux-modal>

@@ -3,6 +3,7 @@
 $classes = Flux::classes()
     ->add('shrink-0 size-[1.125rem] rounded-[.3rem] flex justify-center items-center')
     ->add('text-sm text-zinc-700 dark:text-zinc-800')
+    ->add('[ui-option[disabled]_&]:opacity-75 [ui-option[data-selected][disabled]_&]:opacity-50 ')
     ->add('[ui-option[data-selected]_&>svg:first-child]:block')
     ->add([
         'border',
@@ -13,16 +14,14 @@ $classes = Flux::classes()
     ])
     ->add([
         'bg-white dark:bg-white/10',
-        'dark:[ui-option[disabled]_&]:bg-white/5',
-        '[ui-option[data-selected]_&]:bg-zinc-800 dark:[ui-option[data-selected]_&]:bg-white',
-        '[ui-option[disabled][data-selected]_&]:bg-zinc-500 dark:[ui-option[disabled][data-selected]_&]:bg-white/60',
-        '[ui-option[data-selected]:hover_&]:bg-zinc-800 dark:[ui-option[data-selected]:hover_&]:bg-white',
-        '[ui-option[data-selected]_&]:focus:bg-zinc-800 dark:[ui-option[data-selected]_&]:focus:bg-white',
+        '[ui-option[data-selected]_&]:bg-[var(--color-accent)]',
+        '[ui-option[data-selected]_&]:hover:bg-[var(--color-accent)]',
+        '[ui-option[data-selected]_&]:focus:bg-[var(--color-accent)]',
     ])
     ;
 @endphp
 
 <div {{ $attributes->class($classes) }}>
-    <flux:icon.check variant="micro" class="hidden text-white dark:text-zinc-800" />
-    <flux:icon.minus variant="micro" class="hidden text-white dark:text-zinc-800" />
+    <flux:icon.check variant="micro" class="hidden text-[var(--color-accent-foreground)]" />
+    <flux:icon.minus variant="micro" class="hidden text-[var(--color-accent-foreground)]" />
 </div>

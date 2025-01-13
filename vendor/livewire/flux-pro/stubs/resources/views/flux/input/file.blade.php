@@ -42,7 +42,7 @@ $classes = Flux::classes()
         {{-- We need it to so that we can know to clear the selected file labels when the input is cleared... --}}
         x-init="Object.defineProperty($el, 'value', {
           ...Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value'),
-          set(value) {
+            set(value) {
             Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(this, value);
 
             if(! value) this.dispatchEvent(new Event('change', { bubbles: true }))

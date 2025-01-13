@@ -8,10 +8,11 @@ use App\Models\Item;
 use App\Models\Scope;
 use App\Models\ScopeRule;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ScopeHelp extends Component
@@ -109,18 +110,16 @@ class ScopeHelp extends Component
             'description' => $scopeRule->ai_reasoning,
         ]);
 
-        $analyzerService = new AccessibilityAnalyzerService();
-        $result = $analyzerService->reviewIssueWithAI($issue);
-        $this->response = $analyzerService->response;
+        $result = GuidelinesAnalyzerService::reviewIssueWithAI($issue);
 
         if (count($result) > 0) {
             foreach ($result as $guideline) {
                 Item::create([
                     'issue_id' => $issue->id,
                     'guideline_id' => $guideline['number'],
-                    'description' => $guideline['applicability'],
-                    'recommendation' => $guideline['recommendation'],
-                    'testing' => $guideline['testing'],
+                    'description' => Str::markdown($guideline['applicability']),
+                    'recommendation' => Str::markdown($guideline['recommendation']),
+                    'testing' => Str::markdown($guideline['testing']),
                     'assessment' => Assessment::fromName(ucfirst($scopeRule->ai_assessment)),
                 ]);
             }

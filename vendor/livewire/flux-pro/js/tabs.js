@@ -89,6 +89,11 @@ class UITabs extends UIControl {
 
         (new MutationObserver(mutations => {
             this.initializeTabs()
+
+            // If a panel is added dynamically, and that panel is selected, we need to show it...
+            let selected = this._selectableGroup.selected()
+
+            selected.el.closest('ui-tab-group').showPanel(selected.value)
         })).observe(this, { childList: true })
     }
 
