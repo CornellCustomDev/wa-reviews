@@ -27,7 +27,8 @@ class Item extends Model
 
     protected $casts = [
         'assessment' => Assessment::class,
-        'testing_method' => TestingMethod::class
+        'testing_method' => TestingMethod::class,
+        'image_links' => 'array',
     ];
 
     public function issue(): BelongsTo

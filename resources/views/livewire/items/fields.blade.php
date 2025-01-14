@@ -43,3 +43,9 @@
     label="Content entry issue"
     wire:model="form.content_issue"
 />
+
+<x-forms.image-upload
+    label="Image examples"
+    wire:model.live="form.images"
+    :existing-images="$this->form->image_links"
+/>

@@ -14,7 +14,7 @@ class UpdateIssue extends Component
     public IssueForm $form;
     public Scope $scope;
 
-    public function mount(Scope $scope, Issue $issue)
+    public function mount(Scope $scope, Issue $issue): void
     {
         $this->scope = $scope;
         $this->form->setModel($issue);

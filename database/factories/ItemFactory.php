@@ -29,7 +29,7 @@ class ItemFactory extends Factory
             'description' => $this->faker->paragraph,
             'testing_method' => $this->faker->randomElement(TestingMethod::values()),
             'recommendation' => $this->faker->paragraph,
-            'image_links' => '',
+            'image_links' => [],
             'content_issue' => $this->faker->boolean,
         ];
     }
