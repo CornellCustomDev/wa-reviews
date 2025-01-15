@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('items', function (Blueprint $table) {
-            // change image_links to be json formatted to allow multiple image links
-            $table->json('image_links')->nullable()->change();
+            // If the image_links field already exists, change it, otherwise add it
+            if (Schema::hasColumn('items', 'image_links')) {
+                $table->json('image_links')->nullable()->change();
+            } else {
+                $table->json('image_links')->nullable()->after('recommendation');
+            }
         });
     }
 
@@ -23,7 +27,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('items', function (Blueprint $table) {
-            $table->dropColumn('image_links');
+            $table->text('image_links')->nullable()->change();
         });
     }
 };

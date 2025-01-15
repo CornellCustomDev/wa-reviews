@@ -10,11 +10,12 @@ use Symfony\Component\DomCrawler\Crawler;
 
 class ParseAlfaRuleDetailScrape extends Command
 {
-    protected $signature = 'app:parse-alfa-rule-detail-scrape';
+    protected $signature = 'app:parse-alfa-rule-detail-scrape {--parse-only}';
     protected $description = 'Scrapes each rule detail page from https://alfa.siteimprove.com/rules and stores the details in the sia_rules table';
 
     public function handle()
     {
+        $parseOnly = $this->option('parse-only');
         $siaRules = SiaRule::all();
 
         // Truncate sia_rule_criterion table
@@ -22,26 +23,28 @@ class ParseAlfaRuleDetailScrape extends Command
 
         $this->info('Scraping '.count($siaRules).' rule details...');
 
-        $this->withProgressBar($siaRules, function (SiaRule $rule) use (&$levelsFound) {
-//            try {
-//                $html = file_get_contents('https://alfa.siteimprove.com/rules/' . $rule->alfa);
-//            } catch (\Exception $e) {
-//                $this->error('Failed to scrape rule ' . $rule->alfa . ': ' . $e->getMessage());
-//                return;
-//            }
-//            // Confirm the rule is not empty
-//            if (empty($html)) {
-//                $this->error('Failed to scrape rule ' . $rule->alfa . ': Empty response');
-//                return;
-//            }
-//            // Wait 0.5 seconds to avoid rate limiting
-//            usleep(500000);
-//
-//            $crawler = new Crawler($html);
-//            $rule->rule_html = $crawler->filter('main div div div')->html();
-//            // Strip the text from the class name suffixes that are added by Siteimprove build system
-//            $rule->rule_html = preg_replace('/([a-zA-Z])(__[0-9a-zA-Z_]{5})([\s\"])/', '$1$3', $rule->rule_html);
-//            $rule->save();
+        $this->withProgressBar($siaRules, function (SiaRule $rule) use (&$levelsFound, $parseOnly) {
+            if (!$parseOnly) {
+                try {
+                    $html = file_get_contents('https://alfa.siteimprove.com/rules/' . $rule->alfa);
+                } catch (\Exception $e) {
+                    $this->error('Failed to scrape rule ' . $rule->alfa . ': ' . $e->getMessage());
+                    return;
+                }
+                // Confirm the rule is not empty
+                if (empty($html)) {
+                    $this->error('Failed to scrape rule ' . $rule->alfa . ': Empty response');
+                    return;
+                }
+                // Wait 0.5 seconds to avoid rate limiting
+                usleep(500000);
+
+                $crawler = new Crawler($html);
+                $rule->rule_html = $crawler->filter('main div div div')->html();
+                // Strip the text from the class name suffixes that are added by Siteimprove build system
+                $rule->rule_html = preg_replace('/([a-zA-Z])(__[0-9a-zA-Z_]{5})([\s\"])/', '$1$3', $rule->rule_html);
+                $rule->save();
+            }
 
             $crawler = new Crawler($rule->rule_html);
 

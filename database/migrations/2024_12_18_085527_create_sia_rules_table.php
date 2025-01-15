@@ -16,9 +16,11 @@ return new class extends Migration
             $table->string('alfa', 8);
             $table->string('name', 255)->nullable();
             $table->string('name_html', 500)->nullable();
-            $table->foreignId('act_rule_id')->nullable()->constrained('act_rules')->unique();
+            $table->string('act_rule_id', 7)->nullable()->index();
             $table->longText('rule_html')->nullable();
             $table->timestamps();
+
+            $table->foreign('act_rule_id')->references('id')->on('act_rules')->onDelete('set null');
         });
     }
 
