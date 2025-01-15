@@ -1,7 +1,7 @@
 @props([
     'label',
     'name' => $attributes->whereStartsWith('wire:model')->first(),
-    'existingImages' => null,
+    'existingImages' => [],
 ])
 
 <div x-data="images" class="max-w-[600px]">
