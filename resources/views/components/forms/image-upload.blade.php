@@ -64,7 +64,7 @@
         </div>
     @endif
 
-    <div wire:loading wire:target="form.images">Uploading...</div>
+    <div wire:loading.delay wire:target="form.images">Uploading...</div>
 </div>
 
 @script
