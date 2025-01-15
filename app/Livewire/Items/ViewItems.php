@@ -13,6 +13,7 @@ class ViewItems extends Component
 {
     public Issue $issue;
     public ?Item $editItem;
+    public ?string $selectedImage = null;
 
     #[On('items-updated')]
     public function refreshIssue(): void
@@ -30,6 +31,18 @@ class ViewItems extends Component
     {
         $this->modal('edit-item')->close();
         $this->editItem = null;
+    }
+
+    public function viewImage(string $imageUrl): void
+    {
+        $this->selectedImage = $imageUrl;
+        $this->modal('view-image')->show();
+    }
+
+    public function closeImage(): void
+    {
+        $this->modal('view-image')->close();
+        $this->selectedImage = null;
     }
 
     public function delete(Item $item): void

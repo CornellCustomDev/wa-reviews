@@ -8,8 +8,10 @@ use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
 
 class ItemForm extends Form
@@ -28,8 +30,10 @@ class ItemForm extends Form
     public ?string $recommendation;
     #[Validate('string|nullable')]
     public ?string $testing = '';
-    #[Validate('string|nullable')]
-    public ?string $image_links;
+    public ?array $image_links = [];
+    public array $imagesToRemove = [];
+    #[Validate(['images.*' => 'nullable|image'])]
+    public array $images = [];
     #[Validate('boolean|nullable')]
     public ?bool $content_issue = false;
 
@@ -37,6 +41,7 @@ class ItemForm extends Form
     public Collection $guidelineOptions;
     public Collection $assessmentOptions;
     public Collection $testingMethodOptions;
+    private $storage;
 
     public function __construct(
         protected Component $component,
@@ -63,6 +68,8 @@ class ItemForm extends Form
                 'value' => $test_method->value(),
                 'option' => $test_method->value(),
             ]);
+
+        $this->storage = Storage::disk('public');
     }
 
     public function getOptions($field): array
@@ -85,6 +92,7 @@ class ItemForm extends Form
         $this->recommendation = $item->recommendation;
         $this->testing = $item->testing;
         $this->image_links = $item->image_links;
+        $this->images = [];
         $this->content_issue = $item->content_issue;
     }
 
@@ -97,7 +105,29 @@ class ItemForm extends Form
     {
         $this->validate();
 
-        $issue->items()->create($this->all());
+        $item = $issue->items()->create($this->all());
+
+        $image_links = [];
+        /** @var TemporaryUploadedFile $file */
+        foreach ($this->images as $file) {
+            $storedFilename = $file->storeAs("issues/$issue->id/$item->id", $file->getClientOriginalName(), 'public');
+            $image_links[] = $this->storage->url($storedFilename);
+        }
+        $item->image_links = $image_links;
+        $item->save();
+
+    }
+
+    public function removeExistingImage(string $filename): void
+    {
+        $path = "issues/{$this->item->issue->id}/{$this->item->id}";
+        if (!$this->storage->exists("$path/$filename")) {
+            return;
+        }
+
+        $url = $this->storage->url("$path/$filename");
+        $this->image_links = array_diff($this->image_links, [$url]);
+        $this->imagesToRemove[] = $filename;
     }
 
     public function update(?string $field = null): void
@@ -106,8 +136,48 @@ class ItemForm extends Form
 
         if ($field) {
             $this->item->update([$field => $this->$field]);
-        } else {
-            $this->item->update($this->all());
+            return;
         }
+
+        $path = "issues/{$this->item->issue->id}/{$this->item->id}";
+        foreach ($this->imagesToRemove as $filename) {
+            $this->storage->delete("$path/$filename");
+            if (empty($this->storage->allFiles($path))) {
+                $this->storage->deleteDirectory($path);
+            }
+            $issuePath = dirname($path);
+            if (empty($this->storage->allFiles($issuePath))) {
+                $this->storage->deleteDirectory($issuePath);
+            }
+        }
+
+        $attributes = $this->all();
+        /** @var TemporaryUploadedFile $file */
+        foreach ($this->images as $file) {
+            $originalName = $file->getClientOriginalName();
+            if ($this->isDuplicate($originalName, $file)) {
+                continue;
+            }
+            $storedFilename = $file->storeAs($path, $originalName, 'public');
+            $attributes['image_links'][] = $this->storage->url($storedFilename);
+        }
+
+        $this->item->update($attributes);
+    }
+
+    private function isDuplicate(string $originalName, TemporaryUploadedFile $file): bool
+    {
+        if (empty($this->image_links)) {
+            return false;
+        }
+
+        $tempFilepath = $file->getRealPath();
+        $path = "issues/{$this->item->issue->id}/{$this->item->id}";
+
+        return collect($this->image_links)
+            ->map(fn ($url) => basename($url))
+            ->filter(fn ($filename) => $filename === $originalName)
+            ->filter(fn ($filename) => md5_file($tempFilepath) === md5_file($this->storage->path("$path/$filename")))
+            ->isNotEmpty();
     }
 }

@@ -21,8 +21,6 @@ class IssueForm extends Form
     public string $target = '';
     #[Validate('string')]
     public string $description = '';
-    #[Validate('string')]
-    public string $recommendation = '';
     public bool $generateGuidelines = false;
 
     public Collection $scopeOptions;
@@ -33,7 +31,6 @@ class IssueForm extends Form
         $this->scope_id = $issue->scope_id ?? '';
         $this->target = $issue->target;
         $this->description = $issue->description;
-        $this->recommendation = $issue->recommendation;
 
         $this->scopeOptions = $this->issue->project->scopes
             ->map(fn($scope) => [

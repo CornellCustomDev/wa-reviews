@@ -1,6 +1,7 @@
 @props([
     'label',
     'name' => $attributes->whereStartsWith('wire:model')->first(),
+    'descriptionTrailing' => null,
     'description' => null,
     'badge' => null,
 ])
@@ -17,6 +18,11 @@
     @endif
 
     <flux:input :$attributes  />
+
     <flux:error class="!mt-1" :$name />
+
+    @if ($descriptionTrailing)
+        <flux:description>{{ $descriptionTrailing }}</flux:description>
+    @endif
 
 </flux:field>
