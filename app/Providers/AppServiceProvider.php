@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\APIGateway\OpenAIChatService as APIGatewayChatService;
+use App\Services\CornellAI\AzureOpenAI\ChatService as AzureOpenAIChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,13 +16,20 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(
-            abstract: ChatService::class,
-            concrete: fn() => new ChatService(
-                endpoint: strval(config('azure_openai.endpoint')),
-                apiKey: strval(config('azure_openai.api_key')),
-                apiVersion: strval(config('azure_openai.api_version')),
-                model: strval(config('azure_openai.model')),
-            ),
+            abstract: OpenAIChatService::class,
+            concrete: match(config('cornell_ai.ai_service')) {
+                APIGatewayChatService::class => fn() => new APIGatewayChatService(
+                    baseUrl: strval(config('cornell_ai.api_gateway.base_url')),
+                    apiKey: strval(config('cornell_ai.api_gateway.api_key')),
+                    model: strval(config('cornell_ai.api_gateway.model')),
+                ),
+                AzureOpenAIChatService::class => fn() => new AzureOpenAIChatService(
+                    endpoint: strval(config('cornell_ai.azure_openai.endpoint')),
+                    apiKey: strval(config('cornell_ai.azure_openai.api_key')),
+                    apiVersion: strval(config('cornell_ai.azure_openai.api_version')),
+                    model: strval(config('cornell_ai.azure_openai.model')),
+                ),
+            },
         );
         $this->app->singleton(
             abstract: SiteimproveService::class,

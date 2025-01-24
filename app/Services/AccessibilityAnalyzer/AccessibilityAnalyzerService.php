@@ -2,14 +2,10 @@
 
 namespace App\Services\AccessibilityAnalyzer;
 
-use App\Models\ActRule;
-use App\Models\Issue;
-use App\Services\AzureOpenAI\ChatService;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\CornellAI\OpenAIChatService;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\DomCrawler\Crawler;
 
 class AccessibilityAnalyzerService
@@ -144,7 +140,7 @@ class AccessibilityAnalyzerService
 
         $nodes = $this->findNodes($html, $cssSelectors);
         $prompt = $this->getNodesPrompt($ruleRunner, $nodes, $html);
-        $chat = ChatService::make();
+        $chat = app(OpenAIChatService::class);
         $chat->setPrompt($prompt);
         $chat->send();
 

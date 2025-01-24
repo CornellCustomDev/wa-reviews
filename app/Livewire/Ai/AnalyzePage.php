@@ -4,7 +4,7 @@ namespace App\Livewire\Ai;
 
 use App\Models\ActRule;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -55,7 +55,7 @@ class AnalyzePage extends Component
         $nodes = $parser->findNodes($html, explode(',', $cssSelectors));
         $this->prompt = $parser->getNodesPrompt($actRule->getRuleRunner(), $nodes, '');
 
-        $chat = ChatService::make();
+        $chat = app(OpenAIChatService::class);
         $chat->setPrompt($this->prompt.$html);
         $chat->send();
         $json = json_decode($chat->getLastAiResponse());

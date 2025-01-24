@@ -5,7 +5,7 @@ namespace App\Services\GuidelinesAnalyzer;
 use App\Enums\Assessment;
 use App\Models\Issue;
 use App\Models\Item;
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -19,7 +19,7 @@ class GuidelinesAnalyzerService
             $issue->description
         );
 
-        $chat = ChatService::make();
+        $chat = app(OpenAIChatService::class);
         $chat->setPrompt(self::getGuidelinesPrompt());
         $chat->addMessage($issueContext);
         $chat->send();

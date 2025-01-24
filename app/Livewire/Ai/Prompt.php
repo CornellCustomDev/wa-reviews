@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Ai;
 
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -17,14 +17,14 @@ class Prompt extends Component
 
     public function mount(): void
     {
-        $chatService = app(ChatService::class);
+        $chatService = app(OpenAIChatService::class);
         $this->prompt = Chat::getPrompt();
         $this->messages = $chatService->getMessages();
     }
 
     public function sendMessage(): void
     {
-        $chatService = app(ChatService::class);
+        $chatService = app(OpenAIChatService::class);
 
         $prompt = $this->prompt . ($this->includeGuidelines ? Storage::get('guidelines.md') : '');
         $chatService->setPrompt($prompt);
