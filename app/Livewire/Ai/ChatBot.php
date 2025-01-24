@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Ai;
 
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use Livewire\Component;
 
 abstract class ChatBot extends Component
@@ -15,7 +15,7 @@ abstract class ChatBot extends Component
 
     public function sendChatMessage(): void
     {
-        $chat = ChatService::make();
+        $chat = app(OpenAIChatService::class);
         $chat->setPrompt($this->getChatPrompt());
         if (!empty($this->chatMessages)) {
             $chat->setMessages($this->chatMessages);

@@ -2,14 +2,10 @@
 
 namespace App\Livewire\Ai;
 
-use App\Enums\Assessment;
 use App\Models\Issue;
-use App\Models\Item;
-use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\AzureOpenAI\ChatService;
+use App\Services\CornellAI\OpenAIChatService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Livewire\Component;
 
 class GuidelineHelp extends Component
@@ -43,7 +39,7 @@ class GuidelineHelp extends Component
 
     public function sendChatMessage()
     {
-        $chat = ChatService::make();
+        $chat = app(OpenAIChatService::class);
         $chat->setPrompt($this->getChatPrompt());
         if (!empty($this->chatMessages)) {
             $chat->setMessages($this->chatMessages);
