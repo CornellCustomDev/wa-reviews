@@ -24,6 +24,7 @@
         "livewire/flux": "^1.1",
         "livewire/flux-pro": "^1.1",
         "livewire/livewire": "^3.5",
+        "maatwebsite/excel": "^3.1",
         "openai-php/client": "^0.10.1",
         "symfony/dom-crawler": "^7.2"
     },
