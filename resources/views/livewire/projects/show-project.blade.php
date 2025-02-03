@@ -38,6 +38,7 @@
             <flux:tab name="issues" :accent="false">Issues ({{ $project->issues()->count() }})</flux:tab>
             <flux:tab name="scope" :accent="false">Scope ({{ $project->scopes()->count() }})</flux:tab>
             <flux:tab name="siteimprove" :accent="false">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
+            <flux:tab name="report" :accent="false">Report</flux:tab>
         </flux:tabs>
 
         <flux:tab.panel name="issues" class="!pt-6">
@@ -48,6 +49,9 @@
         </flux:tab.panel>
         <flux:tab.panel name="siteimprove" class="!pt-6">
             <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />
+        </flux:tab.panel>
+        <flux:tab.panel name="report" class="!pt-6">
+            <livewire:projects.report-data :$project />
         </flux:tab.panel>
     </flux:tab.group>
 

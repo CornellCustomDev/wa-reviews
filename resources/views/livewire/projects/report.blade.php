@@ -1,6 +1,11 @@
 <div>
     <h1>Report: {{ $project->name }}</h1>
 
+    <div class="float-right print:hidden">
+        <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
+        <x-forms.button icon="arrow-down-tray" wire:click="exportReport()">Export</x-forms.button>
+    </div>
+
     @include('livewire.projects.report-intro')
 
     <h2>Overview of findings</h2>
