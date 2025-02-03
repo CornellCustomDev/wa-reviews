@@ -10,7 +10,7 @@ $classes = Flux::classes()
 ;
 @endphp
 
-<ui-toolbar {{ $attributes->class($classes) }} aria-label="{{ __('Formatting') }}">
+<ui-toolbar {{ $attributes->class($classes) }} wire:ignore aria-label="{{ __('Formatting') }}">
     <div class="h-10 p-2 flex gap-2 items-center">
         <?php if ($slot->isNotEmpty()): ?>
             {{ $slot }}

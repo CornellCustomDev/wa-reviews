@@ -55,8 +55,8 @@ if ($loading) {
 <?php else: ?>
     <option
         {{ $attributes }}
-        @if ($value) value="{{ $value }}" @endif
-        @if ($value) wire:key="{{ $value }}" @endif
+        @if (isset($value)) value="{{ $value }}" @endif
+        @if (isset($value)) wire:key="{{ $value }}" @endif
     >{{ $slot }}</option>
 <?php endif; ?>
 

@@ -2876,7 +2876,7 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
       get raw() {
         return raw;
       },
-      version: "3.14.6",
+      version: "3.14.8",
       flushAndStopDeferringMutations,
       dontAutoEvaluateFunctions,
       disableEffectScheduling,
@@ -3076,7 +3076,6 @@ ${expression ? 'Expression: "' + expression + '"\n\n' : ""}`, el);
         placeInDom(clone2, target, modifiers);
         skipDuringClone(() => {
           initTree(clone2);
-          clone2._x_ignore = true;
         })();
       });
       el._x_teleportPutBack = () => {
@@ -7155,8 +7154,13 @@ var require_module_cjs9 = __commonJS({
           } else {
             processInputValue(el, false);
           }
-          if (el._x_model)
+          if (el._x_model) {
+            if (el._x_model.get() === el.value)
+              return;
+            if (el._x_model.get() === null && el.value === "")
+              return;
             el._x_model.set(el.value);
+          }
         });
         const controller = new AbortController();
         cleanup(() => {
@@ -7496,6 +7500,9 @@ function handleFileUpload(el, property, component, cleanup) {
     if (!el.isConnected)
       return;
     if (value === null || value === "") {
+      el.value = "";
+    }
+    if (el.multiple && Array.isArray(value) && value.length === 0) {
       el.value = "";
     }
   });
@@ -8184,6 +8191,7 @@ var aliases = {
   "get": "$get",
   "set": "$set",
   "call": "$call",
+  "hook": "$hook",
   "commit": "$commit",
   "watch": "$watch",
   "entangle": "$entangle",
@@ -8278,6 +8286,16 @@ wireProperty("$watch", (component) => (path, callback) => {
 wireProperty("$refresh", (component) => component.$wire.$commit);
 wireProperty("$commit", (component) => async () => await requestCommit(component));
 wireProperty("$on", (component) => (...params) => listen2(component, ...params));
+wireProperty("$hook", (component) => (name, callback) => {
+  let unhook = on(name, ({ component: hookComponent, ...params }) => {
+    if (hookComponent === void 0)
+      return callback(params);
+    if (hookComponent.id === component.id)
+      return callback({ component: hookComponent, ...params });
+  });
+  component.addCleanup(unhook);
+  return unhook;
+});
 wireProperty("$dispatch", (component) => (...params) => dispatch2(component, ...params));
 wireProperty("$dispatchSelf", (component) => (...params) => dispatchSelf(component, ...params));
 wireProperty("$dispatchTo", () => (...params) => dispatchTo(...params));
@@ -9093,6 +9111,7 @@ var attributesExemptFromScriptTagHashing = [
 ];
 function swapCurrentPageWithNewHtml(html, andThen) {
   let newDocument = new DOMParser().parseFromString(html, "text/html");
+  let newHtml = newDocument.documentElement;
   let newBody = document.adoptNode(newDocument.body);
   let newHead = document.adoptNode(newDocument.head);
   oldBodyScriptTagHashes = oldBodyScriptTagHashes.concat(Array.from(document.body.querySelectorAll("script")).map((i) => {
@@ -9100,6 +9119,7 @@ function swapCurrentPageWithNewHtml(html, andThen) {
   }));
   let afterRemoteScriptsHaveLoaded = () => {
   };
+  replaceHtmlAttributes(newHtml);
   mergeNewHead(newHead).finally(() => {
     afterRemoteScriptsHaveLoaded();
   });
@@ -9117,6 +9137,21 @@ function prepNewBodyScriptTagsToRun(newBody, oldBodyScriptTagHashes2) {
         return;
     }
     i.replaceWith(cloneScriptTag(i));
+  });
+}
+function replaceHtmlAttributes(newHtmlElement) {
+  let currentHtmlElement = document.documentElement;
+  Array.from(newHtmlElement.attributes).forEach((attr) => {
+    const name = attr.name;
+    const value = attr.value;
+    if (currentHtmlElement.getAttribute(name) !== value) {
+      currentHtmlElement.setAttribute(name, value);
+    }
+  });
+  Array.from(currentHtmlElement.attributes).forEach((attr) => {
+    if (!newHtmlElement.hasAttribute(attr.name)) {
+      currentHtmlElement.removeAttribute(attr.name);
+    }
   });
 }
 function mergeNewHead(newHead) {
@@ -9152,6 +9187,8 @@ function mergeNewHead(newHead) {
       child.remove();
   }
   for (let child of Array.from(newHead.children)) {
+    if (child.tagName.toLowerCase() === "noscript")
+      continue;
     document.head.appendChild(child);
   }
   return Promise.all(remoteScriptsPromises);
@@ -9519,24 +9556,24 @@ function queryStringUtils() {
       let search = url.search;
       if (!search)
         return false;
-      let data = fromQueryString(search);
+      let data = fromQueryString(search, key);
       return Object.keys(data).includes(key);
     },
     get(url, key) {
       let search = url.search;
       if (!search)
         return false;
-      let data = fromQueryString(search);
+      let data = fromQueryString(search, key);
       return data[key];
     },
     set(url, key, value) {
-      let data = fromQueryString(url.search);
+      let data = fromQueryString(url.search, key);
       data[key] = stripNulls(unwrap(value));
       url.search = toQueryString(data);
       return url;
     },
     remove(url, key) {
-      let data = fromQueryString(url.search);
+      let data = fromQueryString(url.search, key);
       delete data[key];
       url.search = toQueryString(data);
       return url;
@@ -9572,7 +9609,7 @@ function toQueryString(data) {
   let entries = buildQueryStringEntries(data);
   return Object.entries(entries).map(([key, value]) => `${key}=${value}`).join("&");
 }
-function fromQueryString(search) {
+function fromQueryString(search, queryKey) {
   search = search.replace("?", "");
   if (search === "")
     return {};
@@ -9591,10 +9628,12 @@ function fromQueryString(search) {
     if (typeof value == "undefined")
       return;
     value = decodeURIComponent(value.replaceAll("+", "%20"));
-    if (!key.includes("[")) {
+    let decodedKey = decodeURIComponent(key);
+    let shouldBeHandledAsArray = decodedKey.includes("[") && decodedKey.startsWith(queryKey);
+    if (!shouldBeHandledAsArray) {
       data[key] = value;
     } else {
-      let dotNotatedKey = key.replaceAll("[", ".").replaceAll("]", "");
+      let dotNotatedKey = decodedKey.replaceAll("[", ".").replaceAll("]", "");
       insertDotNotatedValueIntoData(dotNotatedKey, value, data);
     }
   });
@@ -10424,8 +10463,10 @@ globalDirective("current", ({ el, directive: directive2, cleanup }) => {
   let refreshCurrent = (url) => {
     if (pathMatches(hrefUrl, url, options)) {
       el.classList.add(...classes);
+      el.setAttribute("data-current", "");
     } else {
       el.classList.remove(...classes);
+      el.removeAttribute("data-current");
     }
   };
   refreshCurrent(new URL(window.location.href));

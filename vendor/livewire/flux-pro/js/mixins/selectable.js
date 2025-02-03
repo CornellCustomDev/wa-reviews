@@ -51,7 +51,7 @@ export class SelectableGroup extends MixinGroup {
     }
 
     setState(value) {
-        if (value === null) value = this.multiple ? [] : ''
+        if (value === null || value === '') value = this.options().multiple ? [] : ''
 
         if (this.options().multiple) {
             if (! Array.isArray(value)) value = [value]

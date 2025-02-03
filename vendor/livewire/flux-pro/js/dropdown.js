@@ -95,9 +95,12 @@ class UIDropdown extends UIElement {
 
         // Delegate things like stealing focus...
         overlay._popoverable.onChange(() => {
-            overlay._popoverable.getState()
-                ? overlay.onPopoverShow?.()
-                : overlay.onPopoverHide?.()
+             // We need to let the popover fully become visible first so it can calculate it's position before we focus, otherwise the page will scroll...
+            setTimeout(() =>
+                overlay._popoverable.getState()
+                    ? overlay.onPopoverShow?.()
+                    : overlay.onPopoverHide?.()
+            )
         })
     }
 

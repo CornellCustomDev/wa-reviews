@@ -18,6 +18,8 @@ class UIEditor extends UIControl {
         // the value attribute, otherwise load it from the editor content element...
         let content = this.value ?? this.querySelector('ui-editor-content').innerHTML
 
+        let toolbar = this.querySelector('ui-toolbar')
+
         this.querySelector('ui-editor-content').innerHTML = ''
 
         this._controllable = new Controllable(this)
@@ -82,7 +84,7 @@ class UIEditor extends UIControl {
                     }
                 })
 
-                initializeToolbar(editor, this.querySelector('ui-toolbar'))
+                toolbar && initializeToolbar(editor, toolbar)
             }
         })
 
@@ -96,10 +98,10 @@ class UIEditor extends UIControl {
 
             if (disabled) {
                 setAttribute(this, 'aria-disabled', 'true')
-                setAttribute(this.querySelector('ui-toolbar'), 'disabled', 'disabled')
+                toolbar && setAttribute(toolbar, 'disabled', 'disabled')
             } else {
                 removeAndReleaseAttribute(this, 'aria-disabled', 'true')
-                removeAndReleaseAttribute(this.querySelector('ui-toolbar'), 'disabled')
+                toolbar && removeAndReleaseAttribute(toolbar, 'disabled')
             }
         })
 

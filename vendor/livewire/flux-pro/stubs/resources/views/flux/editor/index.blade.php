@@ -19,7 +19,7 @@ $classes = Flux::classes()
 @endphp
 
 <flux:with-field :$attributes>
-    <ui-editor {{ $attributes->class($classes) }} aria-label="{{ __('Rich text editor') }}" wire:ignore data-flux-control data-flux-editor>
+    <ui-editor {{ $attributes->class($classes) }} aria-label="{{ __('Rich text editor') }}" data-flux-control data-flux-editor>
         <?php if ($slot->isEmpty()): ?>
             <flux:editor.toolbar :items="$toolbar" />
 

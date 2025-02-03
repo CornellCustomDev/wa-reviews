@@ -82,6 +82,10 @@ class UIDisclosureGroup extends UIElement {
         if (this.exclusive) {
             // Close others when a different one opens...
             on(this, 'lofi-disclosable-change', e => {
+                // If a disclosure group is used within another disclosure group we need to make sure we stop
+                // propagation to prevent the parent disclosure group from closing all of its children...
+                e.stopPropagation()
+
                 if (e.target.localName === 'ui-disclosure' && e.target.value) {
                     this.disclosureWalker().each(el => {
                         if (el === e.target) return

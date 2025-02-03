@@ -21,20 +21,29 @@ $classes = Flux::classes()
     })
     ;
 
-$iconClasses = Flux::classes('text-zinc-500 dark:text-zinc-400 [ui-radio[data-checked]_&]:text-zinc-800 dark:[ui-radio[data-checked]_&]:text-white');
 $iconVariant ??= 'mini';
+
+$iconClasses = Flux::classes('text-zinc-500 dark:text-zinc-400 [ui-radio[data-checked]_&]:text-zinc-800 dark:[ui-radio[data-checked]_&]:text-white')
+    // When using the outline icon variant, we need to size it down to match the default icon sizes...
+    ->add($iconVariant === 'outline' ? 'size-5' : '')
+    ;
+
 @endphp
 
 {{-- We have to put tabindex="-1" here because otherwise, Livewire requests will wipe out tabindex state, --}}
 {{-- even with durable attributes for some reason... --}}
 <ui-radio {{ $attributes->class($classes) }} data-flux-control data-flux-radio-segmented tabindex="-1">
-    <?php if ($icon): ?>
+    <?php if (is_string($icon) && $icon !== ''): ?>
         <flux:icon :$icon :variant="$iconVariant" class="{!! $iconClasses !!}" />
+    <?php elseif ($icon): ?>
+        {{ $icon }}
     <?php endif; ?>
 
     {{ $label ?? $slot }}
 
-    <?php if ($iconTrailing): ?>
+    <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>
         <flux:icon :icon="$iconTrailing" variant="micro" />
+    <?php elseif ($iconTrailing): ?>
+        {{ $iconTrailing }}
     <?php endif; ?>
 </ui-radio>

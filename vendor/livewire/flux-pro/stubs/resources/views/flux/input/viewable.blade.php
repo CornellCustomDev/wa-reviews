@@ -13,6 +13,7 @@ $attributes = $attributes->merge([
     x-data="{ open: false }"
     x-on:click="open = ! open; $el.closest('[data-flux-input]').querySelector('input').setAttribute('type', open ? 'text' : 'password')"
     x-bind:data-viewable-open="open"
+    aria-label="{{ __('Toggle password visibility') }}"
 
     {{-- We need to make the input type "durable" (immune to Livewire morph manipulations): --}}
     x-init="

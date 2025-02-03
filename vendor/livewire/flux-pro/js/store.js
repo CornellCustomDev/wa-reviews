@@ -28,6 +28,8 @@ document.addEventListener('alpine:init', () => {
             if (options.heading) detail.slots.heading = options.heading
             if (options.variant) detail.dataset.variant = options.variant
             if (options.position) detail.dataset.position = options.position
+            // Check for undefined because 0 is a valid duration...
+            if (options.duration !== undefined) detail.duration = options.duration
 
             document.dispatchEvent(new CustomEvent('toast-show', { detail }))
         },
@@ -83,17 +85,17 @@ document.addEventListener('alpine:init', () => {
 
     Alpine.magic('flux', () => flux)
 
-    selectorDarkMode && Alpine.effect(() => {
+    Alpine.effect(() => {
         applyAppearance(flux.appearance)
     })
 
-    selectorDarkMode && document.addEventListener('livewire:navigated', () => {
+    document.addEventListener('livewire:navigated', () => {
         applyAppearance(flux.appearance)
     })
 
     let media = window.matchMedia('(prefers-color-scheme: dark)')
 
-    selectorDarkMode && media.addEventListener('change', () => {
+    media.addEventListener('change', () => {
         flux.systemAppearanceChanged++
 
         applyAppearance(flux.appearance)
@@ -101,6 +103,16 @@ document.addEventListener('alpine:init', () => {
 })
 
 function applyAppearance(appearance) {
+    // If Tailwind dark mode is not set to selector, then remove the class and
+    // local storage to ensure that any dark mode styles are not applied...
+    if (! selectorDarkMode) {
+        document.documentElement.classList.remove('dark')
+
+        window.localStorage.removeItem('flux.appearance')
+
+        return
+    }
+
     let applyDark = () => document.documentElement.classList.add('dark')
     let applyLight = () => document.documentElement.classList.remove('dark')
 

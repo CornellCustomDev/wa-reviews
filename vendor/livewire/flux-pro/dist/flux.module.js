@@ -2027,6 +2027,7 @@ var UIDisclosureGroup = class _UIDisclosureGroup extends UIElement {
     this.exclusive = this.hasAttribute("exclusive");
     if (this.exclusive) {
       on(this, "lofi-disclosable-change", (e) => {
+        e.stopPropagation();
         if (e.target.localName === "ui-disclosure" && e.target.value) {
           this.disclosureWalker().each((el) => {
             if (el === e.target) return;
@@ -2139,7 +2140,7 @@ var SelectableGroup = class extends MixinGroup {
     return this.options().multiple ? this.state.has(value) : this.state === value;
   }
   setState(value) {
-    if (value === null) value = this.multiple ? [] : "";
+    if (value === null || value === "") value = this.options().multiple ? [] : "";
     if (this.options().multiple) {
       if (!Array.isArray(value)) value = [value];
       value = value.map((i) => i + "");
@@ -3998,7 +3999,8 @@ var Anchorable = class extends Mixin {
       position: "bottom start",
       gap: "5",
       offset: "0",
-      matchWidth: false
+      matchWidth: false,
+      crossAxis: false
     });
     if (this.options().reference === null) return;
     if (this.options().position === null) return;
@@ -4007,7 +4009,8 @@ var Anchorable = class extends Mixin {
       position: this.options().position,
       gap: this.options().gap,
       offset: this.options().offset,
-      matchWidth: this.options().matchWidth
+      matchWidth: this.options().matchWidth,
+      crossAxis: this.options().crossAxis
     });
     let cleanupAutoUpdate = () => {
     };
@@ -4015,7 +4018,7 @@ var Anchorable = class extends Mixin {
       if (this.options().auto) {
         cleanupAutoUpdate = autoUpdate(this.options().reference, this.el, reposition);
       } else {
-        reposition(...args);
+        reposition(null, ...args);
       }
     };
     this.cleanup = () => {
@@ -4024,25 +4027,30 @@ var Anchorable = class extends Mixin {
     };
   }
 };
-function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth }) {
-  return (forceX = null, forceY = null) => {
+function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis }) {
+  return (event, forceX, forceY) => {
     computePosition2(invoke, target, {
       placement: compilePlacement(position),
       // Placements: ['top', 'top-start', 'top-end', 'right', 'right-start', 'right-end', 'bottom', 'bottom-start', 'bottom-end', 'left', 'left-start', 'left-end']
       middleware: [
-        flip2(),
-        shift2({ padding: 5, crossAxis: true }),
+        // Offset needs to be first, as per the Floating UI docs...
         offset2({
           mainAxis: Number(gap),
           alignmentAxis: Number(offsetValue)
         }),
-        matchWidth ? size2({
-          apply({ rects, elements }) {
-            Object.assign(elements.floating.style, {
-              width: `${rects.reference.width}px`
-            });
+        flip2(),
+        shift2({ padding: 5, crossAxis }),
+        size2({
+          padding: 5,
+          apply({ rects, elements, availableHeight }) {
+            if (matchWidth) {
+              Object.assign(elements.floating.style, {
+                width: `${rects.reference.width}px`
+              });
+            }
+            elements.floating.style.maxHeight = availableHeight >= elements.floating.scrollHeight ? "" : `${availableHeight}px`;
           }
-        }) : void 0
+        })
       ]
     }).then(({ x, y }) => {
       setPosition(forceX || x, forceY || y);
@@ -4056,7 +4064,12 @@ function createDurablePositionSetter(target) {
   let position = (x, y) => {
     Object.assign(target.style, {
       position: "absolute",
-      inset: `${y}px auto auto ${x}px`
+      overflowY: "auto",
+      left: `${x}px`,
+      top: `${y}px`,
+      // This is required to reset the `popover` default styles, otherwise the dropdown appears in the middle of the screen...
+      right: "auto",
+      bottom: "auto"
     });
   };
   let lastX, lastY;
@@ -4148,7 +4161,9 @@ var UIDropdown = class extends UIElement {
       setAttribute2(trigger, "aria-expanded", overlay._popoverable.getState() ? "true" : "false");
     });
     overlay._popoverable.onChange(() => {
-      overlay._popoverable.getState() ? overlay.onPopoverShow?.() : overlay.onPopoverHide?.();
+      setTimeout(
+        () => overlay._popoverable.getState() ? overlay.onPopoverShow?.() : overlay.onPopoverHide?.()
+      );
     });
   }
   trigger() {
@@ -4738,6 +4753,7 @@ var UISelected = class extends UIElement {
   renderPlaceholder() {
     if (!this.templates.placeholder) return;
     let el = hydrateTemplate(this.templates.placeholder);
+    el.setAttribute("data-appended", "");
     this.templates.placeholder.after(el);
     this.templates.placeholder.clearPlaceholder = () => {
       el.remove();
@@ -4975,7 +4991,7 @@ var UISelect = class extends UIControl {
       setTimeout(() => {
         if (!this._popoverable || this._popoverable.getState()) {
           let firstSelectedOption = this._selectable.selecteds()[0]?.el;
-          queueMicrotask(() => {
+          setTimeout(() => {
             this._activatable.activateSelectedOrFirst(firstSelectedOption);
           });
         } else {
@@ -4986,7 +5002,9 @@ var UISelect = class extends UIControl {
     observer.observe(list, { childList: true });
   }
   button() {
-    return this.querySelector("button:has(+ [popover])");
+    return Array.from(this.querySelectorAll("button")).find(
+      (button) => button.nextElementSibling?.matches("[popover]")
+    ) || null;
   }
   input() {
     return this.querySelector("input");
@@ -5027,7 +5045,7 @@ var UIEmpty = class extends UIElement {
       let picker = this.closest("ui-autocomplete, ui-combobox, ui-select");
       let list = this.closest("ui-options");
       if (!list) return;
-      let isHidden = (el) => getComputedStyle(el).display === "none";
+      let isHidden = (el) => el.hasAttribute("data-hidden");
       let refresh = () => {
         let empty;
         if (CSS.supports("selector(&)")) {
@@ -5141,7 +5159,7 @@ function initPopover(root, trigger, popover, popoverable, anchorable) {
     Array.from([root, popover]).forEach((i) => {
       popoverable.getState() ? setAttribute2(i, "data-open", "") : removeAttribute(i, "data-open", "");
     });
-    popoverable.getState() && anchorable.reposition();
+    popoverable.getState() ? anchorable.reposition() : anchorable.cleanup();
   };
   popoverable.onChange(() => refreshPopover());
   refreshPopover();
@@ -5163,7 +5181,7 @@ function controlActivationWithPopover(popoverable, activatable, selectable) {
   popoverable.onChange(() => {
     if (popoverable.getState()) {
       let firstSelectedOption = selectable.selecteds()[0]?.el;
-      queueMicrotask(() => {
+      setTimeout(() => {
         activatable.activateSelectedOrFirst(firstSelectedOption);
       });
     } else {
@@ -5189,6 +5207,8 @@ function controlPopoverWithKeyboard(button, popoverable) {
     } else if (e.key === "Escape") {
       if (popoverable.getState()) {
         popoverable.setState(false);
+        e.preventDefault();
+        e.stopImmediatePropagation();
       }
     }
   });
@@ -5307,6 +5327,7 @@ function handleAutocomplete(autocomplete, isStrict, root, input, selectable, pop
   };
   setAttribute2(input, "autocomplete", "off");
   setAttribute2(input, "aria-autocomplete", "list");
+  selectable.setState(input.value);
   queueMicrotask(() => {
     selectable.onInitAndChange(() => {
       input.value = selectable.selectedTextValue();
@@ -5557,7 +5578,8 @@ function initializeMenuItem(el) {
     submenu._anchorable = new Anchorable(submenu, {
       reference: button,
       position: submenu.hasAttribute("position") ? submenu.getAttribute("position") : "right start",
-      gap: submenu.hasAttribute("gap") ? submenu.getAttribute("gap") : "-5"
+      gap: submenu.hasAttribute("gap") ? submenu.getAttribute("gap") : "-5",
+      crossAxis: true
     });
     button.addEventListener("click", (e) => {
       submenu._popoverable.setState(true);
@@ -5576,7 +5598,7 @@ function initializeMenuItem(el) {
         clear();
         submenu._focusable.wipeTabbables();
       }
-      submenu._anchorable.reposition();
+      submenu._popoverable.getState() ? submenu._anchorable.reposition() : submenu._anchorable.cleanup();
     });
     on(button, "keydown", (e) => {
       if (e.key === "Enter") {
@@ -5689,7 +5711,9 @@ var UITooltip = class extends UIElement {
       gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
       offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
     });
-    overlay._popoverable.onChange(() => overlay._anchorable.reposition());
+    overlay._popoverable.onChange(() => {
+      overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
+    });
     if (!this._disabled) {
       interest(button, overlay, {
         gain() {
@@ -5900,6 +5924,8 @@ element("label", UILabel);
 element("description", UIDescription);
 
 // js/mixins/dialogable.js
+var lastMouseDownEvent = null;
+document.addEventListener("mousedown", (event) => lastMouseDownEvent = event);
 var Dialogable = class extends Mixin {
   boot({ options }) {
     options({
@@ -5917,12 +5943,16 @@ var Dialogable = class extends Mixin {
     observer.observe(this.el, { attributeFilter: ["open"] });
     if (this.options().clickOutside) {
       this.el.addEventListener("click", (e) => {
-        if (e.target !== this.el) return;
-        if (clickHappenedOutside(this.el, e)) {
+        if (e.target !== this.el) {
+          lastMouseDownEvent = null;
+          return;
+        }
+        if (lastMouseDownEvent && clickHappenedOutside(this.el, lastMouseDownEvent) && clickHappenedOutside(this.el, e)) {
           this.cancel();
           e.preventDefault();
           e.stopPropagation();
         }
+        lastMouseDownEvent = null;
       });
     }
     if (this.el.hasAttribute("open")) {
@@ -6380,6 +6410,7 @@ document.addEventListener("alpine:init", () => {
       if (options.heading) detail.slots.heading = options.heading;
       if (options.variant) detail.dataset.variant = options.variant;
       if (options.position) detail.dataset.position = options.position;
+      if (options.duration !== void 0) detail.duration = options.duration;
       document.dispatchEvent(new CustomEvent("toast-show", { detail }));
     },
     modal(name) {
@@ -6421,19 +6452,24 @@ document.addEventListener("alpine:init", () => {
   });
   window.Flux = flux;
   Alpine.magic("flux", () => flux);
-  selectorDarkMode && Alpine.effect(() => {
+  Alpine.effect(() => {
     applyAppearance(flux.appearance);
   });
-  selectorDarkMode && document.addEventListener("livewire:navigated", () => {
+  document.addEventListener("livewire:navigated", () => {
     applyAppearance(flux.appearance);
   });
   let media = window.matchMedia("(prefers-color-scheme: dark)");
-  selectorDarkMode && media.addEventListener("change", () => {
+  media.addEventListener("change", () => {
     flux.systemAppearanceChanged++;
     applyAppearance(flux.appearance);
   });
 });
 function applyAppearance(appearance) {
+  if (!selectorDarkMode) {
+    document.documentElement.classList.remove("dark");
+    window.localStorage.removeItem("flux.appearance");
+    return;
+  }
   let applyDark = () => document.documentElement.classList.add("dark");
   let applyLight = () => document.documentElement.classList.remove("dark");
   if (appearance === "system") {

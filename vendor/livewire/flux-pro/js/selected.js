@@ -248,6 +248,8 @@ export class UISelected extends UIElement {
 
         let el = hydrateTemplate(this.templates.placeholder)
 
+        el.setAttribute('data-appended', '')
+
         this.templates.placeholder.after(el)
 
         this.templates.placeholder.clearPlaceholder = () => {

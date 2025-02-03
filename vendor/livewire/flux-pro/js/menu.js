@@ -266,6 +266,7 @@ function initializeMenuItem(el) {
             reference: button,
             position: submenu.hasAttribute('position') ? submenu.getAttribute('position') : 'right start',
             gap: submenu.hasAttribute('gap') ? submenu.getAttribute('gap') : '-5',
+            crossAxis: true,
         })
 
         button.addEventListener('click', e => {
@@ -284,7 +285,9 @@ function initializeMenuItem(el) {
                 submenu._focusable.wipeTabbables()
             }
 
-            submenu._anchorable.reposition()
+            submenu._popoverable.getState() 
+                ? submenu._anchorable.reposition()
+                : submenu._anchorable.cleanup()
         })
 
         on(button, 'keydown', e => {

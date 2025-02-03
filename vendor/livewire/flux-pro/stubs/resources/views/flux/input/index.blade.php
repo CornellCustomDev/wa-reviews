@@ -1,5 +1,6 @@
 @props([
     'name' => $attributes->whereStartsWith('wire:model')->first(),
+    'iconVariant' => 'mini',
     'variant' => 'outline',
     'iconTrailing' => null,
     'iconLeading' => null,
@@ -28,6 +29,11 @@ $hasLeadingIcon = (bool) ($iconLeading);
 $hasTrailingIcon = (bool) ($iconTrailing) || (bool) $kbd || (bool) $clearable || (bool) $copyable || (bool) $viewable || (bool) $expandable;
 $hasBothIcons = $hasLeadingIcon && $hasTrailingIcon;
 $hasNoIcons = (! $hasLeadingIcon) && (! $hasTrailingIcon);
+
+$iconClasses = Flux::classes()
+    // When using the outline icon variant, we need to size it down to match the default icon sizes...
+    ->add($iconVariant === 'outline' ? 'size-5' : '')
+    ;
 
 $classes = Flux::classes()
     ->add('w-full border rounded-lg block disabled:shadow-none dark:shadow-none')
@@ -68,7 +74,7 @@ $classes = Flux::classes()
         <div {{ $attributes->only('class')->class('w-full relative block group/input') }} data-flux-input>
             <?php if (is_string($iconLeading)): ?>
                 <div class="z-10 pointer-events-none absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pl-3 left-0">
-                    <flux:icon :icon="$iconLeading" variant="mini" />
+                    <flux:icon :icon="$iconLeading" :variant="$iconVariant" :class="$iconClasses" />
                 </div>
             <?php elseif ($iconLeading): ?>
                 <div {{ $iconLeading->attributes->class('z-10 absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pl-3 left-0') }}>
@@ -96,7 +102,7 @@ $classes = Flux::classes()
 
             <?php if (is_string($iconTrailing)): ?>
                 <div class="pointer-events-none absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pr-3 right-0">
-                    <flux:icon :icon="$iconTrailing" variant="mini" />
+                    <flux:icon :icon="$iconTrailing" :variant="$iconVariant" :class="$iconClasses" />
                 </div>
             <?php elseif ($iconTrailing): ?>
                 <div {{ $iconTrailing->attributes->class('absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pr-2 right-0') }}>
@@ -133,7 +139,7 @@ $classes = Flux::classes()
     <button {{ $attributes->merge(['type' => 'button'])->class([$classes, 'w-full relative flex']) }}>
         <?php if (is_string($iconLeading)): ?>
             <div class="z-10 absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pl-3 left-0">
-                <flux:icon :icon="$iconLeading" variant="mini" />
+                <flux:icon :icon="$iconLeading" :variant="$iconVariant" :class="$iconClasses" />
             </div>
         <?php elseif ($iconLeading): ?>
             <div {{ $iconLeading->attributes->class('z-10 absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pl-3 left-0') }}>
@@ -159,7 +165,7 @@ $classes = Flux::classes()
 
         <?php if (is_string($iconTrailing)): ?>
             <div class="absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pr-3 right-0">
-                <flux:icon :icon="$iconTrailing" variant="mini" />
+                <flux:icon :icon="$iconTrailing" :variant="$iconVariant" :class="$iconClasses" />
             </div>
         <?php elseif  ($iconTrailing): ?>
             <div {{ $iconTrailing->attributes->class('absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pr-2 right-0') }}>

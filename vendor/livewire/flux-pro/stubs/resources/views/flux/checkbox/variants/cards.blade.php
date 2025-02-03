@@ -1,6 +1,7 @@
 @aware([ 'indicator' ])
 
 @props([
+    'iconVariant' => 'micro',
     'description' => null,
     'indicator' => true,
     'accent' => true,
@@ -9,6 +10,13 @@
 ])
 
 @php
+
+$iconClasses = Flux::classes()
+    ->add('inline-block mt-0.5 text-zinc-400 [ui-checkbox[data-checked]_&]:text-zinc-800 dark:[ui-checkbox[data-checked]_&]:text-white')
+    // When using the outline icon variant, we need to size it down to match the default icon sizes...
+    ->add($iconVariant === 'outline' ? 'size-4' : '')
+    ;
+
 $classes = Flux::classes()
     ->add('relative flex justify-between gap-3 flex-1 p-4')
     ->add('rounded-lg shadow-sm')
@@ -44,8 +52,10 @@ $classes = Flux::classes()
 <ui-checkbox {{ $attributes->class($classes) }} data-flux-control data-flux-checkbox-cards tabindex="-1" data-flux-field>
     <?php if ($label): ?>
         <div class="flex-1 flex gap-2">
-            <?php if ($icon): ?>
-                <flux:icon :icon="$icon" variant="micro" class="inline-block mt-0.5 text-zinc-400 [ui-checkbox[data-checked]_&]:text-zinc-800 dark:[ui-checkbox[data-checked]_&]:text-white" />
+            <?php if (is_string($icon) && $icon !== ''): ?>
+                <flux:icon :icon="$icon" :variant="$iconVariant" :class="$iconClasses" />
+            <?php elseif ($icon): ?>
+                {{ $icon }}
             <?php endif; ?>
 
             <div class="flex-1">

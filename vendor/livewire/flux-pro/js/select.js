@@ -256,7 +256,7 @@ export class UISelect extends UIControl {
                 if ((! this._popoverable) || (this._popoverable.getState())) {
                     let firstSelectedOption = this._selectable.selecteds()[0]?.el
 
-                    queueMicrotask(() => { // We need to let the popover fully become visible first so that we detect which elements are visible...
+                    setTimeout(() => { // We need to let the popover fully become visible first so that we detect which elements are visible...
                         this._activatable.activateSelectedOrFirst(firstSelectedOption)
                     })
                 } else {
@@ -269,8 +269,14 @@ export class UISelect extends UIControl {
     }
 
     button() {
-        // @todo: fix this:
-        return this.querySelector('button:has(+ [popover])')
+        // We need to find the first button that has a sibling with a popover. Previously
+        // we used `this.querySelector('button:has(+ [popover])')`, but the `:has()`
+        // selector only recently got support in Firefox (end 2023). We also need
+        // to return `null` as that is what `querySelector` returns if nothing
+        // is found...
+        return Array.from(this.querySelectorAll('button')).find(
+            button => button.nextElementSibling?.matches('[popover]')
+        ) || null
     }
 
     input() {
@@ -327,7 +333,9 @@ class UIEmpty extends UIElement {
 
             if (! list) return
 
-            let isHidden = el => getComputedStyle(el).display === 'none'
+            // On Safari 18+, we can't use `getComputedStyle` to check an elements visibility, as
+            // it will return `none` if the element is inside another element that is hidden...            
+            let isHidden = el => el.hasAttribute('data-hidden')
 
             let refresh = () => {
                 let empty
@@ -477,7 +485,7 @@ function initPopover(root, trigger, popover, popoverable, anchorable) {
             popoverable.getState() ? setAttribute(i, 'data-open', '') : removeAttribute(i, 'data-open', '')
         })
 
-        popoverable.getState() && anchorable.reposition()
+        popoverable.getState() ? anchorable.reposition() : anchorable.cleanup()
     }
 
     popoverable.onChange(() => refreshPopover()); refreshPopover()
@@ -502,7 +510,7 @@ function controlActivationWithPopover(popoverable, activatable, selectable) {
         if (popoverable.getState()) {
             let firstSelectedOption = selectable.selecteds()[0]?.el
 
-            queueMicrotask(() => { // We need to let the popover fully become visible first so that we detect which elements are visible...
+            setTimeout(() => { // We need to let the popover fully become visible first so that we detect which elements are visible...
                 activatable.activateSelectedOrFirst(firstSelectedOption)
             })
         } else {
@@ -528,6 +536,7 @@ function controlPopoverWithKeyboard(button, popoverable) {
         } else if (e.key === 'Escape') {
             if (popoverable.getState()) {
                 popoverable.setState(false);
+                e.preventDefault(); e.stopImmediatePropagation();
             }
         }
     })
@@ -678,6 +687,11 @@ function handleAutocomplete(autocomplete, isStrict, root, input, selectable, pop
 
     setAttribute(input, 'autocomplete', 'off')
     setAttribute(input, 'aria-autocomplete', 'list')
+
+    // If the input has a value, whether it be set by the backend or by Livewire, we should
+    // use it as the initial value. Setting it here before `onInitAndChange()` is called
+    // ensures that we get the input's value before the selectable is initialized...
+    selectable.setState(input.value)
 
     queueMicrotask(() => {
         selectable.onInitAndChange(() => {

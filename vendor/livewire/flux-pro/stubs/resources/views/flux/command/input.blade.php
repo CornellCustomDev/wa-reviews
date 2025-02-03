@@ -20,7 +20,11 @@ $classes = Flux::classes()
 
 <div class="relative" data-flux-command-input>
     <div class="absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400 pl-3.5 left-0 [&:has(+input:focus)]:text-zinc-800 [&:has(+input:focus)]:dark:text-zinc-400">
-        <flux:icon :$icon variant="mini" />
+        <?php if (is_string($icon) && $icon !== ''): ?>
+            <flux:icon :$icon variant="mini" />
+        <?php else: ?>
+            {{ $icon }}
+        <?php endif; ?>
     </div>
 
     <input type="text" {{ $attributes->class($classes) }} />
