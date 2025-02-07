@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
+class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
 {
     public static $files = array (
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
@@ -611,24 +611,12 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'App\\Console\\Commands\\ParseGuidelineTools' => __DIR__ . '/../..' . '/app/Console/Commands/ParseGuidelineTools.php',
         'App\\Console\\Commands\\ParseSiteimproveCheckIds' => __DIR__ . '/../..' . '/app/Console/Commands/ParseSiteimproveCheckIds.php',
         'App\\Console\\Commands\\SplitGuidelines' => __DIR__ . '/../..' . '/app/Console/Commands/SplitGuidelines.php',
-        'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
         'App\\Enums\\Assessment' => __DIR__ . '/../..' . '/app/Enums/Assessment.php',
         'App\\Enums\\GuidelineStatus' => __DIR__ . '/../..' . '/app/Enums/GuidelineStatus.php',
         'App\\Enums\\GuidelineTools' => __DIR__ . '/../..' . '/app/Enums/GuidelineTools.php',
         'App\\Enums\\NamedEnum' => __DIR__ . '/../..' . '/app/Enums/NamedEnum.php',
         'App\\Enums\\TestingMethod' => __DIR__ . '/../..' . '/app/Enums/TestingMethod.php',
-        'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
-        'App\\Http\\Kernel' => __DIR__ . '/../..' . '/app/Http/Kernel.php',
-        'App\\Http\\Middleware\\Authenticate' => __DIR__ . '/../..' . '/app/Http/Middleware/Authenticate.php',
-        'App\\Http\\Middleware\\EncryptCookies' => __DIR__ . '/../..' . '/app/Http/Middleware/EncryptCookies.php',
-        'App\\Http\\Middleware\\PreventRequestsDuringMaintenance' => __DIR__ . '/../..' . '/app/Http/Middleware/PreventRequestsDuringMaintenance.php',
-        'App\\Http\\Middleware\\RedirectIfAuthenticated' => __DIR__ . '/../..' . '/app/Http/Middleware/RedirectIfAuthenticated.php',
-        'App\\Http\\Middleware\\TrimStrings' => __DIR__ . '/../..' . '/app/Http/Middleware/TrimStrings.php',
-        'App\\Http\\Middleware\\TrustHosts' => __DIR__ . '/../..' . '/app/Http/Middleware/TrustHosts.php',
-        'App\\Http\\Middleware\\TrustProxies' => __DIR__ . '/../..' . '/app/Http/Middleware/TrustProxies.php',
-        'App\\Http\\Middleware\\ValidateSignature' => __DIR__ . '/../..' . '/app/Http/Middleware/ValidateSignature.php',
-        'App\\Http\\Middleware\\VerifyCsrfToken' => __DIR__ . '/../..' . '/app/Http/Middleware/VerifyCsrfToken.php',
         'App\\Livewire\\ActRules\\ShowRule' => __DIR__ . '/../..' . '/app/Livewire/ActRules/ShowRule.php',
         'App\\Livewire\\ActRules\\ViewRules' => __DIR__ . '/../..' . '/app/Livewire/ActRules/ViewRules.php',
         'App\\Livewire\\Ai\\AnalyzePage' => __DIR__ . '/../..' . '/app/Livewire/Ai/AnalyzePage.php',
@@ -698,10 +686,6 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
         'App\\Policies\\ProjectPolicy' => __DIR__ . '/../..' . '/app/Policies/ProjectPolicy.php',
         'App\\Policies\\ScopePolicy' => __DIR__ . '/../..' . '/app/Policies/ScopePolicy.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
-        'App\\Providers\\AuthServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AuthServiceProvider.php',
-        'App\\Providers\\BroadcastServiceProvider' => __DIR__ . '/../..' . '/app/Providers/BroadcastServiceProvider.php',
-        'App\\Providers\\EventServiceProvider' => __DIR__ . '/../..' . '/app/Providers/EventServiceProvider.php',
-        'App\\Providers\\RouteServiceProvider' => __DIR__ . '/../..' . '/app/Providers/RouteServiceProvider.php',
         'App\\Services\\AccessibilityAnalyzer\\AccessibilityAnalyzerService' => __DIR__ . '/../..' . '/app/Services/AccessibilityAnalyzer/AccessibilityAnalyzerService.php',
         'App\\Services\\AccessibilityAnalyzer\\ActRuleRunner' => __DIR__ . '/../..' . '/app/Services/AccessibilityAnalyzer/ActRuleRunner.php',
         'App\\Services\\AccessibilityAnalyzer\\ActRules\\AriaHiddenNoFocusableContent6cfa84' => __DIR__ . '/../..' . '/app/Services/AccessibilityAnalyzer/ActRules/AriaHiddenNoFocusableContent6cfa84.php',
@@ -7615,9 +7599,9 @@ class ComposerStaticInit9c491b8531eec05ba41a11d9276a5749
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit9c491b8531eec05ba41a11d9276a5749::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit9c491b8531eec05ba41a11d9276a5749::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit9c491b8531eec05ba41a11d9276a5749::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$classMap;
 
         }, null, ClassLoader::class);
     }

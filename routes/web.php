@@ -32,17 +32,6 @@ use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
 use App\Models\Project;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
-
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
@@ -99,7 +88,6 @@ Route::prefix('sia-rules')->name('sia-rules.')->group(function () {
     Route::get('/{rule}', ShowSiaRule::class)->name('show');
 });
 
-// Livewire route
 Route::get('chat', Chat::class)->name('chat');
 Route::get('guidelines.md', Doc::class)->name('guidelines.md');
 Route::get('prompt', Prompt::class)->name('prompt');
