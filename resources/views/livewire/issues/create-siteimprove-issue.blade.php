@@ -10,7 +10,7 @@
     </flux:subheading>
 
     <form wire:submit="save">
-        <x-cd.form.text label="Target" wire:model="form.target" />
+        <x-forms.input type="text" label="Target" wire:model="form.target" />
         <x-forms.textarea label="Description" wire:model="form.description" />
         <x-forms.checkbox
             label="Generate guideline observations with AI"

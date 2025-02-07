@@ -53,8 +53,6 @@ return array(
     'App\\Livewire\\Issues\\UpdateIssue' => $baseDir . '/app/Livewire/Issues/UpdateIssue.php',
     'App\\Livewire\\Issues\\ViewIssues' => $baseDir . '/app/Livewire/Issues/ViewIssues.php',
     'App\\Livewire\\Items\\CreateItem' => $baseDir . '/app/Livewire/Items/CreateItem.php',
-    'App\\Livewire\\Items\\ItemField' => $baseDir . '/app/Livewire/Items/ItemField.php',
-    'App\\Livewire\\Items\\ItemFieldCheckbox' => $baseDir . '/app/Livewire/Items/ItemFieldCheckbox.php',
     'App\\Livewire\\Items\\UpdateItem' => $baseDir . '/app/Livewire/Items/UpdateItem.php',
     'App\\Livewire\\Items\\ViewItems' => $baseDir . '/app/Livewire/Items/ViewItems.php',
     'App\\Livewire\\Projects\\CreateProject' => $baseDir . '/app/Livewire/Projects/CreateProject.php',

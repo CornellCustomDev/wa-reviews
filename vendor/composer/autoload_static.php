@@ -704,8 +704,6 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'App\\Livewire\\Issues\\UpdateIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/UpdateIssue.php',
         'App\\Livewire\\Issues\\ViewIssues' => __DIR__ . '/../..' . '/app/Livewire/Issues/ViewIssues.php',
         'App\\Livewire\\Items\\CreateItem' => __DIR__ . '/../..' . '/app/Livewire/Items/CreateItem.php',
-        'App\\Livewire\\Items\\ItemField' => __DIR__ . '/../..' . '/app/Livewire/Items/ItemField.php',
-        'App\\Livewire\\Items\\ItemFieldCheckbox' => __DIR__ . '/../..' . '/app/Livewire/Items/ItemFieldCheckbox.php',
         'App\\Livewire\\Items\\UpdateItem' => __DIR__ . '/../..' . '/app/Livewire/Items/UpdateItem.php',
         'App\\Livewire\\Items\\ViewItems' => __DIR__ . '/../..' . '/app/Livewire/Items/ViewItems.php',
         'App\\Livewire\\Projects\\CreateProject' => __DIR__ . '/../..' . '/app/Livewire/Projects/CreateProject.php',
