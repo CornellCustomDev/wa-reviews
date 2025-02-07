@@ -56,7 +56,11 @@ $classes = Flux::classes()
 <flux:button-or-link :attributes="$attributes->class($classes)" data-flux-navlist-item>
     <?php if ($icon): ?>
         <div class="relative">
-            <flux:icon :$icon :variant="$iconVariant" class="{!! $iconClasses !!}" />
+            <?php if (is_string($icon) && $icon !== ''): ?>
+                <flux:icon :$icon :variant="$iconVariant" class="{!! $iconClasses !!}" />
+            <?php else: ?>
+                {{ $icon }}
+            <?php endif; ?>
 
             <?php if ($iconDot): ?>
                 <div class="absolute top-[-2px] right-[-2px]">
@@ -70,8 +74,10 @@ $classes = Flux::classes()
         <div class="flex-1 text-sm font-medium leading-none whitespace-nowrap [[data-nav-footer]_&]:hidden [[data-nav-sidebar]_[data-nav-footer]_&]:block" data-content>{{ $slot }}</div>
     <?php endif; ?>
 
-    <?php if ($iconTrailing): ?>
+    <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>
         <flux:icon :icon="$iconTrailing" :variant="$iconVariant" class="!size-4" />
+    <?php elseif ($iconTrailing): ?>
+        {{ $iconTrailing }}
     <?php endif; ?>
 
     <?php if ($badge): ?>

@@ -27,6 +27,15 @@ $classes = Flux::classes()
         'bare' => 'bg-transparent',
     });
 
+// Support adding the .self modifier to the wire:model directive...
+if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wireModel->hasModifier('self')) {
+    unset($attributes[$wireModel->directive]);
+
+    $wireModel->directive .= '.self';
+
+    $attributes = $attributes->merge([$wireModel->directive => $wireModel->value]);
+}
+
 // Support <flux:modal ... @close="?"> syntax...
 if ($attributes['@close'] ?? null) {
     $attributes['wire:close'] = $attributes['@close'];

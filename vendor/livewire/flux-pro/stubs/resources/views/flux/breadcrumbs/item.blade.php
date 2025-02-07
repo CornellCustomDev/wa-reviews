@@ -1,5 +1,6 @@
 @props([
     'separator' => 'chevron-right',
+    'iconVariant' => 'mini',
     'icon' => null,
     'href' => null,
 ])
@@ -19,9 +20,14 @@ $staticTextClasses = Flux::classes()
     ->add('text-gray-500 dark:text-white/80')
     ;
 
-$iconClasses = Flux::classes()
+$separatorClasses = Flux::classes()
     ->add('mx-1 text-zinc-300 dark:text-white/80')
     ->add('group-last/breadcrumb:hidden')
+    ;
+
+$iconClasses = Flux::classes()
+    // When using the outline icon variant, we need to size it down to match the default icon sizes...
+    ->add($iconVariant === 'outline' ? 'size-5' : '')
     ;
 
 [ $styleAttributes, $attributes ] = Flux::splitAttributes($attributes);
@@ -31,7 +37,7 @@ $iconClasses = Flux::classes()
     <?php if ($href): ?>
         <a {{ $attributes->class($linkClasses) }} href="{{ $href }}">
             <?php if ($icon): ?>
-                <flux:icon :$icon variant="mini" />
+                <flux:icon :$icon :variant="$iconVariant" class="{{ $iconClasses }}" />
             <?php else: ?>
                 {{ $slot }}
             <?php endif; ?>
@@ -39,12 +45,12 @@ $iconClasses = Flux::classes()
     <?php else: ?>
         <div {{ $attributes->class($staticTextClasses) }}>
             <?php if ($icon): ?>
-                <flux:icon :$icon variant="mini" />
+                <flux:icon :$icon :variant="$iconVariant" class="{{ $iconClasses }}" />
             <?php else: ?>
                 {{ $slot }}
             <?php endif; ?>
         </div>
     <?php endif; ?>
 
-    <flux:icon :icon="$separator" variant="mini" class="{{ $iconClasses }}" />
+    <flux:icon :icon="$separator" variant="mini" class="{{ $separatorClasses }}" />
 </div>

@@ -2,7 +2,7 @@
 
 @props([
     'iconTrailing' => null,
-    'iconVariant' => null,
+    'iconVariant' => null, // This is null as the default is set below depending on the tab variant...
     'variant' => null,
     'accent' => true,
     'name' => null,
@@ -69,13 +69,17 @@ if ($name) {
 @endphp
 
 <flux:button-or-link :attributes="$attributes->class($classes)" data-flux-tab>
-    <?php if ($icon): ?>
+    <?php if (is_string($icon) && $icon !== ''): ?>
         <flux:icon :$icon :variant="$iconVariant" class="{!! $iconClasses !!}" />
+    <?php elseif ($icon): ?>
+        {{ $icon }}
     <?php endif; ?>
 
     {{ $slot }}
 
-    <?php if ($iconTrailing): ?>
+    <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>
         <flux:icon :icon="$iconTrailing" variant="micro" />
+    <?php elseif ($iconTrailing): ?>
+        {{ $iconTrailing }}
     <?php endif; ?>
 </flux:button-or-link>

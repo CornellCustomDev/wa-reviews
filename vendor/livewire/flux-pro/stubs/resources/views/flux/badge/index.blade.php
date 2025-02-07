@@ -1,4 +1,5 @@
 @props([
+    'iconVariant' => 'micro',
     'iconTrailing' => null,
     'variant' => null,
     'color' => null,
@@ -9,6 +10,9 @@
 
 @php
 $insetClasses = Flux::applyInset($inset, top: '-mt-1', right: '-mr-2', bottom: '-mb-1', left: '-ml-1');
+
+// When using the outline icon variant, we need to size it down to match the default icon sizes...
+$iconClasses = Flux::classes()->add($iconVariant === 'outline' ? 'size-4' : '');
 
 $classes = Flux::classes()
     ->add('inline-flex items-center font-medium whitespace-nowrap')
@@ -69,8 +73,10 @@ $classes = Flux::classes()
 @endphp
 
 <flux:button-or-div :attributes="$attributes->class($classes)" data-flux-badge>
-    <?php if ($icon): ?>
-        <flux:icon :$icon variant="micro" data-flux-badge-icon />
+    <?php if (is_string($icon) && $icon !== ''): ?>
+        <flux:icon :$icon :variant="$iconVariant" :class="$iconClasses" data-flux-badge-icon />
+    <?php else: ?>
+        {{ $icon }}
     <?php endif; ?>
 
     {{ $slot }}
@@ -78,7 +84,7 @@ $classes = Flux::classes()
     <?php if ($iconTrailing): ?>
         <div class="pl-1 flex items-center" data-flux-badge-icon-trailing>
             <?php if (is_string($iconTrailing)): ?>
-                <flux:icon :icon="$iconTrailing" variant="micro" />
+                <flux:icon :icon="$iconTrailing" :variant="$iconVariant" :class="$iconClasses" />
             <?php else: ?>
                 {{ $iconTrailing }}
             <?php endif; ?>

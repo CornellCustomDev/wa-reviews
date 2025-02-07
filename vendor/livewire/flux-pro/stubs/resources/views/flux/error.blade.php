@@ -10,7 +10,7 @@ $classes = Flux::classes('mt-3 text-sm font-medium text-red-500 dark:text-red-40
     ->add($message ? '' : 'hidden');
 @endphp
 
-<div aria-live="assertive" {{ $attributes->class($classes) }} data-flux-error>
+<div role="alert" aria-live="polite" aria-atomic="true" {{ $attributes->class($classes) }} data-flux-error>
     <?php if ($message) : ?>
         <flux:icon icon="exclamation-triangle" variant="mini" class="inline" />
 

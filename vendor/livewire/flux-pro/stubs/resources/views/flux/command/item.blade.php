@@ -1,4 +1,5 @@
 @props([
+    'iconVariant' => 'outline',
     'icon' => null,
     'kbd' => null,
 ])
@@ -15,7 +16,11 @@ $classes = Flux::classes()
 <ui-option action {{ $attributes->class($classes) }} data-flux-command-item>
     <?php if ($icon): ?>
         <div class="relative">
-            <flux:icon :$icon variant="outline" class="mr-2 size-6 text-zinc-400 dark:text-zinc-400 group-data-[active]/item:text-zinc-800 group-data-[active]/item:dark:text-white" />
+            <?php if (is_string($icon) && $icon !== ''): ?>
+                <flux:icon :$icon :variant="$iconVariant" class="mr-2 size-6 text-zinc-400 dark:text-zinc-400 group-data-[active]/item:text-zinc-800 group-data-[active]/item:dark:text-white" />
+            <?php else: ?>
+                {{ $icon }}
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

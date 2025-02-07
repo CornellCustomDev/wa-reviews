@@ -19974,6 +19974,7 @@ img.ProseMirror-separator {
   var UIEditor = class extends UIControl {
     boot() {
       let content = this.value ?? this.querySelector("ui-editor-content").innerHTML;
+      let toolbar = this.querySelector("ui-toolbar");
       this.querySelector("ui-editor-content").innerHTML = "";
       this._controllable = new Controllable(this);
       this._disableable = new Disableable(this);
@@ -20032,7 +20033,7 @@ img.ProseMirror-separator {
               this.querySelector('[data-editor="link"] [data-match-target]')?.click();
             }
           });
-          initializeToolbar(editor, this.querySelector("ui-toolbar"));
+          toolbar && initializeToolbar(editor, toolbar);
         }
       });
       let shouldEmitUpdate = false;
@@ -20040,10 +20041,10 @@ img.ProseMirror-separator {
         this.editor.setEditable(!disabled, shouldEmitUpdate);
         if (disabled) {
           setAttribute2(this, "aria-disabled", "true");
-          setAttribute2(this.querySelector("ui-toolbar"), "disabled", "disabled");
+          toolbar && setAttribute2(toolbar, "disabled", "disabled");
         } else {
           removeAndReleaseAttribute(this, "aria-disabled", "true");
-          removeAndReleaseAttribute(this.querySelector("ui-toolbar"), "disabled");
+          toolbar && removeAndReleaseAttribute(toolbar, "disabled");
         }
       });
       shouldEmitUpdate = true;

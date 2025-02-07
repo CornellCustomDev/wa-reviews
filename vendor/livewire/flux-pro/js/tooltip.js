@@ -25,7 +25,11 @@ class UITooltip extends UIElement {
             offset: this.hasAttribute('offset') ? this.getAttribute('offset') : undefined,
         })
 
-        overlay._popoverable.onChange(() => overlay._anchorable.reposition())
+        overlay._popoverable.onChange(() => {
+            overlay._popoverable.getState()
+                ? overlay._anchorable.reposition()
+                : overlay._anchorable.cleanup()
+        })
 
         if (! this._disabled) {
             // Tooltips don't show on mobile...
