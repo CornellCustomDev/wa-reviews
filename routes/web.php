@@ -31,34 +31,42 @@ use App\Livewire\SiaRules\ShowSiaRule;
 use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
 use App\Models\Project;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\ApacheShib;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
-Route::prefix('project')->name('project.')->group(function () {
-    Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
-    Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
-    Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
-    Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
-    Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
-    Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
+Route::group(['middleware' => [ApacheShib::class]], function () {
+    Route::get('login', fn() => redirect()->route('cu-auth.shibboleth-login'))->name('login');
+    Route::get('logout', fn() => redirect()->route('cu-auth.shibboleth-logout'))->name('logout');
 });
 
-Route::prefix('scope/{scope}')->name('scope.')->group(function () {
-    Route::get('', ShowScope::class)->name('show')->can('view', 'scope');
-    Route::get('/edit', UpdateScope::class)->name('edit')->can('update', 'scope');
-    Route::get('/issue/create', CreateIssue::class)->name('issue.create')->can('update', 'scope');
-    Route::get('/issue/siteimprove/create/{rule}/{guideline}', CreateSiteimproveIssue::class)->name('issue.siteimprove.create');
-});
+Route::group(['middleware' => [ApacheShib::class]], function () {
+    Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
+    Route::prefix('project')->name('project.')->group(function () {
+        Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
+        Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
+        Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
+        Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
+        Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
+        Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
+    });
 
-Route::prefix('issue/{issue}')->name('issue.')->group(function () {
-    Route::get('', ShowIssue::class)->name('show')->can('view', 'issue');
-    Route::get('/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
-    Route::get('/item/create', CreateItem::class)->name('item.create')->can('update', 'issue');
-    Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
+    Route::prefix('scope/{scope}')->name('scope.')->group(function () {
+        Route::get('', ShowScope::class)->name('show')->can('view', 'scope');
+        Route::get('/edit', UpdateScope::class)->name('edit')->can('update', 'scope');
+        Route::get('/issue/create', CreateIssue::class)->name('issue.create')->can('update', 'scope');
+        Route::get('/issue/siteimprove/create/{rule}/{guideline}', CreateSiteimproveIssue::class)->name('issue.siteimprove.create');
+    });
+
+    Route::prefix('issue/{issue}')->name('issue.')->group(function () {
+        Route::get('', ShowIssue::class)->name('show')->can('view', 'issue');
+        Route::get('/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
+        Route::get('/item/create', CreateItem::class)->name('item.create')->can('update', 'issue');
+        Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
+    });
 });
 
 Route::prefix('guidelines')->name('guidelines.')->group(function () {
