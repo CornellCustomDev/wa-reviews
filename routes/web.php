@@ -13,6 +13,7 @@ use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Issues\CreateProjectIssue;
 use App\Livewire\Issues\CreateSiteimproveIssue;
 use App\Livewire\Projects\CreateProject;
+use App\Livewire\Projects\Report;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Livewire\Projects\ViewProjects;
@@ -43,6 +44,7 @@ Route::prefix('project')->name('project.')->group(function () {
     Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
     Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
     Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
+    Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
 });
 
 Route::prefix('scope/{scope}')->name('scope.')->group(function () {

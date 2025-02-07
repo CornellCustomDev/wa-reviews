@@ -182,9 +182,15 @@ class SiteimproveService
 
     public static function getPageReportUrlForScope(Scope $scope): ?string
     {
+        $key = "siteimprove_url_$scope->url";
+        $cachedValue = Cache::get($key);
+        if ($cachedValue === '') {
+            Cache::forget($key);
+        }
+
         $siteimproveService = SiteimproveService::fromScope($scope);
         return Cache::rememberForever(
-            key: "siteimprove_url_$scope->url",
+            key: $key,
             callback: fn() => $siteimproveService->getPageReportUrl($scope->url) ?? ''
         );
     }
