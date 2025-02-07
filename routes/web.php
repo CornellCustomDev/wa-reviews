@@ -39,6 +39,11 @@ Route::get('/', function () {
 })->name('welcome');
 
 Route::group(['middleware' => [ApacheShib::class]], function () {
+    Route::get('login', fn() => redirect()->route('cu-auth.shibboleth-login'))->name('login');
+    Route::get('logout', fn() => redirect()->route('cu-auth.shibboleth-logout'))->name('logout');
+});
+
+Route::group(['middleware' => [ApacheShib::class]], function () {
     Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
     Route::prefix('project')->name('project.')->group(function () {
         Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);

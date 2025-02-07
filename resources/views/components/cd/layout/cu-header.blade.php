@@ -32,6 +32,15 @@
         <div class="buttons">
             <button class="mobile-button" id="mobile-nav">Main Menu</button>
             <button class="mobile-button" id="cu-search-button">Toggle Search Form</button>
+            <nav id="utility-navigation" aria-label="Supplementary Navigation">
+                <ul class="list-menu links">
+                    @guest
+                        <li><a href="{{ route('login') }}">Log In</a></li>
+                    @else
+                        <li><a href="{{ route('logout') }}">Log Out</a></li>
+                    @endguest
+                </ul>
+            </nav>
         </div>
     </div>
 </header>
