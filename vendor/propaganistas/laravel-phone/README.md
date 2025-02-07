@@ -17,7 +17,6 @@ Adds phone number functionality to Laravel based on the [PHP port](https://githu
     - [Formatting](#formatting)
     - [Number information](#number-information)
     - [Equality comparison](#equality-comparison)
-    - [Helper function](#helper-function)
 - [Database considerations](#database-considerations)
 
 ## Demo
@@ -177,6 +176,14 @@ use Propaganistas\LaravelPhone\PhoneNumber;
 (string) new PhoneNumber('012 34 56 78', 'BE');            // +3212345678
 ```
 
+Alternatively you can use the `phone()` helper function. It returns a `Propaganistas\LaravelPhone\PhoneNumber` instance or the formatted string if `$format` was provided:
+
+```php
+phone('+3212/34.56.78');                // PhoneNumber instance
+phone('012 34 56 78', 'BE');            // PhoneNumber instance
+phone('012 34 56 78', 'BE', $format);   // string
+```
+
 ### Formatting
 A PhoneNumber can be formatted in various ways:
 
@@ -186,7 +193,7 @@ $phone = new PhoneNumber('012/34.56.78', 'BE');
 $phone->format($format);       // See libphonenumber\PhoneNumberFormat
 $phone->formatE164();          // +3212345678
 $phone->formatInternational(); // +32 12 34 56 78
-$phone->formatRFC3966();       // +32-12-34-56-78
+$phone->formatRFC3966();       // tel:+32-12-34-56-78
 $phone->formatNational();      // 012 34 56 78
 
 // Formats so the number can be called straight from the provided country.
@@ -225,14 +232,6 @@ $phone->equals( $anotherPhoneObject )      // true/false
 $phone->notEquals('045 67 89 10', 'BE')    // true
 $phone->notEquals('+32 45 67 89 10')       // true
 $phone->notEquals( $anotherPhoneObject )   // true/false
-```
-
-### Helper function
-
-The package exposes the `phone()` helper function that returns a `Propaganistas\LaravelPhone\PhoneNumber` instance or the formatted string if `$format` was provided:
-
-```php
-phone($number, $country = [], $format = null)
 ```
 
 ## Database considerations

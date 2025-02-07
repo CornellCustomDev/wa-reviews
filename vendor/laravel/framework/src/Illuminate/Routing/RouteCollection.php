@@ -59,13 +59,14 @@ class RouteCollection extends AbstractRouteCollection
      */
     protected function addToCollections($route)
     {
+        $methods = $route->methods();
         $domainAndUri = $route->getDomain().$route->uri();
 
-        foreach ($route->methods() as $method) {
+        foreach ($methods as $method) {
             $this->routes[$method][$domainAndUri] = $route;
         }
 
-        $this->allRoutes[$method.$domainAndUri] = $route;
+        $this->allRoutes[implode('|', $methods).$domainAndUri] = $route;
     }
 
     /**
@@ -76,9 +77,9 @@ class RouteCollection extends AbstractRouteCollection
      */
     protected function addLookups($route)
     {
-        // If the route has a name, we will add it to the name look-up table so that we
-        // will quickly be able to find any route associate with a name and not have
-        // to iterate through every route every time we need to perform a look-up.
+        // If the route has a name, we will add it to the name look-up table, so that we
+        // will quickly be able to find the route associated with a name and not have
+        // to iterate through every route every time we need to find a named route.
         if ($name = $route->getName()) {
             $this->nameList[$name] = $route;
         }
