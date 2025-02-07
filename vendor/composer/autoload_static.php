@@ -167,6 +167,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
             'GuzzleHttp\\Promise\\' => 19,
             'GuzzleHttp\\' => 11,
             'GrahamCampbell\\ResultType\\' => 26,
+            'Giggsey\\Locale\\' => 15,
         ),
         'F' => 
         array (
@@ -353,13 +354,13 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         ),
         'Spatie\\LaravelIgnition\\' => 
         array (
-            0 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/laravel-ignition',
-            1 => __DIR__ . '/..' . '/spatie/laravel-ignition/src',
+            0 => __DIR__ . '/..' . '/spatie/laravel-ignition/src',
+            1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/laravel-ignition',
         ),
         'Spatie\\Ignition\\' => 
         array (
-            0 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
-            1 => __DIR__ . '/..' . '/spatie/ignition/src',
+            0 => __DIR__ . '/..' . '/spatie/ignition/src',
+            1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
         ),
         'Spatie\\FlareClient\\' => 
         array (
@@ -395,8 +396,8 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         ),
         'Psr\\Http\\Message\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/http-message/src',
-            1 => __DIR__ . '/..' . '/psr/http-factory/src',
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Psr\\Http\\Client\\' => 
         array (
@@ -452,8 +453,8 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         ),
         'League\\Uri\\' => 
         array (
-            0 => __DIR__ . '/..' . '/league/uri-interfaces',
-            1 => __DIR__ . '/..' . '/league/uri',
+            0 => __DIR__ . '/..' . '/league/uri',
+            1 => __DIR__ . '/..' . '/league/uri-interfaces',
         ),
         'League\\MimeTypeDetection\\' => 
         array (
@@ -524,6 +525,10 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'GrahamCampbell\\ResultType\\' => 
         array (
             0 => __DIR__ . '/..' . '/graham-campbell/result-type/src',
+        ),
+        'Giggsey\\Locale\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/giggsey/locale/src',
         ),
         'Fruitcake\\Cors\\' => 
         array (
@@ -806,6 +811,13 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Carbon\\WeekDay' => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon/WeekDay.php',
         'Carbon\\WrapperClock' => __DIR__ . '/..' . '/nesbot/carbon/src/Carbon/WrapperClock.php',
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/CUAuthServiceProvider.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\DataObjects\\ShibIdentity' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/DataObjects/ShibIdentity.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Events\\CUAuthenticated' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Events/CUAuthenticated.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Http\\Controllers\\AuthController' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Http/Controllers/AuthController.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Listeners\\AuthorizeUser' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Listeners/AuthorizeUser.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\ApacheShib' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Middleware/ApacheShib.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\AppTesters' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Middleware/AppTesters.php',
         'CornellCustomDev\\LaravelStarterKit\\Contact\\PhoneNumber' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/Contact/PhoneNumber.php',
         'CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/StarterKitServiceProvider.php',
         'Cron\\AbstractField' => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron/AbstractField.php',
@@ -1562,6 +1574,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Flux\\FluxTagCompiler' => __DIR__ . '/..' . '/livewire/flux/src/FluxTagCompiler.php',
         'Fruitcake\\Cors\\CorsService' => __DIR__ . '/..' . '/fruitcake/php-cors/src/CorsService.php',
         'Fruitcake\\Cors\\Exceptions\\InvalidOptionException' => __DIR__ . '/..' . '/fruitcake/php-cors/src/Exceptions/InvalidOptionException.php',
+        'Giggsey\\Locale\\Locale' => __DIR__ . '/..' . '/giggsey/locale/src/Locale.php',
         'GrahamCampbell\\ResultType\\Error' => __DIR__ . '/..' . '/graham-campbell/result-type/src/Error.php',
         'GrahamCampbell\\ResultType\\Result' => __DIR__ . '/..' . '/graham-campbell/result-type/src/Result.php',
         'GrahamCampbell\\ResultType\\Success' => __DIR__ . '/..' . '/graham-campbell/result-type/src/Success.php',

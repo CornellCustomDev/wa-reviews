@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e2b96d798858560b9a52d5e97c21fd0a",
+    "content-hash": "09a9517c856767060bb98dfc868d0d0d",
     "packages": [
         {
             "name": "brick/math",
@@ -137,35 +137,37 @@
         },
         {
             "name": "cornell-custom-dev/laravel-starter-kit",
-            "version": "dev-components",
+            "version": "v0.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "a30806a277a3fb16e4a277f9c2204f93499672fc"
+                "reference": "433644514811a69927f4594dcfdeb7e42e31ff25"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/a30806a277a3fb16e4a277f9c2204f93499672fc",
-                "reference": "a30806a277a3fb16e4a277f9c2204f93499672fc",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/433644514811a69927f4594dcfdeb7e42e31ff25",
+                "reference": "433644514811a69927f4594dcfdeb7e42e31ff25",
                 "shasum": ""
             },
             "require": {
                 "cubear/cwd_framework_lite": "^3.0",
-                "livewire/livewire": "^3.4",
-                "php": "^8.1",
-                "propaganistas/laravel-phone": "^5.0",
-                "spatie/laravel-package-tools": "^1.16"
+                "giggsey/locale": "^2.7",
+                "livewire/livewire": "^3.5",
+                "php": "^8.2",
+                "propaganistas/laravel-phone": "^5.3",
+                "spatie/laravel-package-tools": "^1.18"
             },
             "require-dev": {
-                "laravel/pint": "^1.13",
-                "orchestra/testbench": "^8.17",
+                "laravel/pint": "^1.20",
+                "orchestra/testbench": "^8.31",
                 "phpunit/phpunit": "^10.5"
             },
             "type": "library",
             "extra": {
                 "laravel": {
                     "providers": [
-                        "CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider"
+                        "CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider",
+                        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider"
                     ]
                 }
             },
@@ -181,9 +183,9 @@
             "description": "Cornell University Custom Development Laravel Starter Kit",
             "support": {
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/issues",
-                "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/components"
+                "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/v0.4.0"
             },
-            "time": "2024-04-05T19:33:38+00:00"
+            "time": "2025-02-05T18:36:58+00:00"
         },
         {
             "name": "cubear/cwd_framework_lite",
@@ -738,6 +740,62 @@
                 "source": "https://github.com/giggsey/libphonenumber-for-php-lite"
             },
             "time": "2025-01-31T14:48:31+00:00"
+        },
+        {
+            "name": "giggsey/locale",
+            "version": "2.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/giggsey/Locale.git",
+                "reference": "a5c65ea3c2630f27ccb78977990eefbee6dd8f97"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/giggsey/Locale/zipball/a5c65ea3c2630f27ccb78977990eefbee6dd8f97",
+                "reference": "a5c65ea3c2630f27ccb78977990eefbee6dd8f97",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "friendsofphp/php-cs-fixer": "^3.64",
+                "pear/pear-core-minimal": "^1.9",
+                "pear/pear_exception": "^1.0",
+                "pear/versioncontrol_git": "^0.5",
+                "phing/phing": "^2.7",
+                "php-coveralls/php-coveralls": "^2.0",
+                "phpunit/phpunit": "^8.5|^9.5",
+                "symfony/console": "^5.0|^6.0",
+                "symfony/filesystem": "^5.0|^6.0",
+                "symfony/finder": "^5.0|^6.0",
+                "symfony/process": "^5.0|^6.0",
+                "symfony/var-exporter": "^5.2|^6.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Giggsey\\Locale\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Joshua Gigg",
+                    "email": "giggsey@gmail.com",
+                    "homepage": "https://giggsey.com/"
+                }
+            ],
+            "description": "Locale functions required by libphonenumber-for-php",
+            "support": {
+                "issues": "https://github.com/giggsey/Locale/issues",
+                "source": "https://github.com/giggsey/Locale/tree/2.7.0"
+            },
+            "time": "2024-11-04T11:18:07+00:00"
         },
         {
             "name": "graham-campbell/result-type",
@@ -9025,9 +9083,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "cornell-custom-dev/laravel-starter-kit": 20
-    },
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
