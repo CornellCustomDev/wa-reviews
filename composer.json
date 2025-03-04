@@ -12,7 +12,7 @@
     "require": {
         "php": "^8.3",
         "ext-dom": "*",
-        "cornell-custom-dev/laravel-starter-kit": "^0.4",
+        "cornell-custom-dev/laravel-starter-kit": "dev-onelogin-saml",
         "laravel/framework": "^11.41",
         "laravel/tinker": "^2.10",
         "livewire/flux": "^1.1",
