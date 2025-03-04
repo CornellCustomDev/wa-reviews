@@ -16,6 +16,7 @@ use Illuminate\Validation\Rules\File;
 use Illuminate\Validation\Rules\ImageFile;
 use Illuminate\Validation\Rules\In;
 use Illuminate\Validation\Rules\NotIn;
+use Illuminate\Validation\Rules\Numeric;
 use Illuminate\Validation\Rules\ProhibitedIf;
 use Illuminate\Validation\Rules\RequiredIf;
 use Illuminate\Validation\Rules\Unique;
@@ -215,11 +216,12 @@ class Rule
     /**
      * Get an image file rule builder instance.
      *
+     * @param  bool  $allowSvg
      * @return \Illuminate\Validation\Rules\ImageFile
      */
-    public static function imageFile()
+    public static function imageFile($allowSvg = false)
     {
-        return new ImageFile;
+        return new ImageFile($allowSvg);
     }
 
     /**
@@ -231,5 +233,15 @@ class Rule
     public static function dimensions(array $constraints = [])
     {
         return new Dimensions($constraints);
+    }
+
+    /**
+     * Get a numeric rule builder instance.
+     *
+     * @return \Illuminate\Validation\Rules\Numeric
+     */
+    public static function numeric()
+    {
+        return new Numeric;
     }
 }

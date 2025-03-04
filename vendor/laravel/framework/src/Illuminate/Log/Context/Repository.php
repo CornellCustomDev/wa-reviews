@@ -67,6 +67,17 @@ class Repository
     }
 
     /**
+     * Determine if the given key is missing.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function missing($key)
+    {
+        return ! $this->has($key);
+    }
+
+    /**
      * Determine if the given key exists within the hidden context data.
      *
      * @param  string  $key
@@ -75,6 +86,17 @@ class Repository
     public function hasHidden($key)
     {
         return array_key_exists($key, $this->hidden);
+    }
+
+    /**
+     * Determine if the given key is missing within the hidden context data.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    public function missingHidden($key)
+    {
+        return ! $this->hasHidden($key);
     }
 
     /**
@@ -423,6 +445,35 @@ class Repository
     {
         return ! $this->hasHidden($key) ||
             (is_array($this->hidden[$key]) && array_is_list($this->hidden[$key]));
+    }
+
+    /**
+     * Run the callback function with the given context values and restore the original context state when complete.
+     *
+     * @param  callable  $callback
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $hidden
+     * @return mixed
+     */
+    public function scope(callable $callback, array $data = [], array $hidden = [])
+    {
+        $dataBefore = $this->data;
+        $hiddenBefore = $this->hidden;
+
+        if ($data !== []) {
+            $this->add($data);
+        }
+
+        if ($hidden !== []) {
+            $this->addHidden($hidden);
+        }
+
+        try {
+            return $callback();
+        } finally {
+            $this->data = $dataBefore;
+            $this->hidden = $hiddenBefore;
+        }
     }
 
     /**

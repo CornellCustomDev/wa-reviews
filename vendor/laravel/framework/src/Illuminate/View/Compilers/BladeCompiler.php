@@ -812,7 +812,7 @@ class BladeCompiler extends Compiler implements CompilerInterface
      */
     public function anonymousComponentPath(string $path, ?string $prefix = null)
     {
-        $prefixHash = md5($prefix ?: $path);
+        $prefixHash = hash('xxh128', $prefix ?: $path);
 
         $this->anonymousComponentPaths[] = [
             'path' => $path,
@@ -932,7 +932,7 @@ class BladeCompiler extends Compiler implements CompilerInterface
         $this->directive($alias, function ($expression) use ($path) {
             $expression = $this->stripParentheses($expression) ?: '[]';
 
-            return "<?php echo \$__env->make('{$path}', {$expression}, \Illuminate\Support\Arr::except(get_defined_vars(), ['__data', '__path']))->render(); ?>";
+            return "<?php echo \$__env->make('{$path}', {$expression}, array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>";
         });
     }
 

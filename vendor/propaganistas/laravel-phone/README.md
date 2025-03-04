@@ -1,11 +1,11 @@
 # Laravel Phone
 
-![Tests](https://github.com/Propaganistas/Laravel-Phone/workflows/Tests/badge.svg?branch=master)
+[![Tests](https://github.com/Propaganistas/Laravel-Phone/actions/workflows/tests.yml/badge.svg?branch=master)](https://github.com/Propaganistas/Laravel-Phone/actions/workflows/tests.yml)
 [![Latest Stable Version](https://poser.pugx.org/propaganistas/laravel-phone/v/stable)](https://packagist.org/packages/propaganistas/laravel-phone)
 [![Total Downloads](https://poser.pugx.org/propaganistas/laravel-phone/downloads)](https://packagist.org/packages/propaganistas/laravel-phone)
 [![License](https://poser.pugx.org/propaganistas/laravel-phone/license)](https://packagist.org/packages/propaganistas/laravel-phone)
 
-Adds phone number functionality to Laravel based on the [PHP port](https://github.com/giggsey/libphonenumber-for-php) of [libphonenumber by Google](https://github.com/googlei18n/libphonenumber).
+Adds phone number functionality to Laravel based on the [PHP port](https://github.com/giggsey/libphonenumber-for-php-lite) of [libphonenumber by Google](https://github.com/googlei18n/libphonenumber).
 
 ## Table of Contents
 

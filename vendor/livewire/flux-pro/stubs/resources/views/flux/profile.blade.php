@@ -9,10 +9,10 @@
 
 @php
 // If no initials are provided, we'll try to generate them from the name by taking the first letter of the first and last name...
-$initials ??= collect(explode(' ', $name))
+$initials ??= collect(explode(' ', $name ?? ''))
     ->map(fn($part) => Str::substr($part, 0, 1))
     ->filter()
-    ->only([0, count(explode(' ', $name)) - 1])
+    ->only([0, count(explode(' ', $name ?? '')) - 1])
     ->implode('');
 
 // When using the outline icon variant, we need to size it down to match the default icon sizes...

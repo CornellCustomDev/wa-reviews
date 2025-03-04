@@ -27,19 +27,21 @@ use PHPUnit\Framework\MockObject\Invocation as BaseInvocation;
 final class Parameters implements ParametersRule
 {
     /**
-     * @psalm-var list<Constraint>
+     * @var list<Constraint>
      */
     private array $parameters           = [];
     private ?BaseInvocation $invocation = null;
     private null|bool|ExpectationFailedException $parameterVerificationResult;
 
     /**
+     * @param array<mixed> $parameters
+     *
      * @throws \PHPUnit\Framework\Exception
      */
     public function __construct(array $parameters)
     {
         foreach ($parameters as $parameter) {
-            if (!($parameter instanceof Constraint)) {
+            if (!$parameter instanceof Constraint) {
                 $parameter = new IsEqual(
                     $parameter,
                 );
@@ -114,6 +116,7 @@ final class Parameters implements ParametersRule
             } else {
                 $other = $this->invocation->parameters()[$i];
             }
+
             $parameter->evaluate(
                 $other,
                 sprintf(

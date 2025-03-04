@@ -419,10 +419,10 @@ class UrlGenerator implements UrlGeneratorContract
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  bool  $absolute
-     * @param  array  $ignoreQuery
+     * @param  \Closure|array  $ignoreQuery
      * @return bool
      */
-    public function hasValidSignature(Request $request, $absolute = true, array $ignoreQuery = [])
+    public function hasValidSignature(Request $request, $absolute = true, Closure|array $ignoreQuery = [])
     {
         return $this->hasCorrectSignature($request, $absolute, $ignoreQuery)
             && $this->signatureHasNotExpired($request);
@@ -432,10 +432,10 @@ class UrlGenerator implements UrlGeneratorContract
      * Determine if the given request has a valid signature for a relative URL.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  array  $ignoreQuery
+     * @param  \Closure|array  $ignoreQuery
      * @return bool
      */
-    public function hasValidRelativeSignature(Request $request, array $ignoreQuery = [])
+    public function hasValidRelativeSignature(Request $request, Closure|array $ignoreQuery = [])
     {
         return $this->hasValidSignature($request, false, $ignoreQuery);
     }
@@ -445,17 +445,27 @@ class UrlGenerator implements UrlGeneratorContract
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  bool  $absolute
-     * @param  array  $ignoreQuery
+     * @param  \Closure|array  $ignoreQuery
      * @return bool
      */
-    public function hasCorrectSignature(Request $request, $absolute = true, array $ignoreQuery = [])
+    public function hasCorrectSignature(Request $request, $absolute = true, Closure|array $ignoreQuery = [])
     {
-        $ignoreQuery[] = 'signature';
-
         $url = $absolute ? $request->url() : '/'.$request->path();
 
         $queryString = (new Collection(explode('&', (string) $request->server->get('QUERY_STRING'))))
-            ->reject(fn ($parameter) => in_array(Str::before($parameter, '='), $ignoreQuery))
+            ->reject(function ($parameter) use ($ignoreQuery) {
+                $parameter = Str::before($parameter, '=');
+
+                if ($parameter === 'signature') {
+                    return true;
+                }
+
+                if ($ignoreQuery instanceof Closure) {
+                    return $ignoreQuery($parameter);
+                }
+
+                return in_array($parameter, $ignoreQuery);
+            })
             ->join('&');
 
         $original = rtrim($url.'?'.$queryString, '?');
@@ -743,16 +753,40 @@ class UrlGenerator implements UrlGeneratorContract
     }
 
     /**
+     * Set the URL origin for all generated URLs.
+     *
+     * @param  string|null  $root
+     * @return void
+     */
+    public function useOrigin(?string $root)
+    {
+        $this->forceRootUrl($root);
+    }
+
+    /**
      * Set the forced root URL.
      *
      * @param  string|null  $root
      * @return void
+     *
+     * @deprecated Use useOrigin
      */
     public function forceRootUrl($root)
     {
         $this->forcedRoot = $root ? rtrim($root, '/') : null;
 
         $this->cachedRoot = null;
+    }
+
+    /**
+     * Set the URL origin for all generated asset URLs.
+     *
+     * @param  string|null  $root
+     * @return void
+     */
+    public function useAssetOrigin(?string $root)
+    {
+        $this->assetRoot = $root ? rtrim($root, '/') : null;
     }
 
     /**
