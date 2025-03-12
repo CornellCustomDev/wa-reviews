@@ -31,12 +31,12 @@
                             @foreach($item->image_links as $imagePath)
                                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                                 <flux:tooltip position="bottom" class="align-middle">
-                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="!px-0.5 w-24 h-24 overflow-hidden hover:border-cds-blue-900">
+                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">
                                         <div class="relative w-full h-full">
                                             <img
                                                 src="{{ $imagePath }}"
                                                 alt="Preview of image: {{ $imageName }}"
-                                                class="absolute top-0.5 left-0 object-cover object-top rounded"
+                                                class="absolute top-0.5 left-0 object-cover object-top rounded-sm"
                                             />
                                         </div>
                                     </flux:button>
@@ -73,7 +73,7 @@
         @endforeach
         </tbody>
     </table>
-    <flux:modal name="edit-item" wire:close="closeEdit()" class="max-w-screen-xl">
+    <flux:modal name="edit-item" wire:close="closeEdit()" class="max-w-(--breakpoint-xl)">
         @if ($editItem)
             <livewire:items.update-item :item="$editItem" />
         @endif

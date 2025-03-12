@@ -15,14 +15,14 @@ $border ??= $invalid ? 'border-red-500' : match ($variant) {
 
 $classes = Flux::classes()
     ->add('block w-full')
-    ->add('shadow-sm [&[disabled]]:shadow-none border')
+    ->add('shadow-xs [&[disabled]]:shadow-none border')
     ->add(match ($variant) {
         default => 'rounded-lg',
         'cds' => 'rounded-none',
     })
     ->add('bg-white dark:bg-white/10 dark:[&[disabled]]:bg-white/[7%]')
-    ->add('[&_[data-slot=content]]:text-sm')
-    ->add('[&_[data-slot=content]]:text-zinc-700 dark:[&_[data-slot=content]]:text-zinc-300')
+    ->add('**:data-[slot=content]:text-sm')
+    ->add('**:data-[slot=content]:text-zinc-700 dark:**:data-[slot=content]:text-zinc-300')
     ->add('[&[disabled]_[data-slot=content]]:text-zinc-500 dark:[&[disabled]_[data-slot=content]]:text-zinc-400')
     ->add($invalid ? 'border-red-500' : $border)
     ;

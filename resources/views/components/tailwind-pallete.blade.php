@@ -32,7 +32,7 @@
 <flux.button class="bg-wa-na" icon="eye" />
 
 <h2>flux:editor</h2>
-<flux:editor class="[&_[data-slot=content]]:min-h-24" />
-<flux:editor class="[&_[data-slot=content]]:min-h-44" />
-<flux:editor class="[&_[data-slot=content]]:min-h-64" />
-<flux:editor class="[&_[data-slot=content]]:last:!mb-0" />
+<flux:editor class="**:data-[slot=content]:min-h-24" />
+<flux:editor class="**:data-[slot=content]:min-h-44" />
+<flux:editor class="**:data-[slot=content]:min-h-64" />
+<flux:editor class="last:**:data-[slot=content]:mb-0!" />

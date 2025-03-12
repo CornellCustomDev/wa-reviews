@@ -10,7 +10,7 @@
 @php
 $classes = Flux::classes()
     ->add('[:where(&)]:min-w-48 [:where(&)]:max-h-[20rem] p-[.3125rem]')
-    ->add('rounded shadow-sm')
+    ->add('rounded-sm shadow-xs')
     ->add('border border-cds-gray-600 dark:border-zinc-600')
     ->add('bg-cds-gray-600 dark:bg-zinc-700')
     ->add('[&>ui-empty]:text-white')
@@ -25,7 +25,7 @@ if (is_object($searchable)) $search = $searchable;
         {{ $slot }}
     </ui-options>
 <?php else: ?>
-    <div popover="manual" class="rounded shadow-sm border border-cds-gray-600 dark:border-zinc-600 bg-cds-gray-600 dark:bg-zinc-700 p-[.3125rem]" data-flux-options>
+    <div popover="manual" class="rounded-sm shadow-xs border border-cds-gray-600 dark:border-zinc-600 bg-cds-gray-600 dark:bg-zinc-700 p-[.3125rem]" data-flux-options>
         <?php if ($search): ?> {{ $search }} <?php else: ?>
             <flux:select.search />
         <?php endif; ?>
@@ -34,7 +34,7 @@ if (is_object($searchable)) $search = $searchable;
             {{ $slot }}
 
             <?php if ($empty): ?>
-                <ui-empty class="data-[hidden]:hidden">{{ $empty }}</ui-empty>
+                <ui-empty class="data-hidden:hidden">{{ $empty }}</ui-empty>
             <?php else: ?>
                 <flux:select.empty>{!! __('No results found') !!}</flux:select.empty>
             <?php endif; ?>

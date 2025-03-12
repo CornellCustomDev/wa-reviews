@@ -18,8 +18,8 @@ $classes = Flux::classes()
         '[ui-checkbox[data-checked]_&]:bg-center',
         '[ui-checkbox[data-checked]_&]:bg-no-repeat',
         '[ui-checkbox[data-indeterminate]_&]:bg-[var(--color-accent)]',
-        '[ui-checkbox[data-indeterminate]_&]:hover:bg-[var(--color-accent)]',
-        '[ui-checkbox[data-indeterminate]_&]:focus:bg-[var(--color-accent)]',
+        'hover:[ui-checkbox[data-indeterminate]_&]:bg-(--color-accent)',
+        'focus:[ui-checkbox[data-indeterminate]_&]:bg-(--color-accent)',
     ])
     ;
 @endphp

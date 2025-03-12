@@ -12,16 +12,16 @@
     @foreach ($form->assessmentOptions as $option)
         @switch(Str::of($option['value'])->lower()->replace('/', ''))
             @case('pass')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-pass"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass!"/>
                 @break
             @case('warn')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-warn"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-warn!"/>
                 @break
             @case('fail')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-fail"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-fail!"/>
                 @break
             @case('na')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-[checked]:!bg-wa-na"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-na!"/>
                 @break
         @endswitch
     @endforeach
