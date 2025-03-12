@@ -13,16 +13,16 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
         @if ($paginator->hasPages())
             <div class="flex items-center bg-white border border-zinc-200 rounded-[8px] p-[1px] dark:bg-white/10 dark:border-white/10">
                 @if ($paginator->onFirstPage())
-                    <div class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-white">
+                    <div class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-300 dark:text-zinc-500">
                         <flux:icon.chevron-left variant="micro" />
                     </div>
                 @else
                     @if(method_exists($paginator,'getCursorName'))
-                        <button type="button" wire:key="cursor-{{ $paginator->getCursorName() }}-{{ $paginator->previousCursor()->encode() }}" wire:click="setPage('{{$paginator->previousCursor()->encode()}}','{{ $paginator->getCursorName() }}')" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <button type="button" wire:key="cursor-{{ $paginator->getCursorName() }}-{{ $paginator->previousCursor()->encode() }}" wire:click="setPage('{{$paginator->previousCursor()->encode()}}','{{ $paginator->getCursorName() }}')" class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
                             <flux:icon.chevron-left variant="micro" />
                         </button>
                     @else
-                        <button type="button" wire:click="previousPage('{{ $paginator->getPageName() }}')" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <button type="button" wire:click="previousPage('{{ $paginator->getPageName() }}')" class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
                             <flux:icon.chevron-left variant="micro" />
                         </button>
                     @endif
@@ -30,16 +30,16 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
 
                 @if ($paginator->hasMorePages())
                     @if(method_exists($paginator,'getCursorName'))
-                        <button type="button" wire:key="cursor-{{ $paginator->getCursorName() }}-{{ $paginator->nextCursor()->encode() }}" wire:click="setPage('{{$paginator->nextCursor()->encode()}}','{{ $paginator->getCursorName() }}')" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <button type="button" wire:key="cursor-{{ $paginator->getCursorName() }}-{{ $paginator->nextCursor()->encode() }}" wire:click="setPage('{{$paginator->nextCursor()->encode()}}','{{ $paginator->getCursorName() }}')" class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
                             <flux:icon.chevron-right variant="micro" />
                         </button>
                     @else
-                        <button type="button" wire:click="nextPage('{{ $paginator->getPageName() }}')" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <button type="button" wire:click="nextPage('{{ $paginator->getPageName() }}')" class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-400 dark:text-white hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
                             <flux:icon.chevron-right variant="micro" />
                         </button>
                     @endif
                 @else
-                    <div class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-white">
+                    <div class="flex justify-center items-center size-8 sm:size-6 rounded-[6px] text-zinc-300 dark:text-zinc-500">
                         <flux:icon.chevron-right variant="micro" />
                     </div>
                 @endif
@@ -47,7 +47,7 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
         @endif
     </div>
 @else
-    <div {{ $attributes->class('pt-3 border-t border-zinc-100 dark:border-zinc-700 flex justify-between items-center max-sm:flex-col max-sm:gap-3 max-sm:items-end') }} data-flux-pagination>
+    <div {{ $attributes->class('pt-3 border-t border-zinc-100 dark:border-zinc-700 flex justify-between items-center gap-3') }} data-flux-pagination>
         @if ($paginator->total() > 0)
             <div class="text-zinc-500 dark:text-zinc-400 text-xs font-medium whitespace-nowrap">
                 {!! __('Showing') !!} {{ $paginator->firstItem() }} {!! __('to') !!} {{ $paginator->lastItem() }} {!! __('of') !!} {{ $paginator->total() }} {!! __('results') !!}
@@ -57,9 +57,33 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
         @endif
 
         @if ($paginator->hasPages())
-            <div class="flex items-center bg-white border border-zinc-200 rounded-[8px] p-[1px] dark:bg-white/10 dark:border-white/10">
+            {{-- Mobile pagination --}}
+            <div class="flex sm:hidden items-center bg-white border border-zinc-200 rounded-[8px] p-[1px] dark:bg-white/10 dark:border-white/10">
                 @if ($paginator->onFirstPage())
-                    <div aria-disabled="true" aria-label="{{ __('pagination.previous') }}" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-zinc-400">
+                    <div aria-disabled="true" aria-label="{{ __('pagination.previous') }}" class="flex justify-center items-center size-8 rounded-[6px] text-zinc-300 dark:text-zinc-500">
+                        <flux:icon.chevron-left variant="micro" />
+                    </div>
+                @else
+                    <button type="button" wire:click="previousPage('{{ $paginator->getPageName() }}')" aria-label="{{ __('pagination.previous') }}" class="flex justify-center items-center size-8 rounded-[6px] text-zinc-400 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <flux:icon.chevron-left variant="micro" />
+                    </button>
+                @endif
+
+                @if ($paginator->hasMorePages())
+                    <button type="button" wire:click="nextPage('{{ $paginator->getPageName() }}')" aria-label="{{ __('pagination.next') }}" class="flex justify-center items-center size-8 rounded-[6px] text-zinc-400 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/20 hover:text-zinc-800 dark:hover:text-white">
+                        <flux:icon.chevron-right variant="micro" />
+                    </button>
+                @else
+                    <div aria-label="{{ __('pagination.next') }}" class="flex justify-center items-center size-8 rounded-[6px] text-zinc-300 dark:text-zinc-500">
+                        <flux:icon.chevron-right variant="micro" />
+                    </div>
+                @endif
+            </div>
+
+            {{-- Desktop pagination --}}
+            <div class="hidden sm:flex items-center bg-white border border-zinc-200 rounded-[8px] p-[1px] dark:bg-white/10 dark:border-white/10">
+                @if ($paginator->onFirstPage())
+                    <div aria-disabled="true" aria-label="{{ __('pagination.previous') }}" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-zinc-500">
                         <flux:icon.chevron-left variant="micro" />
                     </div>
                 @else
@@ -103,7 +127,7 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
                         <flux:icon.chevron-right variant="micro" />
                     </button>
                 @else
-                    <div aria-label="{{ __('pagination.next') }}" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-zinc-400">
+                    <div aria-label="{{ __('pagination.next') }}" class="flex justify-center items-center size-6 rounded-[6px] text-zinc-300 dark:text-zinc-500">
                         <flux:icon.chevron-right variant="micro" />
                     </div>
                 @endif

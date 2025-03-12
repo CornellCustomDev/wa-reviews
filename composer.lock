@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e44c4a836bc16f0f577232c2c33a6fb0",
+    "content-hash": "f27103d02ab1422fd36c6caeb7562bcd",
     "packages": [
         {
             "name": "brick/math",
@@ -1495,16 +1495,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.1.0",
+            "version": "v12.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "09f4a014c3fea7726c6824f5e04fca6ee165e328"
+                "reference": "2fb06941bc69ea92f28b2888535ab144ee006889"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/09f4a014c3fea7726c6824f5e04fca6ee165e328",
-                "reference": "09f4a014c3fea7726c6824f5e04fca6ee165e328",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/2fb06941bc69ea92f28b2888535ab144ee006889",
+                "reference": "2fb06941bc69ea92f28b2888535ab144ee006889",
                 "shasum": ""
             },
             "require": {
@@ -1706,7 +1706,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-03-04T16:10:42+00:00"
+            "time": "2025-03-12T14:38:20+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -2447,16 +2447,16 @@
         },
         {
             "name": "livewire/flux",
-            "version": "v1.1.6",
+            "version": "v2.0.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/flux.git",
-                "reference": "aab9937b1248840e88ed3d401e32ffc3dcaff79d"
+                "reference": "a635c8440199e1838ba800a82279e6729a9e5e8c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/flux/zipball/aab9937b1248840e88ed3d401e32ffc3dcaff79d",
-                "reference": "aab9937b1248840e88ed3d401e32ffc3dcaff79d",
+                "url": "https://api.github.com/repos/livewire/flux/zipball/a635c8440199e1838ba800a82279e6729a9e5e8c",
+                "reference": "a635c8440199e1838ba800a82279e6729a9e5e8c",
                 "shasum": ""
             },
             "require": {
@@ -2504,25 +2504,25 @@
             ],
             "support": {
                 "issues": "https://github.com/livewire/flux/issues",
-                "source": "https://github.com/livewire/flux/tree/v1.1.6"
+                "source": "https://github.com/livewire/flux/tree/v2.0.5"
             },
-            "time": "2025-02-26T01:01:44+00:00"
+            "time": "2025-03-09T19:33:12+00:00"
         },
         {
             "name": "livewire/flux-pro",
-            "version": "1.1.6",
+            "version": "2.0.5",
             "dist": {
                 "type": "zip",
-                "url": "https://composer.fluxui.dev/download/9e4cee69-e34f-4268-9e7e-5e600afc2b03/flux-pro-1.1.6.zip",
-                "reference": "6c3c2c587f71fb80dfbe85f90848a977c4515d0c",
-                "shasum": "2f99f23edd652ce9b6c8239206d86e4c12b89446"
+                "url": "https://composer.fluxui.dev/download/9e649913-fa6a-4084-9af4-87c555092094/flux-pro-2.0.5.zip",
+                "reference": "b9a4bdbf6963880d82bc3605e6d4489a60cf2480",
+                "shasum": "b8726fec7cc0275abde2b1c2ec0d00e21170ffb6"
             },
             "require": {
                 "illuminate/console": "^10.0|^11.0|^12.0",
                 "illuminate/support": "^10.0|^11.0|^12.0",
                 "illuminate/view": "^10.0|^11.0|^12.0",
                 "laravel/prompts": "^0.1.24|^0.2|^0.3",
-                "livewire/flux": "1.1.6",
+                "livewire/flux": "2.0.5|dev-main",
                 "livewire/livewire": "^3.5.19",
                 "php": "^8.1",
                 "symfony/console": "^6.0|^7.0"
@@ -2563,7 +2563,7 @@
                 "livewire",
                 "ui"
             ],
-            "time": "2025-02-26T01:15:47+00:00"
+            "time": "2025-03-09T19:37:02+00:00"
         },
         {
             "name": "livewire/livewire",

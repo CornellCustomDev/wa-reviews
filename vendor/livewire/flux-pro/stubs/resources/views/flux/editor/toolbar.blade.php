@@ -4,7 +4,7 @@
 
 @php
 $classes = Flux::classes()
-    ->add('block overflow-x-auto border-b bg-zinc-50 rounded-t-[calc(0.5rem-1px)] w-full')
+    ->add('block overflow-x-auto border-b border-zinc-200 dark:border-white/10 bg-zinc-50 rounded-t-[calc(0.5rem-1px)] w-full')
     ->add('dark:bg-white/[6%]')
     ->add('dark:border-white/5')
 ;

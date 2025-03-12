@@ -24,11 +24,11 @@ $classes = Flux::classes()
     <span class="flex-1">{{ $slot }}</span>
 
     <?php if ($variant === 'reverse'): ?>
-        <flux:accordion.icon pointing="down" class="hidden group-data-[open]/accordion-heading:block !text-zinc-800 dark:!text-white" />
-        <flux:accordion.icon pointing="right" class="block group-data-[open]/accordion-heading:hidden" />
+        <flux:accordion.icon pointing="down" class="hidden group-data-open/accordion-heading:block text-zinc-800! dark:text-white!" />
+        <flux:accordion.icon pointing="right" class="block group-data-open/accordion-heading:hidden" />
     <?php else: ?>
-        <flux:accordion.icon pointing="up" class="hidden group-data-[open]/accordion-heading:block !text-zinc-800 dark:!text-white" />
-        <flux:accordion.icon pointing="down" class="block group-data-[open]/accordion-heading:hidden" />
+        <flux:accordion.icon pointing="up" class="hidden group-data-open/accordion-heading:block text-zinc-800! dark:text-white!" />
+        <flux:accordion.icon pointing="down" class="block group-data-open/accordion-heading:hidden" />
     <?php endif; ?>
 </button>
 

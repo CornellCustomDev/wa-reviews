@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
+class ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd
 {
     public static $files = array (
         '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
@@ -1666,6 +1666,9 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Flux\\Console\\ActivateCommand' => __DIR__ . '/..' . '/livewire/flux/src/Console/ActivateCommand.php',
         'Flux\\Console\\IconCommand' => __DIR__ . '/..' . '/livewire/flux/src/Console/IconCommand.php',
         'Flux\\Console\\PublishCommand' => __DIR__ . '/..' . '/livewire/flux/src/Console/PublishCommand.php',
+        'Flux\\DateRange' => __DIR__ . '/..' . '/livewire/flux/src/DateRange.php',
+        'Flux\\DateRangePreset' => __DIR__ . '/..' . '/livewire/flux/src/DateRangePreset.php',
+        'Flux\\DateRangeSynth' => __DIR__ . '/..' . '/livewire/flux/src/DateRangeSynth.php',
         'Flux\\Flux' => __DIR__ . '/..' . '/livewire/flux/src/Flux.php',
         'Flux\\FluxManager' => __DIR__ . '/..' . '/livewire/flux/src/FluxManager.php',
         'Flux\\FluxServiceProvider' => __DIR__ . '/..' . '/livewire/flux/src/FluxServiceProvider.php',
@@ -2448,6 +2451,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Illuminate\\Contracts\\Translation\\HasLocalePreference' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Translation/HasLocalePreference.php',
         'Illuminate\\Contracts\\Translation\\Loader' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Translation/Loader.php',
         'Illuminate\\Contracts\\Translation\\Translator' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Translation/Translator.php',
+        'Illuminate\\Contracts\\Validation\\CompilableRules' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Validation/CompilableRules.php',
         'Illuminate\\Contracts\\Validation\\DataAwareRule' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Validation/DataAwareRule.php',
         'Illuminate\\Contracts\\Validation\\Factory' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Validation/Factory.php',
         'Illuminate\\Contracts\\Validation\\ImplicitRule' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Contracts/Validation/ImplicitRule.php',
@@ -8717,10 +8721,10 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd::$classMap;
 
         }, null, ClassLoader::class);
     }

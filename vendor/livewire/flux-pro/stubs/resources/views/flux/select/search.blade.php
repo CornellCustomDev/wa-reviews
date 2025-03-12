@@ -14,7 +14,7 @@ $classes = Flux::classes()
     ->add('font-medium text-base sm:text-sm text-zinc-800 dark:text-white')
     ->add('pl-9') // Make room for magnifying glass icon...
     ->add('pr-9') // Make room for clear/clos button and loading indicator...
-    ->add('outline-none')
+    ->add('outline-hidden')
     ->add('border-b border-zinc-200 dark:border-zinc-600')
     ->add('bg-white dark:bg-zinc-700')
     // The below reverts styles added by Tailwind Forms plugin

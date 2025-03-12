@@ -16,12 +16,12 @@ if ($variant === 'pills') {
         ->add('flex whitespace-nowrap gap-2 items-center px-3 rounded-full text-sm font-medium')
         ->add('bg-zinc-800/5 dark:bg-white/5 hover:bg-zinc-800/10 dark:hover:bg-white/10 text-zinc-600 hover:text-zinc-800 dark:text-white/70 dark:hover:text-white')
         ->add(match ($accent) {
-            true => 'data-[selected]:bg-[var(--color-accent)]',
-            false => 'data-[selected]:bg-zinc-800 dark:data-[selected]:bg-white',
+            true => 'data-selected:bg-(--color-accent) hover:data-selected:bg-(--color-accent)',
+            false => 'data-selected:bg-zinc-800 dark:data-selected:bg-white',
         })
         ->add(match ($accent) {
-            true => 'data-[selected]:text-[var(--color-accent-foreground)] hover:data-[selected]:text-[var(--color-accent-foreground)]',
-            false => 'data-[selected]:text-white dark:data-[selected]:text-zinc-800',
+            true => 'data-selected:text-(--color-accent-foreground) hover:data-selected:text-(--color-accent-foreground)',
+            false => 'data-selected:text-white dark:data-selected:text-zinc-800',
         })
         ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
         ;
@@ -31,9 +31,9 @@ if ($variant === 'pills') {
 } elseif ($variant === 'segmented') {
     $classes = Flux::classes()
         ->add('flex whitespace-nowrap flex-1 justify-center items-center gap-2')
-        ->add('rounded-md data-[selected]:shadow-sm')
-        ->add('text-sm font-medium text-zinc-600 hover:text-zinc-800 dark:hover:text-white dark:text-white/70 data-[selected]:text-zinc-800 data-[selected]:dark:text-white')
-        ->add('data-[selected]:bg-white data-[selected]:dark:bg-white/20')
+        ->add('rounded-md data-selected:shadow-xs')
+        ->add('text-sm font-medium text-zinc-600 hover:text-zinc-800 dark:hover:text-white dark:text-white/70 data-selected:text-zinc-800 dark:data-selected:text-white')
+        ->add('data-selected:bg-white dark:data-selected:bg-white/20')
         ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
         ->add(match ($size) {
             'sm' => 'px-3 text-sm',
@@ -50,8 +50,8 @@ if ($variant === 'pills') {
         ->add('border-b-[2px] border-transparent')
         ->add('text-sm font-medium text-zinc-400 dark:text-white/50')
         ->add(match($accent) {
-            true => 'data-[selected]:border-[var(--color-accent-content)] data-[selected]:text-[var(--color-accent-content)] hover:data-[selected]:text-[var(--color-accent-content)] hover:text-zinc-800 dark:hover:text-white',
-            false => 'data-[selected]:border-zinc-800 data-[selected]:text-zinc-800 dark:data-[selected]:border-white dark:data-[selected]:text-white hover:text-zinc-800 dark:hover:text-white',
+            true => 'data-selected:border-(--color-accent-content) data-selected:text-(--color-accent-content) hover:data-selected:text-(--color-accent-content) hover:text-zinc-800 dark:hover:text-white',
+            false => 'data-selected:border-zinc-800 data-selected:text-zinc-800 dark:data-selected:border-white dark:data-selected:text-white hover:text-zinc-800 dark:hover:text-white',
         })
         ->add('[&[disabled]]:opacity-50 dark:[&[disabled]]:opacity-75 [&[disabled]]:cursor-default [&[disabled]]:pointer-events-none')
         ;

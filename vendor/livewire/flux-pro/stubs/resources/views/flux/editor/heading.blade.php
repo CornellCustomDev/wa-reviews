@@ -11,7 +11,7 @@
         </flux:editor.button>
     </flux:tooltip>
 
-    <ui-options popover="manual" aria-label="{{ __('Styles') }}" class="min-w-[10rem] rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 shadow-sm p-[5px]">
+    <ui-options popover="manual" aria-label="{{ __('Styles') }}" class="min-w-[10rem] rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 shadow-xs p-[5px]">
         <flux:editor.option value="paragraph" selected>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="size-5 shrink-0" aria-hidden="true"> <path d="M3.33331 5.83398V3.33398H16.6666V5.83398" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M7.5 16.666H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M10 3.33398V16.6673" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /> </svg>
             <div class="[ui-selected_&]:sr-only">{{ __('Text') }}</div>
