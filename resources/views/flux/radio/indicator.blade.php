@@ -3,7 +3,7 @@
 $classes = Flux::classes()
     ->add('shrink-0 size-[20px] rounded-full')
     ->add('text-sm text-zinc-700 dark:text-zinc-800')
-    ->add('shadow-sm [ui-radio[disabled]_&]:shadow-none [ui-radio[data-checked]_&]:shadow-none indeterminate:shadown-none')
+    ->add('shadow-xs [ui-radio[disabled]_&]:shadow-none [ui-radio[data-checked]_&]:shadow-none indeterminate:shadown-none')
     ->add('flex justify-center items-center [ui-radio[data-checked]_&>div]:block')
     ->add([
         'border',
@@ -19,8 +19,8 @@ $classes = Flux::classes()
         '[ui-radio[data-checked]_&]:bg-center',
         '[ui-radio[data-checked]_&]:bg-no-repeat',
         '[ui-radio[disabled][data-checked]_&]:bg-zinc-500 dark:[ui-radio[disabled][data-checked]_&]:bg-white/60',
-        '[ui-radio[data-checked]_&]:hover:bg-cds-blue-600 dark:[ui-radio[data-checked]_&]:hover:bg-white',
-        '[ui-radio[data-checked]_&]:focus:bg-cds-blue-600 dark:[ui-radio[data-checked]_&]:focus:bg-white',
+        'hover:[ui-radio[data-checked]_&]:bg-cds-blue-600 dark:hover:[ui-radio[data-checked]_&]:bg-white',
+        'focus:[ui-radio[data-checked]_&]:bg-cds-blue-600 dark:focus:[ui-radio[data-checked]_&]:bg-white',
     ])
     ;
 @endphp

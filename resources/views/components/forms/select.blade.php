@@ -7,7 +7,7 @@
 @php
 $classes = Flux::classes()
     ->add('max-w-[600px]')
-    ->add('!mb-4')
+    ->add('mb-4!')
     ;
 
 $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
@@ -15,6 +15,6 @@ $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' :
 
 <flux:select :$label {{ $attributes->class($classes) }} :$badge >
     @foreach ($options as $option)
-        <flux:option :value="$option['value']">{{ $option['option'] }}</flux:option>
+        <flux:select.option :value="$option['value']">{{ $option['option'] }}</flux:select.option>
     @endforeach
 </flux:select>

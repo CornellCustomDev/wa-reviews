@@ -26,7 +26,7 @@
                     <flux:button
                         variant="danger"
                         size="xs"
-                        class="!absolute top-2 right-2"
+                        class="absolute! top-2 right-2"
                         icon="x-mark"
                         tooltip="Remove {{ $imageName }}"
                         x-on:click="removeExistingImage('{{ $imageName }}')"
@@ -54,7 +54,7 @@
                     <flux:button
                         variant="danger"
                         size="xs"
-                        class="!absolute top-2 right-2"
+                        class="absolute! top-2 right-2"
                         icon="x-mark"
                         tooltip="Remove {{ $file->getClientOriginalName() }}"
                         x-on:click="removeImage('{{ $file->getFilename() }}')"

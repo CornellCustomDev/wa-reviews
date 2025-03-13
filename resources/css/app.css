@@ -1,3 +1,66 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../views':
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+}
+
+@theme {
+    /* Font families */
+    --font-sans: Avenir Next, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI Semibold", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --font-verdana: Verdana, sans-serif;
+    --font-systemUi: -apple-system, system-ui, BlinkMacSystemFont, Avenir Next, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+    /* cds-blue colors */
+    --color-cds-blue-50: #f4f7fb;
+    --color-cds-blue-100: #e7f0f7;
+    --color-cds-blue-200: #cadeed;
+    --color-cds-blue-300: #9bc3de;
+    --color-cds-blue-400: #65a5cb;
+    --color-cds-blue-500: #4289b5;
+    --color-cds-blue-600: #2d668e;
+    --color-cds-blue-700: #28587c;
+    --color-cds-blue-800: #254b67;
+    --color-cds-blue-900: #234057;
+    --color-cds-blue-950: #17293a;
+
+    /* cds-gray colors */
+    --color-cds-gray-50: #f6f6f6;
+    --color-cds-gray-100: #e7e7e7;
+    --color-cds-gray-200: #d1d1d1;
+    --color-cds-gray-300: #b0b0b0;
+    --color-cds-gray-400: #888888;
+    --color-cds-gray-500: #767676;
+    --color-cds-gray-600: #5d5d5d;
+    --color-cds-gray-700: #4f4f4f;
+    --color-cds-gray-800: #454545;
+    --color-cds-gray-900: #3d3d3d;
+    --color-cds-gray-950: #262626;
+
+    /* wa colors */
+    --color-wa-pass: #caff37;
+    --color-wa-warn: #f6b26b;
+    --color-wa-fail: #ea9999;
+    --color-wa-na: #9fc5e8;
+}
+
+@utility bg-radio-checked {
+    background-image: url('/cwd-framework/images/layout/checked-radio.svg');
+}
+@utility bg-checked {
+    background-image: url('/cwd-framework/images/layout/checked.svg');
+}
+

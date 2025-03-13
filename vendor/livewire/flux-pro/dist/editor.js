@@ -2,7 +2,7 @@
   // js/utils.js
   function inject(callback) {
     let styles = callback({
-      css: (strings, ...values) => strings.raw[0] + values.join("")
+      css: (strings, ...values) => `@layer base { ${strings.raw[0] + values.join("")} }`
     });
     if (document.adoptedStyleSheets === void 0) {
       let styleElement = document.createElement("style");
@@ -208,6 +208,9 @@
   // js/mixins/controllable.js
   var Controllable = class extends Mixin {
     boot({ options }) {
+      options({
+        bubbles: false
+      });
       this.initialState = this.el.value;
       this.getterFunc = () => {
       };
@@ -232,11 +235,11 @@
     }
     dispatch() {
       this.el.dispatchEvent(new Event("input", {
-        bubbles: false,
+        bubbles: this.options().bubbles,
         cancelable: true
       }));
       this.el.dispatchEvent(new Event("change", {
-        bubbles: false,
+        bubbles: this.options().bubbles,
         cancelable: true
       }));
     }
@@ -1402,6 +1405,12 @@
       this.attrs = attrs;
       this.marks = marks;
       this.content = content || Fragment.empty;
+    }
+    /**
+    The array of this node's child nodes.
+    */
+    get children() {
+      return this.content.content;
     }
     /**
     The size of this node, as defined by the integer-based [indexing
@@ -2929,6 +2938,7 @@
       this.options = options;
       this.isOpen = isOpen;
       this.open = 0;
+      this.localPreserveWS = false;
       let topNode = options.topNode, topContext;
       let topOptions = wsOptionsFor(null, options.preserveWhitespace, 0) | (isOpen ? OPT_OPEN_LEFT : 0);
       if (topNode)
@@ -2955,9 +2965,9 @@
     }
     addTextNode(dom, marks) {
       let value = dom.nodeValue;
-      let top = this.top;
-      if (top.options & OPT_PRESERVE_WS_FULL || top.inlineContext(dom) || /[^ \t\r\n\u000c]/.test(value)) {
-        if (!(top.options & OPT_PRESERVE_WS)) {
+      let top = this.top, preserveWS = top.options & OPT_PRESERVE_WS_FULL ? "full" : this.localPreserveWS || (top.options & OPT_PRESERVE_WS) > 0;
+      if (preserveWS === "full" || top.inlineContext(dom) || /[^ \t\r\n\u000c]/.test(value)) {
+        if (!preserveWS) {
           value = value.replace(/[ \t\r\n\u000c]+/g, " ");
           if (/^[ \t\r\n\u000c]/.test(value) && this.open == this.nodes.length - 1) {
             let nodeBefore = top.content[top.content.length - 1];
@@ -2965,7 +2975,7 @@
             if (!nodeBefore || domNodeBefore && domNodeBefore.nodeName == "BR" || nodeBefore.isText && /[ \t\r\n\u000c]$/.test(nodeBefore.text))
               value = value.slice(1);
           }
-        } else if (!(top.options & OPT_PRESERVE_WS_FULL)) {
+        } else if (preserveWS !== "full") {
           value = value.replace(/\r?\n|\r/g, " ");
         } else {
           value = value.replace(/\r\n?/g, "\n");
@@ -2980,11 +2990,14 @@
     // Try to find a handler for the given tag and use that to parse. If
     // none is found, the element's content nodes are added directly.
     addElement(dom, marks, matchAfter) {
+      let outerWS = this.localPreserveWS, top = this.top;
+      if (dom.tagName == "PRE" || /pre/.test(dom.style && dom.style.whiteSpace))
+        this.localPreserveWS = true;
       let name = dom.nodeName.toLowerCase(), ruleID;
       if (listTags.hasOwnProperty(name) && this.parser.normalizeLists)
         normalizeList(dom);
       let rule = this.options.ruleFromNode && this.options.ruleFromNode(dom) || (ruleID = this.parser.matchTag(dom, this, matchAfter));
-      if (rule ? rule.ignore : ignoreTags.hasOwnProperty(name)) {
+      out: if (rule ? rule.ignore : ignoreTags.hasOwnProperty(name)) {
         this.findInside(dom);
         this.ignoreFallback(dom, marks);
       } else if (!rule || rule.skip || rule.closeParent) {
@@ -2992,7 +3005,7 @@
           this.open = Math.max(0, this.open - 1);
         else if (rule && rule.skip.nodeType)
           dom = rule.skip;
-        let sync, top = this.top, oldNeedsBlock = this.needsBlock;
+        let sync, oldNeedsBlock = this.needsBlock;
         if (blockTags.hasOwnProperty(name)) {
           if (top.content.length && top.content[0].isInline && this.open) {
             this.open--;
@@ -3003,7 +3016,7 @@
             this.needsBlock = true;
         } else if (!dom.firstChild) {
           this.leafFallback(dom, marks);
-          return;
+          break out;
         }
         let innerMarks = rule && rule.skip ? marks : this.readStyles(dom, marks);
         if (innerMarks)
@@ -3016,6 +3029,7 @@
         if (innerMarks)
           this.addElementByRule(dom, rule, innerMarks, rule.consuming === false ? ruleID : void 0);
       }
+      this.localPreserveWS = outerWS;
     }
     // Called for leaf DOM nodes that would otherwise be ignored
     leafFallback(dom, marks) {
@@ -3195,14 +3209,17 @@
     finish() {
       this.open = 0;
       this.closeExtra(this.isOpen);
-      return this.nodes[0].finish(this.isOpen || this.options.topOpen);
+      return this.nodes[0].finish(!!(this.isOpen || this.options.topOpen));
     }
     sync(to) {
-      for (let i = this.open; i >= 0; i--)
+      for (let i = this.open; i >= 0; i--) {
         if (this.nodes[i] == to) {
           this.open = i;
           return true;
+        } else if (this.localPreserveWS) {
+          this.nodes[i].options |= OPT_PRESERVE_WS;
         }
+      }
       return false;
     }
     get currentPos() {
@@ -3707,23 +3724,24 @@
     /**
     Create a new mapping with the given position maps.
     */
-    constructor(maps = [], mirror, from2 = 0, to = maps.length) {
-      this.maps = maps;
+    constructor(maps, mirror, from2 = 0, to = maps ? maps.length : 0) {
       this.mirror = mirror;
       this.from = from2;
       this.to = to;
+      this._maps = maps || [];
+      this.ownData = !(maps || mirror);
+    }
+    /**
+    The step maps in this mapping.
+    */
+    get maps() {
+      return this._maps;
     }
     /**
     Create a mapping that maps only through a part of this one.
     */
     slice(from2 = 0, to = this.maps.length) {
-      return new _Mapping(this.maps, this.mirror, from2, to);
-    }
-    /**
-    @internal
-    */
-    copy() {
-      return new _Mapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to);
+      return new _Mapping(this._maps, this.mirror, from2, to);
     }
     /**
     Add a step map to the end of this mapping. If `mirrors` is
@@ -3731,18 +3749,23 @@
     image of this one.
     */
     appendMap(map2, mirrors) {
-      this.to = this.maps.push(map2);
+      if (!this.ownData) {
+        this._maps = this._maps.slice();
+        this.mirror = this.mirror && this.mirror.slice();
+        this.ownData = true;
+      }
+      this.to = this._maps.push(map2);
       if (mirrors != null)
-        this.setMirror(this.maps.length - 1, mirrors);
+        this.setMirror(this._maps.length - 1, mirrors);
     }
     /**
     Add all the step maps in a given mapping to this one (preserving
     mirroring information).
     */
     appendMapping(mapping) {
-      for (let i = 0, startSize = this.maps.length; i < mapping.maps.length; i++) {
+      for (let i = 0, startSize = this._maps.length; i < mapping._maps.length; i++) {
         let mirr = mapping.getMirror(i);
-        this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
+        this.appendMap(mapping._maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
       }
     }
     /**
@@ -3769,9 +3792,9 @@
     Append the inverse of the given mapping to this one.
     */
     appendMappingInverted(mapping) {
-      for (let i = mapping.maps.length - 1, totalSize = this.maps.length + mapping.maps.length; i >= 0; i--) {
+      for (let i = mapping.maps.length - 1, totalSize = this._maps.length + mapping._maps.length; i >= 0; i--) {
         let mirr = mapping.getMirror(i);
-        this.appendMap(mapping.maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
+        this.appendMap(mapping._maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
       }
     }
     /**
@@ -3789,7 +3812,7 @@
       if (this.mirror)
         return this._map(pos, assoc, true);
       for (let i = this.from; i < this.to; i++)
-        pos = this.maps[i].map(pos, assoc);
+        pos = this._maps[i].map(pos, assoc);
       return pos;
     }
     /**
@@ -3805,12 +3828,12 @@
     _map(pos, assoc, simple) {
       let delInfo = 0;
       for (let i = this.from; i < this.to; i++) {
-        let map2 = this.maps[i], result = map2.mapResult(pos, assoc);
+        let map2 = this._maps[i], result = map2.mapResult(pos, assoc);
         if (result.recover != null) {
           let corr = this.getMirror(i);
           if (corr != null && corr > i && corr < this.to) {
             i = corr;
-            pos = this.maps[corr].recover(result.recover);
+            pos = this._maps[corr].recover(result.recover);
             continue;
           }
         }
@@ -5311,7 +5334,7 @@
     greater than one, any number of nodes above that. By default, the
     parts split off will inherit the node type of the original node.
     This can be changed by passing an array of types and attributes to
-    use after the split.
+    use after the split (with the outermost nodes coming first).
     */
     split(pos, depth = 1, typesAfter) {
       split(this, pos, depth, typesAfter);
@@ -6459,11 +6482,13 @@
   function scrollRectIntoView(view, rect, startDOM) {
     let scrollThreshold = view.someProp("scrollThreshold") || 0, scrollMargin = view.someProp("scrollMargin") || 5;
     let doc3 = view.dom.ownerDocument;
-    for (let parent = startDOM || view.dom; ; parent = parentNode(parent)) {
+    for (let parent = startDOM || view.dom; ; ) {
       if (!parent)
         break;
-      if (parent.nodeType != 1)
+      if (parent.nodeType != 1) {
+        parent = parentNode(parent);
         continue;
+      }
       let elt = parent;
       let atTop = elt == doc3.body;
       let bounding = atTop ? windowRect(doc3) : clientRect(elt);
@@ -6489,8 +6514,10 @@
           rect = { left: rect.left - dX, top: rect.top - dY, right: rect.right - dX, bottom: rect.bottom - dY };
         }
       }
-      if (atTop || /^(fixed|sticky)$/.test(getComputedStyle(parent).position))
+      let pos = atTop ? "fixed" : getComputedStyle(parent).position;
+      if (/^(fixed|sticky)$/.test(pos))
         break;
+      parent = pos == "absolute" ? parent.offsetParent : parentNode(parent);
     }
   }
   function storeScrollPos(view) {
@@ -6633,11 +6660,11 @@
     for (let cur = node, sawBlock = false; ; ) {
       if (cur == view.dom)
         break;
-      let desc = view.docView.nearestDesc(cur, true);
+      let desc = view.docView.nearestDesc(cur, true), rect;
       if (!desc)
         return null;
-      if (desc.dom.nodeType == 1 && (desc.node.isBlock && desc.parent || !desc.contentDOM)) {
-        let rect = desc.dom.getBoundingClientRect();
+      if (desc.dom.nodeType == 1 && (desc.node.isBlock && desc.parent || !desc.contentDOM) && // Ignore elements with zero-size bounding rectangles
+      ((rect = desc.dom.getBoundingClientRect()).width || rect.height)) {
         if (desc.node.isBlock && desc.parent) {
           if (!sawBlock && rect.left > coords.left || rect.top > coords.top)
             outsideBlock = desc.posBefore;
@@ -7052,8 +7079,15 @@
       for (let i = 0, offset = 0; i < this.children.length; i++) {
         let child = this.children[i], end = offset + child.size;
         if (offset == pos && end != offset) {
-          while (!child.border && child.children.length)
-            child = child.children[0];
+          while (!child.border && child.children.length) {
+            for (let i2 = 0; i2 < child.children.length; i2++) {
+              let inner = child.children[i2];
+              if (inner.size) {
+                child = inner;
+                break;
+              }
+            }
+          }
           return child;
         }
         if (pos < end)
@@ -7158,17 +7192,18 @@
     // custom things with the selection. Note that this falls apart when
     // a selection starts in such a node and ends in another, in which
     // case we just use whatever domFromPos produces as a best effort.
-    setSelection(anchor, head, root, force = false) {
+    setSelection(anchor, head, view, force = false) {
       let from2 = Math.min(anchor, head), to = Math.max(anchor, head);
       for (let i = 0, offset = 0; i < this.children.length; i++) {
         let child = this.children[i], end = offset + child.size;
         if (from2 > offset && to < end)
-          return child.setSelection(anchor - offset - child.border, head - offset - child.border, root, force);
+          return child.setSelection(anchor - offset - child.border, head - offset - child.border, view, force);
         offset = end;
       }
       let anchorDOM = this.domFromPos(anchor, anchor ? -1 : 1);
       let headDOM = head == anchor ? anchorDOM : this.domFromPos(head, head ? -1 : 1);
-      let domSel = root.getSelection();
+      let domSel = view.root.getSelection();
+      let selRange = view.domSelectionRange();
       let brKludge = false;
       if ((gecko || safari) && anchor == head) {
         let { node, offset } = anchorDOM;
@@ -7191,12 +7226,12 @@
           brKludge = prev && (prev.nodeName == "BR" || prev.contentEditable == "false");
         }
       }
-      if (gecko && domSel.focusNode && domSel.focusNode != headDOM.node && domSel.focusNode.nodeType == 1) {
-        let after = domSel.focusNode.childNodes[domSel.focusOffset];
+      if (gecko && selRange.focusNode && selRange.focusNode != headDOM.node && selRange.focusNode.nodeType == 1) {
+        let after = selRange.focusNode.childNodes[selRange.focusOffset];
         if (after && after.contentEditable == "false")
           force = true;
       }
-      if (!(force || brKludge && safari) && isEquivalentPosition(anchorDOM.node, anchorDOM.offset, domSel.anchorNode, domSel.anchorOffset) && isEquivalentPosition(headDOM.node, headDOM.offset, domSel.focusNode, domSel.focusOffset))
+      if (!(force || brKludge && safari) && isEquivalentPosition(anchorDOM.node, anchorDOM.offset, selRange.anchorNode, selRange.anchorOffset) && isEquivalentPosition(headDOM.node, headDOM.offset, selRange.focusNode, selRange.focusOffset))
         return;
       let domSelExtended = false;
       if ((domSel.extend || anchor == head) && !brKludge) {
@@ -7379,6 +7414,9 @@
         nodes[i].parent = copy2;
       copy2.children = nodes;
       return copy2;
+    }
+    ignoreMutation(mutation) {
+      return this.spec.ignoreMutation ? this.spec.ignoreMutation(mutation) : super.ignoreMutation(mutation);
     }
     destroy() {
       if (this.spec.destroy)
@@ -7693,8 +7731,8 @@
     deselectNode() {
       this.spec.deselectNode ? this.spec.deselectNode() : super.deselectNode();
     }
-    setSelection(anchor, head, root, force) {
-      this.spec.setSelection ? this.spec.setSelection(anchor, head, root) : super.setSelection(anchor, head, root, force);
+    setSelection(anchor, head, view, force) {
+      this.spec.setSelection ? this.spec.setSelection(anchor, head, view.root) : super.setSelection(anchor, head, view, force);
     }
     destroy() {
       if (this.spec.destroy)
@@ -8281,7 +8319,7 @@
         if (!sel.empty && !sel.$from.parent.inlineContent)
           resetEditableTo = temporarilyEditableNear(view, sel.to);
       }
-      view.docView.setSelection(anchor, head, view.root, force);
+      view.docView.setSelection(anchor, head, view, force);
       if (brokenSelectBetweenUneditable) {
         if (resetEditableFrom)
           resetEditable(resetEditableFrom);
@@ -8984,7 +9022,7 @@
       this.lastIOSEnterFallbackTimeout = -1;
       this.lastFocus = 0;
       this.lastTouch = 0;
-      this.lastAndroidDelete = 0;
+      this.lastChromeDelete = 0;
       this.composing = false;
       this.compositionNode = null;
       this.composingTimeout = -1;
@@ -10736,8 +10774,8 @@
         view.domObserver.suppressSelectionUpdates();
       return;
     }
-    if (chrome && android && change.endB == change.start)
-      view.input.lastAndroidDelete = Date.now();
+    if (chrome && change.endB == change.start)
+      view.input.lastChromeDelete = Date.now();
     if (android && !inlineChange && $from.start() != $to.start() && $to.parentOffset == 0 && $from.depth == $to.depth && parse.sel && parse.sel.anchor == parse.sel.head && parse.sel.head == change.endA) {
       change.endB -= 2;
       $to = parse.doc.resolveNoCache(change.endB - parse.from);
@@ -10777,7 +10815,7 @@
       tr2 = view.state.tr.replace(chFrom, chTo, parse.doc.slice(change.start - parse.from, change.endB - parse.from));
     if (parse.sel) {
       let sel2 = resolveSelection(view, tr2.doc, parse.sel);
-      if (sel2 && !(chrome && android && view.composing && sel2.empty && (change.start != change.endB || view.input.lastAndroidDelete < Date.now() - 100) && (sel2.head == chFrom || sel2.head == tr2.mapping.map(chTo) - 1) || ie && sel2.empty && sel2.head == chFrom))
+      if (sel2 && !(chrome && view.composing && sel2.empty && (change.start != change.endB || view.input.lastChromeDelete < Date.now() - 100) && (sel2.head == chFrom || sel2.head == tr2.mapping.map(chTo) - 1) || ie && sel2.empty && sel2.head == chFrom))
         tr2.setSelection(sel2);
     }
     if (storedMarks)
@@ -11049,7 +11087,8 @@
     */
     scrollToSelection() {
       let startDOM = this.domSelectionRange().focusNode;
-      if (this.someProp("handleScrollToSelection", (f) => f(this))) ;
+      if (!startDOM || !this.dom.contains(startDOM.nodeType == 1 ? startDOM : startDOM.parentNode)) ;
+      else if (this.someProp("handleScrollToSelection", (f) => f(this))) ;
       else if (this.state.selection instanceof NodeSelection) {
         let target = this.docView.domAfterPos(this.state.selection.from);
         if (target.nodeType == 1)
@@ -11259,6 +11298,17 @@
     */
     pasteText(text, event) {
       return doPaste(this, text, null, true, event || new ClipboardEvent("paste"));
+    }
+    /**
+    Serialize the given slice as it would be if it was copied from
+    this editor. Returns a DOM element that contains a
+    representation of the slice as its children, a textual
+    representation, and the transformed slice (which can be
+    different from the given input due to hooks like
+    [`transformCopied`](https://prosemirror.net/docs/ref/#view.EditorProps.transformCopied)).
+    */
+    serializeForClipboard(slice2) {
+      return serializeForClipboard(this, slice2);
     }
     /**
     Removes the editor from the DOM and destroys all [node
@@ -12102,25 +12152,34 @@
   function wrapInList(listType, attrs = null) {
     return function(state, dispatch) {
       let { $from, $to } = state.selection;
-      let range = $from.blockRange($to), doJoin = false, outerRange = range;
+      let range = $from.blockRange($to);
       if (!range)
         return false;
-      if (range.depth >= 2 && $from.node(range.depth - 1).type.compatibleContent(listType) && range.startIndex == 0) {
-        if ($from.index(range.depth - 1) == 0)
-          return false;
-        let $insert = state.doc.resolve(range.start - 2);
-        outerRange = new NodeRange($insert, $insert, range.depth);
-        if (range.endIndex < range.parent.childCount)
-          range = new NodeRange($from, state.doc.resolve($to.end(range.depth)), range.depth);
-        doJoin = true;
-      }
-      let wrap2 = findWrapping(outerRange, listType, attrs, range);
-      if (!wrap2)
+      let tr2 = dispatch ? state.tr : null;
+      if (!wrapRangeInList(tr2, range, listType, attrs))
         return false;
       if (dispatch)
-        dispatch(doWrapInList(state.tr, range, wrap2, doJoin, listType).scrollIntoView());
+        dispatch(tr2.scrollIntoView());
       return true;
     };
+  }
+  function wrapRangeInList(tr2, range, listType, attrs = null) {
+    let doJoin = false, outerRange = range, doc3 = range.$from.doc;
+    if (range.depth >= 2 && range.$from.node(range.depth - 1).type.compatibleContent(listType) && range.startIndex == 0) {
+      if (range.$from.index(range.depth - 1) == 0)
+        return false;
+      let $insert = doc3.resolve(range.start - 2);
+      outerRange = new NodeRange($insert, $insert, range.depth);
+      if (range.endIndex < range.parent.childCount)
+        range = new NodeRange(range.$from, doc3.resolve(range.$to.end(range.depth)), range.depth);
+      doJoin = true;
+    }
+    let wrap2 = findWrapping(outerRange, listType, attrs, range);
+    if (!wrap2)
+      return false;
+    if (tr2)
+      doWrapInList(tr2, range, wrap2, doJoin, listType);
+    return true;
   }
   function doWrapInList(tr2, range, wrappers, joinBefore, listType) {
     let content = Fragment.empty;
@@ -12166,9 +12225,9 @@
     if (target == null)
       return false;
     tr2.lift(range, target);
-    let after = tr2.mapping.map(end, -1) - 1;
-    if (canJoin(tr2.doc, after))
-      tr2.join(after);
+    let $after = tr2.doc.resolve(tr2.mapping.map(end, -1) - 1);
+    if (canJoin(tr2.doc, $after.pos) && $after.nodeBefore.type == $after.nodeAfter.type)
+      tr2.join($after.pos);
     dispatch(tr2.scrollIntoView());
     return true;
   }
@@ -12369,6 +12428,13 @@
       }
       return this;
     }
+    once(event, fn) {
+      const onceFn = (...args) => {
+        this.off(event, onceFn);
+        fn.apply(this, args);
+      };
+      return this.on(event, onceFn);
+    }
     removeAllListeners() {
       this.callbacks = {};
     }
@@ -12485,7 +12551,7 @@
           return;
         }
         if (key === "class") {
-          const valueClasses = value ? value.split(" ") : [];
+          const valueClasses = value ? String(value).split(" ") : [];
           const existingClasses = mergedAttributes[key] ? mergedAttributes[key].split(" ") : [];
           const insertClasses = valueClasses.filter((valueClass) => !existingClasses.includes(valueClass));
           mergedAttributes[key] = [...existingClasses, ...insertClasses].join(" ");
@@ -12616,6 +12682,7 @@
         draggable: callOrReturn(getExtensionField(extension, "draggable", context)),
         code: callOrReturn(getExtensionField(extension, "code", context)),
         whitespace: callOrReturn(getExtensionField(extension, "whitespace", context)),
+        linebreakReplacement: callOrReturn(getExtensionField(extension, "linebreakReplacement", context)),
         defining: callOrReturn(getExtensionField(extension, "defining", context)),
         isolating: callOrReturn(getExtensionField(extension, "isolating", context)),
         attrs: Object.fromEntries(extensionAttributes.map((extensionAttribute) => {
@@ -12697,6 +12764,13 @@
       });
     }
     return enabled;
+  }
+  function getHTMLFromFragment(fragment, schema) {
+    const documentFragment = DOMSerializer.fromSchema(schema).serializeFragment(fragment);
+    const temporaryDocument = document.implementation.createHTMLDocument();
+    const container = temporaryDocument.createElement("div");
+    container.appendChild(documentFragment);
+    return container.innerHTML;
   }
   var getTextContentFromNodes = ($from, maxMatch = 500) => {
     let textBefore = "";
@@ -12808,7 +12882,7 @@
         init() {
           return null;
         },
-        apply(tr2, prev) {
+        apply(tr2, prev, state) {
           const stored = tr2.getMeta(plugin);
           if (stored) {
             return stored;
@@ -12817,7 +12891,13 @@
           const isSimulatedInput = !!simulatedInputMeta;
           if (isSimulatedInput) {
             setTimeout(() => {
-              const { from: from2, text } = simulatedInputMeta;
+              let { text } = simulatedInputMeta;
+              if (typeof text === "string") {
+                text = text;
+              } else {
+                text = getHTMLFromFragment(Fragment.from(text), state.schema);
+              }
+              const { from: from2 } = simulatedInputMeta;
               const to = from2 + text.length;
               run$1({
                 editor,
@@ -13061,6 +13141,7 @@
     const success = handlers2.every((handler) => handler !== null);
     return success;
   }
+  var tiptapDragFromOtherEditor = null;
   var createClipboardPasteEvent = (text) => {
     var _a;
     const event = new ClipboardEvent("paste", {
@@ -13075,7 +13156,12 @@
     let isPastedFromProseMirror = false;
     let isDroppedFromProseMirror = false;
     let pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
-    let dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
+    let dropEvent;
+    try {
+      dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
+    } catch {
+      dropEvent = null;
+    }
     const processEvent = ({ state, from: from2, to, rule, pasteEvt }) => {
       const tr2 = state.tr;
       const chainableState = createChainableState({
@@ -13094,7 +13180,11 @@
       if (!handler || !tr2.steps.length) {
         return;
       }
-      dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
+      try {
+        dropEvent = typeof DragEvent !== "undefined" ? new DragEvent("drop") : null;
+      } catch {
+        dropEvent = null;
+      }
       pasteEvent = typeof ClipboardEvent !== "undefined" ? new ClipboardEvent("paste") : null;
       return tr2;
     };
@@ -13105,11 +13195,21 @@
           const handleDragstart = (event) => {
             var _a;
             dragSourceElement = ((_a = view.dom.parentElement) === null || _a === void 0 ? void 0 : _a.contains(event.target)) ? view.dom.parentElement : null;
+            if (dragSourceElement) {
+              tiptapDragFromOtherEditor = editor;
+            }
+          };
+          const handleDragend = () => {
+            if (tiptapDragFromOtherEditor) {
+              tiptapDragFromOtherEditor = null;
+            }
           };
           window.addEventListener("dragstart", handleDragstart);
+          window.addEventListener("dragend", handleDragend);
           return {
             destroy() {
               window.removeEventListener("dragstart", handleDragstart);
+              window.removeEventListener("dragend", handleDragend);
             }
           };
         },
@@ -13118,6 +13218,17 @@
             drop: (view, event) => {
               isDroppedFromProseMirror = dragSourceElement === view.dom.parentElement;
               dropEvent = event;
+              if (!isDroppedFromProseMirror) {
+                const dragFromOtherEditor = tiptapDragFromOtherEditor;
+                if (dragFromOtherEditor) {
+                  setTimeout(() => {
+                    const selection = dragFromOtherEditor.state.selection;
+                    if (selection) {
+                      dragFromOtherEditor.commands.deleteRange({ from: selection.from, to: selection.to });
+                    }
+                  }, 10);
+                }
+              }
               return false;
             },
             paste: (_view, event) => {
@@ -13139,7 +13250,13 @@
             return;
           }
           if (isSimulatedPaste) {
-            const { from: from3, text } = simulatedPasteMeta;
+            let { text } = simulatedPasteMeta;
+            if (typeof text === "string") {
+              text = text;
+            } else {
+              text = getHTMLFromFragment(Fragment.from(text), state.schema);
+            }
+            const { from: from3 } = simulatedPasteMeta;
             const to2 = from3 + text.length;
             const pasteEvt = createClipboardPasteEvent(text);
             return processEvent({
@@ -13663,13 +13780,18 @@
   }
   function findMarkInSet(marks, type, attributes = {}) {
     return marks.find((item) => {
-      return item.type === type && objectIncludes(item.attrs, attributes);
+      return item.type === type && objectIncludes(
+        // Only check equality for the attributes that are provided
+        Object.fromEntries(Object.keys(attributes).map((k) => [k, item.attrs[k]])),
+        attributes
+      );
     });
   }
   function isMarkInSet(marks, type, attributes = {}) {
     return !!findMarkInSet(marks, type, attributes);
   }
-  function getMarkRange($pos, type, attributes = {}) {
+  function getMarkRange($pos, type, attributes) {
+    var _a;
     if (!$pos || !type) {
       return;
     }
@@ -13680,6 +13802,7 @@
     if (!start.node || !start.node.marks.some((mark2) => mark2.type === type)) {
       return;
     }
+    attributes = attributes || ((_a = start.node.marks[0]) === null || _a === void 0 ? void 0 : _a.attrs);
     const mark = findMarkInSet([...start.node.marks], type, attributes);
     if (!mark) {
       return;
@@ -13688,8 +13811,7 @@
     let startPos = $pos.start() + start.offset;
     let endIndex = startIndex + 1;
     let endPos = startPos + start.node.nodeSize;
-    findMarkInSet([...start.node.marks], type, attributes);
-    while (startIndex > 0 && mark.isInSet($pos.parent.child(startIndex - 1).marks)) {
+    while (startIndex > 0 && isMarkInSet([...$pos.parent.child(startIndex - 1).marks], type, attributes)) {
       startIndex -= 1;
       startPos -= $pos.parent.child(startIndex).nodeSize;
     }
@@ -13758,6 +13880,9 @@
     }
     return TextSelection.create(doc3, minMax(position, minPos, maxPos), minMax(position, minPos, maxPos));
   }
+  function isAndroid() {
+    return navigator.platform === "Android" || /android/i.test(navigator.userAgent);
+  }
   function isiOS() {
     return [
       "iPad Simulator",
@@ -13774,7 +13899,7 @@
       ...options
     };
     const delayedFocus = () => {
-      if (isiOS()) {
+      if (isiOS() || isAndroid()) {
         view.dom.focus();
       }
       requestAnimationFrame(() => {
@@ -13830,6 +13955,9 @@
     return removeWhitespaces(html);
   }
   function createNodeFromContent(content, schema, options) {
+    if (content instanceof Node || content instanceof Fragment) {
+      return content;
+    }
     options = {
       slice: true,
       parseOptions: {},
@@ -13972,6 +14100,14 @@
       if (isOnlyTextContent) {
         if (Array.isArray(value)) {
           newContent = value.map((v) => v.text || "").join("");
+        } else if (value instanceof Fragment) {
+          let text = "";
+          value.forEach((node) => {
+            if (node.text) {
+              text += node.text;
+            }
+          });
+          newContent = text;
         } else if (typeof value === "object" && !!value && !!value.text) {
           newContent = value.text;
         } else {
@@ -14017,7 +14153,7 @@
         dispatch(tr2);
       }
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -14032,7 +14168,7 @@
         dispatch(tr2);
       }
       return true;
-    } catch (e) {
+    } catch {
       return false;
     }
   };
@@ -14214,11 +14350,12 @@
     }
     return true;
   };
-  var selectAll2 = () => ({ tr: tr2, commands: commands2 }) => {
-    return commands2.setTextSelection({
-      from: 0,
-      to: tr2.doc.content.size
-    });
+  var selectAll2 = () => ({ tr: tr2, dispatch }) => {
+    if (dispatch) {
+      const selection = new AllSelection(tr2.doc);
+      tr2.setSelection(selection);
+    }
+    return true;
   };
   var selectNodeBackward2 = () => ({ state, dispatch }) => {
     return selectNodeBackward(state, dispatch);
@@ -14327,13 +14464,6 @@
   }
   function findParentNode(predicate) {
     return (selection) => findParentNodeClosestToPos(selection.$from, predicate);
-  }
-  function getHTMLFromFragment(fragment, schema) {
-    const documentFragment = DOMSerializer.fromSchema(schema).serializeFragment(fragment);
-    const temporaryDocument = document.implementation.createHTMLDocument();
-    const container = temporaryDocument.createElement("div");
-    container.appendChild(documentFragment);
-    return container.innerHTML;
   }
   function getText2(node, options) {
     const range = {
@@ -14641,18 +14771,22 @@
   };
   var setNode = (typeOrName, attributes = {}) => ({ state, dispatch, chain }) => {
     const type = getNodeType(typeOrName, state.schema);
+    let attributesToCopy;
+    if (state.selection.$anchor.sameParent(state.selection.$head)) {
+      attributesToCopy = state.selection.$anchor.parent.attrs;
+    }
     if (!type.isTextblock) {
       console.warn('[tiptap warn]: Currently "setNode()" only supports text block nodes.');
       return false;
     }
     return chain().command(({ commands: commands2 }) => {
-      const canSetBlock = setBlockType2(type, attributes)(state);
+      const canSetBlock = setBlockType2(type, { ...attributesToCopy, ...attributes })(state);
       if (canSetBlock) {
         return true;
       }
       return commands2.clearNodes();
     }).command(({ state: updatedState }) => {
-      return setBlockType2(type, attributes)(updatedState, dispatch);
+      return setBlockType2(type, { ...attributesToCopy, ...attributes })(updatedState, dispatch);
     }).run();
   };
   var setNodeSelection = (position) => ({ tr: tr2, dispatch }) => {
@@ -15011,18 +15145,59 @@
       tr2.selection.ranges.forEach((range) => {
         const from2 = range.$from.pos;
         const to = range.$to.pos;
-        state.doc.nodesBetween(from2, to, (node, pos) => {
-          if (nodeType && nodeType === node.type) {
-            tr2.setNodeMarkup(pos, void 0, {
-              ...node.attrs,
+        let lastPos;
+        let lastNode;
+        let trimmedFrom;
+        let trimmedTo;
+        if (tr2.selection.empty) {
+          state.doc.nodesBetween(from2, to, (node, pos) => {
+            if (nodeType && nodeType === node.type) {
+              trimmedFrom = Math.max(pos, from2);
+              trimmedTo = Math.min(pos + node.nodeSize, to);
+              lastPos = pos;
+              lastNode = node;
+            }
+          });
+        } else {
+          state.doc.nodesBetween(from2, to, (node, pos) => {
+            if (pos < from2 && nodeType && nodeType === node.type) {
+              trimmedFrom = Math.max(pos, from2);
+              trimmedTo = Math.min(pos + node.nodeSize, to);
+              lastPos = pos;
+              lastNode = node;
+            }
+            if (pos >= from2 && pos <= to) {
+              if (nodeType && nodeType === node.type) {
+                tr2.setNodeMarkup(pos, void 0, {
+                  ...node.attrs,
+                  ...attributes
+                });
+              }
+              if (markType && node.marks.length) {
+                node.marks.forEach((mark) => {
+                  if (markType === mark.type) {
+                    const trimmedFrom2 = Math.max(pos, from2);
+                    const trimmedTo2 = Math.min(pos + node.nodeSize, to);
+                    tr2.addMark(trimmedFrom2, trimmedTo2, markType.create({
+                      ...mark.attrs,
+                      ...attributes
+                    }));
+                  }
+                });
+              }
+            }
+          });
+        }
+        if (lastNode) {
+          if (lastPos !== void 0) {
+            tr2.setNodeMarkup(lastPos, void 0, {
+              ...lastNode.attrs,
               ...attributes
             });
           }
-          if (markType && node.marks.length) {
-            node.marks.forEach((mark) => {
+          if (markType && lastNode.marks.length) {
+            lastNode.marks.forEach((mark) => {
               if (markType === mark.type) {
-                const trimmedFrom = Math.max(pos, from2);
-                const trimmedTo = Math.min(pos + node.nodeSize, to);
                 tr2.addMark(trimmedFrom, trimmedTo, markType.create({
                   ...mark.attrs,
                   ...attributes
@@ -15030,7 +15205,7 @@
               }
             });
           }
-        });
+        }
       });
     }
     return true;
@@ -15246,6 +15421,9 @@
         new Plugin({
           key: new PluginKey("clearDocument"),
           appendTransaction: (transactions, oldState, newState) => {
+            if (transactions.some((tr3) => tr3.getMeta("composition"))) {
+              return;
+            }
             const docChanges = transactions.some((transaction) => transaction.docChanged) && !oldState.doc.eq(newState.doc);
             const ignoreTr = transactions.some((transaction) => transaction.getMeta("preventClearDocument"));
             if (!docChanges || ignoreTr) {
@@ -15792,6 +15970,7 @@ img.ProseMirror-separator {
      * Creates a ProseMirror view.
      */
     createView() {
+      var _a;
       let doc3;
       try {
         doc3 = createDocument(this.options.content, this.schema, this.options.parseOptions, { errorOnInvalidContent: this.options.enableContentCheck });
@@ -15815,16 +15994,17 @@ img.ProseMirror-separator {
       const selection = resolveFocusPosition(doc3, this.options.autofocus);
       this.view = new EditorView(this.options.element, {
         ...this.options.editorProps,
+        attributes: {
+          // add `role="textbox"` to the editor element
+          role: "textbox",
+          ...(_a = this.options.editorProps) === null || _a === void 0 ? void 0 : _a.attributes
+        },
         dispatchTransaction: this.dispatchTransaction.bind(this),
         state: EditorState.create({
           doc: doc3,
           selection: selection || void 0
         })
       });
-      this.view.dom.setAttribute("role", "textbox");
-      if (!this.view.dom.getAttribute("aria-label")) {
-        this.view.dom.setAttribute("aria-label", "Rich-Text Editor");
-      }
       const newState = this.state.reconfigure({
         plugins: this.extensionManager.plugins
       });
@@ -16363,6 +16543,9 @@ img.ProseMirror-separator {
         return callback(...args);
       };
     }
+    isDisabled() {
+      return this.el.disabled;
+    }
   };
 
   // node_modules/@tiptap/extension-text-align/dist/index.js
@@ -16372,7 +16555,7 @@ img.ProseMirror-separator {
       return {
         types: [],
         alignments: ["left", "center", "right", "justify"],
-        defaultAlignment: "left"
+        defaultAlignment: null
       };
     },
     addGlobalAttributes() {
@@ -16383,11 +16566,11 @@ img.ProseMirror-separator {
             textAlign: {
               default: this.options.defaultAlignment,
               parseHTML: (element2) => {
-                const alignment = element2.style.textAlign || this.options.defaultAlignment;
+                const alignment = element2.style.textAlign;
                 return this.options.alignments.includes(alignment) ? alignment : this.options.defaultAlignment;
               },
               renderHTML: (attributes) => {
-                if (attributes.textAlign === this.options.defaultAlignment) {
+                if (!attributes.textAlign) {
                   return {};
                 }
                 return { style: `text-align: ${attributes.textAlign}` };
@@ -16780,8 +16963,8 @@ img.ProseMirror-separator {
   });
 
   // node_modules/@tiptap/extension-code/dist/index.js
-  var inputRegex4 = /(?:^|\s)(`(?!\s+`)((?:[^`]+))`(?!\s+`))$/;
-  var pasteRegex2 = /(?:^|\s)(`(?!\s+`)((?:[^`]+))`(?!\s+`))/g;
+  var inputRegex4 = /(^|[^`])`([^`]+)`(?!`)/;
+  var pasteRegex2 = /(^|[^`])`([^`]+)`(?!`)/g;
   var Code = Mark2.create({
     name: "code",
     addOptions() {
@@ -17422,6 +17605,7 @@ img.ProseMirror-separator {
     inline: true,
     group: "inline",
     selectable: false,
+    linebreakReplacement: true,
     parseHTML() {
       return [
         { tag: "br" }
@@ -17524,7 +17708,7 @@ img.ProseMirror-separator {
     addInputRules() {
       return this.options.levels.map((level) => {
         return textblockTypeInputRule({
-          find: new RegExp(`^(#{1,${level}})\\s$`),
+          find: new RegExp(`^(#{${Math.min(...this.options.levels)},${level}})\\s$`),
           type: this.type,
           getAttributes: {
             level
@@ -18540,7 +18724,7 @@ img.ProseMirror-separator {
   });
 
   // node_modules/linkifyjs/dist/linkify.es.js
-  var encodedTlds = "aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4vianca6w0s2x0a2z0ure5ba0by2idu3namex3narepublic11d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2ntley5rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0cast4mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dabur3d1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0ardian6cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6logistics9properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3ncaster6d0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2psy3ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2tura4vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9dnavy5lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0america6xi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0a1b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp2w2ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5m\xF6gensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4finity6ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2";
+  var encodedTlds = "aaa1rp3bb0ott3vie4c1le2ogado5udhabi7c0ademy5centure6ountant0s9o1tor4d0s1ult4e0g1ro2tna4f0l1rica5g0akhan5ency5i0g1rbus3force5tel5kdn3l0ibaba4pay4lfinanz6state5y2sace3tom5m0azon4ericanexpress7family11x2fam3ica3sterdam8nalytics7droid5quan4z2o0l2partments8p0le4q0uarelle8r0ab1mco4chi3my2pa2t0e3s0da2ia2sociates9t0hleta5torney7u0ction5di0ble3o3spost5thor3o0s4w0s2x0a2z0ure5ba0by2idu3namex4d1k2r0celona5laycard4s5efoot5gains6seball5ketball8uhaus5yern5b0c1t1va3cg1n2d1e0ats2uty4er2ntley5rlin4st0buy5t2f1g1h0arti5i0ble3d1ke2ng0o3o1z2j1lack0friday9ockbuster8g1omberg7ue3m0s1w2n0pparibas9o0ats3ehringer8fa2m1nd2o0k0ing5sch2tik2on4t1utique6x2r0adesco6idgestone9oadway5ker3ther5ussels7s1t1uild0ers6siness6y1zz3v1w1y1z0h3ca0b1fe2l0l1vinklein9m0era3p2non3petown5ital0one8r0avan4ds2e0er0s4s2sa1e1h1ino4t0ering5holic7ba1n1re3c1d1enter4o1rn3f0a1d2g1h0anel2nel4rity4se2t2eap3intai5ristmas6ome4urch5i0priani6rcle4sco3tadel4i0c2y3k1l0aims4eaning6ick2nic1que6othing5ud3ub0med6m1n1o0ach3des3ffee4llege4ogne5m0mbank4unity6pany2re3uter5sec4ndos3struction8ulting7tact3ractors9oking4l1p2rsica5untry4pon0s4rses6pa2r0edit0card4union9icket5own3s1uise0s6u0isinella9v1w1x1y0mru3ou3z2dad1nce3ta1e1ing3sun4y2clk3ds2e0al0er2s3gree4livery5l1oitte5ta3mocrat6ntal2ist5si0gn4v2hl2iamonds6et2gital5rect0ory7scount3ver5h2y2j1k1m1np2o0cs1tor4g1mains5t1wnload7rive4tv2ubai3nlop4pont4rban5vag2r2z2earth3t2c0o2deka3u0cation8e1g1mail3erck5nergy4gineer0ing9terprises10pson4quipment8r0icsson6ni3s0q1tate5t1u0rovision8s2vents5xchange6pert3osed4ress5traspace10fage2il1rwinds6th3mily4n0s2rm0ers5shion4t3edex3edback6rrari3ero6i0delity5o2lm2nal1nce1ial7re0stone6mdale6sh0ing5t0ness6j1k1lickr3ghts4r2orist4wers5y2m1o0o0d1tball6rd1ex2sale4um3undation8x2r0ee1senius7l1ogans4ntier7tr2ujitsu5n0d2rniture7tbol5yi3ga0l0lery3o1up4me0s3p1rden4y2b0iz3d0n2e0a1nt0ing5orge5f1g0ee3h1i0ft0s3ves2ing5l0ass3e1obal2o4m0ail3bh2o1x2n1odaddy5ld0point6f2o0dyear5g0le4p1t1v2p1q1r0ainger5phics5tis4een3ipe3ocery4up4s1t1u0cci3ge2ide2tars5ru3w1y2hair2mburg5ngout5us3bo2dfc0bank7ealth0care8lp1sinki6re1mes5iphop4samitsu7tachi5v2k0t2m1n1ockey4ldings5iday5medepot5goods5s0ense7nda3rse3spital5t0ing5t0els3mail5use3w2r1sbc3t1u0ghes5yatt3undai7ibm2cbc2e1u2d1e0ee3fm2kano4l1m0amat4db2mo0bilien9n0c1dustries8finiti5o2g1k1stitute6urance4e4t0ernational10uit4vestments10o1piranga7q1r0ish4s0maili5t0anbul7t0au2v3jaguar4va3cb2e0ep2tzt3welry6io2ll2m0p2nj2o0bs1urg4t1y2p0morgan6rs3uegos4niper7kaufen5ddi3e0rryhotels6logistics9properties14fh2g1h1i0a1ds2m1ndle4tchen5wi3m1n1oeln3matsu5sher5p0mg2n2r0d1ed3uokgroup8w1y0oto4z2la0caixa5mborghini8er3ncaster6d0rover6xess5salle5t0ino3robe5w0yer5b1c1ds2ease3clerc5frak4gal2o2xus4gbt3i0dl2fe0insurance9style7ghting6ke2lly3mited4o2ncoln4k2psy3ve1ing5k1lc1p2oan0s3cker3us3l1ndon4tte1o3ve3pl0financial11r1s1t0d0a3u0ndbeck6xe1ury5v1y2ma0drid4if1son4keup4n0agement7go3p1rket0ing3s4riott5shalls7ttel5ba2c0kinsey7d1e0d0ia3et2lbourne7me1orial6n0u2rckmsd7g1h1iami3crosoft7l1ni1t2t0subishi9k1l0b1s2m0a2n1o0bi0le4da2e1i1m1nash3ey2ster5rmon3tgage6scow4to0rcycles9v0ie4p1q1r1s0d2t0n1r2u0seum3ic4v1w1x1y1z2na0b1goya4me2vy3ba2c1e0c1t0bank4flix4work5ustar5w0s2xt0direct7us4f0l2g0o2hk2i0co2ke1on3nja3ssan1y5l1o0kia3rton4w0ruz3tv4p1r0a1w2tt2u1yc2z2obi1server7ffice5kinawa6layan0group9lo3m0ega4ne1g1l0ine5oo2pen3racle3nge4g0anic5igins6saka4tsuka4t2vh3pa0ge2nasonic7ris2s1tners4s1y3y2ccw3e0t2f0izer5g1h0armacy6d1ilips5one2to0graphy6s4ysio5ics1tet2ures6d1n0g1k2oneer5zza4k1l0ace2y0station9umbing5s3m1n0c2ohl2ker3litie5rn2st3r0america6xi3ess3ime3o0d0uctions8f1gressive8mo2perties3y5tection8u0dential9s1t1ub2w0c2y2qa1pon3uebec3st5racing4dio4e0ad1lestate6tor2y4cipes5d0stone5umbrella9hab3ise0n3t2liance6n0t0als5pair3ort3ublican8st0aurant8view0s5xroth6ich0ardli6oh3l1o1p2o0cks3deo3gers4om3s0vp3u0gby3hr2n2w0e2yukyu6sa0arland6fe0ty4kura4le1on3msclub4ung5ndvik0coromant12ofi4p1rl2s1ve2xo3b0i1s2c0b1haeffler7midt4olarships8ol3ule3warz5ience5ot3d1e0arch3t2cure1ity6ek2lect4ner3rvices6ven3w1x0y3fr2g1h0angrila6rp3ell3ia1ksha5oes2p0ping5uji3w3i0lk2na1gles5te3j1k0i0n2y0pe4l0ing4m0art3ile4n0cf3o0ccer3ial4ftbank4ware6hu2lar2utions7ng1y2y2pa0ce3ort2t3r0l2s1t0ada2ples4r1tebank4farm7c0group6ockholm6rage3e3ream4udio2y3yle4u0cks3pplies3y2ort5rf1gery5zuki5v1watch4iss4x1y0dney4stems6z2tab1ipei4lk2obao4rget4tamotors6r2too4x0i3c0i2d0k2eam2ch0nology8l1masek5nnis4va3f1g1h0d1eater2re6iaa2ckets5enda4ps2res2ol4j0maxx4x2k0maxx5l1m0all4n1o0day3kyo3ols3p1ray3shiba5tal3urs3wn2yota3s3r0ade1ing4ining5vel0ers0insurance16ust3v2t1ube2i1nes3shu4v0s2w1z2ua1bank3s2g1k1nicom3versity8o2ol2ps2s1y1z2va0cations7na1guard7c1e0gas3ntures6risign5m\xF6gensberater2ung14sicherung10t2g1i0ajes4deo3g1king4llas4n1p1rgin4sa1ion4va1o3laanderen9n1odka3lvo3te1ing3o2yage5u2wales2mart4ter4ng0gou5tch0es6eather0channel12bcam3er2site5d0ding5ibo2r3f1hoswho6ien2ki2lliamhill9n0dows4e1ners6me2olterskluwer11odside6rk0s2ld3w2s1tc1f3xbox3erox4ihuan4n2xx2yz3yachts4hoo3maxun5ndex5e1odobashi7ga2kohama6u0tube6t1un3za0ppos4ra3ero3ip2m1one3uerich6w2";
   var encodedUtlds = "\u03B5\u03BB1\u03C52\u0431\u04331\u0435\u043B3\u0434\u0435\u0442\u04384\u0435\u044E2\u043A\u0430\u0442\u043E\u043B\u0438\u043A6\u043E\u043C3\u043C\u043A\u04342\u043E\u043D1\u0441\u043A\u0432\u04306\u043E\u043D\u043B\u0430\u0439\u043D5\u0440\u04333\u0440\u0443\u04412\u04442\u0441\u0430\u0439\u04423\u0440\u04313\u0443\u043A\u04403\u049B\u0430\u04373\u0570\u0561\u05753\u05D9\u05E9\u05E8\u05D0\u05DC5\u05E7\u05D5\u05DD3\u0627\u0628\u0648\u0638\u0628\u064A5\u0631\u0627\u0645\u0643\u06485\u0644\u0627\u0631\u062F\u06464\u0628\u062D\u0631\u064A\u06465\u062C\u0632\u0627\u0626\u06315\u0633\u0639\u0648\u062F\u064A\u06296\u0639\u0644\u064A\u0627\u06465\u0645\u063A\u0631\u06285\u0645\u0627\u0631\u0627\u062A5\u06CC\u0631\u0627\u06465\u0628\u0627\u0631\u062A2\u0632\u0627\u06314\u064A\u062A\u06433\u06BE\u0627\u0631\u062A5\u062A\u0648\u0646\u06334\u0633\u0648\u062F\u0627\u06463\u0631\u064A\u06295\u0634\u0628\u0643\u06294\u0639\u0631\u0627\u06422\u06282\u0645\u0627\u06464\u0641\u0644\u0633\u0637\u064A\u06466\u0642\u0637\u06313\u0643\u0627\u062B\u0648\u0644\u064A\u06436\u0648\u06453\u0645\u0635\u06312\u0644\u064A\u0633\u064A\u06275\u0648\u0631\u064A\u062A\u0627\u0646\u064A\u06277\u0642\u06394\u0647\u0645\u0631\u0627\u06475\u067E\u0627\u06A9\u0633\u062A\u0627\u06467\u0680\u0627\u0631\u062A4\u0915\u0949\u092E3\u0928\u0947\u091F3\u092D\u093E\u0930\u09240\u092E\u094D3\u094B\u09245\u0938\u0902\u0917\u0920\u09285\u09AC\u09BE\u0982\u09B2\u09BE5\u09AD\u09BE\u09B0\u09A42\u09F0\u09A44\u0A2D\u0A3E\u0A30\u0A244\u0AAD\u0ABE\u0AB0\u0AA44\u0B2D\u0B3E\u0B30\u0B244\u0B87\u0BA8\u0BCD\u0BA4\u0BBF\u0BAF\u0BBE6\u0BB2\u0B99\u0BCD\u0B95\u0BC86\u0B9A\u0BBF\u0B99\u0BCD\u0B95\u0BAA\u0BCD\u0BAA\u0BC2\u0BB0\u0BCD11\u0C2D\u0C3E\u0C30\u0C24\u0C4D5\u0CAD\u0CBE\u0CB0\u0CA44\u0D2D\u0D3E\u0D30\u0D24\u0D025\u0DBD\u0D82\u0D9A\u0DCF4\u0E04\u0E2D\u0E213\u0E44\u0E17\u0E223\u0EA5\u0EB2\u0EA73\u10D2\u10D42\u307F\u3093\u306A3\u30A2\u30DE\u30BE\u30F34\u30AF\u30E9\u30A6\u30C94\u30B0\u30FC\u30B0\u30EB4\u30B3\u30E02\u30B9\u30C8\u30A23\u30BB\u30FC\u30EB3\u30D5\u30A1\u30C3\u30B7\u30E7\u30F36\u30DD\u30A4\u30F3\u30C84\u4E16\u754C2\u4E2D\u4FE11\u56FD1\u570B1\u6587\u7F513\u4E9A\u9A6C\u900A3\u4F01\u4E1A2\u4F5B\u5C712\u4FE1\u606F2\u5065\u5EB72\u516B\u53662\u516C\u53F81\u76CA2\u53F0\u6E7E1\u70632\u5546\u57CE1\u5E971\u68072\u5609\u91CC0\u5927\u9152\u5E975\u5728\u7EBF2\u5927\u62FF2\u5929\u4E3B\u65593\u5A31\u4E502\u5BB6\u96FB2\u5E7F\u4E1C2\u5FAE\u535A2\u6148\u55842\u6211\u7231\u4F603\u624B\u673A2\u62DB\u80582\u653F\u52A11\u5E9C2\u65B0\u52A0\u57612\u95FB2\u65F6\u5C1A2\u66F8\u7C4D2\u673A\u67842\u6DE1\u9A6C\u95213\u6E38\u620F2\u6FB3\u95802\u70B9\u770B2\u79FB\u52A82\u7EC4\u7EC7\u673A\u67844\u7F51\u57401\u5E971\u7AD91\u7EDC2\u8054\u901A2\u8C37\u6B4C2\u8D2D\u72692\u901A\u8CA92\u96C6\u56E22\u96FB\u8A0A\u76C8\u79D14\u98DE\u5229\u6D663\u98DF\u54C12\u9910\u53852\u9999\u683C\u91CC\u62C93\u6E2F2\uB2F7\uB1371\uCEF42\uC0BC\uC1312\uD55C\uAD6D2";
   var assign = (target, properties) => {
     for (const key in properties) {
@@ -18601,10 +18785,7 @@ img.ProseMirror-separator {
     }
     return result;
   }
-  function State(token) {
-    if (token === void 0) {
-      token = null;
-    }
+  function State(token = null) {
     this.j = {};
     this.jr = [];
     this.jd = null;
@@ -18643,10 +18824,7 @@ img.ProseMirror-separator {
      * @param {string} input
      * @param {boolean} exactOnly
      */
-    has(input, exactOnly) {
-      if (exactOnly === void 0) {
-        exactOnly = false;
-      }
+    has(input, exactOnly = false) {
       return exactOnly ? input in this.j : !!this.go(input);
     },
     /**
@@ -18771,6 +18949,8 @@ img.ProseMirror-separator {
   var tt = (state, input, next, flags, groups) => state.tt(input, next, flags, groups);
   var WORD = "WORD";
   var UWORD = "UWORD";
+  var ASCIINUMERICAL = "ASCIINUMERICAL";
+  var ALPHANUMERICAL = "ALPHANUMERICAL";
   var LOCALHOST = "LOCALHOST";
   var TLD = "TLD";
   var UTLD = "UTLD";
@@ -18778,7 +18958,7 @@ img.ProseMirror-separator {
   var SLASH_SCHEME = "SLASH_SCHEME";
   var NUM = "NUM";
   var WS = "WS";
-  var NL$1 = "NL";
+  var NL = "NL";
   var OPENBRACE = "OPENBRACE";
   var CLOSEBRACE = "CLOSEBRACE";
   var OPENBRACKET = "OPENBRACKET";
@@ -18815,6 +18995,7 @@ img.ProseMirror-separator {
   var POUND = "POUND";
   var QUERY = "QUERY";
   var QUOTE = "QUOTE";
+  var FULLWIDTHMIDDLEDOT = "FULLWIDTHMIDDLEDOT";
   var SEMI = "SEMI";
   var SLASH = "SLASH";
   var TILDE = "TILDE";
@@ -18825,6 +19006,8 @@ img.ProseMirror-separator {
     __proto__: null,
     WORD,
     UWORD,
+    ASCIINUMERICAL,
+    ALPHANUMERICAL,
     LOCALHOST,
     TLD,
     UTLD,
@@ -18832,7 +19015,7 @@ img.ProseMirror-separator {
     SLASH_SCHEME,
     NUM,
     WS,
-    NL: NL$1,
+    NL,
     OPENBRACE,
     CLOSEBRACE,
     OPENBRACKET,
@@ -18869,6 +19052,7 @@ img.ProseMirror-separator {
     POUND,
     QUERY,
     QUOTE,
+    FULLWIDTHMIDDLEDOT,
     SEMI,
     SLASH,
     TILDE,
@@ -18881,15 +19065,14 @@ img.ProseMirror-separator {
   var EMOJI = /\p{Emoji}/u;
   var DIGIT = /\d/;
   var SPACE = /\s/;
-  var NL = "\n";
+  var CR = "\r";
+  var LF = "\n";
   var EMOJI_VARIATION = "\uFE0F";
   var EMOJI_JOINER = "\u200D";
+  var OBJECT_REPLACEMENT = "\uFFFC";
   var tlds = null;
   var utlds = null;
-  function init$2(customSchemes) {
-    if (customSchemes === void 0) {
-      customSchemes = [];
-    }
+  function init$2(customSchemes = []) {
     const groups = {};
     State.groups = groups;
     const Start = new State();
@@ -18939,36 +19122,61 @@ img.ProseMirror-separator {
     tt(Start, "~", TILDE);
     tt(Start, "_", UNDERSCORE);
     tt(Start, "\\", BACKSLASH);
+    tt(Start, "\u30FB", FULLWIDTHMIDDLEDOT);
     const Num = tr(Start, DIGIT, NUM, {
       [numeric]: true
     });
     tr(Num, DIGIT, Num);
+    const Asciinumeric = tr(Num, ASCII_LETTER, ASCIINUMERICAL, {
+      [asciinumeric]: true
+    });
+    const Alphanumeric = tr(Num, LETTER, ALPHANUMERICAL, {
+      [alphanumeric]: true
+    });
     const Word = tr(Start, ASCII_LETTER, WORD, {
       [ascii]: true
     });
+    tr(Word, DIGIT, Asciinumeric);
     tr(Word, ASCII_LETTER, Word);
+    tr(Asciinumeric, DIGIT, Asciinumeric);
+    tr(Asciinumeric, ASCII_LETTER, Asciinumeric);
     const UWord = tr(Start, LETTER, UWORD, {
       [alpha]: true
     });
     tr(UWord, ASCII_LETTER);
+    tr(UWord, DIGIT, Alphanumeric);
     tr(UWord, LETTER, UWord);
+    tr(Alphanumeric, DIGIT, Alphanumeric);
+    tr(Alphanumeric, ASCII_LETTER);
+    tr(Alphanumeric, LETTER, Alphanumeric);
+    const Nl2 = tt(Start, LF, NL, {
+      [whitespace]: true
+    });
+    const Cr = tt(Start, CR, WS, {
+      [whitespace]: true
+    });
     const Ws = tr(Start, SPACE, WS, {
       [whitespace]: true
     });
-    tt(Start, NL, NL$1, {
-      [whitespace]: true
-    });
-    tt(Ws, NL);
+    tt(Start, OBJECT_REPLACEMENT, Ws);
+    tt(Cr, LF, Nl2);
+    tt(Cr, OBJECT_REPLACEMENT, Ws);
+    tr(Cr, SPACE, Ws);
+    tt(Ws, CR);
+    tt(Ws, LF);
     tr(Ws, SPACE, Ws);
+    tt(Ws, OBJECT_REPLACEMENT, Ws);
     const Emoji = tr(Start, EMOJI, EMOJI$1, {
       [emoji]: true
     });
+    tt(Emoji, "#");
     tr(Emoji, EMOJI, Emoji);
     tt(Emoji, EMOJI_VARIATION, Emoji);
     const EmojiJoiner = tt(Emoji, EMOJI_JOINER);
+    tt(EmojiJoiner, "#");
     tr(EmojiJoiner, EMOJI, Emoji);
-    const wordjr = [[ASCII_LETTER, Word]];
-    const uwordjr = [[ASCII_LETTER, null], [LETTER, UWord]];
+    const wordjr = [[ASCII_LETTER, Word], [DIGIT, Asciinumeric]];
+    const uwordjr = [[ASCII_LETTER, null], [LETTER, UWord], [DIGIT, Alphanumeric]];
     for (let i = 0; i < tlds.length; i++) {
       fastts(Start, tlds[i], TLD, WORD, wordjr);
     }
@@ -19142,10 +19350,7 @@ img.ProseMirror-separator {
     ignoreTags: [],
     render: null
   };
-  function Options(opts, defaultRender) {
-    if (defaultRender === void 0) {
-      defaultRender = null;
-    }
+  function Options(opts, defaultRender = null) {
     let o = assign({}, defaults);
     if (opts) {
       o = assign(o, opts instanceof Options ? opts.o : opts);
@@ -19260,7 +19465,7 @@ img.ProseMirror-separator {
      * Returns the `.toString` value by default.
      * @param {string} [scheme]
      * @return {string}
-    */
+     */
     toHref(scheme2) {
       return this.toString();
     },
@@ -19306,10 +19511,7 @@ img.ProseMirror-separator {
     		@method toObject
     	@param {string} [protocol] `'http'` by default
     */
-    toObject(protocol) {
-      if (protocol === void 0) {
-        protocol = defaults.defaultProtocol;
-      }
+    toObject(protocol = defaults.defaultProtocol) {
       return {
         type: this.t,
         value: this.toString(),
@@ -19408,10 +19610,7 @@ img.ProseMirror-separator {
     		@param {string} [scheme] default scheme (e.g., 'https')
     	@return {string} the full href
     */
-    toHref(scheme2) {
-      if (scheme2 === void 0) {
-        scheme2 = defaults.defaultProtocol;
-      }
+    toHref(scheme2 = defaults.defaultProtocol) {
       return this.hasProtocol() ? this.v : `${scheme2}://${this.v}`;
     },
     /**
@@ -19424,12 +19623,11 @@ img.ProseMirror-separator {
     }
   });
   var makeState = (arg) => new State(arg);
-  function init$1(_ref) {
-    let {
-      groups
-    } = _ref;
+  function init$1({
+    groups
+  }) {
     const qsAccepting = groups.domain.concat([AMPERSAND, ASTERISK, AT, BACKSLASH, BACKTICK, CARET, DOLLAR, EQUALS, HYPHEN, NUM, PERCENT, PIPE, PLUS, POUND, SLASH, SYM, TILDE, UNDERSCORE]);
-    const qsNonAccepting = [APOSTROPHE, COLON, COMMA, DOT, EXCLAMATION, QUERY, QUOTE, SEMI, OPENANGLEBRACKET, CLOSEANGLEBRACKET, OPENBRACE, CLOSEBRACE, CLOSEBRACKET, OPENBRACKET, OPENPAREN, CLOSEPAREN, FULLWIDTHLEFTPAREN, FULLWIDTHRIGHTPAREN, LEFTCORNERBRACKET, RIGHTCORNERBRACKET, LEFTWHITECORNERBRACKET, RIGHTWHITECORNERBRACKET, FULLWIDTHLESSTHAN, FULLWIDTHGREATERTHAN];
+    const qsNonAccepting = [COLON, COMMA, DOT, EXCLAMATION, PERCENT, QUERY, QUOTE, SEMI, OPENANGLEBRACKET, CLOSEANGLEBRACKET, OPENBRACE, CLOSEBRACE, CLOSEBRACKET, OPENBRACKET, OPENPAREN, CLOSEPAREN, FULLWIDTHLEFTPAREN, FULLWIDTHRIGHTPAREN, LEFTCORNERBRACKET, RIGHTCORNERBRACKET, LEFTWHITECORNERBRACKET, RIGHTWHITECORNERBRACKET, FULLWIDTHLESSTHAN, FULLWIDTHGREATERTHAN];
     const localpartAccepting = [AMPERSAND, APOSTROPHE, ASTERISK, BACKSLASH, BACKTICK, CARET, DOLLAR, EQUALS, HYPHEN, OPENBRACE, CLOSEBRACE, PERCENT, PIPE, PLUS, POUND, QUERY, SLASH, SYM, TILDE, UNDERSCORE];
     const Start = makeState();
     const Localpart = tt(Start, TILDE);
@@ -19458,6 +19656,7 @@ img.ProseMirror-separator {
     ta(EmailDomainDot, groups.utld, Email$1);
     tt(LocalpartAt, LOCALHOST, Email$1);
     const EmailDomainHyphen = tt(EmailDomain, HYPHEN);
+    tt(EmailDomainHyphen, HYPHEN, EmailDomainHyphen);
     ta(EmailDomainHyphen, groups.domain, EmailDomain);
     ta(Email$1, groups.domain, EmailDomain);
     tt(Email$1, DOT, EmailDomainDot);
@@ -19466,6 +19665,7 @@ img.ProseMirror-separator {
     ta(EmailColon, groups.numeric, Email);
     const DomainHyphen = tt(Domain, HYPHEN);
     const DomainDot = tt(Domain, DOT);
+    tt(DomainHyphen, HYPHEN, DomainHyphen);
     ta(DomainHyphen, groups.domain, Domain);
     ta(DomainDot, localpartAccepting, Localpart);
     ta(DomainDot, groups.domain, Domain);
@@ -19500,6 +19700,7 @@ img.ProseMirror-separator {
     tt(SlashScheme, HYPHEN, DomainHyphen);
     ta(SchemeColon, groups.domain, Url$1);
     tt(SchemeColon, SLASH, Url$1);
+    tt(SchemeColon, QUERY, Url$1);
     ta(UriPrefix, groups.domain, Url$1);
     ta(UriPrefix, qsAccepting, Url$1);
     tt(UriPrefix, SLASH, Url$1);
@@ -19538,7 +19739,7 @@ img.ProseMirror-separator {
       tt(UrlOpenSyms, CLOSE, Url$1);
     }
     tt(Start, LOCALHOST, DomainDotTld);
-    tt(Start, NL$1, Nl);
+    tt(Start, NL, Nl);
     return {
       start: Start,
       tokens: tk
@@ -19619,11 +19820,9 @@ img.ProseMirror-separator {
     INIT.pluginQueue = [];
     INIT.customSchemes = [];
     INIT.initialized = false;
+    return INIT;
   }
-  function registerCustomProtocol(scheme2, optionalSlashSlash) {
-    if (optionalSlashSlash === void 0) {
-      optionalSlashSlash = false;
-    }
+  function registerCustomProtocol(scheme2, optionalSlashSlash = false) {
     if (INIT.initialized) {
       warn(`linkifyjs: already initialized - will not register custom scheme "${scheme2}" ${warnAdvice}`);
     }
@@ -19650,6 +19849,7 @@ img.ProseMirror-separator {
       });
     }
     INIT.initialized = true;
+    return INIT;
   }
   function tokenize(str) {
     if (!INIT.initialized) {
@@ -19657,13 +19857,8 @@ img.ProseMirror-separator {
     }
     return run2(INIT.parser.start, str, run$12(INIT.scanner.start, str));
   }
-  function find(str, type, opts) {
-    if (type === void 0) {
-      type = null;
-    }
-    if (opts === void 0) {
-      opts = null;
-    }
+  tokenize.scan = run$12;
+  function find(str, type = null, opts = null) {
     if (type && typeof type === "object") {
       if (opts) {
         throw Error(`linkifyjs: Invalid link type ${type}; must be a string`);
@@ -19739,7 +19934,7 @@ img.ProseMirror-separator {
                 return true;
               }
               return !newState.doc.rangeHasMark(link.from, link.to, newState.schema.marks.code);
-            }).filter((link) => options.validate(link.value)).forEach((link) => {
+            }).filter((link) => options.validate(link.value)).filter((link) => options.shouldAutoLink(link.value)).forEach((link) => {
               if (getMarksBetween(link.from, link.to, newState.doc).some((item) => item.mark.type === options.type)) {
                 return;
               }
@@ -19809,17 +20004,27 @@ img.ProseMirror-separator {
           if (!textContent || !link) {
             return false;
           }
-          options.editor.commands.setMark(options.type, {
+          return options.editor.commands.setMark(options.type, {
             href: link.href
           });
-          return true;
         }
       }
     });
   }
   var ATTR_WHITESPACE = /[\u0000-\u0020\u00A0\u1680\u180E\u2000-\u2029\u205F\u3000]/g;
   function isAllowedUri(uri, protocols) {
-    const allowedProtocols = ["http", "https", "ftp", "ftps", "mailto", "tel", "callto", "sms", "cid", "xmpp"];
+    const allowedProtocols = [
+      "http",
+      "https",
+      "ftp",
+      "ftps",
+      "mailto",
+      "tel",
+      "callto",
+      "sms",
+      "cid",
+      "xmpp"
+    ];
     if (protocols) {
       protocols.forEach((protocol) => {
         const nextProtocol = typeof protocol === "string" ? protocol : protocol.scheme;
@@ -19828,7 +20033,11 @@ img.ProseMirror-separator {
         }
       });
     }
-    return !uri || uri.replace(ATTR_WHITESPACE, "").match(new RegExp(`^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z+.-]+(?:[^a-z+.-:]|$))`, "i"));
+    return !uri || uri.replace(ATTR_WHITESPACE, "").match(new RegExp(
+      // eslint-disable-next-line no-useless-escape
+      `^(?:(?:${allowedProtocols.join("|")}):|[^a-z]|[a-z0-9+.-]+(?:[^a-z+.-:]|$))`,
+      "i"
+    ));
   }
   var Link = Mark2.create({
     name: "link",
@@ -19836,6 +20045,10 @@ img.ProseMirror-separator {
     keepOnSplit: false,
     exitable: true,
     onCreate() {
+      if (this.options.validate && !this.options.shouldAutoLink) {
+        this.options.shouldAutoLink = this.options.validate;
+        console.warn("The `validate` option is deprecated. Rename to the `shouldAutoLink` option instead.");
+      }
       this.options.protocols.forEach((protocol) => {
         if (typeof protocol === "string") {
           registerCustomProtocol(protocol);
@@ -19862,7 +20075,9 @@ img.ProseMirror-separator {
           rel: "noopener noreferrer nofollow",
           class: null
         },
-        validate: (url) => !!url
+        isAllowedUri: (url, ctx) => !!isAllowedUri(url, ctx.protocols),
+        validate: (url) => !!url,
+        shouldAutoLink: (url) => !!url
       };
     },
     addAttributes() {
@@ -19885,29 +20100,59 @@ img.ProseMirror-separator {
       };
     },
     parseHTML() {
-      return [{
-        tag: "a[href]",
-        getAttrs: (dom) => {
-          const href = dom.getAttribute("href");
-          if (!href || !isAllowedUri(href, this.options.protocols)) {
-            return false;
+      return [
+        {
+          tag: "a[href]",
+          getAttrs: (dom) => {
+            const href = dom.getAttribute("href");
+            if (!href || !this.options.isAllowedUri(href, {
+              defaultValidate: (url) => !!isAllowedUri(url, this.options.protocols),
+              protocols: this.options.protocols,
+              defaultProtocol: this.options.defaultProtocol
+            })) {
+              return false;
+            }
+            return null;
           }
-          return null;
         }
-      }];
+      ];
     },
     renderHTML({ HTMLAttributes }) {
-      if (!isAllowedUri(HTMLAttributes.href, this.options.protocols)) {
-        return ["a", mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: "" }), 0];
+      if (!this.options.isAllowedUri(HTMLAttributes.href, {
+        defaultValidate: (href) => !!isAllowedUri(href, this.options.protocols),
+        protocols: this.options.protocols,
+        defaultProtocol: this.options.defaultProtocol
+      })) {
+        return [
+          "a",
+          mergeAttributes(this.options.HTMLAttributes, { ...HTMLAttributes, href: "" }),
+          0
+        ];
       }
       return ["a", mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0];
     },
     addCommands() {
       return {
         setLink: (attributes) => ({ chain }) => {
+          const { href } = attributes;
+          if (!this.options.isAllowedUri(href, {
+            defaultValidate: (url) => !!isAllowedUri(url, this.options.protocols),
+            protocols: this.options.protocols,
+            defaultProtocol: this.options.defaultProtocol
+          })) {
+            return false;
+          }
           return chain().setMark(this.name, attributes).setMeta("preventAutolink", true).run();
         },
         toggleLink: (attributes) => ({ chain }) => {
+          const { href } = attributes;
+          if (!this.options.isAllowedUri(href, {
+            defaultValidate: (url) => !!isAllowedUri(url, this.options.protocols),
+            protocols: this.options.protocols,
+            defaultProtocol: this.options.defaultProtocol
+          })) {
+            return false;
+          }
           return chain().toggleMark(this.name, attributes, { extendEmptyMarkRange: true }).setMeta("preventAutolink", true).run();
         },
         unsetLink: () => ({ chain }) => {
@@ -19921,8 +20166,12 @@ img.ProseMirror-separator {
           find: (text) => {
             const foundLinks = [];
             if (text) {
-              const { validate } = this.options;
-              const links = find(text).filter((item) => item.isLink && validate(item.value));
+              const { protocols, defaultProtocol } = this.options;
+              const links = find(text).filter((item) => item.isLink && this.options.isAllowedUri(item.value, {
+                defaultValidate: (href) => !!isAllowedUri(href, protocols),
+                protocols,
+                defaultProtocol
+              }));
               if (links.length) {
                 links.forEach((link) => foundLinks.push({
                   text: link.value,
@@ -19947,11 +20196,17 @@ img.ProseMirror-separator {
     },
     addProseMirrorPlugins() {
       const plugins = [];
+      const { protocols, defaultProtocol } = this.options;
       if (this.options.autolink) {
         plugins.push(autolink({
           type: this.type,
           defaultProtocol: this.options.defaultProtocol,
-          validate: this.options.validate
+          validate: (url) => this.options.isAllowedUri(url, {
+            defaultValidate: (href) => !!isAllowedUri(href, protocols),
+            protocols,
+            defaultProtocol
+          }),
+          shouldAutoLink: this.options.shouldAutoLink
         }));
       }
       if (this.options.openOnClick === true) {
@@ -19976,7 +20231,9 @@ img.ProseMirror-separator {
       let content = this.value ?? this.querySelector("ui-editor-content").innerHTML;
       let toolbar = this.querySelector("ui-toolbar");
       this.querySelector("ui-editor-content").innerHTML = "";
-      this._controllable = new Controllable(this);
+      this._controllable = new Controllable(this, { bubbles: true });
+      toolbar.addEventListener("input", (e) => e.stopPropagation());
+      toolbar.addEventListener("change", (e) => e.stopPropagation());
       this._disableable = new Disableable(this);
       this.editor = new Editor({
         element: this.querySelector("ui-editor-content"),
@@ -20117,7 +20374,7 @@ img.ProseMirror-separator {
       let insertLink = () => {
         let url = toolbar.querySelector('[data-editor="link:url"]')?.value?.trim();
         if (url) {
-          editor.chain().focus().setLink({ href: url }).run();
+          editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
         } else {
           editor.chain().focus().unsetLink().run();
         }

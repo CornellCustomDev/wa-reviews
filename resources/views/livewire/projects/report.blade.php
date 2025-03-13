@@ -23,7 +23,7 @@
                     <h4 class="text-blue-900 font-semibold mb-0.5">
                         <x-forms.button
                             size="xs"
-                            class="bg-wa-{{ Str::of($item->assessment->value())->lower()->replace('/', '') }} !text-sm h-5 pt-0.5 mr-1"
+                            class="bg-wa-{{ Str::of($item->assessment->value())->lower()->replace('/', '') }} text-sm! h-5 pt-0.5 mr-1"
                             textColor="text-black hover:text-white"
                             href="{{ route('guidelines.show', $item->guideline) }}" title="View Guideline {{ $item->guideline->number }}"
                         >{{ $item->guideline->number }}</x-forms.button>
@@ -59,7 +59,7 @@
                             @foreach($item->image_links as $imagePath)
                                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                                 <flux:tooltip position="bottom" class="align-middle">
-                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="!px-0.5 overflow-hidden hover:border-cds-blue-900 h-auto">
+                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! overflow-hidden hover:border-cds-blue-900 h-auto">
                                         <div class="relative py-1">
                                             <img
                                                 src="{{ $imagePath }}"

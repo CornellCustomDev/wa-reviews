@@ -10,12 +10,12 @@
         ->add('[&+ui-label]:font-verdana')
         ->add('[&+ui-label]:font-medium')
         ->add('[&+ui-label]:text-sm')
-        ->add('[&+ui-label]:!text-cds-gray-950')
-        ->add('[[data-flux-field]:has(>&)>ui-label]:!mb-0') // Required more specificity to override
+        ->add('[&+ui-label]:text-cds-gray-950!')
+        ->add('[[data-flux-field]:has(>&)>ui-label]:mb-0!') // Required more specificity to override
         // Spacing
         ->add('[[data-flux-field]:has(>&)]:pt-1.5')
         ->add('[[data-flux-field]:has(>&)]:mb-4')
-        ->add('[[data-flux-field]:has(>&)]:!gap-x-2')
+        ->add('[[data-flux-field]:has(>&)]:gap-x-2!')
         ;
 @endphp
 

@@ -849,12 +849,12 @@ class Arr
 
         if (! array_is_list($array)) {
             $descending
-                    ? krsort($array, $options)
-                    : ksort($array, $options);
+                ? krsort($array, $options)
+                : ksort($array, $options);
         } else {
             $descending
-                    ? rsort($array, $options)
-                    : sort($array, $options);
+                ? rsort($array, $options)
+                : sort($array, $options);
         }
 
         return $array;
@@ -949,7 +949,7 @@ class Arr
      * @template TValue of mixed
      *
      * @param  iterable<TKey, TValue>  $array
-     * @param  callable  $callback
+     * @param  callable(TValue, TKey): bool  $callback
      * @return array<int<0, 1>, array<TKey, TValue>>
      */
     public static function partition($array, callable $callback)

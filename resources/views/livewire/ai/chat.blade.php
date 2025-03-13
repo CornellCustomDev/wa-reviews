@@ -12,7 +12,7 @@
         <div class="mb-4">
             <hr>
             <h3 class="h5">{{ ucfirst($message['role']) }}</h3>
-            <div @class(['p-2', 'rounded', 'bg-cds-gray-200' => $message['role'] == 'assistant' ])>{!! Str::of($message['content'])->markdown() !!}</div>
+            <div @class(['p-2', 'rounded-sm', 'bg-cds-gray-200' => $message['role'] == 'assistant' ])>{!! Str::of($message['content'])->markdown() !!}</div>
         </div>
     @endforeach
 
@@ -25,7 +25,7 @@
             wire:model="userMessage"
             placeholder="Type your message here..."
             rows="auto"
-            class="!mb-4"
+            class="mb-4!"
             wire:loading.attr="disabled"
             @keydown.enter="!$event.shiftKey && ($event.preventDefault(), $wire.sendMessage())"
         />

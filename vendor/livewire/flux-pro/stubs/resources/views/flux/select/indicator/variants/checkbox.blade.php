@@ -15,8 +15,8 @@ $classes = Flux::classes()
     ->add([
         'bg-white dark:bg-white/10',
         '[ui-option[data-selected]_&]:bg-[var(--color-accent)]',
-        '[ui-option[data-selected]_&]:hover:bg-[var(--color-accent)]',
-        '[ui-option[data-selected]_&]:focus:bg-[var(--color-accent)]',
+        'hover:[ui-option[data-selected]_&]:bg-(--color-accent)',
+        'focus:[ui-option[data-selected]_&]:bg-(--color-accent)',
     ])
     ;
 @endphp
