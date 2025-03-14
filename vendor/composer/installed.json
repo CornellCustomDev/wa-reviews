@@ -308,12 +308,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "49a19c3473f3a31b326f05df803762565a28a3de"
+                "reference": "8c4b91f323aee2013df9ca29722c6d1cb1c92339"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/49a19c3473f3a31b326f05df803762565a28a3de",
-                "reference": "49a19c3473f3a31b326f05df803762565a28a3de",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/8c4b91f323aee2013df9ca29722c6d1cb1c92339",
+                "reference": "8c4b91f323aee2013df9ca29722c6d1cb1c92339",
                 "shasum": ""
             },
             "require": {
@@ -331,7 +331,7 @@
                 "orchestra/testbench": "^8.32",
                 "phpunit/phpunit": "^10.5"
             },
-            "time": "2025-03-04T20:34:47+00:00",
+            "time": "2025-03-06T19:36:30+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2797,17 +2797,17 @@
         },
         {
             "name": "livewire/flux",
-            "version": "v2.0.5",
-            "version_normalized": "2.0.5.0",
+            "version": "v2.0.6",
+            "version_normalized": "2.0.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/flux.git",
-                "reference": "a635c8440199e1838ba800a82279e6729a9e5e8c"
+                "reference": "afd046a72c7a10e6ff56f3e9c16eb390c3db0cc5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/flux/zipball/a635c8440199e1838ba800a82279e6729a9e5e8c",
-                "reference": "a635c8440199e1838ba800a82279e6729a9e5e8c",
+                "url": "https://api.github.com/repos/livewire/flux/zipball/afd046a72c7a10e6ff56f3e9c16eb390c3db0cc5",
+                "reference": "afd046a72c7a10e6ff56f3e9c16eb390c3db0cc5",
                 "shasum": ""
             },
             "require": {
@@ -2819,7 +2819,7 @@
                 "php": "^8.1",
                 "symfony/console": "^6.0|^7.0"
             },
-            "time": "2025-03-09T19:33:12+00:00",
+            "time": "2025-03-12T20:53:07+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2857,31 +2857,31 @@
             ],
             "support": {
                 "issues": "https://github.com/livewire/flux/issues",
-                "source": "https://github.com/livewire/flux/tree/v2.0.5"
+                "source": "https://github.com/livewire/flux/tree/v2.0.6"
             },
             "install-path": "../livewire/flux"
         },
         {
             "name": "livewire/flux-pro",
-            "version": "2.0.5",
-            "version_normalized": "2.0.5.0",
+            "version": "2.0.6",
+            "version_normalized": "2.0.6.0",
             "dist": {
                 "type": "zip",
-                "url": "https://composer.fluxui.dev/download/9e649913-fa6a-4084-9af4-87c555092094/flux-pro-2.0.5.zip",
-                "reference": "b9a4bdbf6963880d82bc3605e6d4489a60cf2480",
-                "shasum": "b8726fec7cc0275abde2b1c2ec0d00e21170ffb6"
+                "url": "https://composer.fluxui.dev/download/9e6abd7e-7ae2-492e-aedb-a2b93ff01ce4/flux-pro-2.0.6.zip",
+                "reference": "eab6eeabcc4aadacb31f618e456004cfc697aa1b",
+                "shasum": "85c36d77e80ac8455d91a0882f6b0ffb837a599b"
             },
             "require": {
                 "illuminate/console": "^10.0|^11.0|^12.0",
                 "illuminate/support": "^10.0|^11.0|^12.0",
                 "illuminate/view": "^10.0|^11.0|^12.0",
                 "laravel/prompts": "^0.1.24|^0.2|^0.3",
-                "livewire/flux": "2.0.5|dev-main",
-                "livewire/livewire": "^3.5.19",
+                "livewire/flux": "2.0.6|dev-main",
+                "livewire/livewire": "^3.6.2",
                 "php": "^8.1",
                 "symfony/console": "^6.0|^7.0"
             },
-            "time": "2025-03-09T19:37:02+00:00",
+            "time": "2025-03-12T20:53:50+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2923,17 +2923,17 @@
         },
         {
             "name": "livewire/livewire",
-            "version": "v3.6.0",
-            "version_normalized": "3.6.0.0",
+            "version": "v3.6.2",
+            "version_normalized": "3.6.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/livewire/livewire.git",
-                "reference": "4c66b569cb729ba9b2f4a3c4e79f50fd8f2b71d1"
+                "reference": "8f8914731f5eb43b6bb145d87c8d5a9edfc89313"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/livewire/livewire/zipball/4c66b569cb729ba9b2f4a3c4e79f50fd8f2b71d1",
-                "reference": "4c66b569cb729ba9b2f4a3c4e79f50fd8f2b71d1",
+                "url": "https://api.github.com/repos/livewire/livewire/zipball/8f8914731f5eb43b6bb145d87c8d5a9edfc89313",
+                "reference": "8f8914731f5eb43b6bb145d87c8d5a9edfc89313",
                 "shasum": ""
             },
             "require": {
@@ -2956,7 +2956,7 @@
                 "phpunit/phpunit": "^10.4|^11.5",
                 "psy/psysh": "^0.11.22|^0.12"
             },
-            "time": "2025-02-26T00:57:32+00:00",
+            "time": "2025-03-12T20:24:15+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -2990,7 +2990,7 @@
             "description": "A front-end framework for Laravel.",
             "support": {
                 "issues": "https://github.com/livewire/livewire/issues",
-                "source": "https://github.com/livewire/livewire/tree/v3.6.0"
+                "source": "https://github.com/livewire/livewire/tree/v3.6.2"
             },
             "funding": [
                 {

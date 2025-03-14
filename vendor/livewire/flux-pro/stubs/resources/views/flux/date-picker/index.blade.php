@@ -32,7 +32,8 @@ $range = $mode === 'range';
 
 $placeholder = $placeholder ?? ($range ? __('Select a date range') : __('Select a date'));
 
-$invalid ??= ($name && $errors->has($name));
+// Mark it invalid if the property or any of it's nested attributes have errors...
+$invalid ??= ($name && ($errors->has($name) || $errors->has($name . '.*')));
 
 $class= Flux::classes()
     ->add('block min-w-0')
@@ -245,7 +246,7 @@ $presetArray = array_map(function ($preset) {
 
                 <div class="@unless ($withConfirmation) sm:hidden @endunless p-4 sm:p-2 flex justify-end gap-2">
                     <ui-close>
-                        <flux:button variant="ghost">Cancel</flux:button>
+                        <flux:button variant="ghost">{{ __('Cancel') }}</flux:button>
                     </ui-close>
 
                     <ui-date-picker-select>

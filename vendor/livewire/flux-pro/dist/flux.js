@@ -1778,12 +1778,12 @@ ${useLayer ? "}" : ""}
     };
   }
   var lockCount = 0;
+  var undoLockStyles = () => {
+  };
   function lockScroll(allowScroll = false) {
     if (allowScroll) return { lock: () => {
     }, unlock: () => {
     } };
-    let undoLockStyles = () => {
-    };
     return {
       lock() {
         lockCount++;
@@ -1795,6 +1795,7 @@ ${useLayer ? "}" : ""}
       },
       unlock() {
         lockCount = Math.max(0, lockCount - 1);
+        if (lockCount > 0) return;
         undoLockStyles();
       }
     };
@@ -1886,18 +1887,33 @@ ${useLayer ? "}" : ""}
     Object.entries(attrs).forEach(([key, value2]) => {
       clone.setAttribute(key, value2);
     });
+    clone.setAttribute("data-appended", "");
     return clone;
   }
 
   // js/element.js
   var UIElement = class extends HTMLElement {
+    wasDisconnected = false;
     constructor() {
       super();
       this.boot?.();
     }
     connectedCallback() {
+      if (this.wasDisconnected) {
+        this.wasDisconnected = false;
+        return;
+      }
       queueMicrotask(() => {
         this.mount?.();
+      });
+    }
+    disconnectedCallback() {
+      this.wasDisconnected = true;
+      queueMicrotask(() => {
+        if (this.wasDisconnected) {
+          this.unmount?.();
+        }
+        this.wasDisconnected = false;
       });
     }
     mixin(func, options = {}) {
@@ -4478,11 +4494,12 @@ ${useLayer ? "}" : ""}
       if (template.hasAttribute("display")) {
         return new Intl.DateTimeFormat(config.locale, { weekday: template.getAttribute("display") }).format(date);
       }
-      let formatter = new Intl.DateTimeFormat(config.locale, { weekday: "short" });
       let safeTwoCharLocales = ["en", "es", "de", "fr", "it", "pt"];
       if (safeTwoCharLocales.includes(config.locale.split("-")[0])) {
-        return formatter.format(date).slice(0, 2);
+        let formatter2 = new Intl.DateTimeFormat(config.locale, { weekday: "short" });
+        return formatter2.format(date).slice(0, 2);
       }
+      let formatter = new Intl.DateTimeFormat(config.locale, { weekday: "narrow" });
       return formatter.format(date);
     };
     let weekdays = Array.from({ length: 7 }, (_, idx) => {
@@ -8063,7 +8080,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
   };
   inject(({ css }) => css`
-    ui-label { display: inline-block; cursor: default; user-select: none; }
+    ui-label { display: inline-block; cursor: default; }
     ui-description { display: block; }
 `);
   element("field", UIField);
@@ -8612,6 +8629,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   var UIChart = class extends HTMLElement {
     constructor() {
       super();
+      this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
       let svgTemplate = this.querySelector('template[name="svg"]');
       let svg = hydrateTemplate(svgTemplate);
       svgTemplate.after(svg);
@@ -9107,12 +9125,6 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             bottom: gutter.bottom + overflow.bottom
           });
           redraw(false);
-          chart.updateDimensions({ width: chart.width, height: chart.height }, {
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0
-          });
         }
       };
       this._observable.subscribe("resize", () => {
@@ -9129,11 +9141,23 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       });
       this._observable.subscribe("data", () => {
         chart.updateData(this._data);
+        chart.updateDimensions({ width: chart.width, height: chart.height }, {
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: 0
+        });
         redraw();
       });
       new ResizeObserver(() => {
         this._observable.notify("resize");
       }).observe(this);
+      new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.attributeName !== "value") return;
+          this._selectable.setState(this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : []);
+        });
+      }).observe(this, { attributes: true, attributeFilter: ["value"] });
     }
   };
   customElements.define("ui-chart", UIChart);
@@ -9303,6 +9327,12 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       button && on(button, "click", (e) => {
         dialog._dialogable.show();
       });
+    }
+    unmount() {
+      let { unlock } = lockScroll();
+      if (this.dialog()._dialogable.getState()) {
+        unlock();
+      }
     }
     button() {
       let button = this.querySelector("button");

@@ -1,3 +1,5 @@
+@aware([ 'transition' ])
+
 @props([
     'transition' => false,
     'disabled' => false,
