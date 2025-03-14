@@ -18,9 +18,11 @@
 
     <link rel="icon" href="{{ asset('cwd-framework/favicon.ico') }}" type="image/vnd.microsoft.icon"/>
 
-    <link href="{{ asset('cwd-framework/css/base.css') }}" rel="stylesheet">
-    <link href="{{ asset('cwd-framework/css/cornell.css') }}" rel="stylesheet">
-    <link href="{{ asset('cwd-framework/css/cwd_utilities.css') }}" rel="stylesheet">
+    <style>
+        @import "{{ asset('cwd-framework/css/base.css') }}" layer(base);
+        @import "{{ asset('cwd-framework/css/cornell.css') }}" layer(base);
+        @import "{{ asset('cwd-framework/css/cwd_utilities.css') }}" layer(base);
+    </style>
 
     <!-- Activate for Cornell.edu typography and basic patterns -->
     <!-- <link rel="stylesheet" href="https://use.typekit.net/nwp2wku.css"> -->
@@ -35,10 +37,6 @@
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600&display=swap" rel="stylesheet" />
 
     @livewireStyles
-    <script>
-        window.localStorage.setItem('flux.appearance', 'none');
-    </script>
-    @fluxStyles
 </head>
 <body @class([
     'cu-seal',

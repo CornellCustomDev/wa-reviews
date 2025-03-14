@@ -19,8 +19,8 @@ $iconClasses = Flux::classes()
 
 $classes = Flux::classes()
     ->add('relative flex justify-between gap-3 flex-1 p-4')
-    ->add('rounded-lg shadow-sm')
-    ->add('bg-white dark:bg-white/10 dark:hover:bg-white/15 dark:data-[checked]:bg-white/15')
+    ->add('rounded-lg shadow-xs')
+    ->add('bg-white dark:bg-white/10 dark:hover:bg-white/15 dark:data-checked:bg-white/15')
     ->add('after:absolute after:-inset-px after:rounded-lg *:relative')
     ->add('border border-zinc-800/15 dark:border-white/10')
     ->add([
@@ -34,11 +34,11 @@ $classes = Flux::classes()
             '[&:hover_[data-flux-checkbox-indicator]]:border-[var(--haze-border)] dark:[&:hover_[data-flux-checkbox-indicator]]:border-white/10',
             'hover:border-[var(--haze-border)] dark:hover:border-white/10',
 
-            'data-[checked]:border-[var(--color-accent)] hover:data-[checked]:border-[var(--color-accent)] dark:data-[checked]:bg-white/15 ',
-            'hover:after:bg-[var(--haze-light)] dark:hover:after:bg-white/[4%] data-[checked]:after:bg-[var(--haze)] hover:data-[checked]:after:bg-[var(--haze)]',
+            'data-checked:border-(--color-accent) hover:data-checked:border-(--color-accent) dark:data-checked:bg-white/15 ',
+            'hover:after:bg-[var(--haze-light)] dark:hover:after:bg-white/[4%] data-checked:after:bg-(--haze) hover:data-checked:after:bg-(--haze)',
         ],
         false => [
-            'data-[checked]:bg-zinc-50 dark:data-[checked]:bg-white/15 data-[checked]:border-zinc-800 dark:data-[checked]:border-white',
+            'data-checked:bg-zinc-50 dark:data-checked:bg-white/15 data-checked:border-zinc-800 dark:data-checked:border-white',
             'hover:bg-zinc-50 dark:hover:bg-white/15',
         ],
     })

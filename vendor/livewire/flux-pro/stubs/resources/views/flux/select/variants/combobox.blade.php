@@ -28,9 +28,9 @@ $class= Flux::classes()
         <flux:select.input :$placeholder :$invalid :$size />
     <?php endif; ?>
 
-    <flux:options>
+    <flux:select.options>
         {{ $slot}}
 
         <flux:select.empty>{!! __('No results found') !!}</flux:select.empty>
-    </flux:options>
+    </flux:select.options>
 </ui-select>

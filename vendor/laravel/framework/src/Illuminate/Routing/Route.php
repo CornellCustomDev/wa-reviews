@@ -792,7 +792,7 @@ class Route
     public function getDomain()
     {
         return isset($this->action['domain'])
-                ? str_replace(['http://', 'https://'], '', $this->action['domain']) : null;
+            ? str_replace(['http://', 'https://'], '', $this->action['domain']) : null;
     }
 
     /**
@@ -1085,7 +1085,7 @@ class Route
     /**
      * Specify that the "Authorize" / "can" middleware should be applied to the route with the given options.
      *
-     * @param  \BackedEnum|string  $ability
+     * @param  \UnitEnum|string  $ability
      * @param  array|string  $models
      * @return $this
      */
@@ -1094,8 +1094,8 @@ class Route
         $ability = enum_value($ability);
 
         return empty($models)
-                    ? $this->middleware(['can:'.$ability])
-                    : $this->middleware(['can:'.$ability.','.implode(',', Arr::wrap($models))]);
+            ? $this->middleware(['can:'.$ability])
+            : $this->middleware(['can:'.$ability.','.implode(',', Arr::wrap($models))]);
     }
 
     /**

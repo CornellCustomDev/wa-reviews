@@ -38,7 +38,7 @@ $trigger ??= $button;
         <flux:select.button :$placeholder :$invalid :$size :$clearable :suffix="$selectedSuffix" />
     <?php endif; ?>
 
-    <flux:options :$search :$searchable :$indicator :$empty>
+    <flux:select.options :$search :$searchable :$indicator :$empty>
         {{ $slot}}
-    </flux:options>
+    </flux:select.options>
 </ui-select>

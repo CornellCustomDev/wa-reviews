@@ -7,7 +7,7 @@
     $classes = Flux::classes()
         ->add('font-sans text-[15px] font-semibold select-none')
         ->add('text-cds-gray-900 dark:text-white')
-        ->add('!mb-1')
+        ->add('mb-1!')
         ;
 @endphp
 

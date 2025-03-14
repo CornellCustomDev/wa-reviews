@@ -527,7 +527,37 @@ class TestResponse implements ArrayAccess
      */
     public function assertContent($value)
     {
-        PHPUnit::withResponse($this)->assertSame($value, $this->content());
+        PHPUnit::withResponse($this)->assertSame($value, $this->getContent());
+
+        return $this;
+    }
+
+    /**
+     * Assert that the response was streamed.
+     *
+     * @return $this
+     */
+    public function assertStreamed()
+    {
+        PHPUnit::withResponse($this)->assertTrue(
+            $this->baseResponse instanceof StreamedResponse || $this->baseResponse instanceof StreamedJsonResponse,
+            'Expected the response to be streamed, but it wasn\'t.'
+        );
+
+        return $this;
+    }
+
+    /**
+     * Assert that the response was not streamed.
+     *
+     * @return $this
+     */
+    public function assertNotStreamed()
+    {
+        PHPUnit::withResponse($this)->assertTrue(
+            ! $this->baseResponse instanceof StreamedResponse && ! $this->baseResponse instanceof StreamedJsonResponse,
+            'Response was unexpectedly streamed.'
+        );
 
         return $this;
     }
@@ -567,7 +597,7 @@ class TestResponse implements ArrayAccess
     {
         $value = Arr::wrap($value);
 
-        $values = $escape ? array_map('e', $value) : $value;
+        $values = $escape ? array_map(e(...), $value) : $value;
 
         foreach ($values as $value) {
             PHPUnit::withResponse($this)->assertStringContainsString((string) $value, $this->getContent());
@@ -596,7 +626,7 @@ class TestResponse implements ArrayAccess
      */
     public function assertSeeInOrder(array $values, $escape = true)
     {
-        $values = $escape ? array_map('e', $values) : $values;
+        $values = $escape ? array_map(e(...), $values) : $values;
 
         PHPUnit::withResponse($this)->assertThat($values, new SeeInOrder($this->getContent()));
 
@@ -625,7 +655,7 @@ class TestResponse implements ArrayAccess
     {
         $value = Arr::wrap($value);
 
-        $values = $escape ? array_map('e', $value) : $value;
+        $values = $escape ? array_map(e(...), $value) : $value;
 
         $content = strip_tags($this->getContent());
 
@@ -645,7 +675,7 @@ class TestResponse implements ArrayAccess
      */
     public function assertSeeTextInOrder(array $values, $escape = true)
     {
-        $values = $escape ? array_map('e', $values) : $values;
+        $values = $escape ? array_map(e(...), $values) : $values;
 
         PHPUnit::withResponse($this)->assertThat($values, new SeeInOrder(strip_tags($this->getContent())));
 
@@ -663,7 +693,7 @@ class TestResponse implements ArrayAccess
     {
         $value = Arr::wrap($value);
 
-        $values = $escape ? array_map('e', $value) : $value;
+        $values = $escape ? array_map(e(...), $value) : $value;
 
         foreach ($values as $value) {
             PHPUnit::withResponse($this)->assertStringNotContainsString((string) $value, $this->getContent());
@@ -694,7 +724,7 @@ class TestResponse implements ArrayAccess
     {
         $value = Arr::wrap($value);
 
-        $values = $escape ? array_map('e', $value) : $value;
+        $values = $escape ? array_map(e(...), $value) : $value;
 
         $content = strip_tags($this->getContent());
 
@@ -781,6 +811,21 @@ class TestResponse implements ArrayAccess
     public function assertSimilarJson(array $data)
     {
         $this->decodeResponseJson()->assertSimilar($data);
+
+        return $this;
+    }
+
+    /**
+     * Assert that the response contains the given JSON fragments.
+     *
+     * @param  array  $data
+     * @return $this
+     */
+    public function assertJsonFragments(array $data)
+    {
+        foreach ($data as $fragment) {
+            $this->assertJsonFragment($fragment);
+        }
 
         return $this;
     }
@@ -896,9 +941,9 @@ class TestResponse implements ArrayAccess
         $jsonErrors = Arr::get($this->json(), $responseKey) ?? [];
 
         $errorMessage = $jsonErrors
-                ? 'Response has the following JSON validation errors:'.
-                        PHP_EOL.PHP_EOL.json_encode($jsonErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
-                : 'Response does not have JSON validation errors.';
+            ? 'Response has the following JSON validation errors:'.
+                    PHP_EOL.PHP_EOL.json_encode($jsonErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
+            : 'Response does not have JSON validation errors.';
 
         foreach ($errors as $key => $value) {
             if (is_int($key)) {
@@ -929,6 +974,26 @@ class TestResponse implements ArrayAccess
         }
 
         return $this;
+    }
+
+    /**
+     * Assert that the response has the given JSON validation errors but does not have any other JSON validation errors.
+     *
+     * @param  string|array  $errors
+     * @param  string  $responseKey
+     * @return $this
+     */
+    public function assertOnlyJsonValidationErrors($errors, $responseKey = 'errors')
+    {
+        $this->assertJsonValidationErrors($errors, $responseKey);
+
+        $jsonErrors = Arr::get($this->json(), $responseKey) ?? [];
+
+        $expectedErrorKeys = collect($errors)->map(fn ($value, $key) => is_int($key) ? $value : $key)->all();
+
+        $unexpectedErrorKeys = Arr::except($jsonErrors, $expectedErrorKeys);
+
+        PHPUnit::withResponse($this)->assertTrue(count($unexpectedErrorKeys) === 0, 'Response has unexpected validation errors: '.collect($unexpectedErrorKeys)->keys()->map(fn ($key) => "'{$key}'")->join(', '));
     }
 
     /**
@@ -1049,7 +1114,12 @@ class TestResponse implements ArrayAccess
      */
     public function decodeResponseJson()
     {
-        $testJson = new AssertableJsonString($this->getContent());
+        if ($this->baseResponse instanceof StreamedResponse ||
+            $this->baseResponse instanceof StreamedJsonResponse) {
+            $testJson = new AssertableJsonString($this->streamedContent());
+        } else {
+            $testJson = new AssertableJsonString($this->getContent());
+        }
 
         $decodedResponse = $testJson->json();
 
@@ -1271,9 +1341,9 @@ class TestResponse implements ArrayAccess
         $sessionErrors = $this->session()->get('errors')->getBag($errorBag)->getMessages();
 
         $errorMessage = $sessionErrors
-                ? 'Response has the following validation errors in the session:'.
-                        PHP_EOL.PHP_EOL.json_encode($sessionErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
-                : 'Response does not have validation errors in the session.';
+            ? 'Response has the following validation errors in the session:'.
+                    PHP_EOL.PHP_EOL.json_encode($sessionErrors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).PHP_EOL
+            : 'Response does not have validation errors in the session.';
 
         foreach (Arr::wrap($errors) as $key => $value) {
             PHPUnit::withResponse($this)->assertArrayHasKey(
@@ -1302,6 +1372,39 @@ class TestResponse implements ArrayAccess
                 }
             }
         }
+
+        return $this;
+    }
+
+    /**
+     * Assert that the response has the given validation errors but does not have any other validation errors.
+     *
+     * @param  string|array|null  $errors
+     * @param  string  $errorBag
+     * @param  string  $responseKey
+     * @return $this
+     */
+    public function assertOnlyInvalid($errors = null, $errorBag = 'default', $responseKey = 'errors')
+    {
+        if ($this->baseResponse->headers->get('Content-Type') === 'application/json') {
+            return $this->assertOnlyJsonValidationErrors($errors, $responseKey);
+        }
+
+        $this->assertSessionHas('errors');
+
+        $sessionErrors = $this->session()->get('errors')
+            ->getBag($errorBag)
+            ->getMessages();
+
+        $expectedErrorKeys = collect($errors)
+            ->map(fn ($value, $key) => is_int($key) ? $value : $key)->all();
+
+        $unexpectedErrorKeys = Arr::except($sessionErrors, $expectedErrorKeys);
+
+        PHPUnit::withResponse($this)->assertTrue(
+            count($unexpectedErrorKeys) === 0,
+            'Response has unexpected validation errors: '.collect($unexpectedErrorKeys)->keys()->map(fn ($key) => "'{$key}'")->join(', ')
+        );
 
         return $this;
     }
@@ -1545,6 +1648,33 @@ class TestResponse implements ArrayAccess
     }
 
     /**
+     * Dump the body of the response and end the script.
+     *
+     * @param  string|null  $key
+     * @return never
+     */
+    public function ddBody($key = null)
+    {
+        $content = $this->content();
+
+        if (function_exists('json_validate') && json_validate($content)) {
+            $this->ddJson($key);
+        }
+
+        dd($content);
+    }
+
+    /**
+     * Dump the JSON payload from the response and end the script.
+     *
+     * @param  string|null  $key
+     */
+    public function ddJson($key = null)
+    {
+        dd($this->json($key));
+    }
+
+    /**
      * Dump the session from the response and end the script.
      *
      * @param  string|array  $keys
@@ -1686,8 +1816,8 @@ class TestResponse implements ArrayAccess
     public function offsetExists($offset): bool
     {
         return $this->responseHasView()
-                    ? isset($this->original->gatherData()[$offset])
-                    : isset($this->json()[$offset]);
+            ? isset($this->original->gatherData()[$offset])
+            : isset($this->json()[$offset]);
     }
 
     /**
@@ -1699,8 +1829,8 @@ class TestResponse implements ArrayAccess
     public function offsetGet($offset): mixed
     {
         return $this->responseHasView()
-                    ? $this->viewData($offset)
-                    : $this->json()[$offset];
+            ? $this->viewData($offset)
+            : $this->json()[$offset];
     }
 
     /**

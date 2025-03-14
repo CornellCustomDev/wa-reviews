@@ -1,8 +1,8 @@
 <div>
     <h1>{{ $project->name }}</h1>
 
-    <div class="mb-4 max-w-screen-md" x-data="{ edit: $wire.entangle('showEdit').live }">
-        <div class="col-span-2 border rounded border-cds-gray-200 p-4">
+    <div class="mb-4 max-w-(--breakpoint-md)" x-data="{ edit: $wire.entangle('showEdit').live }">
+        <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4">
             @can('update', $project)
                 <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
                 <x-forms.button icon="x-mark" x-cloak class="float-right" variant="cds-secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
@@ -41,16 +41,16 @@
             <flux:tab name="report" :accent="false">Report</flux:tab>
         </flux:tabs>
 
-        <flux:tab.panel name="issues" class="!pt-6">
+        <flux:tab.panel name="issues" class="pt-6!">
             <livewire:projects.issues :$project />
         </flux:tab.panel>
-        <flux:tab.panel name="scope" class="!pt-6">
+        <flux:tab.panel name="scope" class="pt-6!">
             <livewire:scopes.view-scopes :$project />
         </flux:tab.panel>
-        <flux:tab.panel name="siteimprove" class="!pt-6">
+        <flux:tab.panel name="siteimprove" class="pt-6!">
             <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />
         </flux:tab.panel>
-        <flux:tab.panel name="report" class="!pt-6">
+        <flux:tab.panel name="report" class="pt-6!">
             <livewire:projects.report-data :$project />
         </flux:tab.panel>
     </flux:tab.group>

@@ -14,13 +14,13 @@
             <flux:tab name="guidelines" :accent="false">Guidelines</flux:tab>
         </flux:tabs>
 
-        <flux:tab.panel name="issues" class="!pt-6">
+        <flux:tab.panel name="issues" class="pt-6!">
             <livewire:issues.view-issues :$scope />
         </flux:tab.panel>
-        <flux:tab.panel name="siteimprove" class="!pt-6">
+        <flux:tab.panel name="siteimprove" class="pt-6!">
             <livewire:scopes.siteimprove-issues :$scope />
         </flux:tab.panel>
-        <flux:tab.panel name="guidelines" class="!pt-6">
+        <flux:tab.panel name="guidelines" class="pt-6!">
             <livewire:scopes.scope-guidelines :$scope />
         </flux:tab.panel>
 

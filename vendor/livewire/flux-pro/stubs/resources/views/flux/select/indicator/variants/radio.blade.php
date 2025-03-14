@@ -9,14 +9,14 @@ $classes = Flux::classes()
         'border',
         'border-zinc-300 dark:border-white/10',
         '[ui-option[disabled]_&]:border-zinc-200 dark:[ui-option[disabled]_&]:border-white/5',
-        '[ui-option[data-selected]_&]:border-transparent data-[indeterminate]:border-transparent',
-        '[ui-option[disabled]_&]:[ui-option[data-selected]_&]:border-transparent data-[indeterminate]:border-transparent',
+        '[ui-option[data-selected]_&]:border-transparent data-indeterminate:border-transparent',
+        '[ui-option[data-selected]_&]:[ui-option[disabled]_&]:border-transparent data-indeterminate:border-transparent',
     ])
     ->add([
         'bg-white dark:bg-white/10',
         '[ui-option[data-selected]_&]:bg-[var(--color-accent)]',
-        '[ui-option[data-selected]_&]:hover:bg-[var(--color-accent)]',
-        '[ui-option[data-selected]_&]:focus:bg-[var(--color-accent)]',
+        'hover:[ui-option[data-selected]_&]:bg-(--color-accent)',
+        'focus:[ui-option[data-selected]_&]:bg-(--color-accent)',
     ])
     ;
 @endphp

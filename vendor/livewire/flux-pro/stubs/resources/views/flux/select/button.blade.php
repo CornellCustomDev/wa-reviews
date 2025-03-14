@@ -17,12 +17,12 @@ $classes = Flux::classes()
     ->add('group/select-button cursor-default py-2')
     ->add('overflow-hidden') // Overflow hidden is here to prevent the button from growing when selected text is too long.
     ->add('flex items-center')
-    ->add('shadow-sm')
+    ->add('shadow-xs')
     ->add('bg-white dark:bg-white/10 dark:disabled:bg-white/[7%]')
     // Make the placeholder match the text color of standard input placeholders...
     ->add('disabled:shadow-none')
     ->add(match ($size) {
-        default => 'h-10 text-sm rounded-lg px-3 block w-full',
+        default => 'h-10 text-base sm:text-sm rounded-lg px-3 block w-full',
         'sm' => 'h-8 text-sm rounded-md pl-3 pr-2 block w-full',
         'xs' => 'h-6 text-xs rounded-md pl-3 pr-2 block w-full',
     })
@@ -54,5 +54,5 @@ $classes = Flux::classes()
         </flux:button>
     <?php endif; ?>
 
-    <flux:icon.chevron-down variant="mini" class="ml-2 -mr-1 text-zinc-300 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:!text-zinc-200 dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:!text-white/40" />
+    <flux:icon.chevron-down variant="mini" class="ml-2 -mr-1 text-zinc-300 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
 </button>

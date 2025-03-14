@@ -9,7 +9,7 @@
 
     <h1>{{ $issue->project->name }}: Issue</h1>
 
-    <div class="col-span-2 border rounded border-cds-gray-200 p-4 mb-8 min-h-16" x-data="{ edit: $wire.entangle('showEdit').live }">
+    <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4 mb-8 min-h-16" x-data="{ edit: $wire.entangle('showEdit').live }">
         @can('update', $issue)
             <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit issue" />
             <x-forms.button icon="x-mark" x-cloak class="float-right" variant="cds-secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing issue" />

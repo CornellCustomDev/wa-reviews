@@ -158,6 +158,13 @@ class Builder implements BuilderContract
     protected $afterQueryCallbacks = [];
 
     /**
+     * The callbacks that should be invoked on clone.
+     *
+     * @var array
+     */
+    protected $onCloneCallbacks = [];
+
+    /**
      * Create a new Eloquent query builder instance.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
@@ -317,6 +324,8 @@ class Builder implements BuilderContract
         if ($column instanceof Closure && is_null($operator)) {
             $column($query = $this->model->newQueryWithoutRelationships());
 
+            $this->eagerLoad = array_merge($this->eagerLoad, $query->getEagerLoads());
+
             $this->query->addNestedWhereQuery($query->getQuery(), $boolean);
         } else {
             $this->query->where(...func_get_args());
@@ -466,6 +475,21 @@ class Builder implements BuilderContract
         }
 
         return $this->whereKey($id)->first($columns);
+    }
+
+    /**
+     * Find a sole model by its primary key.
+     *
+     * @param  mixed  $id
+     * @param  array|string  $columns
+     * @return TModel
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException<TModel>
+     * @throws \Illuminate\Database\MultipleRecordsFoundException
+     */
+    public function findSole($id, $columns = ['*'])
+    {
+        return $this->whereKey($id)->sole($columns);
     }
 
     /**
@@ -994,7 +1018,7 @@ class Builder implements BuilderContract
      * @param  string  $pageName
      * @param  int|null  $page
      * @param  \Closure|int|null  $total
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @return \Illuminate\Pagination\LengthAwarePaginator
      *
      * @throws \InvalidArgumentException
      */
@@ -1004,10 +1028,7 @@ class Builder implements BuilderContract
 
         $total = value($total) ?? $this->toBase()->getCountForPagination();
 
-        $perPage = ($perPage instanceof Closure
-            ? $perPage($total)
-            : $perPage
-        ) ?: $this->model->getPerPage();
+        $perPage = value($perPage, $total) ?: $this->model->getPerPage();
 
         $results = $total
             ? $this->forPage($page, $perPage)->get($columns)
@@ -1484,7 +1505,8 @@ class Builder implements BuilderContract
         // scope so that we can properly group the added scope constraints in the
         // query as their own isolated nested where statement and avoid issues.
         $originalWhereCount = is_null($query->wheres)
-                    ? 0 : count($query->wheres);
+            ? 0
+            : count($query->wheres);
 
         $result = $scope(...$parameters) ?? $this;
 
@@ -1574,7 +1596,7 @@ class Builder implements BuilderContract
     }
 
     /**
-     * Set the relationships that should be eager loaded.
+     * Specify relationships that should be eager loaded.
      *
      * @param  array<array-key, array|(\Closure(\Illuminate\Database\Eloquent\Relations\Relation<*,*,*>): mixed)|string>|string  $relations
      * @param  (\Closure(\Illuminate\Database\Eloquent\Relations\Relation<*,*,*>): mixed)|string|null  $callback
@@ -1758,8 +1780,8 @@ class Builder implements BuilderContract
         return [explode(':', $name)[0], static function ($query) use ($name) {
             $query->select(array_map(static function ($column) use ($query) {
                 return $query instanceof BelongsToMany
-                        ? $query->getRelated()->qualifyColumn($column)
-                        : $column;
+                    ? $query->getRelated()->qualifyColumn($column)
+                    : $column;
             }, explode(',', explode(':', $name)[1])));
         }];
     }
@@ -1932,6 +1954,26 @@ class Builder implements BuilderContract
     public function withoutEagerLoads()
     {
         return $this->setEagerLoads([]);
+    }
+
+    /**
+     * Get the "limit" value from the query or null if it's not set.
+     *
+     * @return mixed
+     */
+    public function getLimit()
+    {
+        return $this->query->getLimit();
+    }
+
+    /**
+     * Get the "offset" value from the query or null if it's not set.
+     *
+     * @return mixed
+     */
+    public function getOffset()
+    {
+        return $this->query->getOffset();
     }
 
     /**
@@ -2169,6 +2211,19 @@ class Builder implements BuilderContract
     }
 
     /**
+     * Register a closure to be invoked on a clone.
+     *
+     * @param  \Closure  $callback
+     * @return $this
+     */
+    public function onClone(Closure $callback)
+    {
+        $this->onCloneCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    /**
      * Force a clone of the underlying query builder when cloning.
      *
      * @return void
@@ -2176,5 +2231,9 @@ class Builder implements BuilderContract
     public function __clone()
     {
         $this->query = clone $this->query;
+
+        foreach ($this->onCloneCallbacks as $onCloneCallback) {
+            $onCloneCallback($this);
+        }
     }
 }
