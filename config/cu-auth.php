@@ -6,7 +6,9 @@ return [
     | Identity Manager
     |--------------------------------------------------------------------------
     |
-    | The identity manager to use for user authentication.
+    | The identity manager to use for user authentication. Options are:
+    | - apache-shib: Apache mod_shib
+    | - php-saml: OneLogin SAML PHP Toolkit
     |
     */
     'identity_manager' => env('CU_AUTH_IDENTITY_MANGER', 'apache-shib'),
@@ -16,7 +18,9 @@ return [
     | Require Local User
     |--------------------------------------------------------------------------
     |
-    | Require a local user be logged in based on the remote user.
+    | Require a local user account in the application for the authenticated
+    | remote user. This setting controls the CUAuthenticated event to handle
+    | user login.
     |
     */
     'require_local_user' => env('REQUIRE_LOCAL_USER', true),
@@ -39,8 +43,21 @@ return [
     'apache_shib_user_variable' => env('APACHE_SHIB_USER_VARIABLE', 'REMOTE_USER'),
     'remote_user_override' => env('REMOTE_USER'),
 
-    'shibboleth_login_url' => env('SHIBBOLETH_LOGIN_URL', '/Shibboleth.sso/Login'),
-    'shibboleth_logout_url' => env('SHIBBOLETH_LOGOUT_URL', '/Shibboleth.sso/Logout'),
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Path for storing SAML certificates outside of version control.
+    |
+    | (Note: Configuration for the OneLogin SAML PHP Toolkit is primarily
+    | in config/php-saml-toolkit.php.)
+    |
+    | The default path of storage/app/keys is ignored by git in a standard
+    | Laravel installation, so typically this does not need to be changed.
+    |
+    */
+    'cert-path' => storage_path(env('SAML_CERT_PATH', 'app/keys')),
 
     /*
     |--------------------------------------------------------------------------

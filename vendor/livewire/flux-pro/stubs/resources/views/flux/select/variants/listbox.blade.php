@@ -3,7 +3,6 @@
     'selectedSuffix' => null,
     'placeholder' => null,
     'searchable' => null,
-    'indicator' => null,
     'clearable' => null,
     'invalid' => null,
     'button' => null, // Deprecated...
@@ -38,7 +37,7 @@ $trigger ??= $button;
         <flux:select.button :$placeholder :$invalid :$size :$clearable :suffix="$selectedSuffix" />
     <?php endif; ?>
 
-    <flux:select.options :$search :$searchable :$indicator :$empty>
-        {{ $slot}}
+    <flux:select.options :$search :$searchable :$empty>
+        {{ $slot }}
     </flux:select.options>
 </ui-select>

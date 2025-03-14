@@ -24,7 +24,8 @@ $months = $months ?? ($mode === 'range' ? 2 : 1);
 
 $range = $mode === 'range';
 
-$invalid ??= ($name && $errors->has($name));
+// Mark it invalid if the property or any of it's nested attributes have errors...
+$invalid ??= ($name && ($errors->has($name) || $errors->has($name . '.*')));
 
 $class= Flux::classes()
     ->add('isolate relative')

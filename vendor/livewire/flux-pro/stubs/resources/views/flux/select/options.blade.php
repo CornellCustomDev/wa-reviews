@@ -2,7 +2,6 @@
 
 @props([
     'searchable' => null,
-    'indicator' => null,
     'search' => null,
     'empty' => null,
 ])
