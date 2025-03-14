@@ -8,8 +8,6 @@
 ])
 
 @php
-// Clearable is not supported on xs size...
-if ($size === 'xs') $clearable = null;
 
 $classes = Flux::classes()
     ->add('group/select-button cursor-default py-2')
@@ -42,9 +40,9 @@ $classes = Flux::classes()
 
     <?php if ($clearable): ?>
         <flux:button as="div"
-            class="cursor-pointer ml-2 -mr-2 [[data-flux-date-picker-button]:has([data-flux-date-picker-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
+            class="cursor-pointer ml-2 {{ $size === 'sm' || $size === 'xs' ? '-mr-1' : '-mr-2' }} [[data-flux-date-picker-button]:has([data-flux-date-picker-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
             variant="subtle"
-            :size="$size === 'sm' ? 'xs' : 'sm'"
+            :size="$size === 'sm' || $size === 'xs' ? 'xs' : 'sm'"
             square
             tabindex="-1"
             aria-label="Clear date"

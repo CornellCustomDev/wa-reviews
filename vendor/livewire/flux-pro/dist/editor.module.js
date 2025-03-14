@@ -114,13 +114,27 @@ function attributeObserver(el, initialAttributes) {
 
 // js/element.js
 var UIElement = class extends HTMLElement {
+  wasDisconnected = false;
   constructor() {
     super();
     this.boot?.();
   }
   connectedCallback() {
+    if (this.wasDisconnected) {
+      this.wasDisconnected = false;
+      return;
+    }
     queueMicrotask(() => {
       this.mount?.();
+    });
+  }
+  disconnectedCallback() {
+    this.wasDisconnected = true;
+    queueMicrotask(() => {
+      if (this.wasDisconnected) {
+        this.unmount?.();
+      }
+      this.wasDisconnected = false;
     });
   }
   mixin(func, options = {}) {
