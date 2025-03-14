@@ -1,10 +1,10 @@
 <div>
     <form wire:submit="save">
         <x-forms.input label="Responsibile unit at Cornell" wire:model="form.responsible_unit" />
-        <flux:fieldset legend="Point of Contact" description="Who is the primary contact for this project?">
+        <x-forms.fieldset legend="Point of Contact">
             <x-forms.input label="Name" wire:model="form.poc_name" />
             <x-forms.input label="NetID" wire:model="form.poc_netid" />
-        </flux:fieldset>
+        </x-forms.fieldset>
         <x-forms.input label="Who is the audience?" wire:model="form.audience" />
         <x-forms.textarea label="What is the purpose of the site?" wire:model="form.site_purpose" />
         <x-forms.textarea label="URLs included in review" wire:model="form.urls_included" />

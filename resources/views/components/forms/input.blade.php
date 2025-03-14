@@ -11,7 +11,7 @@
 @endphp
 
 <flux:field class="mb-4 max-w-[600px]">
-    <flux:label class="mb-1!" :$badge>{{ $label }}</flux:label>
+    <flux:label :$badge>{{ $label }}</flux:label>
 
     @if ($description)
         <flux:description class="mb-1!">{{ $description }}</flux:description>
