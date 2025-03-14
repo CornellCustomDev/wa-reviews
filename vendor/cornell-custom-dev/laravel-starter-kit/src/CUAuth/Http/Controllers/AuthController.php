@@ -2,27 +2,34 @@
 
 namespace CornellCustomDev\LaravelStarterKit\CUAuth\Http\Controllers;
 
-use CornellCustomDev\LaravelStarterKit\CUAuth\DataObjects\ShibIdentity;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Facades\Auth;
 
 class AuthController extends BaseController
 {
-    public function shibbolethLogin(Request $request)
-    {
-        $redirectUri = $request->query('redirect_uri', '/');
+    public function __construct(
+        protected IdentityManager $identityManager
+    ) {}
 
-        if (ShibIdentity::getRemoteUser($request)) {
-            // Already logged in so redirect to the originally intended URL
-            return redirect()->to($redirectUri);
+    public function login(Request $request)
+    {
+        $redirectUrl = $request->query('redirect_url', '/');
+
+        $remoteIdentity = $this->identityManager->getIdentity();
+        if ($remoteIdentity) {
+            return redirect()->to($redirectUrl);
         }
 
-        // Use the Shibboleth login URL
-        return redirect(config('cu-auth.shibboleth_login_url').'?target='.urlencode($redirectUri));
+        // Use the SSO login URL
+        $ssoUrl = $this->identityManager->getSsoUrl($redirectUrl);
+
+        return redirect($ssoUrl);
     }
 
-    public function shibbolethLogout(Request $request)
+    public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
@@ -30,12 +37,35 @@ class AuthController extends BaseController
 
         $returnUrl = $request->query('return', '/');
 
-        if (ShibIdentity::getRemoteUserOverride()) {
-            // If using locally configured remote user, there is no Shibboleth logout
-            return redirect()->to($returnUrl);
+        $sloUrl = $this->identityManager->getSloUrl($returnUrl);
+
+        return redirect($sloUrl);
+    }
+
+    public function acs(Request $request)
+    {
+        try {
+            $this->identityManager->storeIdentity();
+        } catch (Exception $e) {
+            return response($e->getMessage(), 403);
         }
 
-        // Use the Shibboleth logout URL
-        return redirect(config('cu-auth.shibboleth_logout_url').'?return='.urlencode($returnUrl));
+        // Redirect to the originally intended URL
+        $returnUrl = $this->identityManager->getSsoReturnUrl($request);
+
+        return redirect()->to($returnUrl);
+    }
+
+    public function metadata(Request $request)
+    {
+        $metadata = $this->identityManager->getMetadata();
+
+        if (empty($metadata)) {
+            return response('Metadata not available.', 404);
+        }
+
+        return response($metadata)->withHeaders([
+            'Content-Type' => 'text/xml',
+        ]);
     }
 }

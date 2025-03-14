@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '95d81ccb7f73f8fa30cc640fa569f57b0d4a2e77',
+        'reference' => 'ad9f9de0bd0e629ef8fc62f1788533d24660df72',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -53,9 +53,9 @@
             ),
         ),
         'cornell-custom-dev/laravel-starter-kit' => array(
-            'pretty_version' => 'v0.4.0',
-            'version' => '0.4.0.0',
-            'reference' => '433644514811a69927f4594dcfdeb7e42e31ff25',
+            'pretty_version' => 'dev-onelogin-saml',
+            'version' => 'dev-onelogin-saml',
+            'reference' => '49a19c3473f3a31b326f05df803762565a28a3de',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-starter-kit',
             'aliases' => array(),
@@ -64,7 +64,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '95d81ccb7f73f8fa30cc640fa569f57b0d4a2e77',
+            'reference' => 'ad9f9de0bd0e629ef8fc62f1788533d24660df72',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -715,6 +715,15 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
+        'onelogin/php-saml' => array(
+            'pretty_version' => '4.2.0',
+            'version' => '4.2.0.0',
+            'reference' => 'd3b5172f137db2f412239432d77253ceaaa1e939',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../onelogin/php-saml',
+            'aliases' => array(),
+            'dev_requirement' => false,
+        ),
         'openai-php/client' => array(
             'pretty_version' => 'v0.10.3',
             'version' => '0.10.3.0',
@@ -1018,6 +1027,15 @@
             'replaced' => array(
                 0 => '4.7.6',
             ),
+        ),
+        'robrichards/xmlseclibs' => array(
+            'pretty_version' => '3.1.3',
+            'version' => '3.1.3.0',
+            'reference' => '2bdfd742624d739dfadbd415f00181b4a77aaf07',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../robrichards/xmlseclibs',
+            'aliases' => array(),
+            'dev_requirement' => false,
         ),
         'sebastian/cli-parser' => array(
             'pretty_version' => '2.0.1',

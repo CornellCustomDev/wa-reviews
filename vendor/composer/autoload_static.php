@@ -111,6 +111,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         ),
         'R' => 
         array (
+            'RobRichards\\XMLSecLibs\\' => 23,
             'Ramsey\\Uuid\\' => 12,
             'Ramsey\\Collection\\' => 18,
         ),
@@ -132,6 +133,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'O' => 
         array (
             'OpenAI\\' => 7,
+            'OneLogin\\' => 9,
         ),
         'N' => 
         array (
@@ -389,6 +391,10 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         array (
             0 => __DIR__ . '/..' . '/spatie/backtrace/src',
         ),
+        'RobRichards\\XMLSecLibs\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/robrichards/xmlseclibs/src',
+        ),
         'Ramsey\\Uuid\\' => 
         array (
             0 => __DIR__ . '/..' . '/ramsey/uuid/src',
@@ -449,6 +455,10 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'OpenAI\\' => 
         array (
             0 => __DIR__ . '/..' . '/openai-php/client/src',
+        ),
+        'OneLogin\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/onelogin/php-saml/src',
         ),
         'NunoMaduro\\Collision\\' => 
         array (
@@ -672,6 +682,7 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'App\\Enums\\TestingMethod' => __DIR__ . '/../..' . '/app/Enums/TestingMethod.php',
         'App\\Exports\\ProjectReportExport' => __DIR__ . '/../..' . '/app/Exports/ProjectReportExport.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
+        'App\\Listeners\\CUAuthorize' => __DIR__ . '/../..' . '/app/Listeners/CUAuthorize.php',
         'App\\Livewire\\ActRules\\ShowRule' => __DIR__ . '/../..' . '/app/Livewire/ActRules/ShowRule.php',
         'App\\Livewire\\ActRules\\ViewRules' => __DIR__ . '/../..' . '/app/Livewire/ActRules/ViewRules.php',
         'App\\Livewire\\Ai\\AnalyzePage' => __DIR__ . '/../..' . '/app/Livewire/Ai/AnalyzePage.php',
@@ -895,12 +906,16 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Composer\\Semver\\Semver' => __DIR__ . '/..' . '/composer/semver/src/Semver.php',
         'Composer\\Semver\\VersionParser' => __DIR__ . '/..' . '/composer/semver/src/VersionParser.php',
         'CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/CUAuthServiceProvider.php',
-        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\DataObjects\\ShibIdentity' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/DataObjects/ShibIdentity.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Commands\\GenerateKeys' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Commands/GenerateKeys.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\DataObjects\\RemoteIdentity' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/DataObjects/RemoteIdentity.php',
         'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Events\\CUAuthenticated' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Events/CUAuthenticated.php',
         'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Http\\Controllers\\AuthController' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Http/Controllers/AuthController.php',
         'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Listeners\\AuthorizeUser' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Listeners/AuthorizeUser.php',
-        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\ApacheShib' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Middleware/ApacheShib.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Managers\\IdentityManager' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Managers/IdentityManager.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Managers\\SamlIdentityManager' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Managers/SamlIdentityManager.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Managers\\ShibIdentityManager' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Managers/ShibIdentityManager.php',
         'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\AppTesters' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Middleware/AppTesters.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\CUAuth' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/CUAuth/Middleware/CUAuth.php',
         'CornellCustomDev\\LaravelStarterKit\\Contact\\PhoneNumber' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/Contact/PhoneNumber.php',
         'CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-starter-kit/src/StarterKitServiceProvider.php',
         'Cron\\AbstractField' => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron/AbstractField.php',
@@ -4629,6 +4644,18 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'NunoMaduro\\Collision\\Provider' => __DIR__ . '/..' . '/nunomaduro/collision/src/Provider.php',
         'NunoMaduro\\Collision\\SolutionsRepositories\\NullSolutionsRepository' => __DIR__ . '/..' . '/nunomaduro/collision/src/SolutionsRepositories/NullSolutionsRepository.php',
         'NunoMaduro\\Collision\\Writer' => __DIR__ . '/..' . '/nunomaduro/collision/src/Writer.php',
+        'OneLogin\\Saml2\\Auth' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Auth.php',
+        'OneLogin\\Saml2\\AuthnRequest' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/AuthnRequest.php',
+        'OneLogin\\Saml2\\Constants' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Constants.php',
+        'OneLogin\\Saml2\\Error' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Error.php',
+        'OneLogin\\Saml2\\IdPMetadataParser' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/IdPMetadataParser.php',
+        'OneLogin\\Saml2\\LogoutRequest' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/LogoutRequest.php',
+        'OneLogin\\Saml2\\LogoutResponse' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/LogoutResponse.php',
+        'OneLogin\\Saml2\\Metadata' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Metadata.php',
+        'OneLogin\\Saml2\\Response' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Response.php',
+        'OneLogin\\Saml2\\Settings' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Settings.php',
+        'OneLogin\\Saml2\\Utils' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/Utils.php',
+        'OneLogin\\Saml2\\ValidationError' => __DIR__ . '/..' . '/onelogin/php-saml/src/Saml2/ValidationError.php',
         'OpenAI\\Client' => __DIR__ . '/..' . '/openai-php/client/src/Client.php',
         'OpenAI\\Contracts\\ClientContract' => __DIR__ . '/..' . '/openai-php/client/src/Contracts/ClientContract.php',
         'OpenAI\\Contracts\\MetaInformationContract' => __DIR__ . '/..' . '/openai-php/client/src/Contracts/MetaInformationContract.php',
@@ -7049,6 +7076,10 @@ class ComposerStaticInite2b96d798858560b9a52d5e97c21fd0a
         'Ramsey\\Uuid\\UuidInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/UuidInterface.php',
         'Ramsey\\Uuid\\Validator\\GenericValidator' => __DIR__ . '/..' . '/ramsey/uuid/src/Validator/GenericValidator.php',
         'Ramsey\\Uuid\\Validator\\ValidatorInterface' => __DIR__ . '/..' . '/ramsey/uuid/src/Validator/ValidatorInterface.php',
+        'RobRichards\\XMLSecLibs\\Utils\\XPath' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/Utils/XPath.php',
+        'RobRichards\\XMLSecLibs\\XMLSecEnc' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/XMLSecEnc.php',
+        'RobRichards\\XMLSecLibs\\XMLSecurityDSig' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/XMLSecurityDSig.php',
+        'RobRichards\\XMLSecLibs\\XMLSecurityKey' => __DIR__ . '/..' . '/robrichards/xmlseclibs/src/XMLSecurityKey.php',
         'SQLite3Exception' => __DIR__ . '/..' . '/symfony/polyfill-php83/Resources/stubs/SQLite3Exception.php',
         'SebastianBergmann\\CliParser\\AmbiguousOptionException' => __DIR__ . '/..' . '/sebastian/cli-parser/src/exceptions/AmbiguousOptionException.php',
         'SebastianBergmann\\CliParser\\Exception' => __DIR__ . '/..' . '/sebastian/cli-parser/src/exceptions/Exception.php',

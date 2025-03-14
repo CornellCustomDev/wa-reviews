@@ -31,19 +31,19 @@ use App\Livewire\SiaRules\ShowSiaRule;
 use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
 use App\Models\Project;
-use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\ApacheShib;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
-Route::group(['middleware' => [ApacheShib::class]], function () {
-    Route::get('login', fn() => redirect()->route('cu-auth.shibboleth-login'))->name('login');
-    Route::get('logout', fn() => redirect()->route('cu-auth.shibboleth-logout'))->name('logout');
+Route::group(['middleware' => [CUAuth::class]], function () {
+    Route::get('login', fn() => redirect()->route('cu-auth.sso-login'))->name('login');
+    Route::get('logout', fn() => redirect()->route('cu-auth.sso-logout'))->name('logout');
 });
 
-Route::group(['middleware' => [ApacheShib::class]], function () {
+Route::group(['middleware' => [CUAuth::class]], function () {
     Route::get('projects/', ViewProjects::class)->name('projects')->can('viewAny', Project::class);
     Route::prefix('project')->name('project.')->group(function () {
         Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
