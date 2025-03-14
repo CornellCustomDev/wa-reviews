@@ -30,6 +30,7 @@ use App\Livewire\Scopes\UpdateScope;
 use App\Livewire\SiaRules\ShowSiaRule;
 use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
+use App\Livewire\Users\Manage;
 use App\Models\Project;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
@@ -66,6 +67,10 @@ Route::group(['middleware' => [CUAuth::class]], function () {
         Route::get('/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
         Route::get('/item/create', CreateItem::class)->name('item.create')->can('update', 'issue');
         Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
+    });
+
+    Route::prefix('users/')->name('users.')->group(function () {
+        Route::get('manage', Manage::class)->name('manage');
     });
 });
 

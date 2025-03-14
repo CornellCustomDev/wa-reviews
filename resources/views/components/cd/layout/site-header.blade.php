@@ -8,6 +8,9 @@
                 <li><a href="{{ route('categories.index') }}">Categories</a></li>
                 <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('chat') }}">AI Chat</a></li>
+                @can(\App\Enums\Permissions::ManageUsers)
+                    <li><a href="{{ route('users.manage') }}">Users</a></li>
+                @endcan
             </ul>
         </div>
     </nav>

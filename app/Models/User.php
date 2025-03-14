@@ -50,7 +50,7 @@ class User extends Authenticatable
 
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Teams::class);
+        return $this->belongsToMany(Team::class);
     }
 
     public function isAdministrator(): bool

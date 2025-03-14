@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Services\CornellAI\APIGateway\OpenAIChatService as APIGatewayChatService;
 use App\Services\CornellAI\AzureOpenAI\ChatService as AzureOpenAIChatService;
 use App\Services\CornellAI\OpenAIChatService;
 use App\Services\SiteImprove\SiteimproveService;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -44,6 +46,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Gate::after(fn (User $u) => $u->isAdministrator() ? true : null);
     }
 }
