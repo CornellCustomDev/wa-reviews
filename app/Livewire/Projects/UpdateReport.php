@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Projects;
 
-use App\Livewire\Forms\ProjectForm;
+use App\Livewire\Forms\ReportForm;
 use App\Models\Project;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -10,7 +10,7 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class UpdateReport extends Component
 {
-    public ProjectForm $form;
+    public ReportForm $form;
 
     public function mount(Project $project)
     {
@@ -22,6 +22,6 @@ class UpdateReport extends Component
         $this->authorize('update', $this->form->project);
         $this->form->update();
 
-        return redirect()->route('project.show', $this->form->project);
+        return redirect()->route('project.show', ['project' => $this->form->project, 'tab' => 'report']);
     }
 }

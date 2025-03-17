@@ -10,7 +10,7 @@
     $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
 @endphp
 
-<flux:field class="mb-4 max-w-[600px]">
+<flux:field class="mb-4">
     <flux:label :$badge>{{ $label }}</flux:label>
 
     @if ($description)

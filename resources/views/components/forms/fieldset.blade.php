@@ -8,16 +8,12 @@
 @endphp
 
 @if ($description)
-<flux:fieldset legend="{{ $legend }}" aria-describedby="{{ $descr_id }}" class="mb-4 semantic">
-    <div class="ml-4 -mr-4">
-        <p id="{{ $descr_id }}">{{ $description }}</p>
-        {{ $slot }}
-    </div>
+<flux:fieldset legend="{{ $legend }}" aria-describedby="{{ $descr_id }}" class="mb-8 semantic">
+    <p id="{{ $descr_id }}">{{ $description }}</p>
+    {{ $slot }}
 </flux:fieldset>
 @else
-<flux:fieldset legend="{{ $legend }}" class="mb-4 semantic">
-    <div class="ml-4 -mr-4">
+<flux:fieldset legend="{{ $legend }}" class="mb-8 semantic">
         {{ $slot }}
-    </div>
 </flux:fieldset>
 @endif

@@ -9,11 +9,40 @@
             <flux:heading level="2" size="xl">Report Data</flux:heading>
 
             <div x-show="!editReport">
-                @if($project->description)
-                    <div>
-                        {!! $project->description !!}
-                    </div>
-                @endif
+                <div>
+                    @if($project->responsible_unit)
+                        <flux:heading level="3" size="lg">Responsible unit at Cornell</flux:heading>
+                        <p>{!! $project->responsible_unit !!}</p>
+                    @endif
+                    @if($project->contact_name)
+                        <flux:heading level="3" size="lg">Point of Contact</flux:heading>
+                        <p>{!! $project->contact_name !!} ({!! $project->contact_netid !!})</p>
+                    @endif
+                    @if($project->audience)
+                        <flux:heading level="3" size="lg">Who is the audience?</flux:heading>
+                        <p>{!! $project->audience !!}</p>
+                    @endif
+                    @if($project->site_purpose)
+                        <flux:heading level="3" size="lg">What is the purpose of the site?</flux:heading>
+                        <p>{!! $project->site_purpose !!}</p>
+                    @endif
+                    @if($project->urls_included)
+                        <flux:heading level="3" size="lg">URLs included in review</flux:heading>
+                        <p>{!! $project->urls_included !!}</p>
+                    @endif
+                    @if($project->urls_excluded)
+                        <flux:heading level="3" size="lg">URLs excluded from review</flux:heading>
+                        <p>{!! $project->urls_excluded !!}</p>
+                    @endif
+                    @if($project->review_procedure)
+                        <flux:heading level="3" size="lg">Review procedure</flux:heading>
+                        <p>{!! $project->review_procedure !!}</p>
+                    @endif
+                    @if($project->summary)
+                        <flux:heading level="3" size="lg">Summary and Overall Findings</flux:heading>
+                        <p>{!! $project->summary !!}</p>
+                    @endif
+                </div>
             </div>
 
             <div x-show="editReport" x-cloak>
