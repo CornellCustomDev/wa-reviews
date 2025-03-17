@@ -4,7 +4,7 @@
             <tr>
                 <th>Name</th>
                 <th>Email</th>
-                <th style="width: 100px;">Actions</th>
+                <th>Teams</th>
             </tr>
         </thead>
         <tbody>
@@ -18,20 +18,27 @@
                 </td>
                 <td class="text-nowrap">
                     @can('update', $user)
-                        <x-forms.button.edit
-                            :href="route('users.manage', $user)" title="Edit User {{ $user->id }}" size="xs"
-                        />
-                    @endcan
-                    @can('delete', $user)
-                        <x-forms.button.delete
-                            title="Delete User {{ $user->id }}"
+                        <x-forms.button
+                            title="Edit User {{ $user->id }}"
+                            icon="pencil-square"
                             size="xs"
-                            wire:click.prevent="delete('{{ $user->id }}')"
-                            wire:confirm="Are you sure you want to delete the user &quot;{{ $user->email }}&quot;?"
+                            class="float-right"
+                            wire:click="edit('{{ $user->id }}')"
                         />
                     @endcan
+                        <ul>
+                            @foreach($user->teams as $team)
+                                <li>{{ $team->name }}</li>
+                            @endforeach
+                        </ul>
                 </td>
             </tr>
         @endforeach
     </table>
+
+    <flux:modal name="edit-user" wire:close="closeEditUser()" class="max-w-(--breakpoint-xl)">
+        @if ($editUser)
+            <livewire:users.update-user :user="$editUser" />
+        @endif
+    </flux:modal>
 </div>

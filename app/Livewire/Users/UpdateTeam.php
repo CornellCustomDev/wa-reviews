@@ -20,7 +20,7 @@ class UpdateTeam extends Component
         $this->authorize('update', $this->form->team);
         $this->form->update();
 
-        // TODO: This should just close the modal and refresh the content, not redirect
-        return redirect()->route('users.manage');
+        $this->dispatch('close-edit-team');
+        $this->dispatch('team-changes');
     }
 }

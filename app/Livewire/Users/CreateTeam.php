@@ -15,7 +15,7 @@ class CreateTeam extends Component
         $this->authorize('create', Team::class);
         $this->form->store();
 
-        // TODO: This should just close the modal and refresh the content, not redirect
-        return redirect()->route('users.manage');
+        $this->dispatch('close-edit-team');
+        $this->dispatch('team-changes');
     }
 }

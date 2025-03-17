@@ -3,6 +3,7 @@
 namespace App\Livewire\Users;
 
 use App\Models\Team;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ViewTeams extends Component
@@ -22,6 +23,7 @@ class ViewTeams extends Component
         $this->modal('edit-team')->show();
     }
 
+    #[On(['close-edit-team'])]
     public function closeEditTeam(): void
     {
         $this->modal('edit-team')->close();
@@ -33,6 +35,7 @@ class ViewTeams extends Component
     {
         $this->authorize('delete', $team);
         $team->delete();
+        $this->dispatch('team-changes');
     }
 
     public function render()
