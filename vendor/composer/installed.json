@@ -308,12 +308,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "8c4b91f323aee2013df9ca29722c6d1cb1c92339"
+                "reference": "9574f0f9d696b754ae39d52f8ae073ea4e2d20ac"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/8c4b91f323aee2013df9ca29722c6d1cb1c92339",
-                "reference": "8c4b91f323aee2013df9ca29722c6d1cb1c92339",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/9574f0f9d696b754ae39d52f8ae073ea4e2d20ac",
+                "reference": "9574f0f9d696b754ae39d52f8ae073ea4e2d20ac",
                 "shasum": ""
             },
             "require": {
@@ -331,7 +331,7 @@
                 "orchestra/testbench": "^8.32",
                 "phpunit/phpunit": "^10.5"
             },
-            "time": "2025-03-06T19:36:30+00:00",
+            "time": "2025-03-18T19:24:50+00:00",
             "type": "library",
             "extra": {
                 "laravel": {

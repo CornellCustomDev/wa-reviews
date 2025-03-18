@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '8b3a944e7554dc82aca26bb2b8e4a0eea0d77ac7',
+        'reference' => '59843b4d97052cf4cd78e7ba5b6c23a869e699f7',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -55,7 +55,7 @@
         'cornell-custom-dev/laravel-starter-kit' => array(
             'pretty_version' => 'dev-onelogin-saml',
             'version' => 'dev-onelogin-saml',
-            'reference' => '8c4b91f323aee2013df9ca29722c6d1cb1c92339',
+            'reference' => '9574f0f9d696b754ae39d52f8ae073ea4e2d20ac',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-starter-kit',
             'aliases' => array(),
@@ -64,7 +64,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'ca2cb0b0c15ca369492de62393f5a7abcfe47814',
+            'reference' => '59843b4d97052cf4cd78e7ba5b6c23a869e699f7',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
