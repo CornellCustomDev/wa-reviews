@@ -11,36 +11,40 @@
             <div x-show="!editReport">
                 <div>
                     @if($project->responsible_unit)
-                        <flux:heading level="3" size="lg">Responsible unit at Cornell</flux:heading>
-                        <p>{!! $project->responsible_unit !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Responsible unit at Cornell</flux:heading>
+                        <p>{{ $project->responsible_unit }}</p>
                     @endif
                     @if($project->contact_name)
-                        <flux:heading level="3" size="lg">Point of Contact</flux:heading>
-                        <p>{!! $project->contact_name !!} ({!! $project->contact_netid !!})</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Point of Contact</flux:heading>
+                        <p>{{ $project->contact_name }}
+                            @if($project->contact_netid)
+                                ({{ $project->contact_netid }})
+                            @endif
+                        </p>
                     @endif
                     @if($project->audience)
-                        <flux:heading level="3" size="lg">Who is the audience?</flux:heading>
-                        <p>{!! $project->audience !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Who is the audience?</flux:heading>
+                        <p>{{ $project->audience }}</p>
                     @endif
                     @if($project->site_purpose)
-                        <flux:heading level="3" size="lg">What is the purpose of the site?</flux:heading>
-                        <p>{!! $project->site_purpose !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">What is the purpose of the site?</flux:heading>
+                        <p>{{ $project->site_purpose }}</p>
                     @endif
                     @if($project->urls_included)
-                        <flux:heading level="3" size="lg">URLs included in review</flux:heading>
-                        <p>{!! $project->urls_included !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">URLs included in review</flux:heading>
+                        <p>{{ $project->urls_included }}</p>
                     @endif
                     @if($project->urls_excluded)
-                        <flux:heading level="3" size="lg">URLs excluded from review</flux:heading>
-                        <p>{!! $project->urls_excluded !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">URLs excluded from review</flux:heading>
+                        <p>{{ $project->urls_excluded }}</p>
                     @endif
                     @if($project->review_procedure)
-                        <flux:heading level="3" size="lg">Review procedure</flux:heading>
-                        <p>{!! $project->review_procedure !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Review procedure</flux:heading>
+                        <p>{{ $project->review_procedure }}</p>
                     @endif
                     @if($project->summary)
-                        <flux:heading level="3" size="lg">Summary and Overall Findings</flux:heading>
-                        <p>{!! $project->summary !!}</p>
+                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Summary and Overall Findings</flux:heading>
+                        <p>{{ $project->summary }}</p>
                     @endif
                 </div>
             </div>

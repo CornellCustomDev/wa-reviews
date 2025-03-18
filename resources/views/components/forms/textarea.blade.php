@@ -4,6 +4,7 @@
     'variant' => 'cds',
     'size' => 'base',
     'badge' => null,
+    'description' => null,
 ])
 @php
 $classes = Flux::classes()
@@ -18,4 +19,4 @@ $classes = Flux::classes()
 
 $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
 @endphp
-<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" :$badge />
+<flux:editor :$label :$variant :$toolbar :attributes="$attributes->class($classes)" :$badge description="{{ $description }}" />
