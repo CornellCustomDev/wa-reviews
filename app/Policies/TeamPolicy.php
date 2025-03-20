@@ -14,7 +14,7 @@ class TeamPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams);
     }
 
     /**
@@ -22,12 +22,14 @@ class TeamPolicy
      */
     public function view(User $user, Team $team): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams)
+            || $user->isAbleTo(Permissions::ManageTeamMembers, $team->id);
     }
 
     public function manageTeam(User $user, Team $team): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams)
+            || $user->isAbleTo(Permissions::ManageTeamMembers, $team->id);
     }
 
     /**
@@ -35,7 +37,7 @@ class TeamPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams);
     }
 
     /**
@@ -43,7 +45,7 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams);
     }
 
     /**
@@ -51,7 +53,7 @@ class TeamPolicy
      */
     public function delete(User $user, Team $team): bool
     {
-        return $user->can(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams);
     }
 
     /**

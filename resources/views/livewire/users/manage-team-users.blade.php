@@ -18,7 +18,7 @@
                     {{ $user->email }}
                 </td>
                 <td>
-                    @can('update', $user)
+                    @can('manageTeam', $team)
                         <x-forms.button
                             title="Edit Roles for {{ $user->name }}"
                             icon="pencil-square"

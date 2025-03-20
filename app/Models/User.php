@@ -63,6 +63,6 @@ class User extends Authenticatable implements LaratrustUser
 
     public function isAdministrator(): bool
     {
-        return true;
+        return false;
     }
 }
