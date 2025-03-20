@@ -8,8 +8,13 @@ enum Permissions: string
 
     // Administrative
     case ManageSiteConfig = 'manage site config';
-    case ManageUsers = 'manage users';
+    case ManageTeams = 'manage teams';
 
-    // Projects
-    case ManageProjects = 'manage projects';
+    // Teams
+    case ManageTeamMembers = 'manage team members';
+    case ManageTeamProjects = 'manage team projects';
+
+    // Members
+    case EditProjects = 'edit projects';
+    case ViewProjects = 'view projects';
 }

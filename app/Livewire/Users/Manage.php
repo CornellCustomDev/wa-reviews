@@ -8,5 +8,5 @@ use Livewire\Component;
 class Manage extends Component
 {
     #[Url]
-    public string $tab = 'users';
+    public string $tab = 'teams';
 }

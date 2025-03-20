@@ -2,24 +2,25 @@
     <table class="table striped bordered">
         <thead>
             <tr>
-                <th style="width: 50px;">ID</th>
                 <th>Name</th>
-                <th style="width: 100px;">Actions</th>
+                <th class="w-24">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach($teams as $team)
                 <tr wire:key="{{ $team->id }}">
                     <td>
-                        {{ $team->id }}
-                    </td>
-                    <td>
                         {{ $team->name }}
                     </td>
                     <td class="text-nowrap">
+                        <x-forms.button.view
+                            title="View {{ $team->name }}"
+                            size="xs"
+                            :href="route('team.show', $team)"
+                        />
                         @can('update', $team)
                             <x-forms.button
-                                title="Edit Team {{ $team->id }}"
+                                title="Edit Team {{ $team->name }}"
                                 icon="pencil-square"
                                 size="xs"
                                 wire:click="edit('{{ $team->id }}')"
@@ -38,7 +39,9 @@
         </tbody>
     </table>
 
-    <x-forms.button icon="plus-circle" wire:click="create()">Add Team</x-forms.button>
+    @can('create', App\Models\Team::class)
+        <x-forms.button icon="plus-circle" wire:click="create()">Add Team</x-forms.button>
+    @endcan
 
     <flux:modal name="edit-team" wire:close="closeEditTeam()" class="max-w-(--breakpoint-xl)">
         @if ($createTeam)

@@ -1,6 +1,9 @@
 <div>
     <form wire:submit="save">
+        <flux:heading>Update User</flux:heading>
+        <hr>
         <x-forms.input wire:model="form.name" label="Name" />
+        <x-forms.input wire:model="form.email" label="Email" disabled />
         <flux:checkbox.group label="Teams" wire:model="form.teams">
             @foreach($this->getTeams() as $team)
                 <x-forms.checkbox
@@ -11,7 +14,7 @@
         </flux:checkbox.group>
         <x-forms.button.submit-group>
             <x-forms.button type="submit">
-                Update user
+                Update User
             </x-forms.button>
             <x-forms.button wire:click="$dispatch('close-edit-user')" variant="cds-secondary">
                 Cancel

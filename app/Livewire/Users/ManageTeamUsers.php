@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Livewire\Users;
+
+use App\Models\Role;
+use App\Models\Team;
+use App\Models\User;
+use Livewire\Attributes\On;
+use Livewire\Component;
+
+class ManageTeamUsers extends Component
+{
+    public Team $team;
+    public ?User $editUser = null;
+
+    public function edit(User $user): void
+    {
+        $this->editUser = $user;
+        $this->modal('edit-user')->show();
+    }
+
+    #[On('close-add-user')]
+    public function closeAddUser(): void
+    {
+        $this->modal('add-user')->close();
+    }
+
+    #[On('close-edit-user')]
+    public function closeEditUser(): void
+    {
+        $this->modal('edit-user')->close();
+        $this->editUser = null;
+    }
+
+    public function remove(User $user)
+    {
+        $this->authorize('manageTeam', $this->team);
+        // Remove any roles the user has on the team
+        $user->syncRoles([], $this->team->id);
+        // Remove the user from the team
+        $this->team->users()->detach($user->id);
+        $this->dispatch('team-changes');
+    }
+
+    public function render()
+    {
+        return view('livewire.users.manage-team-users', [
+            'roles' => Role::all(),
+            'users' => $this->team->users,
+        ]);
+    }
+}

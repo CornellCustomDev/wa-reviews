@@ -5,41 +5,51 @@ use App\Enums\Roles;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Spatie\Permission\Exceptions\PermissionAlreadyExists;
-use Spatie\Permission\Exceptions\RoleAlreadyExists;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use Laratrust\Models\Permission;
+use Laratrust\Models\Role;
 
 return new class extends Migration
 {
     const array ROLE_PERMISSIONS = [
-        Roles::SuperAdmin->value => [
+        Roles::SiteAdmin->value => [
             Permissions::ManageSiteConfig->value,
-            Permissions::ManageUsers->value,
-            Permissions::ManageProjects->value,
+            Permissions::ManageTeams->value,
+            Permissions::ManageTeamMembers->value,
+            Permissions::ManageTeamProjects->value,
+            Permissions::EditProjects->value,
+            Permissions::ViewProjects->value,
         ],
-        Roles::ProjectManager->value => [
-            Permissions::ManageProjects->value,
-        ]
+        Roles::TeamAdmin->value => [
+            Permissions::ManageTeamMembers->value,
+            Permissions::ManageTeamProjects->value,
+            Permissions::EditProjects->value,
+            Permissions::ViewProjects->value,
+        ],
+        Roles::Reviewer->value => [
+            Permissions::EditProjects->value,
+            Permissions::ViewProjects->value,
+        ],
+        Roles::Member->value => [
+            Permissions::ViewProjects->value,
+        ],
     ];
 
     public function up(): void
     {
         foreach (App\Enums\Permissions::values() as $permission) {
-            try {
-                Permission::create(['name' => $permission]);
-            } catch (PermissionAlreadyExists) {
-                //
-            }
+            Permission::create([
+                'name' => $permission,
+                'display_name' => ucwords($permission),
+            ]);
         }
 
         foreach (App\Enums\Roles::values() as $roleName) {
-            try {
-                $role = Role::create(['name' => $roleName]);
-            } catch (RoleAlreadyExists) {
-                $role = Role::findByName($roleName);
-            }
-            $role->syncPermissions(self::ROLE_PERMISSIONS[$roleName] ?? []);
+            $role = Role::create([
+                'name' => $roleName,
+                'display_name' => ucwords($roleName),
+            ]);
+            $permissions = Permission::whereIn('name', self::ROLE_PERMISSIONS[$roleName] ?? [])->get();
+            $role->syncPermissions($permissions ?? []);
         }
     }
 

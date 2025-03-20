@@ -12,6 +12,7 @@ class UserForm extends Form
 
     #[Validate('required|string|max:255')]
     public string $name = '';
+    public string $email = '';
     #[Validate('nullable')]
     public array $teams = [];
 
@@ -19,6 +20,7 @@ class UserForm extends Form
     {
         $this->user = $user;
         $this->name = $user->name;
+        $this->email = $user->email;
         $this->teams = $user->teams()->pluck('teams.id')->all() ?? [];
     }
 

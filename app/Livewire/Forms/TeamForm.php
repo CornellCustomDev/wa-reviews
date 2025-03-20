@@ -10,7 +10,7 @@ class TeamForm extends Form
 {
     public ?Team $team;
 
-    #[Validate('required|string|max:255')]
+    #[Validate('required|string|min:3|max:255', as: 'Team Name')]
     public string $name = '';
 
     public function setModel(Team $team): void

@@ -5,6 +5,7 @@
                 <th>Name</th>
                 <th>Email</th>
                 <th>Teams</th>
+                <th class="w-24">Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -17,6 +18,13 @@
                     {{ $user->email }}
                 </td>
                 <td class="text-nowrap">
+                    <ul>
+                        @foreach($user->teams as $team)
+                            <li>{{ $team->name }}</li>
+                        @endforeach
+                    </ul>
+                </td>
+                <td>
                     @can('update', $user)
                         <x-forms.button
                             title="Edit User {{ $user->id }}"
@@ -26,11 +34,6 @@
                             wire:click="edit('{{ $user->id }}')"
                         />
                     @endcan
-                        <ul>
-                            @foreach($user->teams as $team)
-                                <li>{{ $team->name }}</li>
-                            @endforeach
-                        </ul>
                 </td>
             </tr>
         @endforeach

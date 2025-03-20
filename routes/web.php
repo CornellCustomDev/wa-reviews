@@ -31,6 +31,7 @@ use App\Livewire\SiaRules\ShowSiaRule;
 use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
 use App\Livewire\Users\Manage;
+use App\Livewire\Users\ManageTeam;
 use App\Models\Project;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
@@ -72,6 +73,11 @@ Route::group(['middleware' => [CUAuth::class]], function () {
     Route::prefix('users/')->name('users.')->group(function () {
         Route::get('manage', Manage::class)->name('manage');
     });
+
+    Route::prefix('team')->name('team.')->group(function () {
+        Route::get('{team}', ManageTeam::class)->name('show')->can('view', 'team');
+    });
+
 });
 
 Route::prefix('guidelines')->name('guidelines.')->group(function () {

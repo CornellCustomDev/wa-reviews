@@ -6,13 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Laratrust\Contracts\LaratrustUser;
+use Laratrust\Traits\HasRolesAndPermissions;
 
-class User extends Authenticatable
+class User extends Authenticatable implements LaratrustUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
-    use HasRoles;
+    use HasRolesAndPermissions;
 
     /**
      * The attributes that are mass assignable.
@@ -51,6 +51,14 @@ class User extends Authenticatable
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
+    }
+
+    public function getRoleIdsForTeam(Team $team): array
+    {
+        return $this->rolesTeams()
+            ->where('team_id', $team->id)->get()
+            ->pluck('pivot.role_id')->all()
+            ?? [];
     }
 
     public function isAdministrator(): bool

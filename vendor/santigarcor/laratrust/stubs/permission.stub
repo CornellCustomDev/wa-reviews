@@ -1,0 +1,10 @@
+<?php
+
+namespace DummyNamespace;
+
+use Laratrust\Models\Permission as PermissionModel;
+
+class DummyClass extends PermissionModel
+{
+    public $guarded = [];
+}
