@@ -8,9 +8,9 @@
                 <li><a href="{{ route('categories.index') }}">Categories</a></li>
                 <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('chat') }}">AI Chat</a></li>
-                @canAny([\App\Enums\Permissions::ManageTeams, \App\Enums\Permissions::ManageTeamMembers])
+                @permission([\App\Enums\Permissions::ManageTeams, \App\Enums\Permissions::ManageTeamMembers])
                     <li><a href="{{ route('users.manage') }}">Teams</a></li>
-                @endcan
+                @endpermission
             </ul>
         </div>
     </nav>

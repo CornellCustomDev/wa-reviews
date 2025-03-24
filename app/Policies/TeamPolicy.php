@@ -45,7 +45,8 @@ class TeamPolicy
      */
     public function update(User $user, Team $team): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams)
+            || $user->isAbleTo(Permissions::ManageTeamMembers, $team->id);
     }
 
     /**

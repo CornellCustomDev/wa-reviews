@@ -13,7 +13,7 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
     /**
@@ -21,7 +21,7 @@ class UserPolicy
      */
     public function view(User $user, User $model): bool
     {
-        return $user->can(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
     /**
@@ -29,7 +29,7 @@ class UserPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
     /**
@@ -37,7 +37,7 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        return $user->can(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
     /**
@@ -45,7 +45,7 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
-        return $user->can(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
     /**
