@@ -2,9 +2,11 @@
     <div>
         <h2>AI Help</h2>
         @if ($useGuidelines)
-            <x-forms.button wire:click="populateGuidelines" icon="check">
-                Populate Guidelines
-            </x-forms.button>
+            @can('update', $issue)
+                <x-forms.button wire:click="populateGuidelines" icon="check">
+                    Populate Guidelines
+                </x-forms.button>
+            @endcan
         @endif
         <x-forms.button.chat wire:click="$toggle('showChat')" :$showChat />
         <span wire:loading.delay wire:target="populateGuidelines"> Analyzing...</span>

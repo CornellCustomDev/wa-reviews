@@ -30,9 +30,10 @@ use App\Livewire\Scopes\UpdateScope;
 use App\Livewire\SiaRules\ShowSiaRule;
 use App\Livewire\SiaRules\ViewSiaRules;
 use App\Livewire\SiteimproveRules\ViewSiteimproveRules;
-use App\Livewire\Users\Manage;
-use App\Livewire\Users\ManageTeam;
+use App\Livewire\Teams\Manage;
+use App\Livewire\Teams\ShowTeam;
 use App\Models\Project;
+use App\Models\Team;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
 
@@ -70,12 +71,9 @@ Route::group(['middleware' => [CUAuth::class]], function () {
         Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
     });
 
-    Route::prefix('users/')->name('users.')->group(function () {
-        Route::get('manage', Manage::class)->name('manage');
-    });
-
-    Route::prefix('team')->name('team.')->group(function () {
-        Route::get('{team}', ManageTeam::class)->name('show')->can('view', 'team');
+    Route::prefix('teams')->name('teams.')->group(function () {
+        Route::get('', Manage::class)->name('manage')->can('viewAny', Team::class);
+        Route::get('{team}', ShowTeam::class)->name('show')->can('view', 'team');
     });
 
 });

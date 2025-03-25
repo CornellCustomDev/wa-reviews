@@ -16,7 +16,7 @@
                         <x-forms.button.view
                             title="View {{ $team->name }}"
                             size="xs"
-                            :href="route('team.show', $team)"
+                            :href="route('teams.show', $team)"
                         />
                         @can('update', $team)
                             <x-forms.button
@@ -45,10 +45,10 @@
 
     <flux:modal name="edit-team" wire:close="closeEditTeam()" class="max-w-(--breakpoint-xl)">
         @if ($createTeam)
-            <livewire:users.create-team />
+            <livewire:teams.create-team />
         @endif
         @if ($editTeam)
-            <livewire:users.update-team :team="$editTeam" />
+            <livewire:teams.update-team :team="$editTeam" />
         @endif
     </flux:modal>
 </div>

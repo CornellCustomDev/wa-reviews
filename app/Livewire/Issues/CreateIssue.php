@@ -15,7 +15,7 @@ class CreateIssue extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->scope->project);
+        $this->authorize('create', [Scope::class, $this->scope->project]);
         $issue = $this->form->store($this->scope);
 
         return redirect()->route('issue.show', $issue);

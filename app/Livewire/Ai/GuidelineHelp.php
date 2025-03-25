@@ -23,6 +23,8 @@ class GuidelineHelp extends Component
 
     public function populateGuidelines(): void
     {
+        $this->authorize('update', $this->issue);
+
         $this->showChat = false;
         $this->feedback = '';
 

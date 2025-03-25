@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use App\Models\Team;
 use Livewire\Attributes\On;
@@ -40,8 +40,8 @@ class ViewTeams extends Component
 
     public function render()
     {
-        return view('livewire.users.view-teams', [
-            'teams' => Team::all(),
+        return view('livewire.teams.view-teams', [
+            'teams' => auth()->user()->getTeams()
         ]);
     }
 }
