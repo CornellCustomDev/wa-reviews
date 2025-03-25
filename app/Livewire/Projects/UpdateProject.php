@@ -4,7 +4,6 @@ namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ProjectForm;
 use App\Models\Project;
-use App\Models\Team;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -20,7 +19,7 @@ class UpdateProject extends Component
 
     public function getTeams()
     {
-        return Team::all()
+        return auth()->user()->teams
             ->mapWithKeys(fn ($team) => [$team->name => [
                 'value' => $team->id,
                 'option' => $team->name,

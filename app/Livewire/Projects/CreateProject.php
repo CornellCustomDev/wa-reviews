@@ -4,7 +4,6 @@ namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ProjectForm;
 use App\Models\Project;
-use App\Models\Team;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 

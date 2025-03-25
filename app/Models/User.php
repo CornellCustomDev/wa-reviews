@@ -34,7 +34,7 @@ class User extends Authenticatable implements LaratrustUser
 
     public function isAdministrator(): bool
     {
-        return $this->hasRole(Roles::SiteAdmin);
+        return false; //$this->hasRole(Roles::SiteAdmin);
     }
 
     public function isTeamMember(Team $team): bool
