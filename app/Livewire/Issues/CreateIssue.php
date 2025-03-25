@@ -3,6 +3,7 @@
 namespace App\Livewire\Issues;
 
 use App\Livewire\Forms\IssueForm;
+use App\Models\Issue;
 use App\Models\Scope;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -15,7 +16,7 @@ class CreateIssue extends Component
 
     public function save()
     {
-        $this->authorize('create', [Scope::class, $this->scope->project]);
+        $this->authorize('create', [Issue::class, $this->scope->project]);
         $issue = $this->form->store($this->scope);
 
         return redirect()->route('issue.show', $issue);

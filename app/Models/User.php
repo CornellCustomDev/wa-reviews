@@ -53,6 +53,8 @@ class User extends Authenticatable implements LaratrustUser
         }
 
         $teamAdminRole = Role::firstWhere('name', Roles::TeamAdmin);
+
+        // Get the teams where the user has the TeamAdmin role
         $teamIds = $this->roles()
             ->wherePivot('role_id', $teamAdminRole->id)
             ->get()
