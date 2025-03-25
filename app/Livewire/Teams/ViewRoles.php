@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use App\Models\Role;
 use Livewire\Component;
@@ -9,7 +9,7 @@ class ViewRoles extends Component
 {
     public function render()
     {
-        return view('livewire.users.view-roles', [
+        return view('livewire.teams.view-roles', [
             'roles' => Role::all(),
         ]);
     }

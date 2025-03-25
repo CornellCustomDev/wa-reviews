@@ -8,10 +8,10 @@
         </flux:tabs>
 
         <flux:tab.panel name="members" class="pt-6!">
-            <livewire:users.manage-team-users :team="$team" />
+            <livewire:teams.manage-team-users :team="$team" />
         </flux:tab.panel>
 {{--        <flux:tab.panel name="projects" class="pt-6!">--}}
-{{--            <livewire:users.manage-team-projects :team="$team" />--}}
+{{--            <livewire:teams.manage-team-projects :team="$team" />--}}
 {{--        </flux:tab.panel>--}}
     </flux:tab.group>
 </div>

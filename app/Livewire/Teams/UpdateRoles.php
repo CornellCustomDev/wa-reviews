@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use App\Enums\Roles;
 use App\Livewire\Forms\RolesForm;

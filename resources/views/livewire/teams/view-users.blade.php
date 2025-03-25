@@ -13,6 +13,9 @@
             <tr wire:key="{{ $user->id }}">
                 <td>
                     {{ $user->name }}
+                    @if($user->hasRole(\App\Enums\Roles::SiteAdmin))
+                        (Site Admin)
+                    @endif
                 </td>
                 <td>
                     {{ $user->email }}
@@ -41,7 +44,7 @@
 
     <flux:modal name="edit-user" wire:close="closeEditUser()" class="max-w-(--breakpoint-xl)">
         @if ($editUser)
-            <livewire:users.update-user :user="$editUser" />
+            <livewire:teams.update-user :user="$editUser" />
         @endif
     </flux:modal>
 </div>

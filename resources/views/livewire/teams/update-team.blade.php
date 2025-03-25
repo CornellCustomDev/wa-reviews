@@ -1,6 +1,6 @@
 <div>
     <form wire:submit="save">
-        @include('livewire.users.fields-team')
+        @include('livewire.teams.fields-team')
         <x-forms.button.submit-group>
             <x-forms.button type="submit">
                 Update Team

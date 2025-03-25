@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use App\Models\Team;
 use App\Models\User;
@@ -39,7 +39,7 @@ class ViewUsers extends Component
 
     public function render()
     {
-        return view('livewire.users.view-users', [
+        return view('livewire.teams.view-users', [
             'users' => User::all(),
             'teams' => Team::all(),
         ]);

@@ -54,12 +54,12 @@
             <x-forms.button icon="plus-circle">Add User</x-forms.button>
         </flux:modal.trigger>
         <flux:modal name="add-user" class="md:w-96 max-w-(--breakpoint-xl)">
-            <livewire:users.add-team-user :team="$team"/>
+            <livewire:teams.add-team-user :team="$team"/>
         </flux:modal>
 
         <flux:modal name="edit-user" wire:close="closeEditUser()" class="md:w-96 max-w-(--breakpoint-xl)">
             @if($editUser)
-                <livewire:users.update-roles :team="$team" :user="$editUser"/>
+                <livewire:teams.update-roles :team="$team" :user="$editUser"/>
             @endif
         </flux:modal>
     @endcan

@@ -11,7 +11,7 @@
                 <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('chat') }}">AI Chat</a></li>
                 @can('view-any', \App\Models\Team::class)
-                    <li><a href="{{ route('users.manage') }}">Teams</a></li>
+                    <li><a href="{{ route('teams.manage') }}">Teams</a></li>
                 @endcan
             </ul>
         </div>

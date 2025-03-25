@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use Livewire\Attributes\Url;
 use Livewire\Component;

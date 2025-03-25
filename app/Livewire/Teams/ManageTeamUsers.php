@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\Users;
+namespace App\Livewire\Teams;
 
 use App\Models\Role;
 use App\Models\Team;
@@ -44,7 +44,7 @@ class ManageTeamUsers extends Component
 
     public function render()
     {
-        return view('livewire.users.manage-team-users', [
+        return view('livewire.teams.manage-team-users', [
             'roles' => Role::all(),
             'users' => $this->team->users,
         ]);
