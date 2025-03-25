@@ -71,7 +71,7 @@ Route::group(['middleware' => [CUAuth::class]], function () {
     });
 
     Route::prefix('users/')->name('users.')->group(function () {
-        Route::get('manage', Manage::class)->name('manage');
+        Route::get('manage', Manage::class)->name('manage')->can('viewAny', 'user');
     });
 
     Route::prefix('team')->name('team.')->group(function () {

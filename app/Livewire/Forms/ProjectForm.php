@@ -11,6 +11,8 @@ class ProjectForm extends Form
 {
     public ?Project $project;
 
+    #[Validate('required')]
+    public $team_id = '';
     #[Validate('required|string|max:255', as: 'Project Name')]
     public string $name = '';
     #[Validate('required')]
@@ -26,6 +28,7 @@ class ProjectForm extends Form
     public function setModel(Project $project): void
     {
         $this->project = $project;
+        $this->team_id = $project->team_id ?? '';
         $this->name = $project->name;
         $this->site_url = $project->site_url;
         $this->description = $project->description;

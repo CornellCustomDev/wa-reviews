@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permissions;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Models\User;
@@ -11,54 +12,36 @@ class ScopePolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(?User $user): bool
+    public function viewAny(User $user): bool
     {
-        return true;
+        return false;
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(?User $user, Scope $scope): bool
+    public function view(User $user, Scope $scope): bool
     {
-        return $user?->can('view', $scope->project) ?? true;
+        return $user->isTeamMember($scope->project->team);
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(?User $user, Project $project): bool
+    public function create(User $user, Project $project): bool
     {
-        return $user?->can('update', $project) ?? true;
+        return $user->isAbleTo(Permissions::EditProjects, $project->team);
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(?User $user, Scope $scope): bool
+    public function update(User $user, Scope $scope): bool
     {
-        return $user?->can('update', $scope->project) ?? true;
+        return $user->isAbleTo(Permissions::EditProjects, $scope->project->team);
     }
 
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(?User $user, Scope $scope): bool
+    public function delete(User $user, Scope $scope): bool
     {
-        return $user?->can('update', $scope->project) ?? true;
+        return $user->isAbleTo(Permissions::EditProjects, $scope->project->team);
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
     public function restore(User $user, Scope $scope): bool
     {
         return false;
     }
 
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
     public function forceDelete(User $user, Scope $scope): bool
     {
         return false;

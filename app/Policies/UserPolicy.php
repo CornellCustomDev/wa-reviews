@@ -13,7 +13,8 @@ class UserPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAbleTo(Permissions::ManageSiteConfig);
+        return $user->isAbleTo(Permissions::ManageSiteConfig)
+            || $user->isAbleTo(Permissions::ManageTeamMembers);
     }
 
     /**

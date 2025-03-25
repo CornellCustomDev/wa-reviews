@@ -14,7 +14,8 @@ class TeamPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeams);
+        return $user->isAbleTo(Permissions::ManageTeams)
+            || $user->isAbleTo(Permissions::ManageTeamMembers);
     }
 
     /**

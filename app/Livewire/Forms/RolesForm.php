@@ -21,7 +21,7 @@ class RolesForm extends Form
         $this->team = $team;
         $this->user = $user;
         $this->name = $user->name;
-        $this->roles = $user->getRoleIdsForTeam($this->team);
+        $this->roles = $user->getTeamRoles($this->team)->pluck('id')->all();
     }
 
     public function update(): void

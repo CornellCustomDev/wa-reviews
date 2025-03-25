@@ -49,7 +49,7 @@
         @endforeach
     </table>
 
-    @can('update', $project)
+    @can('create', [\App\Models\Issue::class, $project])
         <x-forms.button.add :href="route('project.issue.create', $project)">Add Issue</x-forms.button.add>
     @endcan
 </div>

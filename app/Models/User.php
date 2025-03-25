@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\Roles;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,55 +16,34 @@ class User extends Authenticatable implements LaratrustUser
     use HasFactory, Notifiable;
     use HasRolesAndPermissions;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
-        'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    // These two fields are not in use, but do not include them in outputs
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
     }
 
-    public function getRoleIdsForTeam(Team $team): array
-    {
-        return $this->rolesTeams()
-            ->where('team_id', $team->id)->get()
-            ->pluck('pivot.role_id')->all()
-            ?? [];
-    }
-
     public function isAdministrator(): bool
     {
-        return false;
+        return $this->hasRole(Roles::SiteAdmin);
+    }
+
+    public function isTeamMember(Team $team): bool
+    {
+        return $this->teams->contains($team);
+    }
+
+    public function getTeamRoles(Team $team): Collection
+    {
+        return $this->roles()->wherePivot('team_id', $team->id)->get();
     }
 }

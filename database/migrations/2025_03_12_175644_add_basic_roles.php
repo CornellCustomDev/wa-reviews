@@ -17,20 +17,14 @@ return new class extends Migration
             Permissions::ManageTeamMembers->value,
             Permissions::ManageTeamProjects->value,
             Permissions::EditProjects->value,
-            Permissions::ViewProjects->value,
         ],
         Roles::TeamAdmin->value => [
             Permissions::ManageTeamMembers->value,
             Permissions::ManageTeamProjects->value,
             Permissions::EditProjects->value,
-            Permissions::ViewProjects->value,
         ],
         Roles::Reviewer->value => [
             Permissions::EditProjects->value,
-            Permissions::ViewProjects->value,
-        ],
-        Roles::Member->value => [
-            Permissions::ViewProjects->value,
         ],
     ];
 

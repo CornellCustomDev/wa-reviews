@@ -28,9 +28,10 @@
                         />
                     @endcan
                     <ul>
-                        @foreach($user->getRoleIdsForTeam($team) as $roleId)
-                            <li>{{ $roles->find($roleId)->display_name }}</li>
+                        @foreach($user->getTeamRoles($team) as $role)
+                            <li>{{ $role->display_name }}</li>
                         @endforeach
+                        <li>Team Member</li>
                     </ul>
                 </td>
                 <td>
@@ -53,12 +54,12 @@
             <x-forms.button icon="plus-circle">Add User</x-forms.button>
         </flux:modal.trigger>
         <flux:modal name="add-user" class="md:w-96 max-w-(--breakpoint-xl)">
-            <livewire:users.add-team-user :team="$team" />
+            <livewire:users.add-team-user :team="$team"/>
         </flux:modal>
 
         <flux:modal name="edit-user" wire:close="closeEditUser()" class="md:w-96 max-w-(--breakpoint-xl)">
             @if($editUser)
-                <livewire:users.update-roles :team="$team" :user="$editUser" />
+                <livewire:users.update-roles :team="$team" :user="$editUser"/>
             @endif
         </flux:modal>
     @endcan

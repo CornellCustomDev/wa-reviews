@@ -16,5 +16,4 @@ enum Permissions: string
 
     // Members
     case EditProjects = 'edit projects';
-    case ViewProjects = 'view projects';
 }
