@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Enums\Permissions;
 use App\Models\Project;
+use App\Models\Team;
 use App\Models\User;
 
 class ProjectPolicy
@@ -18,9 +19,9 @@ class ProjectPolicy
         return $user->isTeamMember($project->team);
     }
 
-    public function create(User $user): bool
+    public function create(User $user, ?Team $team = null): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects);
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $team);
     }
 
     public function update(User $user, Project $project): bool

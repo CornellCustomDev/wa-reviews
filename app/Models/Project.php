@@ -41,6 +41,7 @@ class Project extends Model
         if ($user->isAdministrator()) {
             return Project::all();
         }
+
         return Project::query()->whereIn('team_id', $user->teams->pluck('id'))->get();
     }
 }

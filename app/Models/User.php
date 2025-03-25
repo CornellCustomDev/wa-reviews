@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Enums\Roles;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laratrust\Contracts\LaratrustUser;
 use Laratrust\Traits\HasRolesAndPermissions;
 
@@ -34,7 +34,31 @@ class User extends Authenticatable implements LaratrustUser
 
     public function isAdministrator(): bool
     {
-        return false; //$this->hasRole(Roles::SiteAdmin);
+        return $this->hasRole(Roles::SiteAdmin);
+    }
+
+    public function getTeams(): Collection
+    {
+        if ($this->isAdministrator()) {
+            return Team::all();
+        }
+
+        return $this->teams;
+    }
+
+    public function getManagedTeams(): Collection
+    {
+        if ($this->isAdministrator()) {
+            return Team::all();
+        }
+
+        $teamAdminRole = Role::firstWhere('name', Roles::TeamAdmin);
+        $teamIds = $this->roles()
+            ->wherePivot('role_id', $teamAdminRole->id)
+            ->get()
+            ->pluck('pivot.team_id');
+
+        return Team::whereIn('id', $teamIds)->get();
     }
 
     public function isTeamMember(Team $team): bool

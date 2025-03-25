@@ -41,7 +41,7 @@ class ViewTeams extends Component
     public function render()
     {
         return view('livewire.teams.view-teams', [
-            'teams' => auth()->user()->teams
+            'teams' => auth()->user()->getTeams()
         ]);
     }
 }

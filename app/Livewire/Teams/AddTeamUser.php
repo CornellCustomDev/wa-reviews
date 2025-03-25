@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Teams;
 
+use App\Enums\Roles;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -35,15 +37,12 @@ class AddTeamUser extends Component
         $validated = $this->validate([
             'user' => [
                 'required',
+                Rule::unique('team_user', 'user_id')->where('team_id', $this->team->id)
             ],
         ]);
 
-        // Get the user
         $user = User::find($validated['user']);
-
-        // Add the user to the team as a member
         $this->team->users()->attach($user);
-        $user->syncRoles(['member'], $this->team->id);
 
         $this->dispatch('close-add-user');
     }

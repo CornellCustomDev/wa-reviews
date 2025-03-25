@@ -23,7 +23,9 @@
                 <td><a href="{{ route('project.show', $project) }}">{{ $project->name }}</a></td>
                 <td><a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
                 <td>
-                    {{ $project->team?->name }}
+                    @if($project->team)
+                        <a href="{{ route('teams.show', $project->team) }}">{{ $project->team->name }}</a>
+                    @endif
                 </td>
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
                 <td>
