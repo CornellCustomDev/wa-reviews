@@ -64,3 +64,110 @@
     background-image: url('/cwd-framework/images/layout/checked.svg');
 }
 
+@utility focus-ring {
+    @apply outline-0 focus:ring-[3px] ring-offset-2 ring-[#2BA3E3]/40;
+}
+
+[data-flux-button] {
+    @apply cursor-pointer;
+    @apply focus-ring;
+}
+
+/* Form fields */
+[data-flux-field] {
+    @apply max-w-[600px] mb-4;
+
+    /* Label */
+    [data-flux-label] {
+        @apply font-sans text-[15px] font-semibold text-cds-gray-950 mb-1;
+    }
+
+    /* Legend */
+    [data-flux-legend] {
+        @apply text-base text-[15px] font-semibold text-cds-gray-950;
+    }
+
+    /* Input */
+    [data-flux-input] > input {
+        @apply border-cds-gray-300 rounded-none;
+        @apply disabled:border-cds-gray-200 disabled:bg-cds-gray-50;
+        @apply focus-ring;
+    }
+
+    /* Select */
+    [data-flux-select-button] {
+        @apply rounded-none;
+        @apply focus-ring;
+        [data-flux-icon] {
+            @apply w-8;
+        }
+    }
+
+    /* Select options */
+    [data-flux-options] {
+        @apply border-cds-gray-600 bg-cds-gray-600 rounded-none shadow-sm;
+
+        [data-flux-option] {
+            @apply text-white;
+
+            &[data-active] {
+                @apply bg-cds-blue-500/95 rounded-none;
+            }
+        }
+    }
+
+    /* Textarea editor */
+    [data-flux-editor] {
+        @apply border-cds-gray-300 rounded-none;
+        .ProseMirror-focused {
+            /*@apply focus-ring;*/
+            @apply inset-ring-[3px] inset-ring-[#2BA3E3]/40;
+        }
+    }
+
+    /* Checkbox */
+    [data-flux-checkbox] {
+        @apply cursor-pointer;
+        @apply flex size-5 focus-ring rounded-[3px];
+
+        +[data-flux-label] {
+            @apply cursor-pointer;
+            @apply font-verdana font-medium text-sm;
+            @apply mb-0 pt-0.5;
+        }
+        [data-flux-checkbox-indicator] {
+            @apply size-5 rounded-[3px];
+            @apply border-cds-gray-500;
+        }
+        &[data-checked] {
+            [data-flux-checkbox-indicator] {
+                @apply border-cds-gray-900 bg-[#45729f] bg-checked bg-center bg-no-repeat;
+            }
+        }
+    }
+    /* data-flux-field containing the checkbox */
+    &:has(>[data-flux-checkbox]) {
+        @apply pt-1 gap-x-2;
+    }
+
+    /* Radio */
+    [data-flux-radio-group-cards] {
+        [data-flux-radio-cards] {
+            @apply mb-0;
+        }
+        [data-focus] {
+            @apply focus-ring;
+        }
+    }
+
+    /* File upload */
+    [data-flux-input-file] {
+        @apply focus-ring rounded-[3px];
+    }
+}
+
+[data-flux-tabs] {
+    [data-focus] {
+        @apply focus-ring;
+    }
+}

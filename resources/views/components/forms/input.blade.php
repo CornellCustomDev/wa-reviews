@@ -7,7 +7,10 @@
 ])
 
 @php
-    $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
+$badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
+
+$classes = Flux::classes()
+    ->add('border-cds-gray-400 rounded-none');
 @endphp
 
 <flux:field class="mb-4 max-w-[600px]">
@@ -17,7 +20,7 @@
         <flux:description class="mb-1!">{{ $description }}</flux:description>
     @endif
 
-    <flux:input :$attributes  />
+    <flux:input {{ $attributes->class($classes) }} />
 
     <flux:error class="mt-1!" :$name />
 
