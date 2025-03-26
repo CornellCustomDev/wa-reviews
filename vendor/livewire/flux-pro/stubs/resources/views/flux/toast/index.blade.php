@@ -5,7 +5,7 @@
 @php
 $classes = Flux::classes()
     ->add('m-0 p-6 bg-transparent')
-    ->add('[&[data-position*=top]]:mb-auto [&[data-position*=bottom]]:mt-auto [&[data-position*=right]]:ml-auto [&[data-position*=left]]:mr-auto')
+    ->add('[&[data-position*=top]]:mb-auto [&[data-position*=bottom]]:mt-auto [&[data-position*=right]]:ms-auto [&[data-position*=left]]:me-auto')
     ;
 @endphp
 
@@ -14,7 +14,7 @@ $classes = Flux::classes()
         <div popover="manual" {{ $attributes->class($classes)->only(['class']) }} data-position="{{ $position }}" data-variant="" data-flux-toast-dialog>
             <div class="max-w-sm p-2 rounded-xl shadow-lg bg-white border border-zinc-200 border-b-zinc-300/80 dark:bg-zinc-700 dark:border-zinc-600">
                 <div class="flex items-start gap-4">
-                    <div class="flex-1 py-1.5 pl-2.5 flex gap-2">
+                    <div class="flex-1 py-1.5 ps-2.5 flex gap-2">
                         {{-- Success icon --}}
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="hidden [[data-flux-toast-dialog][data-variant=success]_&]:block shrink-0 mt-0.5 size-4 text-lime-600 dark:text-lime-400">
                             <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm3.844-8.791a.75.75 0 0 0-1.188-.918l-3.7 4.79-1.649-1.833a.75.75 0 1 0-1.114 1.004l2.25 2.5a.75.75 0 0 0 1.15-.043l4.25-5.5Z" clip-rule="evenodd" />

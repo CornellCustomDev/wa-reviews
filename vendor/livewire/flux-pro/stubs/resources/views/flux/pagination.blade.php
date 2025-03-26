@@ -135,5 +135,3 @@ $simple = ! $paginator instanceof \Illuminate\Contracts\Pagination\LengthAwarePa
         @endif
     </div>
 @endif
-
-
