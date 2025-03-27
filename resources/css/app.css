@@ -69,8 +69,28 @@
 }
 
 [data-flux-button] {
-    @apply cursor-pointer;
-    @apply focus-ring;
+    @apply cursor-pointer focus-ring;
+    @apply rounded-none;
+    @apply text-white bg-cds-blue-600 hover:bg-[#2471a7];
+    &.secondary {
+        @apply bg-cds-gray-500 hover:bg-cds-gray-400;
+    }
+
+    &[data-cds-button-assessment] {
+        @apply text-black hover:text-white;
+        &.pass {
+            @apply bg-wa-pass;
+        }
+        &.warn {
+            @apply bg-wa-warn;
+        }
+        &.fail {
+            @apply bg-wa-fail;
+        }
+        &.na {
+            @apply bg-wa-na;
+        }
+    }
 }
 
 /* Form fields */
@@ -110,7 +130,7 @@
         [data-flux-select-button] {
             @apply border border-cds-gray-400 rounded-none;
             @apply bg-linear-to-b from-[#fcfcfc] to-[#eeeeee];
-            @apply text-base text-cds-gray-600;
+            @apply font-verdana text-cds-gray-600;
             @apply cursor-pointer focus-ring;
 
             [data-flux-icon] {
@@ -149,8 +169,8 @@
 
     /* Checkbox */
     [data-flux-checkbox] {
-        @apply cursor-pointer;
-        @apply flex size-5 focus-ring rounded-[3px];
+        @apply cursor-pointer focus-ring;
+        @apply flex size-5 rounded-[3px];
 
         +[data-flux-label] {
             @apply cursor-pointer;
@@ -173,8 +193,29 @@
     }
 
     /* Radio */
+    [data-flux-radio] {
+        @apply cursor-pointer focus-ring;
+
+        +[data-flux-label] {
+            @apply cursor-pointer;
+            @apply font-verdana font-medium text-sm;
+        }
+
+        [data-flux-radio-indicator] {
+            @apply border-cds-gray-500;
+        }
+
+        &[data-checked] {
+            [data-flux-radio-indicator] {
+                @apply border-cds-gray-900 bg-[#45729f] bg-radio-checked bg-center bg-no-repeat;
+            }
+        }
+    }
+
+    /* Radio cards */
     [data-flux-radio-group-cards] {
         [data-flux-radio-cards] {
+            @apply cursor-pointer;
             @apply mb-0;
         }
         [data-focus] {
@@ -185,6 +226,9 @@
     /* File upload */
     [data-flux-input-file] {
         @apply focus-ring rounded-[3px];
+        [data-flux-button] {
+            @apply bg-cds-gray-500 hover:bg-cds-gray-400;
+        }
     }
 }
 
@@ -209,3 +253,12 @@
         }
     }
 }
+
+/*[data-flux-modal] {*/
+/*    [data-flux-modal-close] {*/
+/*        [data-flux-button] {*/
+/*            @apply bg-cds-gray-500 hover:bg-cds-gray-400;*/
+/*            @apply text-white! rounded-none;*/
+/*        }*/
+/*    }*/
+/*}*/

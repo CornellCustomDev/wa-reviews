@@ -1,11 +1,14 @@
 <div class="inline-block">
     <flux:tooltip position="bottom" class="align-middle">
         <x-forms.button
-            size="xs"
-            class="bg-wa-{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}"
-            textColor="text-black hover:text-white"
+            data-cds-button-assessment
+
+            class="{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}" size="xs"
             x-on:click.prevent="$dispatch('show-guideline', {number: {{ $item->guideline->number }} })"
-        >{{ $item->guideline->number }}</x-forms.button>
+        >
+            {{ $item->guideline->number }}
+        </x-forms.button>
+
         <flux:tooltip.content class="max-w-[600px]">
             <p>{{ $item->assessment->value() }} guideline {{ $item->guideline->number }}: {{ $item->guideline->name }}</p>
         </flux:tooltip.content>

@@ -1,7 +1,7 @@
 <div x-show="$wire.guidelineNumber" x-cloak>
     <hr>
 
-    <flux:button size="xs" variant="cds-secondary" wire:click="hideGuideline" style="float:right">Hide</flux:button>
+    <x-forms.button size="xs" class="secondary float-right" wire:click="hideGuideline">Hide</x-forms.button>
 
     <h3>Guideline Details</h3>
 

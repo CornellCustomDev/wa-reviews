@@ -5,7 +5,7 @@
 ])
 
 <div x-data="images" class="max-w-[600px]">
-    <flux:input type="file" :$label {{ $attributes }} multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
+    <flux:input type="file" size="sm" variant="outline" :$label {{ $attributes }} multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
 
     <!-- Show previews of selected images -->
     @if ($existingImages || data_get($this, $name))
