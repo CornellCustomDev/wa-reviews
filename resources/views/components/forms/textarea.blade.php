@@ -13,7 +13,7 @@ $classes = Flux::classes()
         'sm' => 'min-h-24',
         'lg' => 'min-h-64',
     })
-    ->add('[[data-flux-field]:has(>&)]:mb-4')
+//    ->add('[[data-flux-field]:has(>&)]:mb-4')
     ;
 
 $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;

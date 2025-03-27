@@ -88,18 +88,40 @@
     }
 
     /* Input */
-    [data-flux-input] > input {
-        @apply border-cds-gray-300 rounded-none;
-        @apply disabled:border-cds-gray-200 disabled:bg-cds-gray-50;
-        @apply focus-ring;
+    [data-flux-input] {
+        > input {
+            @apply border-cds-gray-300 rounded-none;
+            @apply disabled:border-cds-gray-200 disabled:bg-cds-gray-50;
+            @apply focus-ring;
+        }
     }
 
     /* Select */
-    [data-flux-select-button] {
-        @apply rounded-none;
-        @apply focus-ring;
-        [data-flux-icon] {
-            @apply w-8;
+    [data-flux-select] {
+        [data-flux-input] {
+            [data-flux-button] {
+                @apply rounded-none bg-cds-blue-600/95;
+                @apply w-8 h-10 -my-2 -mr-2;
+                [data-flux-icon] {
+                    @apply text-white in-[[disabled]]:text-cds-gray-50;
+                }
+            }
+        }
+        [data-flux-select-button] {
+            @apply border border-cds-gray-400 rounded-none;
+            @apply bg-linear-to-b from-[#fcfcfc] to-[#eeeeee];
+            @apply text-base text-cds-gray-600;
+            @apply cursor-pointer focus-ring;
+
+            [data-flux-icon] {
+                @apply bg-cds-blue-600/95 text-white;
+                @apply w-8 h-10 py-2.5 -my-2 -mr-3;
+            }
+            &:hover {
+                [data-flux-icon] {
+                    @apply text-white;
+                }
+            }
         }
     }
 
@@ -111,7 +133,7 @@
             @apply text-white;
 
             &[data-active] {
-                @apply bg-cds-blue-500/95 rounded-none;
+                @apply bg-[#2471a7] rounded-none;
             }
         }
     }
@@ -169,5 +191,21 @@
 [data-flux-tabs] {
     [data-focus] {
         @apply focus-ring;
+    }
+}
+
+[data-flux-dropdown] {
+    [data-flux-menu] {
+        @apply rounded-sm bg-cds-gray-600;
+        [data-flux-menu-item] {
+            @apply rounded-none text-left text-xs font-normal;
+            @apply text-white bg-cds-gray-600;
+            &[data-active] {
+                @apply bg-[#2471a7];
+            }
+            [data-flux-menu-item-icon] {
+                @apply text-white;
+            }
+        }
     }
 }
