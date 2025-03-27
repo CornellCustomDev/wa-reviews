@@ -104,12 +104,24 @@
 
     /* Legend */
     [data-flux-legend] {
-        @apply text-base text-[15px] font-semibold text-cds-gray-950;
+        @apply font-sans text-[15px] font-semibold text-cds-gray-950;
+    }
+
+    /* Description */
+    [data-flux-description] {
+        @apply mb-1;
+        @apply font-verdana text-[13px] text-cds-gray-600;
+    }
+
+    /* Error */
+    [data-flux-error] {
+        @apply mt-1;
     }
 
     /* Input */
     [data-flux-input] {
         > input {
+            @apply font-systemUi;
             @apply border-cds-gray-300 rounded-none;
             @apply disabled:border-cds-gray-200 disabled:bg-cds-gray-50;
             @apply focus-ring;
@@ -130,7 +142,7 @@
         [data-flux-select-button] {
             @apply border border-cds-gray-400 rounded-none;
             @apply bg-linear-to-b from-[#fcfcfc] to-[#eeeeee];
-            @apply font-verdana text-cds-gray-600;
+            @apply font-systemUi;
             @apply cursor-pointer focus-ring;
 
             [data-flux-icon] {
@@ -150,7 +162,7 @@
         @apply border-cds-gray-600 bg-cds-gray-600 rounded-none shadow-sm;
 
         [data-flux-option] {
-            @apply text-white;
+            @apply font-systemUi text-white font-normal;
 
             &[data-active] {
                 @apply bg-[#2471a7] rounded-none;
@@ -161,6 +173,24 @@
     /* Textarea editor */
     [data-flux-editor] {
         @apply border-cds-gray-300 rounded-none;
+        [data-slot="content"] {
+            @apply font-systemUi;
+        }
+        &[size="base"] {
+            [data-slot="content"] {
+                @apply min-h-44;
+            }
+        }
+        &[size="sm"] {
+            [data-slot="content"] {
+                @apply min-h-24;
+            }
+        }
+        &[size="lg"] {
+            [data-slot="content"] {
+                @apply min-h-64;
+            }
+        }
         .ProseMirror-focused {
             /*@apply focus-ring;*/
             @apply inset-ring-[3px] inset-ring-[#2BA3E3]/40;
@@ -254,11 +284,11 @@
     }
 }
 
-/*[data-flux-modal] {*/
-/*    [data-flux-modal-close] {*/
-/*        [data-flux-button] {*/
-/*            @apply bg-cds-gray-500 hover:bg-cds-gray-400;*/
-/*            @apply text-white! rounded-none;*/
-/*        }*/
-/*    }*/
-/*}*/
+[data-flux-modal] {
+    [data-flux-modal-close] {
+        [data-flux-button] {
+            @apply bg-cds-gray-500 hover:bg-cds-gray-400;
+            @apply rounded-none;
+        }
+    }
+}
