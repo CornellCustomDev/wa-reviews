@@ -18,7 +18,7 @@ class ViewProjects extends Component
     public function render()
     {
         return view('livewire.projects.view-projects', [
-            'projects' => Project::all(),
+            'projects' => Project::getTeamProjects(auth()->user()),
         ]);
     }
 }

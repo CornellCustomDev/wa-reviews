@@ -46,9 +46,11 @@
                                                     View Issue
                                                 </x-forms.menu.item>
                                             @else
-                                                <x-forms.menu.item icon="plus" wire:click="$dispatch('create-issue', {rule: {{ $issue['rule_id'] }}, guideline: {{ $guideline->id }} })">
-                                                    New Issue
-                                                </x-forms.menu.item>
+                                                @can('create', [\App\Models\Issue::class, $scope->project])
+                                                    <x-forms.menu.item icon="plus" wire:click="$dispatch('create-issue', {rule: {{ $issue['rule_id'] }}, guideline: {{ $guideline->id }} })">
+                                                        New Issue
+                                                    </x-forms.menu.item>
+                                                @endcan
                                             @endif
                                         </x-forms.menu>
                                     </flux:dropdown>

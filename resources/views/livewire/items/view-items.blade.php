@@ -55,11 +55,13 @@
                     {!! $item->testing !!}
                 </td>
                 <td class="text-nowrap">
-                    <x-forms.button
-                        title="Edit Item {{ $item->id }}"
-                        icon="pencil-square" size="xs"
-                        wire:click="edit('{{ $item->id }}')"
-                    />
+                    @can('update', $issue)
+                        <x-forms.button
+                            title="Edit Item {{ $item->id }}"
+                            icon="pencil-square" size="xs"
+                            wire:click="edit('{{ $item->id }}')"
+                        />
+                    @endcan
                     @can('delete', $issue)
                         <x-forms.button.delete
                             title="Delete Item {{ $item->id }}"

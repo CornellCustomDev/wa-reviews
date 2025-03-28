@@ -202,6 +202,11 @@
     }
 
     /* Checkbox */
+    [data-flux-checkbox-group] {
+        [data-flux-field] {
+            @apply mb-1;
+        }
+    }
     [data-flux-checkbox] {
         @apply cursor-pointer focus-ring;
         @apply flex size-5 rounded-[3px];
@@ -227,6 +232,11 @@
     }
 
     /* Radio */
+    [data-flux-radio-group] {
+        [data-flux-field] {
+            @apply mb-1;
+        }
+    }
     [data-flux-radio] {
         @apply cursor-pointer focus-ring;
 
@@ -297,10 +307,15 @@
 }
 
 [data-flux-modal] {
+    dialog {
+        @apply min-w-[400px];
+    }
     [data-flux-modal-close] {
         [data-flux-button] {
             @apply bg-cds-gray-500 hover:bg-cds-gray-400;
-            @apply rounded-none;
+            [data-flux-icon] {
+                @apply text-white;
+            }
         }
     }
 }

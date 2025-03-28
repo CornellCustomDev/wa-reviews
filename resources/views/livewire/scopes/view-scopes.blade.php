@@ -30,7 +30,7 @@
                         :href="route('scope.show', $scope)"
                         size="xs"
                     />
-                    @can('update', $project)
+                    @can('delete', $scope)
                         <x-forms.button.delete
                             title="Delete Scope {{ $scope->id }}"
                             size="xs"
@@ -44,7 +44,7 @@
         </tbody>
     </table>
 
-    @can('update', $project)
+    @can('create', [\App\Models\Scope::class, $project])
         <x-forms.button.add :href="route('project.scope.create', $project)">Add Scope</x-forms.button.add>
     @endcan
 </div>

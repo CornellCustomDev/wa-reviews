@@ -34,11 +34,13 @@
                                     :href="route('scope.show', $scope)"
                                     size="xs" icon="eye"  />
                             @else
-                                <x-forms.button
-                                    title="Add row {{ $loop->iteration }} to scope"
-                                    :href="route('project.scope.create', ['project' => $project, 'url' => $page['url']])"
-                                    class="secondary"
-                                    size="xs" icon="plus"  />
+                                @can('create', [\App\Models\Scope::class, $project])
+                                    <x-forms.button
+                                        title="Add row {{ $loop->iteration }} to scope"
+                                        :href="route('project.scope.create', ['project' => $project, 'url' => $page['url']])"
+                                        class="secondary"
+                                        size="xs" icon="plus"  />
+                                @endcan
                             @endif
                         </td>
                     </tr>

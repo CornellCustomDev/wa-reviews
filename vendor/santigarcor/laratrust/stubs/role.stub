@@ -1,0 +1,10 @@
+<?php
+
+namespace DummyNamespace;
+
+use Laratrust\Models\Role as RoleModel;
+
+class DummyClass extends RoleModel
+{
+    public $guarded = [];
+}

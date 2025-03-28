@@ -4,6 +4,7 @@ namespace App\Livewire\Scopes;
 
 use App\Livewire\Forms\ScopeForm;
 use App\Models\Project;
+use App\Models\Scope;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -28,7 +29,7 @@ class CreateScope extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->project);
+        $this->authorize('create', [Scope::class, $this->project]);
         $scope = $this->form->store($this->project);
 
         return redirect()->route('scope.show', $scope);
