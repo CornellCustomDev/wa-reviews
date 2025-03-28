@@ -8,20 +8,20 @@
     required
 />
 
-<flux:radio.group label="Assessment" class="max-w-[600px] mb-4" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
+<flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
     @foreach ($form->assessmentOptions as $option)
         @switch(Str::of($option['value'])->lower()->replace('/', ''))
             @case('pass')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass!"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass hover:bg-wa-pass/30"/>
                 @break
             @case('warn')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-warn!"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-warn hover:bg-wa-warn/30"/>
                 @break
             @case('fail')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-fail!"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-fail hover:bg-wa-fail/30"/>
                 @break
             @case('na')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-na!"/>
+                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-na hover:bg-wa-na/30"/>
                 @break
         @endswitch
     @endforeach

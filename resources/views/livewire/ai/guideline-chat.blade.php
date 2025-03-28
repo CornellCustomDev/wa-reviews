@@ -10,7 +10,7 @@
 
         <p>
             This chatbot can answer questions about this guideline.
-            <x-forms.button variant="cds-secondary" size="xs" wire:click="clearChat">Clear Chat</x-forms.button>
+            <x-forms.button class="secondary" size="xs" wire:click="clearChat">Clear Chat</x-forms.button>
         </p>
 
         @foreach ($chatMessages as $message)

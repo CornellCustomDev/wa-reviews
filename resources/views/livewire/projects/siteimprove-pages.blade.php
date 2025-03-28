@@ -30,13 +30,15 @@
                         <td>
                             @if($scope = $this->pageInScope($page['url']))
                                 <x-forms.button.view
+                                    title="View scope {{ $scope->id }}"
                                     :href="route('scope.show', $scope)"
-                                    size="sm" icon="eye" title="View scope {{ $scope->id }}" />
+                                    size="xs" icon="eye"  />
                             @else
                                 <x-forms.button
+                                    title="Add row {{ $loop->iteration }} to scope"
                                     :href="route('project.scope.create', ['project' => $project, 'url' => $page['url']])"
-                                    variant="cds-secondary"
-                                    size="sm" icon="plus" title="Add row {{ $loop->iteration }} to scope" />
+                                    class="secondary"
+                                    size="xs" icon="plus"  />
                             @endif
                         </td>
                     </tr>

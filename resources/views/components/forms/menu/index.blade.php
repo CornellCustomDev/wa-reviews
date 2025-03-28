@@ -1,6 +1,3 @@
-@props([
-    'variant' => 'cds',
-])
-<flux:menu :$variant :$attributes>
+<flux:menu :$attributes>
     {{ $slot }}
 </flux:menu>

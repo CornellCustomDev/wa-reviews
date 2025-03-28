@@ -26,12 +26,14 @@
                 </td>
                 <td class="text-nowrap">
                     <x-forms.button.view
-                        size="sm" :href="route('scope.show', $scope)" title="View scope {{ $scope->id }}"
+                        title="View scope {{ $scope->id }}"
+                        :href="route('scope.show', $scope)"
+                        size="xs"
                     />
                     @can('update', $project)
                         <x-forms.button.delete
                             title="Delete Scope {{ $scope->id }}"
-                            size="sm"
+                            size="xs"
                             wire:click.prevent="delete('{{ $scope->id }}')"
                             wire:confirm="Are you sure you want to delete the scope titled &quot;{{ $scope->title }}&quot;?"
                         />

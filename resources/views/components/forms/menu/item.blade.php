@@ -1,3 +1,3 @@
-<flux:menu.item variant="cds" :$attributes>
+<flux:menu.item :$attributes>
     {{ $slot }}
 </flux:menu.item>

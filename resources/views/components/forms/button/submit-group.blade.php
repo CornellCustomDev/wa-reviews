@@ -5,8 +5,8 @@
 ])
 <div class="mt-8">
     @if ($slot->isEmpty())
-        <x-forms.button type="submit" variant="cds">{{ $submitName }}</x-forms.button>
-        <x-forms.button :href="$cancelRoute" variant="cds-secondary">{{ $cancelName }}</x-forms.button>
+        <x-forms.button type="submit">{{ $submitName }}</x-forms.button>
+        <x-forms.button :href="$cancelRoute" class="secondary">{{ $cancelName }}</x-forms.button>
     @else
         {{ $slot }}
     @endif

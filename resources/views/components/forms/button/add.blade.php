@@ -4,7 +4,6 @@
 @php
     $attributes = $attributes->merge([
         'href' => $href,
-        'variant' => 'cds',
         'icon' => 'plus-circle',
     ]);
 @endphp
