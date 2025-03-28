@@ -1,5 +1,5 @@
 @props([
-    'label' => null,
+    'label',
 ])
 
 <div data-cds-field-display {{ $attributes }}>

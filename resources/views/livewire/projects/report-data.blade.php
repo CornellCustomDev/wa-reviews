@@ -10,39 +10,28 @@
 
             <div x-show="!editReport">
                 <div>
-                    @if($project->responsible_unit)
-                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Responsible unit at Cornell</flux:heading>
-                        <p>{{ $project->responsible_unit }}</p>
-                    @endif
+                    <x-forms.field-display label="Responsible unit at Cornell">
+                        {{ $project->responsible_unit ?? '' }}
+                    </x-forms.field-display>
 
-                    @if($project->contact_name)
-                        <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Point of Contact</flux:heading>
-                        <p>{{ $project->contact_name }}
-                            @if($project->contact_netid)
-                                ({{ $project->contact_netid }})
-                            @endif
-                        </p>
-                    @endif
+                    <x-forms.field-display label="Point of Contact">
+                        {{ $project->contact_name ?? '' }}
+                        @if($project->contact_netid)
+                            ({{ $project->contact_netid }})
+                        @endif
+                    </x-forms.field-display>
 
-                    <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Who is the audience?</flux:heading>
-                    @if($project->audience)
-                        <p>{{ $project->audience }}</p>
-                    @endif
+                    <x-forms.field-display label="Who is the Audience?">
+                        {{ $project->audience ?? '' }}
+                    </x-forms.field-display>
 
-                    <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">What is the purpose of the site?</flux:heading>
-                    <div>{!! $project->site_purpose ?? '' !!}</div>
+                    <x-forms.field-display label="What is the purpose of the site?">
+                        {!! $project->site_purpose ?? '' !!}
+                    </x-forms.field-display>
 
-                    <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">URLs included in review</flux:heading>
-                    <div>{!! $project->urls_included ?? '' !!}</div>
-
-                    {{-- <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">URLs excluded from review</flux:heading>
-                    <div>{!! $project->urls_excluded ?? '' !!}</div>
-
-                    <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Review procedure</flux:heading>
-                    <div>{!! $project->review_procedure ?? '' !!}</div>
-
-                    <flux:heading level="3" size="lg" class="font-sans font-semibold text-cds-gray-900 text-[15px]">Summary and Overall Findings</flux:heading>
-                    <flux:text>{!! $project->summary ?? '' !!}</flux:text> --}}
+                    <x-forms.field-display label="URLs included in review">
+                        {!! $project->urls_included ?? '' !!}
+                    </x-forms.field-display>
 
                     <x-forms.field-display label="URLs excluded from review">
                         {!! $project->urls_excluded ?? '' !!}

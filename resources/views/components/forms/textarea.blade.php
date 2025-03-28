@@ -3,7 +3,6 @@
     'toolbar' => 'heading bold italic underline | bullet ordered blockquote | link code ~ undo redo',
     'size' => 'base',
     'badge' => null,
-    'description' => null,
 ])
 @php
 $badge ??= $attributes->whereStartsWith('required')->isNotEmpty() ? 'Required' : null;
