@@ -1,13 +1,10 @@
 <div>
     <form wire:submit="save">
-        <div class="mb-4">
-            <flux:heading size="lg">Add User</flux:heading>
-            <flux:subheading>Add a user to this team.</flux:subheading>
-        </div>
+        <h3>Add a User</h3>
 
         {{--    TODO: Search + add from LDAP --}}
 
-        <flux:select wire:model="user" variant="listbox" searchable placeholder="Find user...">
+        <flux:select label="User" wire:model="user" variant="listbox" searchable placeholder="Find user...">
             @foreach($this->nonTeamUsers() as $user)
                 <flux:select.option value="{{ $user->id }}">
                     {{ $user->name }} ({{ $user->email }})
