@@ -8,10 +8,10 @@
 @php
 $classes = Flux::classes()
     ->add('group/accordion-heading flex items-center w-full')
-    ->add('text-left text-sm font-medium')
+    ->add('text-start text-sm font-medium')
     ->add(match ($variant) {
-        default => 'justify-between [&>svg]:ml-6',
-        'reverse' => 'flex-row-reverse justify-end [&>svg]:mr-2',
+        default => 'justify-between [&>svg]:ms-6',
+        'reverse' => 'flex-row-reverse justify-end [&>svg]:me-2',
     })
     ->add($disabled
         ? 'text-zinc-400 dark:text-zinc-400 cursor-default'
@@ -31,4 +31,3 @@ $classes = Flux::classes()
         <flux:accordion.icon pointing="down" class="block group-data-open/accordion-heading:hidden" />
     <?php endif; ?>
 </button>
-

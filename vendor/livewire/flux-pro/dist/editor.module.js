@@ -3737,24 +3737,23 @@ var Mapping = class _Mapping {
   /**
   Create a new mapping with the given position maps.
   */
-  constructor(maps, mirror, from2 = 0, to = maps ? maps.length : 0) {
+  constructor(maps = [], mirror, from2 = 0, to = maps.length) {
+    this.maps = maps;
     this.mirror = mirror;
     this.from = from2;
     this.to = to;
-    this._maps = maps || [];
-    this.ownData = !(maps || mirror);
-  }
-  /**
-  The step maps in this mapping.
-  */
-  get maps() {
-    return this._maps;
   }
   /**
   Create a mapping that maps only through a part of this one.
   */
   slice(from2 = 0, to = this.maps.length) {
-    return new _Mapping(this._maps, this.mirror, from2, to);
+    return new _Mapping(this.maps, this.mirror, from2, to);
+  }
+  /**
+  @internal
+  */
+  copy() {
+    return new _Mapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to);
   }
   /**
   Add a step map to the end of this mapping. If `mirrors` is
@@ -3762,23 +3761,18 @@ var Mapping = class _Mapping {
   image of this one.
   */
   appendMap(map2, mirrors) {
-    if (!this.ownData) {
-      this._maps = this._maps.slice();
-      this.mirror = this.mirror && this.mirror.slice();
-      this.ownData = true;
-    }
-    this.to = this._maps.push(map2);
+    this.to = this.maps.push(map2);
     if (mirrors != null)
-      this.setMirror(this._maps.length - 1, mirrors);
+      this.setMirror(this.maps.length - 1, mirrors);
   }
   /**
   Add all the step maps in a given mapping to this one (preserving
   mirroring information).
   */
   appendMapping(mapping) {
-    for (let i = 0, startSize = this._maps.length; i < mapping._maps.length; i++) {
+    for (let i = 0, startSize = this.maps.length; i < mapping.maps.length; i++) {
       let mirr = mapping.getMirror(i);
-      this.appendMap(mapping._maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
+      this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
     }
   }
   /**
@@ -3805,9 +3799,9 @@ var Mapping = class _Mapping {
   Append the inverse of the given mapping to this one.
   */
   appendMappingInverted(mapping) {
-    for (let i = mapping.maps.length - 1, totalSize = this._maps.length + mapping._maps.length; i >= 0; i--) {
+    for (let i = mapping.maps.length - 1, totalSize = this.maps.length + mapping.maps.length; i >= 0; i--) {
       let mirr = mapping.getMirror(i);
-      this.appendMap(mapping._maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
+      this.appendMap(mapping.maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
     }
   }
   /**
@@ -3825,7 +3819,7 @@ var Mapping = class _Mapping {
     if (this.mirror)
       return this._map(pos, assoc, true);
     for (let i = this.from; i < this.to; i++)
-      pos = this._maps[i].map(pos, assoc);
+      pos = this.maps[i].map(pos, assoc);
     return pos;
   }
   /**
@@ -3841,12 +3835,12 @@ var Mapping = class _Mapping {
   _map(pos, assoc, simple) {
     let delInfo = 0;
     for (let i = this.from; i < this.to; i++) {
-      let map2 = this._maps[i], result = map2.mapResult(pos, assoc);
+      let map2 = this.maps[i], result = map2.mapResult(pos, assoc);
       if (result.recover != null) {
         let corr = this.getMirror(i);
         if (corr != null && corr > i && corr < this.to) {
           i = corr;
-          pos = this._maps[corr].recover(result.recover);
+          pos = this.maps[corr].recover(result.recover);
           continue;
         }
       }
@@ -5347,7 +5341,7 @@ var Transform = class {
   greater than one, any number of nodes above that. By default, the
   parts split off will inherit the node type of the original node.
   This can be changed by passing an array of types and attributes to
-  use after the split (with the outermost nodes coming first).
+  use after the split.
   */
   split(pos, depth = 1, typesAfter) {
     split(this, pos, depth, typesAfter);
@@ -6495,13 +6489,11 @@ function clientRect(node) {
 function scrollRectIntoView(view, rect, startDOM) {
   let scrollThreshold = view.someProp("scrollThreshold") || 0, scrollMargin = view.someProp("scrollMargin") || 5;
   let doc3 = view.dom.ownerDocument;
-  for (let parent = startDOM || view.dom; ; ) {
+  for (let parent = startDOM || view.dom; ; parent = parentNode(parent)) {
     if (!parent)
       break;
-    if (parent.nodeType != 1) {
-      parent = parentNode(parent);
+    if (parent.nodeType != 1)
       continue;
-    }
     let elt = parent;
     let atTop = elt == doc3.body;
     let bounding = atTop ? windowRect(doc3) : clientRect(elt);
@@ -6527,10 +6519,8 @@ function scrollRectIntoView(view, rect, startDOM) {
         rect = { left: rect.left - dX, top: rect.top - dY, right: rect.right - dX, bottom: rect.bottom - dY };
       }
     }
-    let pos = atTop ? "fixed" : getComputedStyle(parent).position;
-    if (/^(fixed|sticky)$/.test(pos))
+    if (atTop || /^(fixed|sticky)$/.test(getComputedStyle(parent).position))
       break;
-    parent = pos == "absolute" ? parent.offsetParent : parentNode(parent);
   }
 }
 function storeScrollPos(view) {
@@ -10530,7 +10520,6 @@ var DOMObserver = class {
       view.input.lastFocus = 0;
       selectionToDOM(view);
       this.currentSelection.set(sel);
-      view.scrollToSelection();
     } else if (from2 > -1 || newSel) {
       if (from2 > -1) {
         view.docView.markDirty(from2, to);
@@ -12238,9 +12227,9 @@ function liftToOuterList(state, dispatch, itemType, range) {
   if (target == null)
     return false;
   tr2.lift(range, target);
-  let $after = tr2.doc.resolve(tr2.mapping.map(end, -1) - 1);
-  if (canJoin(tr2.doc, $after.pos) && $after.nodeBefore.type == $after.nodeAfter.type)
-    tr2.join($after.pos);
+  let after = tr2.mapping.map(end, -1) - 1;
+  if (canJoin(tr2.doc, after))
+    tr2.join(after);
   dispatch(tr2.scrollIntoView());
   return true;
 }

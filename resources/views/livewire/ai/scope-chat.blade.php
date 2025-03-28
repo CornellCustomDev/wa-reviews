@@ -9,7 +9,7 @@
 
         <p>
             This chatbot can answer questions for this scope.
-            <x-forms.button size="xs" variant="cds-secondary" wire:click="clearChat">Clear Chat</x-forms.button>
+            <x-forms.button size="xs" class="secondary" wire:click="clearChat">Clear Chat</x-forms.button>
         </p>
 
         @foreach ($chatMessages as $message)

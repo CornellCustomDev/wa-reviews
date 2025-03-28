@@ -2,7 +2,7 @@
     <h1>{{ $this->scope->title }}: Add Issue</h1>
 
     <form wire:submit="save">
-        <x-forms.input type="text" label="Target" wire:model="form.target" />
+        <x-forms.input type="text" label="Target" wire:model="form.target" required />
         <x-forms.textarea label="Description" wire:model="form.description" />
         <x-forms.checkbox
             label="Generate guideline observations with AI"

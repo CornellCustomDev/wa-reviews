@@ -7,7 +7,7 @@
     </flux:tooltip>
 
     <div popover="manual" class="min-w-[360px] p-[5px] rounded-lg border border-zinc-200 dark:border-zinc-600 shadow-xs bg-white dark:bg-zinc-700">
-        <div class="h-8 flex justify-between gap-2 pl-2 pr-1" data-flux-editor-link>
+        <div class="h-8 flex justify-between gap-2 ps-2 pe-1" data-flux-editor-link>
             <input data-editor="link:url" type="text" form="" placeholder="https://..." class="flex-1 text-base sm:text-sm outline-hidden bg-transparent" autofocus>
 
             <div class="flex gap-2 items-center">

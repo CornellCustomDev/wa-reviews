@@ -23,8 +23,8 @@ $classes = Flux::classes()
     ->add('disabled:shadow-none')
     ->add(match ($size) {
         default => 'h-10 text-base sm:text-sm rounded-lg px-3 block w-full',
-        'sm' => 'h-8 text-sm rounded-md pl-3 pr-2 block w-full',
-        'xs' => 'h-6 text-xs rounded-md pl-3 pr-2 block w-full',
+        'sm' => 'h-8 text-sm rounded-md ps-3 pe-2 block w-full',
+        'xs' => 'h-6 text-xs rounded-md ps-3 pe-2 block w-full',
     })
     ->add($invalid
         ? 'border border-red-500'
@@ -42,7 +42,7 @@ $classes = Flux::classes()
 
     <?php if ($clearable): ?>
         <flux:button as="div"
-            class="cursor-pointer ml-2 -mr-2 [[data-flux-select-button]:has([data-flux-select-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
+            class="cursor-pointer ms-2 -me-2 [[data-flux-select-button]:has([data-flux-select-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
             variant="subtle"
             :size="$size === 'sm' ? 'xs' : 'sm'"
             square
@@ -54,5 +54,5 @@ $classes = Flux::classes()
         </flux:button>
     <?php endif; ?>
 
-    <flux:icon.chevron-down variant="mini" class="ml-2 -mr-1 text-zinc-300 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
+    <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 text-zinc-300 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
 </button>

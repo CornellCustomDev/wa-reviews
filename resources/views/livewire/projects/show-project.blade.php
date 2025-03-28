@@ -5,7 +5,7 @@
         <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4">
             @can('update', $project)
                 <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
-                <x-forms.button icon="x-mark" x-cloak class="float-right" variant="cds-secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
+                <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
             @endcan
 
             <div x-show="!edit">

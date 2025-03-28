@@ -6,7 +6,7 @@
 
 @php
     $classes = Flux::classes()
-        ->add('truncate flex gap-2 text-left flex-1 text-zinc-700')
+        ->add('truncate flex gap-2 text-start flex-1 text-zinc-700')
         ->add('[[disabled]_&]:text-zinc-500 dark:text-zinc-300 dark:[[disabled]_&]:text-zinc-400');
 @endphp
 
