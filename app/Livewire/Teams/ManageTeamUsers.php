@@ -13,6 +13,16 @@ class ManageTeamUsers extends Component
     public Team $team;
     public ?User $editUser = null;
 
+    public function isTeamAdmin(User $user): bool
+    {
+        return $this->team->isTeamAdmin($user);
+    }
+
+    public function isReviewer(User $user): bool
+    {
+        return $this->team->isReviewer($user);
+    }
+
     public function edit(User $user): void
     {
         $this->editUser = $user;
@@ -23,6 +33,7 @@ class ManageTeamUsers extends Component
     public function closeAddUser(): void
     {
         $this->modal('add-user')->close();
+        $this->dispatch('reset-add-user');
     }
 
     #[On('close-edit-user')]
@@ -32,13 +43,12 @@ class ManageTeamUsers extends Component
         $this->editUser = null;
     }
 
-    public function remove(User $user)
+    public function remove(User $user): void
     {
         $this->authorize('manageTeam', $this->team);
-        // Remove any roles the user has on the team
-        $user->syncRoles([], $this->team->id);
-        // Remove the user from the team
-        $this->team->users()->detach($user->id);
+
+        $this->team->removeUser($user);
+
         $this->dispatch('team-changes');
     }
 

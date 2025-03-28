@@ -30,6 +30,10 @@ class Project extends Model
         'summary',
     ];
 
+    protected $with = [
+        'team:id,name',
+    ];
+
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);

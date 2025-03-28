@@ -17,7 +17,7 @@ class TeamPolicy
     public function view(User $user, Team $team): bool
     {
         return $user->isAbleTo(Permissions::ManageTeams)
-            || $user->isTeamMember($team);
+            || $team->isTeamMember($user);
     }
 
     public function manageTeam(User $user, Team $team): bool

@@ -63,13 +63,4 @@ class User extends Authenticatable implements LaratrustUser
         return Team::whereIn('id', $teamIds)->get();
     }
 
-    public function isTeamMember(Team $team): bool
-    {
-        return $this->teams->contains($team);
-    }
-
-    public function getTeamRoles(Team $team): Collection
-    {
-        return $this->roles()->wherePivot('team_id', $team->id)->get();
-    }
 }

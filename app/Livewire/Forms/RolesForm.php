@@ -21,13 +21,13 @@ class RolesForm extends Form
         $this->team = $team;
         $this->user = $user;
         $this->name = $user->name;
-        $this->roles = $user->getTeamRoles($this->team)->pluck('id')->all();
+        $this->roles = $team->getUserRoles($user)->pluck('id')->toArray();
     }
 
     public function update(): void
     {
         $this->validate();
 
-        $this->user->syncRoles($this->roles, $this->team->id);
+        $this->team->setUserRoles($this->user, $this->roles);
     }
 }
