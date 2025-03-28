@@ -25,3 +25,5 @@ yarn-error.log
 *.local.*
 error_log
 bun.lock
+/vendor/_laravel_ide
+*.sql

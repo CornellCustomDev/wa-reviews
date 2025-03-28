@@ -46,16 +46,6 @@ class ReportForm extends Form
     public function update(): void
     {
         $this->validate();
-        $this->sanitizeFields();
         $this->project->update($this->all());
-    }
-
-    public function sanitizeFields(): void
-    {
-        $this->site_purpose = strip_tags($this->site_purpose);
-        $this->urls_included = strip_tags($this->urls_included);
-        $this->urls_excluded = strip_tags($this->urls_excluded);
-        $this->review_procedure = strip_tags($this->review_procedure);
-        $this->summary = strip_tags($this->summary);
     }
 }
