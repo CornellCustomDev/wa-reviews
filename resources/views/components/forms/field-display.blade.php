@@ -3,10 +3,8 @@
 ])
 
 <div data-cds-field-display {{ $attributes }}>
-    @if ($label)
-        <flux:heading level="3">
-            {{ $label }}
-        </flux:heading>
-    @endif
+    <flux:heading level="3">
+        {{ $label }}
+    </flux:heading>
     <div>{{ $slot }}</div>
 </div>
