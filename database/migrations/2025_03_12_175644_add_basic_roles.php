@@ -10,24 +10,6 @@ use Laratrust\Models\Role;
 
 return new class extends Migration
 {
-    const array ROLE_PERMISSIONS = [
-        Roles::SiteAdmin->value => [
-            Permissions::ManageSiteConfig->value,
-            Permissions::ManageTeams->value,
-            Permissions::ManageTeamMembers->value,
-            Permissions::ManageTeamProjects->value,
-            Permissions::EditProjects->value,
-        ],
-        Roles::TeamAdmin->value => [
-            Permissions::ManageTeamMembers->value,
-            Permissions::ManageTeamProjects->value,
-            Permissions::EditProjects->value,
-        ],
-        Roles::Reviewer->value => [
-            Permissions::EditProjects->value,
-        ],
-    ];
-
     public function up(): void
     {
         foreach (App\Enums\Permissions::values() as $permission) {
@@ -42,7 +24,7 @@ return new class extends Migration
                 'name' => $roleName,
                 'display_name' => ucwords($roleName),
             ]);
-            $permissions = Permission::whereIn('name', self::ROLE_PERMISSIONS[$roleName] ?? [])->get();
+            $permissions = Permission::whereIn('name', Roles::getRolePermissions($roleName))->get();
             $role->syncPermissions($permissions ?? []);
         }
     }

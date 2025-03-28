@@ -17,4 +17,26 @@ enum Roles: string
             self::Reviewer->value,
         ];
     }
+
+    public static function getRolePermissions($role): array
+    {
+        return match ($role) {
+            self::SiteAdmin->value => [
+                Permissions::ManageSiteConfig->value,
+                Permissions::ManageTeams->value,
+                Permissions::ManageTeamMembers->value,
+                Permissions::ManageTeamProjects->value,
+                Permissions::EditProjects->value,
+            ],
+            self::TeamAdmin->value => [
+                Permissions::ManageTeamMembers->value,
+                Permissions::ManageTeamProjects->value,
+                Permissions::EditProjects->value,
+            ],
+            self::Reviewer->value => [
+                Permissions::EditProjects->value,
+            ],
+            default => [],
+        };
+    }
 }
