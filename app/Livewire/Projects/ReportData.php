@@ -8,4 +8,5 @@ use Livewire\Component;
 class ReportData extends Component
 {
     public Project $project;
+    public bool $showEditReport = false;
 }
