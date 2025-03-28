@@ -1889,6 +1889,9 @@ function hydrateTemplate(template, slotsAndAttributes = { slots: {}, attrs: {} }
   clone.setAttribute("data-appended", "");
   return clone;
 }
+function isRTL() {
+  return document.documentElement.dir === "rtl";
+}
 
 // js/element.js
 var UIElement = class extends HTMLElement {
@@ -3974,7 +3977,7 @@ var getElementRects = async function(data) {
     }
   };
 };
-function isRTL(element2) {
+function isRTL2(element2) {
   return getComputedStyle2(element2).direction === "rtl";
 }
 var platform = {
@@ -3987,7 +3990,7 @@ var platform = {
   getDimensions,
   getScale,
   isElement,
-  isRTL
+  isRTL: isRTL2
 };
 function rectsAreEqual(a, b) {
   return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
@@ -4222,7 +4225,16 @@ function anchor(target, invoke, setPosition, { position, offset: offsetValue, ga
   };
 }
 function compilePlacement(anchor2) {
-  return anchor2.split(" ").join("-");
+  let placement = anchor2.split(" ");
+  switch (placement[0]) {
+    case "start":
+      placement[0] = isRTL() ? "right" : "left";
+      break;
+    case "end":
+      placement[0] = isRTL() ? "left" : "right";
+      break;
+  }
+  return placement.join("-");
 }
 function createDurablePositionSetter(target) {
   let position = (x, y) => {
@@ -4293,7 +4305,7 @@ var UIDropdown = class extends UIElement {
         lose() {
           overlay._popoverable.setState(false);
         },
-        focusable: true
+        focusable: false
       });
     }
     on(trigger, "click", () => overlay._popoverable.toggle());
@@ -6217,7 +6229,7 @@ var UISelectedDate = class extends UIElement {
     this.templates.date?.clearDate?.();
     if (picker.selectable.hasSelection()) {
       let { cleanup } = renderTemplate(this.templates.date, (hydrate) => {
-        return hydrate({ slots: { default: picker.selectable.display() } });
+        return hydrate({ slots: { default: picker.selectable.display(this.picker.calendar.config.locale) } });
       });
       this.templates.date.clearDate = cleanup;
     } else {
@@ -7739,7 +7751,7 @@ function initializeMenuItem(el) {
     submenu._popoverable = new Popoverable(submenu, { triggers: [button] });
     submenu._anchorable = new Anchorable(submenu, {
       reference: button,
-      position: submenu.hasAttribute("position") ? submenu.getAttribute("position") : "right start",
+      position: submenu.hasAttribute("position") ? submenu.getAttribute("position") : isRTL() ? "left start" : "right start",
       gap: submenu.hasAttribute("gap") ? submenu.getAttribute("gap") : "-5",
       crossAxis: true
     });

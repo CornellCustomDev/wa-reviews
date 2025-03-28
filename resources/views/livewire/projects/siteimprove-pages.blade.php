@@ -32,13 +32,13 @@
                                 <x-forms.button.view
                                     title="View scope {{ $scope->id }}"
                                     :href="route('scope.show', $scope)"
-                                    size="xs" icon="eye" />
+                                    size="xs" icon="eye"  />
                             @else
                                 @can('create', [\App\Models\Scope::class, $project])
                                     <x-forms.button
                                         title="Add row {{ $loop->iteration }} to scope"
                                         :href="route('project.scope.create', ['project' => $project, 'url' => $page['url']])"
-                                        variant="cds-secondary"
+                                        class="secondary"
                                         size="xs" icon="plus"  />
                                 @endcan
                             @endif

@@ -3,8 +3,7 @@
 ])
 @php
     $attributes = $attributes->merge([
-        'variant' => $showChat ? 'cds-secondary' : 'cds',
         'icon' => 'chat-bubble-left-right',
     ]);
 @endphp
-<x-forms.button :$attributes>{{ $showChat ? 'Hide Chat' : 'Chat' }}</x-forms.button>
+<x-forms.button :$attributes @class(['secondary' => $showChat])>{{ $showChat ? 'Hide Chat' : 'Chat' }}</x-forms.button>
