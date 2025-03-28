@@ -16,6 +16,15 @@ class Project extends Model
         'description',
         'siteimprove_url',
         'siteimprove_id',
+        'responsible_unit',
+        'contact_name',
+        'contact_netid',
+        'audience',
+        'site_purpose',
+        'urls_included',
+        'urls_excluded',
+        'review_procedure',
+        'summary',
     ];
 
     public function issues(): HasMany
