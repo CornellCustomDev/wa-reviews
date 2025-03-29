@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Scope;
@@ -67,6 +68,13 @@ class ProjectIssueForm extends Form
         $attributes = $this->except('generateGuidelines');
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
         $this->issue = $project->issues()->create($attributes);
+
+        $delta = collect($attributes)->only([
+            'scope_id',
+            'target',
+            'description',
+        ])->toArray();
+        event(new IssueChanged($this->issue, 'create', $delta));
 
         if ($this->generateGuidelines) {
             GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);

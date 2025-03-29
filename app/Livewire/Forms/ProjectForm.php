@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Events\ProjectChanged;
 use App\Models\Project;
 use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Validate;
@@ -41,6 +42,17 @@ class ProjectForm extends Form
         $this->validate();
 
         $this->project = Project::create($this->all());
+
+        $delta = [
+            'team_id' => $this->project->team_id,
+            'name' => $this->project->name,
+            'site_url' => $this->project->site_url,
+            'description' => $this->project->description,
+            'siteimprove_url' => $this->project->siteimprove_url,
+            'siteimprove_id' => $this->project->siteimprove_id,
+        ];
+        event(new ProjectChanged($this->project, 'created', $delta));
+
         $this->updateSiteimprove();
 
         return $this->project;
@@ -50,7 +62,19 @@ class ProjectForm extends Form
     {
         $this->validate();
 
-        $this->project->update($this->all());
+        $attributes = $this->all();
+        $this->project->update($attributes);
+
+        $delta = [
+            'name' => $this->project->name,
+            'site_url' => $this->project->site_url,
+            'description' => $this->project->description,
+            'siteimprove_url' => $this->project->siteimprove_url,
+            'siteimprove_id' => $this->project->siteimprove_id,
+        ];
+        event(new ProjectChanged($this->project, 'updated', $delta));
+
+
         $this->updateSiteimprove();
     }
 

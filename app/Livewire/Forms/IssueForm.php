@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Forms;
 
+use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Scope;
 use App\Models\SiaRule;
@@ -54,6 +55,13 @@ class IssueForm extends Form
         ]);
         $this->issue = $scope->issues()->create($attributes);
 
+        $delta = collect($attributes)->only([
+            'scope_id',
+            'target',
+            'description',
+        ])->toArray();
+        event(new IssueChanged($this->issue, 'create', $delta));
+
         if ($this->generateGuidelines) {
             GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
         }
@@ -61,16 +69,19 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function update(?string $field = null): void
+    public function update(): void
     {
         $this->validate();
 
-        if ($field) {
-            $this->issue->update([$field => $this->$field]);
-        } else {
-            $attributes = $this->all();
-            $attributes['scope_id'] = $attributes['scope_id'] ?: null;
-            $this->issue->update($attributes);
-        }
+        $attributes = $this->all();
+        $attributes['scope_id'] = $attributes['scope_id'] ?: null;
+        $this->issue->update($attributes);
+
+        $delta = collect($attributes)->only([
+            'scope_id',
+            'target',
+            'description',
+        ])->toArray();
+        event(new IssueChanged($this->issue, 'update', $delta));
     }
 }

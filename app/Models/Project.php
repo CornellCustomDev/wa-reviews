@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\ProjectChanged;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,10 +10,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
     use HasFactory;
+    use SoftDeletes;
 
     protected $fillable = [
         'team_id',
@@ -97,13 +100,31 @@ class Project extends Model
         $this->assignment_id = $assignment->id;
         $this->save();
 
+        $delta = [
+            'user_id'   => $user->id,
+            'user_name' => $user->name,
+        ];
+        event(new ProjectChanged($this, 'assigned', $delta));
+
         // Make sure anything using this object gets the new assignment
         $this->refresh();
     }
 
     public function unassign(): void
     {
+        $reviewer = $this->assignment?->reviewer;
+        if (empty($reviewer)) {
+            return;
+        }
+
         // Deleting the assignment cascades to the project assignment, as well
-        $this->assignment?->delete();
+        $this->assignment->delete();
+
+        $delta = [
+            'user_id'   => $reviewer->id,
+            'user_name' => $reviewer->name,
+        ];
+        event(new ProjectChanged($this, 'unassigned', $delta));
+
     }
 }

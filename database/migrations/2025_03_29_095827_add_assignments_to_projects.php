@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('projects', function (Blueprint $table) {
-            $table->foreignId('assignment_id')->nullable()->after('siteimprove_id')->constrained('project_assignments');
+            $table->foreignId('assignment_id')->nullable()->after('siteimprove_id')
+                ->constrained('project_assignments')->cascadeOnDelete();
+            $table->softDeletes();
         });
     }
 
@@ -24,6 +26,7 @@ return new class extends Migration
         Schema::table('projects', function (Blueprint $table) {
             $table->dropForeign(['assignment_id']);
             $table->dropColumn('assignment_id');
+            $table->dropSoftDeletes();
         });
     }
 };

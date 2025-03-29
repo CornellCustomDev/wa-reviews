@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Projects;
 
+use App\Events\ProjectChanged;
 use App\Models\Project;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -13,6 +14,8 @@ class ViewProjects extends Component
     {
         $this->authorize('delete', $project);
         $project->delete();
+
+        event(new ProjectChanged($project, 'deleted'));
     }
 
     public function render()

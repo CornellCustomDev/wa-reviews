@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Projects;
 
+use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Project;
 use Livewire\Attributes\Computed;
@@ -22,5 +23,7 @@ class Issues extends Component
     {
         $this->authorize('delete', $issue);
         $issue->delete();
+
+        event(new IssueChanged($issue, 'delete', [], auth()->user()));
     }
 }

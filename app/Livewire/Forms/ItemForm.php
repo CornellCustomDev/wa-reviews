@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use App\Enums\Assessment;
 use App\Enums\TestingMethod;
+use App\Events\ItemChanged;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
@@ -116,6 +117,17 @@ class ItemForm extends Form
         $item->image_links = $image_links;
         $item->save();
 
+        $delta = collect($item->getAttributes())->only([
+            'guideline_id',
+            'assessment',
+            'description',
+            'testing_method',
+            'recommendation',
+            'testing',
+            'image_links',
+            'content_issue',
+        ])->toArray();
+        event(new ItemChanged($item, 'create', $delta));
     }
 
     public function removeExistingImage(string $filename): void
@@ -163,6 +175,18 @@ class ItemForm extends Form
         }
 
         $this->item->update($attributes);
+
+        $delta = collect($attributes)->only([
+            'guideline_id',
+            'assessment',
+            'description',
+            'testing_method',
+            'recommendation',
+            'testing',
+            'image_links',
+            'content_issue',
+        ])->toArray();
+        event(new ItemChanged($this->item, 'update', $delta));
     }
 
     private function isDuplicate(string $originalName, TemporaryUploadedFile $file): bool
