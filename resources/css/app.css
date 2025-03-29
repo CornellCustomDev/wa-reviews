@@ -284,9 +284,14 @@
     }
 }
 
-[data-flux-tabs] {
-    [data-focus] {
-        @apply focus-ring;
+[data-flux-tab-group] {
+    [data-flux-tabs] {
+        [data-focus] {
+            @apply focus-ring;
+        }
+    }
+    [data-flux-tab-panel] {
+        @apply pt-6;
     }
 }
 
@@ -308,7 +313,7 @@
 
 [data-flux-modal] {
     dialog {
-        @apply min-w-[400px];
+        @apply min-w-[400px] max-w-(--breakpoint-xl);
     }
     [data-flux-modal-close] {
         [data-flux-button] {

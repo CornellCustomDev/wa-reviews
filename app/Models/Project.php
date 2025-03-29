@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Project extends Model
 {
@@ -39,6 +41,28 @@ class Project extends Model
         return $this->belongsTo(Team::class);
     }
 
+    public function assignment(): HasOne
+    {
+        return $this->hasOne(
+            related: ProjectAssignment::class,
+            foreignKey: 'project_id',
+            localKey: 'id'
+        )->with([
+            'reviewer:id,name,email',
+        ]);
+    }
+
+    public function reviewer(): HasOneThrough
+    {
+        return $this->throughAssignment()->hasReviewer();
+    }
+
+    public function assignmentsHistory(): HasMany
+    {
+        // ProjectAssignment keeps past assignments via soft deletes.
+        return $this->hasMany(ProjectAssignment::class)->withTrashed();
+    }
+
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);
@@ -56,5 +80,30 @@ class Project extends Model
         }
 
         return Project::query()->whereIn('team_id', $user->teams->pluck('id'))->get();
+    }
+
+    public function assignToUser(User $user): void
+    {
+        // We need to first remove the existing assignment
+        $this->unassign();
+
+        // Create an assignment
+        $assignment = ProjectAssignment::create([
+            'project_id' => $this->id,
+            'user_id' => $user->id,
+        ]);
+
+        // Reference the assignment from the project
+        $this->assignment_id = $assignment->id;
+        $this->save();
+
+        // Make sure anything using this object gets the new assignment
+        $this->refresh();
+    }
+
+    public function unassign(): void
+    {
+        // Deleting the assignment cascades to the project assignment, as well
+        $this->assignment?->delete();
     }
 }

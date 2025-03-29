@@ -3,14 +3,14 @@
 
     <flux:tab.group>
         <flux:tabs wire:model.live="tab">
-            <flux:tab name="members" :accent="false">Members</flux:tab>
-{{--            <flux:tab name="projects" :accent="false">Projects</flux:tab>--}}
+            <flux:tab name="members">Members</flux:tab>
+            <flux:tab name="projects">Projects</flux:tab>
         </flux:tabs>
 
-        <flux:tab.panel name="members" class="pt-6!">
+        <flux:tab.panel name="members">
             <livewire:teams.manage-team-users :team="$team" />
         </flux:tab.panel>
-{{--        <flux:tab.panel name="projects" class="pt-6!">--}}
+{{--        <flux:tab.panel name="projects">--}}
 {{--            <livewire:teams.manage-team-projects :team="$team" />--}}
 {{--        </flux:tab.panel>--}}
     </flux:tab.group>

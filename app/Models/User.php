@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\Roles;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -21,7 +23,7 @@ class User extends Authenticatable implements LaratrustUser
         'email',
     ];
 
-    // These two fields are not in use, but do not include them in outputs
+    // These two fields are not in use, but still do not include them in outputs
     protected $hidden = [
         'password',
         'remember_token',
@@ -30,6 +32,23 @@ class User extends Authenticatable implements LaratrustUser
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Team::class);
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(
+            related: ProjectAssignment::class,
+            foreignKey: 'user_id',
+            localKey: 'id'
+        )->with([
+            'project:id,name,team_id',
+            'project.team:id,name',
+        ]);
+    }
+
+    public function assignedProjects(): HasManyThrough
+    {
+        return $this->throughAssignments()->hasProject();
     }
 
     public function isAdministrator(): bool

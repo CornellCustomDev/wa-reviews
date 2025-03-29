@@ -7,6 +7,7 @@ use App\Services\SiteImprove\SiteimproveService;
 use Exception;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -39,6 +40,22 @@ class ShowProject extends Component
         if ($name !== 'showEdit') {
             $this->showEdit = false;
         }
+    }
+
+    #[On('close-add-assignment')]
+    public function closeAddAssignment(): void
+    {
+        $this->modal('add-assignment')->close();
+        $this->dispatch('reset-add-assignment');
+    }
+
+    public function removeReviewer(): void
+    {
+        $this->authorize('update', $this->project);
+
+        $this->project->unassign();
+
+        $this->dispatch('team-changes');
     }
 
     public function render()

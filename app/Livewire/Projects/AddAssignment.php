@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Livewire\Projects;
+
+use App\Models\Project;
+use App\Models\User;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
+use Livewire\Component;
+
+class AddAssignment extends Component
+{
+    public Project $project;
+    public $user;
+
+    #[Computed]
+    public function nonAssignedMembers(): array
+    {
+        return $this->project->team->users()
+            ->get()->except($this->project->reviewer?->id ?? [])
+            ->all();
+    }
+
+    #[On('team-changes')]
+    public function teamChanges(): void
+    {
+        unset($this->nonAssignedMembers);
+        $this->project->refresh();
+    }
+
+    public function save()
+    {
+        $this->authorize('update', $this->project);
+
+        // Validate that the user exists and is not already on the team
+        $validated = $this->validate([
+            'user' => [
+                'required',
+                Rule::unique('project_assignments', 'user_id')
+                    ->where('project_id', $this->project->id)
+                    ->whereNull('deleted_at')
+            ],
+        ]);
+
+        $user = User::find($validated['user']);
+        $this->project->assignToUser($user);
+        $this->teamChanges();
+
+        $this->dispatch('close-add-assignment');
+    }
+
+    #[On('reset-add-assignment')]
+    public function resetAddAssignment(): void
+    {
+        $this->user = null;
+        $this->resetValidation();
+    }
+}
