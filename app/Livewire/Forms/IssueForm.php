@@ -55,12 +55,7 @@ class IssueForm extends Form
         ]);
         $this->issue = $scope->issues()->create($attributes);
 
-        $delta = collect($attributes)->only([
-            'scope_id',
-            'target',
-            'description',
-        ])->toArray();
-        event(new IssueChanged($this->issue, 'create', $delta));
+        event(new IssueChanged($this->issue, 'created'));
 
         if ($this->generateGuidelines) {
             GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
@@ -77,11 +72,6 @@ class IssueForm extends Form
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
         $this->issue->update($attributes);
 
-        $delta = collect($attributes)->only([
-            'scope_id',
-            'target',
-            'description',
-        ])->toArray();
-        event(new IssueChanged($this->issue, 'update', $delta));
+        event(new IssueChanged($this->issue, 'updated'));
     }
 }

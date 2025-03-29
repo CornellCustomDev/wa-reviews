@@ -24,6 +24,6 @@ class Issues extends Component
         $this->authorize('delete', $issue);
         $issue->delete();
 
-        event(new IssueChanged($issue, 'delete', [], auth()->user()));
+        event(new IssueChanged($issue, 'deleted', []));
     }
 }

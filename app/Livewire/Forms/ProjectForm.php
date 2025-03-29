@@ -43,15 +43,7 @@ class ProjectForm extends Form
 
         $this->project = Project::create($this->all());
 
-        $delta = [
-            'team_id' => $this->project->team_id,
-            'name' => $this->project->name,
-            'site_url' => $this->project->site_url,
-            'description' => $this->project->description,
-            'siteimprove_url' => $this->project->siteimprove_url,
-            'siteimprove_id' => $this->project->siteimprove_id,
-        ];
-        event(new ProjectChanged($this->project, 'created', $delta));
+        event(new ProjectChanged($this->project, 'created'));
 
         $this->updateSiteimprove();
 
@@ -65,15 +57,7 @@ class ProjectForm extends Form
         $attributes = $this->all();
         $this->project->update($attributes);
 
-        $delta = [
-            'name' => $this->project->name,
-            'site_url' => $this->project->site_url,
-            'description' => $this->project->description,
-            'siteimprove_url' => $this->project->siteimprove_url,
-            'siteimprove_id' => $this->project->siteimprove_id,
-        ];
-        event(new ProjectChanged($this->project, 'updated', $delta));
-
+        event(new ProjectChanged($this->project, 'updated'));
 
         $this->updateSiteimprove();
     }

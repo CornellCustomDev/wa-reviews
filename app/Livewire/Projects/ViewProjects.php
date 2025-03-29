@@ -15,7 +15,7 @@ class ViewProjects extends Component
         $this->authorize('delete', $project);
         $project->delete();
 
-        event(new ProjectChanged($project, 'deleted'));
+        event(new ProjectChanged($project, 'deleted', []));
     }
 
     public function render()

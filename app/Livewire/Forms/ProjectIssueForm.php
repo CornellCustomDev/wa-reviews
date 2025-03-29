@@ -69,12 +69,7 @@ class ProjectIssueForm extends Form
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
         $this->issue = $project->issues()->create($attributes);
 
-        $delta = collect($attributes)->only([
-            'scope_id',
-            'target',
-            'description',
-        ])->toArray();
-        event(new IssueChanged($this->issue, 'create', $delta));
+        event(new IssueChanged($this->issue, 'created'));
 
         if ($this->generateGuidelines) {
             GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);

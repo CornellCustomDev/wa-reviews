@@ -50,7 +50,7 @@ class ViewItems extends Component
         $this->authorize('delete', $this->issue);
         $item->delete();
 
-        event(new ItemChanged($item, 'deleted'));
+        event(new ItemChanged($item, 'deleted', []));
 
         $this->dispatch('items-updated');
     }

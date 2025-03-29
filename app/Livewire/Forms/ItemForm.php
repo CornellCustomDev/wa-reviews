@@ -117,17 +117,7 @@ class ItemForm extends Form
         $item->image_links = $image_links;
         $item->save();
 
-        $delta = collect($item->getAttributes())->only([
-            'guideline_id',
-            'assessment',
-            'description',
-            'testing_method',
-            'recommendation',
-            'testing',
-            'image_links',
-            'content_issue',
-        ])->toArray();
-        event(new ItemChanged($item, 'create', $delta));
+        event(new ItemChanged($item, 'created'));
     }
 
     public function removeExistingImage(string $filename): void
@@ -176,17 +166,7 @@ class ItemForm extends Form
 
         $this->item->update($attributes);
 
-        $delta = collect($attributes)->only([
-            'guideline_id',
-            'assessment',
-            'description',
-            'testing_method',
-            'recommendation',
-            'testing',
-            'image_links',
-            'content_issue',
-        ])->toArray();
-        event(new ItemChanged($this->item, 'update', $delta));
+        event(new ItemChanged($this->item, 'updated'));
     }
 
     private function isDuplicate(string $originalName, TemporaryUploadedFile $file): bool
