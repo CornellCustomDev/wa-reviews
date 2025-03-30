@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Projects;
 
+use App\Enums\Roles;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,7 @@ class UpdateReviewer extends Component
     {
         return $this->project->team->users()
             ->get()->except($this->project->reviewer?->id ?? [])
+            ->filter(fn ($user) => $user->hasRole([Roles::Reviewer, Roles::TeamAdmin], $this->project->team->id))
             ->all();
     }
 
@@ -31,7 +33,7 @@ class UpdateReviewer extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->project);
+        $this->authorize('manage-project', $this->project);
 
         // Validate that the user exists and is not already on the team
         $validated = $this->validate([

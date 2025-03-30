@@ -42,6 +42,16 @@ class ShowProject extends Component
         }
     }
 
+    #[On('refresh-project')]
+    public function refreshProject(): void
+    {
+        // @TODO Figure out how to get the child elements to refresh instead using this redirect
+        $this->redirect(route('project.show', [
+            'project' => $this->project,
+            'tab' => $this->tab,
+        ]));
+    }
+
     public function render()
     {
         $this->authorize('view', $this->project);

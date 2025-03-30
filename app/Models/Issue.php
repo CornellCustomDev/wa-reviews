@@ -20,6 +20,10 @@ class Issue extends Model
         'recommendation',
     ];
 
+    protected $with = [
+        'project:id,name,team_id,status',
+    ];
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

@@ -133,6 +133,20 @@ class Project extends Model
             'user_name' => $reviewer->name,
         ];
         event(new ProjectChanged($this, 'unassigned', $delta));
+    }
 
+    public function isProjectReviewer(User $user): bool
+    {
+        return $user->id === $this->reviewer?->id;
+    }
+
+    public function isInProgress(): bool
+    {
+        return $this->status->isInProgress();
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->status->isCompleted();
     }
 }

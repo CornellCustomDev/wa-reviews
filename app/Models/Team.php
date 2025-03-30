@@ -10,7 +10,7 @@ use Laratrust\Models\Team as LaratrustTeam;
 
 class Team extends LaratrustTeam
 {
-    public $guarded = [];
+//    public $guarded = [];
 
     public function users(): BelongsToMany
     {

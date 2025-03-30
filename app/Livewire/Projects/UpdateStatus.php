@@ -17,25 +17,27 @@ class UpdateStatus extends Component
 
         $this->project->unassign();
 
-        $this->dispatch('team-changes');
+        $this->dispatch('refresh-project');
     }
 
-public function updateStatus(string $direction): void
-{
-    $this->authorize('update', $this->project);
+    public function updateStatus(string $direction): void
+    {
+        $this->authorize('update', $this->project);
 
-    $this->dispatch('close-update-status');
+        $this->dispatch('close-update-status');
 
-    $this->project->update([
-        'status' => match ($direction) {
-            'next' => $this->project->status->nextStatus(),
-            'previous' => $this->project->status->previousStatus(),
-            default => throw new \InvalidArgumentException("Invalid direction: $direction"),
-        },
-    ]);
+        $this->project->update([
+            'status' => match ($direction) {
+                'next' => $this->project->status->nextStatus(),
+                'previous' => $this->project->status->previousStatus(),
+                default => throw new \InvalidArgumentException("Invalid direction: $direction"),
+            },
+        ]);
 
-    event(new ProjectChanged($this->project, 'status changed'));
-}
+        event(new ProjectChanged($this->project, 'status changed'));
+
+        $this->dispatch('refresh-project');
+    }
 
     #[On('close-update-reviewer')]
     public function closeUpdateReviewer(): void

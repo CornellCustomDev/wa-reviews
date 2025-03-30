@@ -24,17 +24,22 @@ class ScopePolicy
 
     public function create(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $project->team);
+        return ($project->isInProgress() && $project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
     }
 
     public function update(User $user, Scope $scope): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $scope->project->team);
+        /** @var Project $project */
+        $project = $scope->project;
+        return ($project->isInProgress() && $project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
     }
 
     public function delete(User $user, Scope $scope): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $scope->project->team);
+        return ($scope->project->isInProgress() && $scope->project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $scope->project->team);
     }
 
     public function restore(User $user, Scope $scope): bool

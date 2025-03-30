@@ -31,4 +31,13 @@ enum ProjectStatus: string
         };
     }
 
+    public function isInProgress(): bool
+    {
+        return $this === self::InProgress;
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this === self::Completed;
+    }
 }

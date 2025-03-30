@@ -4,22 +4,24 @@
 
     <div class="mb-2">
         @if($project->reviewer)
-            <div class="float-right">
-                <flux:modal.trigger name="update-reviewer">
-                    <x-forms.button icon="pencil-square" size="xs" title="Edit reviewer" />
-                </flux:modal.trigger>
-                <x-forms.button.delete
-                    title="Remove {{ $project->reviewer->name }} from project"
-                    size="xs"
-                    wire:click.prevent="removeReviewer"
-                    wire:confirm="Are you sure you want to remove &quot;{{ $project->reviewer->name }}&quot; from the project?"
-                />
-            </div>
+            @can('manage-project', $project)
+                <div class="float-right">
+                    <flux:modal.trigger name="update-reviewer">
+                        <x-forms.button icon="pencil-square" size="xs" title="Edit reviewer" />
+                    </flux:modal.trigger>
+                    <x-forms.button.delete
+                        title="Remove {{ $project->reviewer->name }} from project"
+                        size="xs"
+                        wire:click.prevent="removeReviewer"
+                        wire:confirm="Are you sure you want to remove &quot;{{ $project->reviewer->name }}&quot; from the project?"
+                    />
+                </div>
+            @endcan
             <x-forms.field-display label="Reviewer">
                 {{ $project->reviewer->name }}
             </x-forms.field-display>
         @else
-            @can('update', $project)
+            @can('manage-project', $project)
                 <flux:modal.trigger name="update-reviewer">
                     <x-forms.button icon="plus-circle">Assign Reviewer</x-forms.button>
                 </flux:modal.trigger>
@@ -35,11 +37,13 @@
     </flux:modal>
 
     <div>
-        <div class="float-right">
-            <flux:modal.trigger name="update-status">
-                <x-forms.button icon="cog-6-tooth" size="xs" title="Edit reviewer" />
-            </flux:modal.trigger>
-        </div>
+        @can('update', $project)
+            <div class="float-right">
+                <flux:modal.trigger name="update-status">
+                    <x-forms.button icon="cog-6-tooth" size="xs" title="Edit reviewer" />
+                </flux:modal.trigger>
+            </div>
+        @endcan
         <x-forms.field-display label="Status" class="mb-0!">
             {{ $project->status ?? 'Not started' }}
         </x-forms.field-display>
