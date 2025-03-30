@@ -42,22 +42,6 @@ class ShowProject extends Component
         }
     }
 
-    #[On('close-add-assignment')]
-    public function closeAddAssignment(): void
-    {
-        $this->modal('add-assignment')->close();
-        $this->dispatch('reset-add-assignment');
-    }
-
-    public function removeReviewer(): void
-    {
-        $this->authorize('update', $this->project);
-
-        $this->project->unassign();
-
-        $this->dispatch('team-changes');
-    }
-
     public function render()
     {
         $this->authorize('view', $this->project);

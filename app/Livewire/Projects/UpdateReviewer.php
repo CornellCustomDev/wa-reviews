@@ -9,7 +9,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class AddAssignment extends Component
+class UpdateReviewer extends Component
 {
     public Project $project;
     public $user;
@@ -47,11 +47,11 @@ class AddAssignment extends Component
         $this->project->assignToUser($user);
         $this->teamChanges();
 
-        $this->dispatch('close-add-assignment');
+        $this->dispatch('close-update-reviewer');
     }
 
-    #[On('reset-add-assignment')]
-    public function resetAddAssignment(): void
+    #[On('reset-update-reviewer')]
+    public function resetUpdateReviewer(): void
     {
         $this->user = null;
         $this->resetValidation();

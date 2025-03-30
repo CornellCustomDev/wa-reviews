@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProjectStatus;
 use App\Events\ProjectChanged;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -24,6 +25,9 @@ class Project extends Model
         'description',
         'siteimprove_url',
         'siteimprove_id',
+        'status',
+        'assignment_id',
+
         'responsible_unit',
         'contact_name',
         'contact_netid',
@@ -33,6 +37,10 @@ class Project extends Model
         'urls_excluded',
         'review_procedure',
         'summary',
+    ];
+
+    protected $casts = [
+        'status' => ProjectStatus::class,
     ];
 
     protected $with = [
