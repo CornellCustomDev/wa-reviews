@@ -47,6 +47,9 @@
             <flux:tab name="scope">Scope ({{ $project->scopes()->count() }})</flux:tab>
             <flux:tab name="siteimprove">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
             <flux:tab name="report">Report</flux:tab>
+            @can('manageProject', $project)
+                <flux:tab name="log">Activity</flux:tab>
+            @endcan
         </flux:tabs>
 
         <flux:tab.panel name="issues">
@@ -61,6 +64,11 @@
         <flux:tab.panel name="report">
             <livewire:projects.report-data :$project />
         </flux:tab.panel>
+        @can('manageProject', $project)
+            <flux:tab.panel name="log">
+                <livewire:projects.activity-log :$project />
+            </flux:tab.panel>
+        @endcan
     </flux:tab.group>
 
 </div>
