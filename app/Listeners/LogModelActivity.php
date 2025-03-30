@@ -18,6 +18,7 @@ class LogModelActivity
         Activity::create([
             'actor_id'     => $actor ? $actor->id : null,
             'actor_type'   => $actor ? get_class($actor) : 'system',
+            'project_id'   => $event->project_id,
             'subject_id'   => $event->model->id,
             'subject_type' => get_class($event->model),
             'action'       => $event->action,

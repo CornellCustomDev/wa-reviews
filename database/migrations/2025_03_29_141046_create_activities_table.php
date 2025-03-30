@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('actor_type');
             $table->unsignedBigInteger('actor_id');
 
+            $table->foreignId('project_id')->constrained('projects');
+
+            $table->unsignedBigInteger('project_id')->constrained('projects');
+
             // Subject: polymorphic reference to an Issue, Item, etc.
             $table->string('subject_type');
             $table->unsignedBigInteger('subject_id');

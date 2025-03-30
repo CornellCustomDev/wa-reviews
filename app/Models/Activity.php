@@ -11,6 +11,7 @@ class Activity extends Model
         'actor_type',
         'subject_id',
         'subject_type',
+        'project_id',
         'action',
         'delta'
     ];

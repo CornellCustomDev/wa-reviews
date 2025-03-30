@@ -16,6 +16,8 @@ class ProjectChanged
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public int $project_id;
+
     public function __construct(
         public Project $model,
         public string $action,
@@ -23,6 +25,7 @@ class ProjectChanged
         public mixed $actor = null,
         public Carbon $timestamp = new Carbon()
     ) {
+        $this->project_id = $model->id;
         $this->delta = $delta ?? collect($model->getChanges())->except(['updated_at'])->toArray();
         $this->actor = $actor ?? auth()->user();
         $this->timestamp = now();
