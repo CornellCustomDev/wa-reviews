@@ -693,6 +693,7 @@ class ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd
         'App\\Enums\\ProjectStatus' => __DIR__ . '/../..' . '/app/Enums/ProjectStatus.php',
         'App\\Enums\\Roles' => __DIR__ . '/../..' . '/app/Enums/Roles.php',
         'App\\Enums\\TestingMethod' => __DIR__ . '/../..' . '/app/Enums/TestingMethod.php',
+        'App\\Events\\AbstractModelChanged' => __DIR__ . '/../..' . '/app/Events/AbstractModelChanged.php',
         'App\\Events\\IssueChanged' => __DIR__ . '/../..' . '/app/Events/IssueChanged.php',
         'App\\Events\\ItemChanged' => __DIR__ . '/../..' . '/app/Events/ItemChanged.php',
         'App\\Events\\ProjectChanged' => __DIR__ . '/../..' . '/app/Events/ProjectChanged.php',

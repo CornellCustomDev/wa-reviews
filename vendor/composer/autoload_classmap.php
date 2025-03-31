@@ -22,6 +22,7 @@ return array(
     'App\\Enums\\ProjectStatus' => $baseDir . '/app/Enums/ProjectStatus.php',
     'App\\Enums\\Roles' => $baseDir . '/app/Enums/Roles.php',
     'App\\Enums\\TestingMethod' => $baseDir . '/app/Enums/TestingMethod.php',
+    'App\\Events\\AbstractModelChanged' => $baseDir . '/app/Events/AbstractModelChanged.php',
     'App\\Events\\IssueChanged' => $baseDir . '/app/Events/IssueChanged.php',
     'App\\Events\\ItemChanged' => $baseDir . '/app/Events/ItemChanged.php',
     'App\\Events\\ProjectChanged' => $baseDir . '/app/Events/ProjectChanged.php',
