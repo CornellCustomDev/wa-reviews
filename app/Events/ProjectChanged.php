@@ -15,7 +15,12 @@ class ProjectChanged extends AbstractModelChanged
         parent::__construct($project, $action, $delta, $actor);
     }
 
-    protected function getProjectId(): int
+    public function getContextType(): string
+    {
+        return Project::class;
+    }
+
+    protected function getContextId(): int
     {
         return $this->project->id;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Teams;
 
+use App\Events\UserChanged;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
@@ -48,6 +49,7 @@ class ManageTeamUsers extends Component
         $this->authorize('manageTeam', $this->team);
 
         $this->team->removeUser($user);
+        event(new UserChanged($user, $this->team, 'removed'));
 
         $this->dispatch('team-changes');
     }

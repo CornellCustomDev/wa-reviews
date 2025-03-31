@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('actor_type');
             $table->unsignedBigInteger('actor_id');
 
-            $table->foreignId('project_id')->constrained('projects');
-
-            $table->unsignedBigInteger('project_id')->constrained('projects');
+            // Context: polymorphic reference to a Project, Team, etc.
+            $table->string('context_type');
+            $table->unsignedBigInteger('context_id');
 
             // Subject: polymorphic reference to an Issue, Item, etc.
             $table->string('subject_type');
@@ -37,6 +37,7 @@ return new class extends Migration
 
             // Indexes for efficient querying on polymorphic relationships and timestamps.
             $table->index(['actor_id', 'actor_type']);
+            $table->index(['context_id', 'context_type']);
             $table->index(['subject_id', 'subject_type']);
             $table->index('created_at');
         });

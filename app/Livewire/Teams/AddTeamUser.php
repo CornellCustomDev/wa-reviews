@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Teams;
 
-use App\Enums\Roles;
+use App\Events\UserChanged;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Validation\Rule;
@@ -43,8 +43,10 @@ class AddTeamUser extends Component
 
         $user = User::find($validated['user']);
         $this->team->addUser($user);
-        $this->teamChanges();
 
+        event(new UserChanged($user, $this->team, 'added'));
+
+        $this->dispatch('team-changes');
         $this->dispatch('close-add-user');
     }
 

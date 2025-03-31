@@ -7,13 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 class Activity extends Model
 {
     protected $fillable = [
-        'actor_id',
         'actor_type',
-        'subject_id',
+        'actor_id',
+        'context_type',
+        'context_id',
         'subject_type',
-        'project_id',
+        'subject_id',
         'action',
-        'delta'
+        'delta',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
@@ -24,6 +27,14 @@ class Activity extends Model
      * Generally a user, but could also be an agent or system.
      */
     public function actor()
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * Context of the activity (e.g., a Project or Team).
+     */
+    public function context()
     {
         return $this->morphTo();
     }

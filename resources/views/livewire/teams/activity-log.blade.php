@@ -1,5 +1,5 @@
 <div>
-    <flux:table :paginate="$this->activities">
+    <flux:table :paginate="$this->activities" >
         <flux:table.columns>
             <flux:table.column
                 sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
@@ -26,28 +26,24 @@
                     </flux:table.cell>
                     <flux:table.cell class="text-xs">
                         @switch($activity->action)
-                            @case('status changed')
+                            @case('roles updated')
                                 <flux:badge size="sm" inset="top bottom">{{ $activity->action }}</flux:badge>
-                                to:
-                                <flux:badge size="sm" variant="solid" color="{{ $this->statusColor($activity->delta['status']) }}" inset="top bottom">{{ $activity->delta['status'] }}</flux:badge>
-                                @break
-                            @case('assigned')
-                                <flux:badge size="sm" color="green" inset="top bottom">{{ $activity->action }}</flux:badge>
-                                <span class="text-xs">to: {{ $activity->delta['user_name'] }}</span>
-                                @break
-                            @case('unassigned')
-                                <flux:badge size="sm" color="zinc" inset="top bottom">{{ $activity->action }}</flux:badge>
-                                <span class="text-xs">from: {{ $activity->delta['user_name'] }}</span>
+                                <span class="text-xs">for {{ $activity->delta['user_name'] }} to: </span>
+                                @forelse(Str::of($activity->delta['roles'])->explode(', ')->filter() as $role)
+                                    <flux:badge size="sm" variant="solid" inset="top bottom">{{ $role }}</flux:badge>
+                                @empty
+                                    None
+                                @endforelse
                                 @break
                             @default
                                 <flux:badge size="sm" inset="top bottom">{{ $activity->action }}</flux:badge>
-                                <span class="text-xs">on: {!! $this->subjectLink($activity) !!}</span>
+                                <span class="text-xs">{!! $this->subjectLink($activity) !!}</span>
                                 @if(!empty($activity->delta))
                                     <flux:tooltip toggleable>
                                         <flux:button icon="information-circle" size="sm" variant="ghost" />
                                         <flux:tooltip.content class="bg-cds-blue-200! text-cds-gray-950! min-w-[400px]">
                                             @foreach($activity->delta as $key => $val)
-                                                <x-forms.field-display :label="ucfirst($key)" class="mb-0 text-cds-gray-950!">{!! $val !!}</x-forms.field-display>
+                                                <x-forms.field-display :label="ucfirst($key)" class="mb-0 text-cds-gray-950!">{!! collect($val)->join(', ') !!}</x-forms.field-display>
                                             @endforeach
                                         </flux:tooltip.content>
                                     </flux:tooltip>

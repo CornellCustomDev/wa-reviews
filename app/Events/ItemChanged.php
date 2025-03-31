@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Item;
+use App\Models\Project;
 
 class ItemChanged extends AbstractModelChanged
 {
@@ -15,7 +16,12 @@ class ItemChanged extends AbstractModelChanged
         parent::__construct($item, $action, $delta, $actor);
     }
 
-    protected function getProjectId(): int
+    public function getContextType(): string
+    {
+        return Project::class;
+    }
+
+    protected function getContextId(): int
     {
         return $this->item->issue->project_id;
     }

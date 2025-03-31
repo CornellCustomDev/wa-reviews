@@ -11,7 +11,8 @@ abstract class AbstractModelChanged
 {
     use Dispatchable, SerializesModels;
 
-    public int $project_id;
+    public string $contextType;
+    public int $contextId;
     public Carbon $timestamp;
 
     public function __construct(
@@ -20,11 +21,14 @@ abstract class AbstractModelChanged
         public ?array $delta = null,
         public mixed $actor = null,
     ) {
-        $this->project_id = $this->getProjectId();
+        $this->contextType = $this->getContextType();
+        $this->contextId = $this->getContextId();
         $this->delta = $delta ?? collect($model->getChanges())->except(['updated_at'])->toArray();
         $this->actor = $actor ?? auth()->user();
         $this->timestamp = now();
     }
 
-    abstract protected function getProjectId(): int;
+    abstract protected function getContextType(): string;
+
+    abstract protected function getContextId(): int;
 }
