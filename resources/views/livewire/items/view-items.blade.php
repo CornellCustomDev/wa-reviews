@@ -75,7 +75,7 @@
         @endforeach
         </tbody>
     </table>
-    <flux:modal name="edit-item" wire:close="closeEdit()" class="max-w-(--breakpoint-xl)">
+    <flux:modal name="edit-item" wire:close="closeEdit()" class="md:w-[600px]">
         @if ($editItem)
             <livewire:items.update-item :item="$editItem" />
         @endif
