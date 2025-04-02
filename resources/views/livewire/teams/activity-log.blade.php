@@ -24,7 +24,7 @@
                     <flux:table.cell class="text-xs">
                         {{ $activity->actor->name }}
                     </flux:table.cell>
-                    <flux:table.cell class="text-xs">
+                    <flux:table.cell class="text-xs align-middle">
                         @switch($activity->action)
                             @case('roles updated')
                                 <flux:badge size="sm" inset="top bottom">{{ $activity->action }}</flux:badge>
@@ -40,7 +40,7 @@
                                 <span class="text-xs">{!! $this->subjectLink($activity) !!}</span>
                                 @if(!empty($activity->delta))
                                     <flux:tooltip toggleable>
-                                        <flux:button icon="information-circle" size="sm" variant="ghost" />
+                                        <flux:button icon="information-circle" size="sm" variant="ghost" class="relative top-[5px] -mt-3 -mb-1 text-cds-blue-600!" />
                                         <flux:tooltip.content class="bg-cds-blue-200! text-cds-gray-950! min-w-[400px]">
                                             @foreach($activity->delta as $key => $val)
                                                 <x-forms.field-display :label="ucfirst($key)" class="mb-0 text-cds-gray-950!">{!! collect($val)->join(', ') !!}</x-forms.field-display>

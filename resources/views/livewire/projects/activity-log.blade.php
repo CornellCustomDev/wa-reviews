@@ -44,7 +44,7 @@
                                 <span class="text-xs">on: {!! $this->subjectLink($activity) !!}</span>
                                 @if(!empty($activity->delta))
                                     <flux:tooltip toggleable>
-                                        <flux:button icon="information-circle" size="sm" variant="ghost" />
+                                        <flux:button icon="information-circle" size="sm" variant="ghost" class="relative top-[5px] -mt-3 -mb-1 text-cds-blue-600!"/>
                                         <flux:tooltip.content class="bg-cds-blue-200! text-cds-gray-950! min-w-[400px]">
                                             @foreach($activity->delta as $key => $val)
                                                 <x-forms.field-display :label="ucfirst($key)" class="mb-0 text-cds-gray-950!">{!! $val !!}</x-forms.field-display>

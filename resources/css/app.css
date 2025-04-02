@@ -70,10 +70,14 @@
 
 [data-flux-button] {
     @apply cursor-pointer focus-ring;
-    @apply rounded-none;
-    @apply text-white bg-cds-blue-600 hover:bg-[#2471a7];
+
+    &.primary {
+        @apply rounded-none;
+        @apply text-white bg-cds-blue-600 hover:bg-[#2471a7];
+    }
     &.secondary {
-        @apply bg-cds-gray-500 hover:bg-cds-gray-400;
+        @apply rounded-none;
+        @apply text-white bg-cds-gray-500 hover:bg-cds-gray-400;
     }
 
     &[data-cds-button-assessment] {
@@ -174,6 +178,13 @@
         }
     }
 
+    [data-flux-select-native] {
+        @apply font-systemUi;
+        @apply border-cds-gray-300 rounded-none;
+        @apply disabled:border-cds-gray-200 disabled:bg-cds-gray-50;
+        @apply focus-ring;
+    }
+
     /* Textarea editor */
     [data-flux-editor] {
         @apply border-cds-gray-300 rounded-none;
@@ -271,7 +282,8 @@
     [data-flux-input-file] {
         @apply focus-ring rounded-[3px];
         [data-flux-button] {
-            @apply bg-cds-gray-500 hover:bg-cds-gray-400;
+            @apply rounded-none;
+            @apply text-white bg-cds-gray-500 hover:bg-cds-gray-400;
         }
     }
 }
