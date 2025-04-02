@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Forms;
 
+use App\Events\UserChanged;
+use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
 use Livewire\Attributes\Validate;
@@ -21,13 +23,18 @@ class RolesForm extends Form
         $this->team = $team;
         $this->user = $user;
         $this->name = $user->name;
-        $this->roles = $user->getTeamRoles($this->team)->pluck('id')->all();
+        $this->roles = $team->getUserRoles($user)->pluck('id')->toArray();
     }
 
     public function update(): void
     {
         $this->validate();
 
-        $this->user->syncRoles($this->roles, $this->team->id);
+        $this->team->setUserRoles($this->user, $this->roles);
+
+        event(new UserChanged($this->user, $this->team, 'roles updated', [
+            'user_name' => $this->user->name,
+            'roles' => Role::find($this->roles)->pluck('display_name')->join(', '),
+        ]));
     }
 }

@@ -13,11 +13,15 @@
 
     <h2>List of Issues Found</h2>
 
-    @foreach($this->issues() as $scope => $issues)
+    @foreach($this->issues() as $issues)
         @php($scope = $issues[0]->scope)
         <div class="mb-4">
-            <h3 class="mb-0">Source: {{ $scope->title }}</h3>
-            <flux:subheading class="mb-2">(<a href="{{ $scope->url }}">{{ $scope->url }}</a>)</flux:subheading>
+            @if($scope)
+                <h3 class="mb-0">Source: {{ $scope?->title }}</h3>
+                <flux:subheading class="mb-2">(<a href="{{ $scope->url }}">{{ $scope->url }}</a>)</flux:subheading>
+            @else
+                <h3 class="mb-0">Source: Not Set</h3>
+            @endif
             @foreach($issues as $issue)
                 @foreach($issue->items as $item)
                     <h4 class="text-blue-900 font-semibold mb-0.5">
@@ -37,20 +41,18 @@
                     @endif
                     <h5>WCAG 2 Success Criterion: {{ $item->guideline->criterion->getLongName() }}</h5>
 
-                    <flux:subheading>Location</flux:subheading>
-                    <p>{{ $item->issue->target }}</p>
-
-                    <flux:subheading>Observation</flux:subheading>
-                    {!! $item->description !!}
-
-                    <flux:subheading>Recommendation</flux:subheading>
-                    {!! $item->recommendation !!}
-
-
-                    <flux:subheading>Testing</flux:subheading>
-                    <div class="mb-4">
+                    <x-forms.field-display label="Location">
+                        {{ $item->issue->target }}
+                    </x-forms.field-display>
+                    <x-forms.field-display label="Observation">
+                        {!! $item->description !!}
+                    </x-forms.field-display>
+                    <x-forms.field-display label="Recommendation">
+                        {!! $item->recommendation !!}
+                    </x-forms.field-display>
+                    <x-forms.field-display label="Testing">
                         {!! $item->testing !!}
-                    </div>
+                    </x-forms.field-display>
 
                     @if($item->image_links)
                         <flux:subheading>Images:</flux:subheading>

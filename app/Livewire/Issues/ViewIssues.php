@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Issues;
 
+use App\Events\IssueChanged;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Scope;
@@ -25,6 +26,8 @@ class ViewIssues extends Component
     {
         $this->authorize('delete', $issue);
         $issue->delete();
+
+        event(new IssueChanged($issue, 'deleted', []));
 
         $this->dispatch('issues-updated');
     }

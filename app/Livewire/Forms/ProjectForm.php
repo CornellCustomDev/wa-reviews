@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Forms;
 
+use App\Events\ProjectChanged;
+use App\Events\TeamChanged;
 use App\Models\Project;
+use App\Models\Team;
 use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
@@ -41,6 +44,10 @@ class ProjectForm extends Form
         $this->validate();
 
         $this->project = Project::create($this->all());
+
+        event(new ProjectChanged($this->project, 'created'));
+        event(new TeamChanged($this->project->team, $this->project, 'created'));
+
         $this->updateSiteimprove();
 
         return $this->project;
@@ -50,11 +57,25 @@ class ProjectForm extends Form
     {
         $this->validate();
 
-        $this->project->update($this->all());
+        $attributes = $this->all();
+        $this->project->update($attributes);
+
+        event(new ProjectChanged($this->project, 'updated'));
+
+        $newTeamId = $this->project->getChanges()['team_id'] ?? null;
+        if ($newTeamId) {
+            $delta = [
+                'project name' => $this->project->name,
+                'site url' => $this->project->site_url,
+            ];
+            event(new TeamChanged($this->project->team, $this->project, 'removed', $delta));
+            event(new TeamChanged(Team::find($newTeamId), $this->project, 'added', $delta));
+        }
+
         $this->updateSiteimprove();
     }
 
-    protected function updateSiteimprove()
+    protected function updateSiteimprove(): void
     {
         $siteimprove_id = $this->project->siteimprove_id ?: (SiteimproveService::findSite($this->project->site_url) ?? '');
         if ($siteimprove_id) {

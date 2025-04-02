@@ -16,9 +16,13 @@ class Scope extends Model
         'title',
         'url',
         'page_content',
-        'retrieved_at',
+        'retrieved_at', // @TODO: Store this in a separate table
         'notes',
         'comments'
+    ];
+
+    protected $with = [
+        'project:id,name,team_id,status',
     ];
 
     protected $casts = [

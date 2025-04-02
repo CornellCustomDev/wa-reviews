@@ -7,6 +7,7 @@ use App\Services\SiteImprove\SiteimproveService;
 use Exception;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -39,6 +40,16 @@ class ShowProject extends Component
         if ($name !== 'showEdit') {
             $this->showEdit = false;
         }
+    }
+
+    #[On('refresh-project')]
+    public function refreshProject(): void
+    {
+        // @TODO Figure out how to get the child elements to refresh instead using this redirect
+        $this->redirect(route('project.show', [
+            'project' => $this->project,
+            'tab' => $this->tab,
+        ]));
     }
 
     public function render()

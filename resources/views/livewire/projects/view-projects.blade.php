@@ -14,6 +14,7 @@
             <th>Site</th>
             <th>Team</th>
             <th style="width: 150px">Created</th>
+            <th style="width: 100px;">Status</th>
             <th style="width: 100px;">Actions</th>
         </tr>
         </thead>
@@ -28,6 +29,7 @@
                     @endif
                 </td>
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
+                <td>{{ $project->status }}</td>
                 <td>
                     <x-forms.button.view
                         title="View project {{ $project->id }}"

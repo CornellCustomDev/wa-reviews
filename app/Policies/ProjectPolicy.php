@@ -16,7 +16,12 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $user->isTeamMember($project->team);
+        return $project->team->isTeamMember($user);
+    }
+
+    public function manageProject(User $user, Project $project): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
     }
 
     public function create(User $user, ?Team $team = null): bool
@@ -26,15 +31,12 @@ class ProjectPolicy
 
     public function update(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $project->team);
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
+            || ($user->id == $project->reviewer->id && ($project->isInProgress() || $project->isCompleted()));
     }
 
     public function delete(User $user, Project $project): bool
     {
-        if ($project->team === null) {
-            return false;
-        }
-
         return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
     }
 

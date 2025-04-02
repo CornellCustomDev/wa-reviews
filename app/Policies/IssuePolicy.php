@@ -16,22 +16,25 @@ class IssuePolicy
 
     public function view(User $user, Issue $issue): bool
     {
-        return $user->isTeamMember($issue->project->team);
+        return $issue->project->team->isTeamMember($user);
     }
 
     public function create(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $project->team);
+        return ($project->isInProgress() && $project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $issue->project->team);
+        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
     }
 
     public function delete(User $user, Issue $issue): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $issue->project->team);
+        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
+            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
     }
 
     public function restore(User $user, Issue $issue): bool

@@ -29,5 +29,6 @@ class UpdateRoles extends Component
         $this->form->update();
 
         $this->dispatch('close-edit-user');
+        $this->dispatch('team-changes');
     }
 }
