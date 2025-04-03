@@ -1428,7 +1428,7 @@
     }
     /**
     The size of this node, as defined by the integer-based [indexing
-    scheme](/docs/guide/#doc.indexing). For text nodes, this is the
+    scheme](https://prosemirror.net/docs/guide/#doc.indexing). For text nodes, this is the
     amount of characters. For other leaf nodes, it is one. For
     non-leaf nodes, it is the size of the content plus two (the
     start and end token).
@@ -3738,23 +3738,24 @@
     /**
     Create a new mapping with the given position maps.
     */
-    constructor(maps = [], mirror, from2 = 0, to = maps.length) {
-      this.maps = maps;
+    constructor(maps, mirror, from2 = 0, to = maps ? maps.length : 0) {
       this.mirror = mirror;
       this.from = from2;
       this.to = to;
+      this._maps = maps || [];
+      this.ownData = !(maps || mirror);
+    }
+    /**
+    The step maps in this mapping.
+    */
+    get maps() {
+      return this._maps;
     }
     /**
     Create a mapping that maps only through a part of this one.
     */
     slice(from2 = 0, to = this.maps.length) {
-      return new _Mapping(this.maps, this.mirror, from2, to);
-    }
-    /**
-    @internal
-    */
-    copy() {
-      return new _Mapping(this.maps.slice(), this.mirror && this.mirror.slice(), this.from, this.to);
+      return new _Mapping(this._maps, this.mirror, from2, to);
     }
     /**
     Add a step map to the end of this mapping. If `mirrors` is
@@ -3762,18 +3763,23 @@
     image of this one.
     */
     appendMap(map2, mirrors) {
-      this.to = this.maps.push(map2);
+      if (!this.ownData) {
+        this._maps = this._maps.slice();
+        this.mirror = this.mirror && this.mirror.slice();
+        this.ownData = true;
+      }
+      this.to = this._maps.push(map2);
       if (mirrors != null)
-        this.setMirror(this.maps.length - 1, mirrors);
+        this.setMirror(this._maps.length - 1, mirrors);
     }
     /**
     Add all the step maps in a given mapping to this one (preserving
     mirroring information).
     */
     appendMapping(mapping) {
-      for (let i = 0, startSize = this.maps.length; i < mapping.maps.length; i++) {
+      for (let i = 0, startSize = this._maps.length; i < mapping._maps.length; i++) {
         let mirr = mapping.getMirror(i);
-        this.appendMap(mapping.maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
+        this.appendMap(mapping._maps[i], mirr != null && mirr < i ? startSize + mirr : void 0);
       }
     }
     /**
@@ -3800,9 +3806,9 @@
     Append the inverse of the given mapping to this one.
     */
     appendMappingInverted(mapping) {
-      for (let i = mapping.maps.length - 1, totalSize = this.maps.length + mapping.maps.length; i >= 0; i--) {
+      for (let i = mapping.maps.length - 1, totalSize = this._maps.length + mapping._maps.length; i >= 0; i--) {
         let mirr = mapping.getMirror(i);
-        this.appendMap(mapping.maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
+        this.appendMap(mapping._maps[i].invert(), mirr != null && mirr > i ? totalSize - mirr - 1 : void 0);
       }
     }
     /**
@@ -3820,7 +3826,7 @@
       if (this.mirror)
         return this._map(pos, assoc, true);
       for (let i = this.from; i < this.to; i++)
-        pos = this.maps[i].map(pos, assoc);
+        pos = this._maps[i].map(pos, assoc);
       return pos;
     }
     /**
@@ -3836,12 +3842,12 @@
     _map(pos, assoc, simple) {
       let delInfo = 0;
       for (let i = this.from; i < this.to; i++) {
-        let map2 = this.maps[i], result = map2.mapResult(pos, assoc);
+        let map2 = this._maps[i], result = map2.mapResult(pos, assoc);
         if (result.recover != null) {
           let corr = this.getMirror(i);
           if (corr != null && corr > i && corr < this.to) {
             i = corr;
-            pos = this.maps[corr].recover(result.recover);
+            pos = this._maps[corr].recover(result.recover);
             continue;
           }
         }
@@ -5342,7 +5348,7 @@
     greater than one, any number of nodes above that. By default, the
     parts split off will inherit the node type of the original node.
     This can be changed by passing an array of types and attributes to
-    use after the split.
+    use after the split (with the outermost nodes coming first).
     */
     split(pos, depth = 1, typesAfter) {
       split(this, pos, depth, typesAfter);
@@ -6490,11 +6496,13 @@
   function scrollRectIntoView(view, rect, startDOM) {
     let scrollThreshold = view.someProp("scrollThreshold") || 0, scrollMargin = view.someProp("scrollMargin") || 5;
     let doc3 = view.dom.ownerDocument;
-    for (let parent = startDOM || view.dom; ; parent = parentNode(parent)) {
+    for (let parent = startDOM || view.dom; ; ) {
       if (!parent)
         break;
-      if (parent.nodeType != 1)
+      if (parent.nodeType != 1) {
+        parent = parentNode(parent);
         continue;
+      }
       let elt = parent;
       let atTop = elt == doc3.body;
       let bounding = atTop ? windowRect(doc3) : clientRect(elt);
@@ -6520,8 +6528,10 @@
           rect = { left: rect.left - dX, top: rect.top - dY, right: rect.right - dX, bottom: rect.bottom - dY };
         }
       }
-      if (atTop || /^(fixed|sticky)$/.test(getComputedStyle(parent).position))
+      let pos = atTop ? "fixed" : getComputedStyle(parent).position;
+      if (/^(fixed|sticky)$/.test(pos))
         break;
+      parent = pos == "absolute" ? parent.offsetParent : parentNode(parent);
     }
   }
   function storeScrollPos(view) {
@@ -10521,6 +10531,7 @@
         view.input.lastFocus = 0;
         selectionToDOM(view);
         this.currentSelection.set(sel);
+        view.scrollToSelection();
       } else if (from2 > -1 || newSel) {
         if (from2 > -1) {
           view.docView.markDirty(from2, to);
@@ -12228,9 +12239,9 @@
     if (target == null)
       return false;
     tr2.lift(range, target);
-    let after = tr2.mapping.map(end, -1) - 1;
-    if (canJoin(tr2.doc, after))
-      tr2.join(after);
+    let $after = tr2.doc.resolve(tr2.mapping.map(end, -1) - 1);
+    if (canJoin(tr2.doc, $after.pos) && $after.nodeBefore.type == $after.nodeAfter.type)
+      tr2.join($after.pos);
     dispatch(tr2.scrollIntoView());
     return true;
   }
@@ -15323,13 +15334,14 @@
       ];
     }
   });
+  var focusEventsPluginKey = new PluginKey("focusEvents");
   var FocusEvents = Extension.create({
     name: "focusEvents",
     addProseMirrorPlugins() {
       const { editor } = this;
       return [
         new Plugin({
-          key: new PluginKey("focusEvents"),
+          key: focusEventsPluginKey,
           props: {
             handleDOMEvents: {
               focus: (view, event) => {
@@ -18501,7 +18513,7 @@ img.ProseMirror-separator {
           }
         },
         type: {
-          default: void 0,
+          default: null,
           parseHTML: (element2) => element2.getAttribute("type")
         }
       };
@@ -18666,61 +18678,60 @@ img.ProseMirror-separator {
   var StarterKit = Extension.create({
     name: "starterKit",
     addExtensions() {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q, _r, _s, _t;
       const extensions = [];
       if (this.options.bold !== false) {
-        extensions.push(Bold.configure((_a = this.options) === null || _a === void 0 ? void 0 : _a.bold));
+        extensions.push(Bold.configure(this.options.bold));
       }
       if (this.options.blockquote !== false) {
-        extensions.push(Blockquote.configure((_b = this.options) === null || _b === void 0 ? void 0 : _b.blockquote));
+        extensions.push(Blockquote.configure(this.options.blockquote));
       }
       if (this.options.bulletList !== false) {
-        extensions.push(BulletList.configure((_c = this.options) === null || _c === void 0 ? void 0 : _c.bulletList));
+        extensions.push(BulletList.configure(this.options.bulletList));
       }
       if (this.options.code !== false) {
-        extensions.push(Code.configure((_d = this.options) === null || _d === void 0 ? void 0 : _d.code));
+        extensions.push(Code.configure(this.options.code));
       }
       if (this.options.codeBlock !== false) {
-        extensions.push(CodeBlock.configure((_e = this.options) === null || _e === void 0 ? void 0 : _e.codeBlock));
+        extensions.push(CodeBlock.configure(this.options.codeBlock));
       }
       if (this.options.document !== false) {
-        extensions.push(Document.configure((_f = this.options) === null || _f === void 0 ? void 0 : _f.document));
+        extensions.push(Document.configure(this.options.document));
       }
       if (this.options.dropcursor !== false) {
-        extensions.push(Dropcursor.configure((_g = this.options) === null || _g === void 0 ? void 0 : _g.dropcursor));
+        extensions.push(Dropcursor.configure(this.options.dropcursor));
       }
       if (this.options.gapcursor !== false) {
-        extensions.push(Gapcursor.configure((_h = this.options) === null || _h === void 0 ? void 0 : _h.gapcursor));
+        extensions.push(Gapcursor.configure(this.options.gapcursor));
       }
       if (this.options.hardBreak !== false) {
-        extensions.push(HardBreak.configure((_j = this.options) === null || _j === void 0 ? void 0 : _j.hardBreak));
+        extensions.push(HardBreak.configure(this.options.hardBreak));
       }
       if (this.options.heading !== false) {
-        extensions.push(Heading.configure((_k = this.options) === null || _k === void 0 ? void 0 : _k.heading));
+        extensions.push(Heading.configure(this.options.heading));
       }
       if (this.options.history !== false) {
-        extensions.push(History.configure((_l = this.options) === null || _l === void 0 ? void 0 : _l.history));
+        extensions.push(History.configure(this.options.history));
       }
       if (this.options.horizontalRule !== false) {
-        extensions.push(HorizontalRule.configure((_m = this.options) === null || _m === void 0 ? void 0 : _m.horizontalRule));
+        extensions.push(HorizontalRule.configure(this.options.horizontalRule));
       }
       if (this.options.italic !== false) {
-        extensions.push(Italic.configure((_o = this.options) === null || _o === void 0 ? void 0 : _o.italic));
+        extensions.push(Italic.configure(this.options.italic));
       }
       if (this.options.listItem !== false) {
-        extensions.push(ListItem.configure((_p = this.options) === null || _p === void 0 ? void 0 : _p.listItem));
+        extensions.push(ListItem.configure(this.options.listItem));
       }
       if (this.options.orderedList !== false) {
-        extensions.push(OrderedList.configure((_q = this.options) === null || _q === void 0 ? void 0 : _q.orderedList));
+        extensions.push(OrderedList.configure(this.options.orderedList));
       }
       if (this.options.paragraph !== false) {
-        extensions.push(Paragraph.configure((_r = this.options) === null || _r === void 0 ? void 0 : _r.paragraph));
+        extensions.push(Paragraph.configure(this.options.paragraph));
       }
       if (this.options.strike !== false) {
-        extensions.push(Strike.configure((_s = this.options) === null || _s === void 0 ? void 0 : _s.strike));
+        extensions.push(Strike.configure(this.options.strike));
       }
       if (this.options.text !== false) {
-        extensions.push(Text.configure((_t = this.options) === null || _t === void 0 ? void 0 : _t.text));
+        extensions.push(Text.configure(this.options.text));
       }
       return extensions;
     }

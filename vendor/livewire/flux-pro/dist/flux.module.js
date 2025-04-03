@@ -1777,8 +1777,6 @@ function debounce(callback, delay) {
   };
 }
 var lockCount = 0;
-var undoLockStyles = () => {
-};
 function lockScroll(allowScroll = false) {
   if (allowScroll) return { lock: () => {
   }, unlock: () => {
@@ -1787,31 +1785,34 @@ function lockScroll(allowScroll = false) {
     lock() {
       lockCount++;
       if (lockCount > 1) return;
-      undoLockStyles = chain(
-        setStyle(document.documentElement, "paddingRight", `${window.innerWidth - document.documentElement.clientWidth}px`),
-        setStyle(document.documentElement, "overflow", "hidden")
-      );
+      setLockStyles(document.documentElement, {
+        paddingRight: `calc(${window.innerWidth - document.documentElement.clientWidth}px + ${document.documentElement.style.paddingRight})`,
+        overflow: "hidden"
+      });
     },
     unlock() {
       lockCount = Math.max(0, lockCount - 1);
       if (lockCount > 0) return;
-      undoLockStyles();
+      undoLockStyles(document.documentElement);
     }
   };
 }
-function setStyle(element2, style, value2) {
-  let currentValue = element2.style[style];
-  element2.style[style] = value2;
-  return () => {
-    element2.style[style] = currentValue;
-  };
-}
-function chain(...fns) {
-  return (...args) => {
-    for (let fn of fns) {
-      fn(...args);
+function setLockStyles(element2, styles) {
+  let unlockedStyles = JSON.parse(element2.getAttribute(`data-flux-scroll-unlock`) || "{}");
+  Object.entries(styles).forEach(([style, value2]) => {
+    if (unlockedStyles[style] === void 0) {
+      unlockedStyles[style] = element2.style[style];
+      element2.style[style] = value2;
     }
-  };
+  });
+  element2.setAttribute(`data-flux-scroll-unlock`, JSON.stringify(unlockedStyles));
+}
+function undoLockStyles(element2) {
+  let unlockedStyles = JSON.parse(element2.getAttribute(`data-flux-scroll-unlock`) || "{}");
+  Object.entries(unlockedStyles).forEach(([style, value2]) => {
+    element2.style[style] = value2;
+  });
+  element2.removeAttribute(`data-flux-scroll-unlock`);
 }
 function initFauxButton(el, isDisabled, action) {
   let ifKey = (key, callback) => (e) => {
@@ -8164,6 +8165,11 @@ function generateChartObject(config) {
             return config.axes.x.scale || (this.rawValues.every((v) => isDateish(v)) ? "time" : "categorical");
           });
         },
+        get interval() {
+          return memoize("x.interval", dataMemoKey, () => {
+            return config.axes.x.interval || "auto";
+          });
+        },
         get values() {
           return memoize("x.values", dataMemoKey, () => this.rawValues.map((v) => {
             if (this.type === "time") {
@@ -8178,7 +8184,7 @@ function generateChartObject(config) {
         get ticks() {
           return memoize("x.ticks", dataMemoKey, () => {
             let xTickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
-            let xTickLabels = generateTickLabels(xTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix);
+            let xTickLabels = generateTickLabels(xTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval);
             return xTickValues.map((value2, index) => ({ value: value2, label: xTickLabels[index] }));
           });
         },
@@ -8207,7 +8213,7 @@ function generateChartObject(config) {
         tickPrefix: config.axes.y.tickPrefix,
         get values() {
           return memoize("y.values", dataMemoKey, () => chart.data.flatMap((d) => this.keys.reduce((acc, key) => {
-            if (!d[key]) {
+            if (d[key] === void 0) {
               return acc;
             }
             acc.push(d[key]);
@@ -8219,10 +8225,15 @@ function generateChartObject(config) {
             return config.axes.y.scale || "linear";
           });
         },
+        get interval() {
+          return memoize("y.interval", dataMemoKey, () => {
+            return config.axes.y.interval || "auto";
+          });
+        },
         get ticks() {
           return memoize("y.ticks", dataMemoKey, () => {
             let yTickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
-            let yTickLabels = generateTickLabels(yTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix);
+            let yTickLabels = generateTickLabels(yTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval);
             return yTickValues.map((value2, index) => ({ value: value2, label: yTickLabels[index] }));
           });
         },
@@ -8251,16 +8262,16 @@ function generateChartObject(config) {
         let series = {
           field: key,
           values: chart.data.map((d) => d[key]),
-          linePath(curve = "monotone") {
+          linePath(curve = "smooth") {
             let points2 = this.points.map((p) => [p.x, p.y]);
             return {
-              monotone: monotoneX,
+              smooth: smoothX,
               none: noCurve
             }[curve](points2);
           },
-          areaPath(curve = "monotone") {
+          areaPath(curve = "smooth") {
             let linePath = {
-              monotone: monotoneX,
+              smooth: smoothX,
               none: noCurve
             }[curve](this.points.map((p) => [p.x, p.y]));
             let areaPath = `${linePath} L${chart.axes.x.scale(chart.axes.x.domain[1])},${chart.axes.y.scale(chart.axes.y.domain[0])} L${chart.axes.x.scale(chart.axes.x.domain[0])},${chart.axes.y.scale(chart.axes.y.domain[0])} Z`;
@@ -8326,6 +8337,24 @@ function generateDomain(type, values) {
     return generateTimeDomain(deduplicatedValues);
   } else if (type === "linear") {
     deduplicatedValues.sort((a, b) => Number(a) - Number(b));
+    if (deduplicatedValues.length === 1) {
+      if (deduplicatedValues[0] === 0) {
+        return [
+          Number(deduplicatedValues[0]),
+          1
+        ];
+      } else if (deduplicatedValues[0] > 0) {
+        return [
+          0,
+          Number(deduplicatedValues[0])
+        ];
+      } else {
+        return [
+          Number(deduplicatedValues[0]),
+          0
+        ];
+      }
+    }
     return [Number(deduplicatedValues[0]), Number(deduplicatedValues[deduplicatedValues.length - 1])];
   } else {
     return [
@@ -8350,16 +8379,21 @@ function generateTickValues(data, axis, domain) {
     if (tickEnd !== "auto" && tickEnd !== "max" && !isNaN(Number(tickEnd))) {
       maxValue = Number(tickEnd);
     }
-    let range = maxValue - minValue;
-    let rawStep = range / (targetCount - 1);
-    let magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-    let normalizedStep = rawStep / magnitude;
+    let interval = Number(axis.interval);
     let niceStep;
-    if (normalizedStep < 1.5) niceStep = 1;
-    else if (normalizedStep < 3) niceStep = 2;
-    else if (normalizedStep < 7) niceStep = 5;
-    else niceStep = 10;
-    niceStep *= magnitude;
+    if (axis.interval === "auto" || Number.isNaN(interval)) {
+      let range = maxValue - minValue;
+      let rawStep = range / (targetCount - 1);
+      let magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+      let normalizedStep = rawStep / magnitude;
+      if (normalizedStep < 1.5) niceStep = 1;
+      else if (normalizedStep < 3) niceStep = 2;
+      else if (normalizedStep < 7) niceStep = 5;
+      else niceStep = 10;
+      niceStep *= magnitude;
+    } else {
+      niceStep = interval;
+    }
     let start;
     if (tickStart === "auto") {
       start = Math.floor(minValue / niceStep) * niceStep;
@@ -8392,7 +8426,7 @@ function generateTickValues(data, axis, domain) {
       tickValues = tickValues.filter((_, i) => i % step === 0);
     }
   } else if (axis.type === "time") {
-    let [_, ticks] = generateDateFormatAndTicks(domain[0], domain[1], axis.tickCount);
+    let [_, ticks] = generateDateFormatAndTicks(domain[0], domain[1], axis.tickCount, axis.interval);
     return ticks;
   } else if (axis.type === "categorical") {
     data.forEach((datum) => {
@@ -8406,11 +8440,11 @@ function generateTickValues(data, axis, domain) {
   }
   return tickValues;
 }
-function generateTickLabels(tickValues, type, format, tickSuffix, tickPrefix) {
+function generateTickLabels(tickValues, type, format, tickSuffix, tickPrefix, interval) {
   let labels = [];
   if (type === "time") {
     if (!format) {
-      [format] = generateDateFormatAndTicks(tickValues[0], tickValues[tickValues.length - 1]);
+      [format] = generateDateFormatAndTicks(tickValues[0], tickValues[tickValues.length - 1], null, interval);
     }
     format = { ...format, timeZone: "UTC" };
     labels = tickValues.map((value2) => new Date(value2).toLocaleString(getLocale(), format));
@@ -8447,7 +8481,7 @@ function scaleLinear(domain, range) {
     return range[0] + (value2 - domain[0]) * (rangeDiff / domainDiff);
   };
 }
-function monotoneX(points) {
+function smoothX(points) {
   if (points.length < 2) return "";
   const sign = (x) => x < 0 ? -1 : 1;
   const calculateSlope = (x0, y0, x1, y1, x2, y2) => {
@@ -8547,7 +8581,7 @@ function scaleTime(domain, range) {
     return range[0] + percent * rangeDiff;
   };
 }
-function generateDateFormatAndTicks(start, end, tickCount) {
+function generateDateFormatAndTicks(start, end, tickCount, interval) {
   let startDate = start;
   let endDate = end;
   const diffMs = endDate - startDate;
@@ -8560,7 +8594,46 @@ function generateDateFormatAndTicks(start, end, tickCount) {
   let format;
   let incrementFn;
   let firstTick;
-  if (diffHours < 1) {
+  switch (interval) {
+    case "second":
+      format = { hour: "numeric", minute: "numeric", second: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds() + 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate(), startDate.getUTCHours(), startDate.getUTCMinutes(), startDate.getUTCSeconds()));
+      break;
+    case "minute":
+      format = { hour: "numeric", minute: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes() + 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate(), startDate.getUTCHours(), startDate.getUTCMinutes()));
+      break;
+    case "hour":
+      format = { hour: "numeric", minute: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours() + 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate(), startDate.getUTCHours()));
+      break;
+    case "day":
+      format = { day: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+      break;
+    case "week":
+      format = { day: "numeric", month: "short" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 7));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), startDate.getUTCDate()));
+      break;
+    case "month":
+      format = { month: "short", day: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1));
+      break;
+    case "year":
+      format = { year: "numeric" };
+      incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear() + 1, 0, 1));
+      firstTick = new Date(Date.UTC(startDate.getUTCFullYear(), 0, 1));
+      break;
+    default:
+  }
+  if (incrementFn) {
+  } else if (diffHours < 1) {
     format = { hour: "numeric", minute: "numeric" };
     let hourStep = tickCount ? Math.max(1, Math.floor(diffMinutes / (tickCount - 1))) : 1;
     incrementFn = (date) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes() + hourStep));
@@ -8777,6 +8850,7 @@ var UIChart = class extends HTMLElement {
           key: xKey,
           format: templates.axes.x.template?.hasAttribute("format") ? JSON.parse(templates.axes.x.template?.getAttribute("format")) : null,
           scale: templates.axes.x.template?.getAttribute("scale"),
+          interval: templates.axes.x.template?.getAttribute("interval"),
           position: templates.axes.x.template?.getAttribute("position"),
           tickCount: templates.axes.x.template?.getAttribute("tick-count") || templates.axes.x.tickLabel?.getAttribute("target-tick-count"),
           tickStart: templates.axes.x.template?.getAttribute("tick-start"),
@@ -8790,6 +8864,7 @@ var UIChart = class extends HTMLElement {
           keys: yKeys,
           format: templates.axes.y.template?.hasAttribute("format") ? JSON.parse(templates.axes.y.template?.getAttribute("format")) : null,
           scale: templates.axes.y.template?.getAttribute("scale"),
+          interval: templates.axes.y.template?.getAttribute("interval"),
           position: templates.axes.y.template?.getAttribute("position"),
           tickCount: templates.axes.y.template?.getAttribute("tick-count") || templates.axes.y.tickLabel?.getAttribute("target-tick-count"),
           tickStart: templates.axes.y.template?.getAttribute("tick-start"),
@@ -8818,7 +8893,7 @@ var UIChart = class extends HTMLElement {
         let line = svg.querySelector(`[data-line][data-series="${field}"]`);
         let template = templates.lines[field];
         if (template) {
-          let curve = template.getAttribute("curve") || "monotone";
+          let curve = template.getAttribute("curve") || "smooth";
           if (!line) {
             let lineEl = hydrateSvgTemplate(template);
             lineEl.setAttribute("data-line", "");
@@ -8834,7 +8909,7 @@ var UIChart = class extends HTMLElement {
         let area = svg.querySelector(`[data-area][data-series="${field}"]`);
         let template = templates.areas[field];
         if (template) {
-          let curve = template.getAttribute("curve") || "monotone";
+          let curve = template.getAttribute("curve") || "smooth";
           if (!area) {
             let areaEl = hydrateSvgTemplate(template);
             areaEl.setAttribute("data-area", "");
@@ -9645,16 +9720,17 @@ var UITabs = class _UITabs extends UIControl {
 };
 function initializeTab(el) {
   el._disableable = new Disableable(el);
-  el._disabled = el.hasAttribute("disabled");
   let link = el.matches("a") ? el : null;
   let target = link || el;
-  if (el._disabled) {
-    setAttribute2(target, "disabled", "");
-    setAttribute2(target, "aria-disabled", "true");
-  }
+  el._disableable.onInitAndChange((disabled) => {
+    if (disabled) {
+      setAttribute2(target, "aria-disabled", "true");
+    } else {
+      removeAttribute(target, "aria-disabled");
+    }
+  });
   let id = assignId(target, "tab");
   setAttribute2(target, "role", "tab");
-  if (el._disabled) return;
   target._focusable = new Focusable(target, { disableable: el._disableable, tabbableAttr: "data-active" });
   if (!link) {
     let panel = el.getAttribute("name");

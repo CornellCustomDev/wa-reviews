@@ -238,7 +238,7 @@ $presetArray = array_map(function ($preset) {
                 <?php if ($presets): ?>
                     <ui-calendar-presets class="block sm:hidden px-4">
                         <select class="appearance-none w-full ps-3 pe-10 block h-10 py-2 text-sm rounded-lg shadow-2xs border bg-white dark:bg-white/10 dark:disabled:bg-white/[9%] text-zinc-700 dark:text-zinc-300 has-[option.placeholder:checked]:text-zinc-400 dark:has-[option.placeholder:checked]:text-zinc-400 disabled:shadow-none border border-zinc-200 border-b-zinc-300/80 dark:border-white/10" data-flux-control="" data-flux-select-native="" data-flux-group-target="">
-                            <option value="" disabled="" selected="" class="placeholder">Choose predefined range...</option>
+                            <option value="" disabled="" selected="" class="placeholder">{{ __('Choose predefined range...') }}</option>
                             @foreach ($presetArray as $preset)
                                 <option value="{{ $preset->value }}">{{ $preset->label() }}</option>
                             @endforeach
