@@ -13,7 +13,7 @@ $classes = Flux::classes()
     ->add('group/select-button cursor-default py-2')
     ->add('overflow-hidden') // Overflow hidden is here to prevent the button from growing if the selected date text is too long.
     ->add('flex items-center')
-    ->add('shadow-2xs')
+    ->add('shadow-xs')
     ->add('bg-white dark:bg-white/10 dark:disabled:bg-white/[7%]')
     // Make the placeholder match the text color of standard input placeholders...
     ->add('disabled:shadow-none')

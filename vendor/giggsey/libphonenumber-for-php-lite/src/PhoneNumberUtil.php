@@ -44,7 +44,7 @@ class PhoneNumberUtil
     public const REGION_CODE_FOR_NON_GEO_ENTITY = '001';
 
     // Region-code for the unknown region.
-    protected const UNKNOWN_REGION = 'ZZ';
+    public const UNKNOWN_REGION = 'ZZ';
 
     protected const NANPA_COUNTRY_CODE = 1;
     // The PLUS_SIGN signifies the international prefix.
@@ -188,7 +188,8 @@ class PhoneNumberUtil
         54, // Argentina
         55, // Brazil
         62, // Indonesia: some prefixes only (fixed CMDA wireless)
-    ] + self::GEO_MOBILE_COUNTRIES_WITHOUT_MOBILE_AREA_CODES;
+        86, // China
+    ];
 
     /**
      * For performance reasons, amalgamate both into one map.

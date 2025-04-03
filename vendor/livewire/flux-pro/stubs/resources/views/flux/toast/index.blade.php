@@ -5,7 +5,9 @@
 @php
 $classes = Flux::classes()
     ->add('m-0 p-6 bg-transparent')
-    ->add('[&[data-position*=top]]:mb-auto [&[data-position*=bottom]]:mt-auto [&[data-position*=right]]:ms-auto [&[data-position*=left]]:me-auto')
+    ->add('[&[data-position*=top]]:mb-auto [&[data-position*=bottom]]:mt-auto')
+    ->add('[&[data-position*=right]]:ml-auto rtl:[&[data-position*=right]]:ml-0 rtl:[&[data-position*=right]]:mr-auto')
+    ->add('[&[data-position*=left]]:mr-auto rtl:[&[data-position*=left]]:mr-0 rtl:[&[data-position*=left]]:ml-auto')
     ;
 @endphp
 
