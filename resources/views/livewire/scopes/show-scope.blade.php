@@ -11,7 +11,9 @@
         <flux:tabs wire:model.live="tab">
             <flux:tab name="issues" :accent="false">Issues ({{ count($scope->issues) }})</flux:tab>
             <flux:tab name="siteimprove" :accent="false">Siteimprove ({{ $this->siteimproveIssueCount() }})</flux:tab>
-            <flux:tab name="guidelines" :accent="false">Guidelines</flux:tab>
+            @can('update', $scope)
+                <flux:tab name="guidelines" :accent="false">Guidelines</flux:tab>
+            @endcan
         </flux:tabs>
 
         <flux:tab.panel name="issues" class="pt-6!">
@@ -20,9 +22,11 @@
         <flux:tab.panel name="siteimprove" class="pt-6!">
             <livewire:scopes.siteimprove-issues :$scope />
         </flux:tab.panel>
-        <flux:tab.panel name="guidelines" class="pt-6!">
-            <livewire:scopes.scope-guidelines :$scope />
-        </flux:tab.panel>
+        @can('update', $scope)
+            <flux:tab.panel name="guidelines" class="pt-6!">
+                <livewire:scopes.scope-guidelines :$scope />
+            </flux:tab.panel>
+        @endcan
 
     </flux:tab.group>
 </div>

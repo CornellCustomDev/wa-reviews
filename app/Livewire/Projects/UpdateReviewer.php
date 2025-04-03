@@ -33,7 +33,7 @@ class UpdateReviewer extends Component
 
     public function save()
     {
-        $this->authorize('manage-project', $this->project);
+        $this->authorize('update-reviewer', $this->project);
 
         // Validate that the user exists and is not already on the team
         $validated = $this->validate([

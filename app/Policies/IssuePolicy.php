@@ -16,7 +16,8 @@ class IssuePolicy
 
     public function view(User $user, Issue $issue): bool
     {
-        return $issue->project->team->isTeamMember($user);
+        return $issue->project->team->isTeamMember($user)
+            || $issue->project->isReportViewer($user);
     }
 
     public function create(User $user, Project $project): bool

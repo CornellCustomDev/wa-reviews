@@ -16,7 +16,8 @@ class ProjectPolicy
 
     public function view(User $user, Project $project): bool
     {
-        return $project->team->isTeamMember($user);
+        return $project->team->isTeamMember($user)
+            || $project->isReportViewer($user);
     }
 
     public function manageProject(User $user, Project $project): bool
@@ -30,6 +31,21 @@ class ProjectPolicy
     }
 
     public function update(User $user, Project $project): bool
+    {
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
+            || ($user->id == $project->reviewer->id && ($project->isInProgress()));
+    }
+
+    public function updateReviewer(User $user, Project $project): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team) && ! $project->isCompleted();
+    }
+
+    public function updateStatus(User $user, Project $project): bool
     {
         return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
             || ($user->id == $project->reviewer->id && ($project->isInProgress() || $project->isCompleted()));

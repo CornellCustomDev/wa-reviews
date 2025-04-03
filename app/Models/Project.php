@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
@@ -68,12 +69,6 @@ class Project extends Model
         return $this->throughAssignment()->hasReviewer();
     }
 
-    public function assignmentsHistory(): HasMany
-    {
-        // ProjectAssignment keeps past assignments via soft deletes.
-        return $this->hasMany(ProjectAssignment::class)->withTrashed();
-    }
-
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);
@@ -82,6 +77,18 @@ class Project extends Model
     public function scopes(): HasMany
     {
         return $this->hasMany(Scope::class);
+    }
+
+    public function reportViewers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            related: User::class,
+            table: 'project_viewers',
+            foreignPivotKey: 'project_id',
+            relatedPivotKey: 'user_id',
+            parentKey: 'id',
+            relatedKey: 'id'
+        );
     }
 
     public static function getTeamProjects(User $user): Collection
@@ -148,5 +155,39 @@ class Project extends Model
     public function isCompleted(): bool
     {
         return $this->status->isCompleted();
+    }
+
+    public function addReportViewer(User $user): void
+    {
+        $this->reportViewers()->attach($user->id);
+
+        $delta = [
+            'user_id'   => $user->id,
+            'user_name' => $user->name,
+        ];
+        event(new ProjectChanged($this, 'added viewer', $delta));
+    }
+
+    public function removeReportViewer(User $user): void
+    {
+        $this->reportViewers()->detach($user->id);
+
+        $delta = [
+            'user_id'   => $user->id,
+            'user_name' => $user->name,
+        ];
+        event(new ProjectChanged($this, 'removed viewer', $delta));
+    }
+
+    public function isReportViewer(User $user): bool
+    {
+        return $this->reportViewers()->where('user_id', $user->id)->exists();
+    }
+
+    public static function getReportViewerProjects(User $user): Collection
+    {
+        return Project::query()
+            ->whereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id))
+            ->get();
     }
 }

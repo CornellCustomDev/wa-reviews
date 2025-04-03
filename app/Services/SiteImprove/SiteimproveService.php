@@ -81,7 +81,7 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    private function siteGet(string $endpoint, array $parameters = [], int $ttlMinutes = 5, bool $bustCache = false): array
+    private function siteGet(string $endpoint, array $parameters = [], int $ttlMinutes = 120, bool $bustCache = false): array
     {
         if (empty($this->siteId)) {
             throw new ErrorException('Site ID is not set');

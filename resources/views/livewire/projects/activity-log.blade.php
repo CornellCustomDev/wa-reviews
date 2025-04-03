@@ -1,11 +1,7 @@
 <div>
     <flux:table :paginate="$this->activities">
         <flux:table.columns>
-            <flux:table.column
-                sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
-                wire:click="sort('created_at')"
-                class="w-48"
-            >
+            <flux:table.column class="w-48">
                 Date
             </flux:table.column>
             <flux:table.column class="w-48">
@@ -38,6 +34,11 @@
                             @case('unassigned')
                                 <flux:badge size="sm" color="zinc" inset="top bottom">{{ $activity->action }}</flux:badge>
                                 <span class="text-xs">from: {{ $activity->delta['user_name'] }}</span>
+                                @break
+                            @case('added viewer')
+                            @case('removed viewer')
+                                <flux:badge size="sm" inset="top bottom">{{ $activity->action }}</flux:badge>
+                                <span class="text-xs">{{ $activity->delta['user_name'] }}</span>
                                 @break
                             @default
                                 <flux:badge size="sm" inset="top bottom">{{ $activity->action }}</flux:badge>
