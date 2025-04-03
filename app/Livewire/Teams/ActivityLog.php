@@ -17,20 +17,7 @@ class ActivityLog extends Component
     use WithPagination;
 
     public Team $team;
-
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
     public $perPage = 15;
-
-    public function sort($column): void
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortBy = $column;
-            $this->sortDirection = 'asc';
-        }
-    }
 
     #[Computed]
     public function activities(): LengthAwarePaginator
@@ -38,7 +25,7 @@ class ActivityLog extends Component
         return Activity::query()
             ->where('context_type', Team::class)
             ->where('context_id', $this->team->id)
-            ->tap(fn ($query) => $this->sortBy ? $query->orderBy($this->sortBy, $this->sortDirection) : $query)
+            ->orderByDesc('id')
             ->paginate($this->perPage);
     }
 

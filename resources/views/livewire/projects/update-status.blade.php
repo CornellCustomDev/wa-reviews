@@ -4,7 +4,7 @@
 
     <div class="mb-2">
         @if($project->reviewer)
-            @can('manage-project', $project)
+            @can('update-reviewer', $project)
                 <div class="float-right">
                     <flux:modal.trigger name="update-reviewer">
                         <x-forms.button icon="pencil-square" size="xs" title="Edit reviewer" />
@@ -21,7 +21,7 @@
                 {{ $project->reviewer->name }}
             </x-forms.field-display>
         @else
-            @can('manage-project', $project)
+            @can('update-reviewer', $project)
                 <flux:modal.trigger name="update-reviewer">
                     <x-forms.button icon="plus-circle">Assign Reviewer</x-forms.button>
                 </flux:modal.trigger>
@@ -37,10 +37,10 @@
     </flux:modal>
 
     <div>
-        @can('update', $project)
+        @can('update-status', $project)
             <div class="float-right">
                 <flux:modal.trigger name="update-status">
-                    <x-forms.button icon="cog-6-tooth" size="xs" title="Edit reviewer" />
+                    <x-forms.button icon="cog-6-tooth" size="xs" title="Edit status" />
                 </flux:modal.trigger>
             </div>
         @endcan

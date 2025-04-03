@@ -301,6 +301,9 @@
         [data-focus] {
             @apply focus-ring;
         }
+        [data-flux-tab] {
+            @apply cursor-pointer;
+        }
     }
     [data-flux-tab-panel] {
         @apply pt-6;

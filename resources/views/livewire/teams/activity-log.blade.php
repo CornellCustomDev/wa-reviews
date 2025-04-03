@@ -1,11 +1,7 @@
 <div>
     <flux:table :paginate="$this->activities" >
         <flux:table.columns>
-            <flux:table.column
-                sortable :sorted="$sortBy === 'created_at'" :direction="$sortDirection"
-                wire:click="sort('created_at')"
-                class="w-48"
-            >
+            <flux:table.column class="w-48">
                 Date
             </flux:table.column>
             <flux:table.column class="w-48">

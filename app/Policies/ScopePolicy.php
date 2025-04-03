@@ -19,7 +19,8 @@ class ScopePolicy
 
     public function view(User $user, Scope $scope): bool
     {
-        return $scope->project->team->isTeamMember($user);
+        return $scope->project->team->isTeamMember($user)
+            || $scope->project->isReportViewer($user);
     }
 
     public function create(User $user, Project $project): bool

@@ -13,7 +13,7 @@ class UpdateStatus extends Component
 
     public function removeReviewer(): void
     {
-        $this->authorize('update', $this->project);
+        $this->authorize('update-reviewer', $this->project);
 
         $this->project->unassign();
 
@@ -22,7 +22,7 @@ class UpdateStatus extends Component
 
     public function updateStatus(string $direction): void
     {
-        $this->authorize('update', $this->project);
+        $this->authorize('update-status', $this->project);
 
         $this->dispatch('close-update-status');
 

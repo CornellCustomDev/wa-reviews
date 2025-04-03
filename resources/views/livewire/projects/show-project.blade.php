@@ -62,7 +62,18 @@
             <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />
         </flux:tab.panel>
         <flux:tab.panel name="report">
-            <livewire:projects.report-data :$project />
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                <div class="col-span-3">
+                    <livewire:projects.report-data :$project />
+                </div>
+                <div class="col-span-2">
+                    @can('manage-project', $project)
+                        @if($project->isCompleted())
+                            <livewire:projects.report-viewers :$project />
+                        @endif
+                    @endcan
+                </div>
+            </div>
         </flux:tab.panel>
         @can('manageProject', $project)
             <flux:tab.panel name="log">
