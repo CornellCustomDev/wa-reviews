@@ -25,7 +25,7 @@ class UpdateRoles extends Component
 
     public function save()
     {
-        $this->authorize('manageTeam', $this->form->team);
+        $this->authorize('manage-team', $this->form->team);
         $this->form->update();
 
         $this->dispatch('close-edit-user');

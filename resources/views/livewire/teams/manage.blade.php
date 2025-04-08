@@ -4,7 +4,7 @@
     <flux:tab.group>
         <flux:tabs wire:model.live="tab">
             <flux:tab name="teams">Teams</flux:tab>
-            @can('viewAny', App\Models\User::class)
+            @can('view-any', App\Models\User::class)
                 <flux:tab name="users">Users</flux:tab>
                 <flux:tab name="roles">Roles / Permissions</flux:tab>
             @endcan
@@ -13,7 +13,7 @@
         <flux:tab.panel name="teams">
             <livewire:teams.view-teams />
         </flux:tab.panel>
-        @can('viewAny', App\Models\User::class)
+        @can('view-any', App\Models\User::class)
             <flux:tab.panel name="users">
                 <livewire:teams.view-users />
             </flux:tab.panel>
