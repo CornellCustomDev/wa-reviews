@@ -14,11 +14,12 @@ class LdapSearch
 {
     /**
      * Default attributes to retrieve from LDAP.
+     *
+     *  See https://confluence.cornell.edu/display/IDM/Attributes
      */
     public const DEFAULT_ATTRIBUTES = [
-        'cornelledunetid',
-        'cn',
         'uid',
+        'edupersonprincipalname',
         'displayName',
         'givenName',
         'sn',
@@ -56,7 +57,7 @@ class LdapSearch
             throw new InvalidArgumentException('LdapSearch::getByEmail requires a search term');
         }
 
-        return self::search("(mail=$email)", $bustCache)?->first();
+        return self::search("(|(mail=$email)(edupersonprincipalname=$email))", $bustCache)?->first();
     }
 
     /**

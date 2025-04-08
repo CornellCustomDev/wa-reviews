@@ -159,6 +159,11 @@ class Project extends Model
 
     public function addReportViewer(User $user): void
     {
+        // if the user is already a viewer, do nothing
+        if ($this->isReportViewer($user)) {
+            return;
+        }
+
         $this->reportViewers()->attach($user->id);
 
         $delta = [

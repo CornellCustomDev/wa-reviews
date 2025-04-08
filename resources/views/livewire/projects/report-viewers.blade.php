@@ -17,7 +17,7 @@
                             />
                         </div>
                     @endcan
-                    <div class="inline-block">{{ $viewer->name }}</div>
+                    <div class="inline-block">{{ $viewer->name }} (<a href="mailto:{{ $viewer->email }}">{{ $viewer->email }}</a>)</div>
                 </li>
             @endforeach
             </ul>

@@ -301,12 +301,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "aa37ba1d69e777d213a430a08f6f049d843ba283"
+                "reference": "3df2b9e64ee03ae283fb481c2162e6066ce8fd2e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/aa37ba1d69e777d213a430a08f6f049d843ba283",
-                "reference": "aa37ba1d69e777d213a430a08f6f049d843ba283",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/3df2b9e64ee03ae283fb481c2162e6066ce8fd2e",
+                "reference": "3df2b9e64ee03ae283fb481c2162e6066ce8fd2e",
                 "shasum": ""
             },
             "require": {
@@ -349,7 +349,7 @@
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/issues",
                 "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/v0.5"
             },
-            "time": "2025-04-08T16:50:17+00:00"
+            "time": "2025-04-08T21:14:13+00:00"
         },
         {
             "name": "cubear/cwd_framework_lite",
