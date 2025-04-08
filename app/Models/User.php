@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Roles;
+use CornellCustomDev\LaravelStarterKit\Ldap\LdapData;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Laratrust\Contracts\LaratrustUser;
 use Laratrust\Traits\HasRolesAndPermissions;
 
@@ -21,6 +24,7 @@ class User extends Authenticatable implements LaratrustUser
     protected $fillable = [
         'name',
         'email',
+        'uid',
     ];
 
     // These two fields are not in use, but still do not include them in outputs
@@ -82,4 +86,17 @@ class User extends Authenticatable implements LaratrustUser
         return Team::whereIn('id', $teamIds)->get();
     }
 
+    public static function createUserFromLdapData(LdapData $ldapData): User
+    {
+        $user = new User;
+        $user->name = $ldapData->name();
+        $user->email = $ldapData->email();
+        $user->uid = $ldapData->principalName();
+        $user->password = Hash::make('password');
+        $user->save();
+
+        Log::info("User::createUserFromLdapData: Created user $user->email with ID $user->id.");
+
+        return $user;
+    }
 }

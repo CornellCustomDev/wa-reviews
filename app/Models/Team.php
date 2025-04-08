@@ -25,6 +25,11 @@ class Team extends LaratrustTeam
 
     public function addUser(User $user): void
     {
+        // If the user is already on the team, do nothing
+        if ($this->isTeamMember($user)) {
+            return;
+        }
+
         $this->users()->attach($user);
 
         event(new UserChanged($user, $this, 'added'));

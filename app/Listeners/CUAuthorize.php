@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Models\User;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Events\CUAuthenticated;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -27,13 +28,14 @@ class CUAuthorize
             // User does not exist, so create them.
             $user = new User;
             $user->name = $remoteIdentity->name() ?: $netid;
-            $user->email = $email;
-            $user->password = Str::random(32);
+            $user->email = $remoteIdentity->email();
+            $user->uid = $remoteIdentity->principalName() ?: $netid;
+            $user->password = Hash::make('password');
             $user->save();
-            Log::info("AuthorizeUser: Created user $user->email with ID $user->id.");
+            Log::info("CUAuthorize: Created user $user->email with ID $user->id.");
         }
 
         auth()->login($user);
-        Log::info("AuthorizeUser: Logged in user $user->email.");
+        Log::info("CUAuthorize: Logged in user $user->email.");
     }
 }
