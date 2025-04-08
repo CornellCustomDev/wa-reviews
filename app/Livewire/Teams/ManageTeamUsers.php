@@ -46,10 +46,9 @@ class ManageTeamUsers extends Component
 
     public function remove(User $user): void
     {
-        $this->authorize('manageTeam', $this->team);
+        $this->authorize('manage-team', $this->team);
 
         $this->team->removeUser($user);
-        event(new UserChanged($user, $this->team, 'removed'));
 
         $this->dispatch('team-changes');
     }

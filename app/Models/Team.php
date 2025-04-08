@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Roles;
+use App\Events\UserChanged;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -30,19 +31,28 @@ class Team extends LaratrustTeam
         }
 
         $this->users()->attach($user);
+
+        event(new UserChanged($user, $this, 'added'));
     }
 
     public function removeUser(User $user): void
     {
         // Remove any roles the user has on the team
-        $this->setUserRoles($user, []);
+        $user->syncRoles([], $this->id);
         // Remove the user from the team
         $this->users()->detach($user);
+
+        event(new UserChanged($user, $this, 'removed'));
     }
 
     public function setUserRoles(User $user, array $roles): void
     {
         $user->syncRoles($roles, $this->id);
+
+        event(new UserChanged($user, $this, 'roles updated', [
+            'user_name' => $user->name,
+            'roles' => Role::find($this->roles)->pluck('display_name')->join(', '),
+        ]));
     }
 
     public function getUserRoles(User $user): Collection
