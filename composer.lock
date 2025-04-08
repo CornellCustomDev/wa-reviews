@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7ac35feef60728a984e129f6e4c33b4c",
+    "content-hash": "ac6eeea168657386e0c311ceb59c5d9c",
     "packages": [
         {
             "name": "brick/math",
@@ -297,20 +297,21 @@
         },
         {
             "name": "cornell-custom-dev/laravel-starter-kit",
-            "version": "dev-onelogin-saml",
+            "version": "v0.5.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "9574f0f9d696b754ae39d52f8ae073ea4e2d20ac"
+                "reference": "aa37ba1d69e777d213a430a08f6f049d843ba283"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/9574f0f9d696b754ae39d52f8ae073ea4e2d20ac",
-                "reference": "9574f0f9d696b754ae39d52f8ae073ea4e2d20ac",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/aa37ba1d69e777d213a430a08f6f049d843ba283",
+                "reference": "aa37ba1d69e777d213a430a08f6f049d843ba283",
                 "shasum": ""
             },
             "require": {
                 "cubear/cwd_framework_lite": "^3.0",
+                "ext-ldap": "*",
                 "ext-openssl": "*",
                 "giggsey/locale": "^2.7",
                 "livewire/livewire": "^3.5",
@@ -329,7 +330,8 @@
                 "laravel": {
                     "providers": [
                         "CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider",
-                        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider"
+                        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider",
+                        "CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider"
                     ]
                 }
             },
@@ -345,9 +347,9 @@
             "description": "Cornell University Custom Development Laravel Starter Kit",
             "support": {
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/issues",
-                "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/onelogin-saml"
+                "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/v0.5"
             },
-            "time": "2025-03-18T19:24:50+00:00"
+            "time": "2025-04-08T16:50:17+00:00"
         },
         {
             "name": "cubear/cwd_framework_lite",

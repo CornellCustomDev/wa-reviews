@@ -12,7 +12,7 @@ Middleware for authorizing Laravel users.
 
 - **Single Sign-On**: Protect routes with SSO (mod_shib or PHP SAML)
   - Optionally log in SSO users to app user accounts
-- **AppTesters**: Limit access to non-production users
+- **AppTesters**: Limit access on non-production sites to users in the `APP_TESTERS` environment variable
 
 
 ## Single Sign-On
@@ -32,7 +32,7 @@ Route::group(['middleware' => [CUAuth::class]], function () {
 ```dotenv
 # File: .env
 # apache-shib (default) | php-saml
-CU_AUTH_IDENTITY_MANGER=apache-shib
+CU_AUTH_IDENTITY_MANAGER=apache-shib
 ```
 
 See [Authorization](#identity-and-authorization) for details on how to log in remote users for local authorization.
