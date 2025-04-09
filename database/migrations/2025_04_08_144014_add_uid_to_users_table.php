@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -12,14 +13,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->string('uid', 100)->nullable()->after('email');
+            $table->string('uid')->nullable()->after('email');
         });
 
-        // Set uid = email
         DB::table('users')->whereNotNull('email')->update([
             'uid' => DB::raw('email')
         ]);
 
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('uid')->unique()->change();
+        });
     }
 
     /**

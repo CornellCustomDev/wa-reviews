@@ -19,17 +19,17 @@ class CUAuthorize
     {
         $remoteIdentity = $this->identityManager->getIdentity();
         $netid = $event->remoteUser;
-        $email = $remoteIdentity->email() ?: $netid . '@cornell.edu';
+        $uid = $remoteIdentity->principalName() ?: $netid . '@cornell.edu';
 
         // Look for a matching user.
-        $user = User::firstWhere('email', $email);
+        $user = User::firstWhere('uid', $uid);
 
         if (empty($user)) {
             // User does not exist, so create them.
             $user = new User;
             $user->name = $remoteIdentity->name() ?: $netid;
             $user->email = $remoteIdentity->email();
-            $user->uid = $remoteIdentity->principalName() ?: $netid;
+            $user->uid = $uid;
             $user->password = Hash::make('password');
             $user->save();
             Log::info("CUAuthorize: Created user $user->email with ID $user->id.");
