@@ -51,7 +51,7 @@ class Team extends LaratrustTeam
 
         event(new UserChanged($user, $this, 'roles updated', [
             'user_name' => $user->name,
-            'roles' => Role::find($this->roles)->pluck('display_name')->join(', '),
+            'roles' => Role::find($user->roles)?->pluck('display_name')->join(', '),
         ]));
     }
 

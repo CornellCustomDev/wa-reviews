@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Models\Item;
 use App\Models\Project;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -29,6 +30,15 @@ class ActivityLog extends Component
             ->paginate($this->perPage);
     }
 
+    /**
+     * Collect a list of the project items for linking to issues.
+     */
+    #[Computed]
+    public function projectItems(): Collection
+    {
+        return $this->project->items()->with('issue:id')->select(['items.id','items.issue_id'])->get()->keyBy('id');
+    }
+
     public function statusColor(string $status): string
     {
         return match($status) {
@@ -45,7 +55,9 @@ class ActivityLog extends Component
 
         $route = match ($activity->subject_type) {
             'App\Models\Issue' => route('issue.show', $activity->subject_id),
-            'App\Models\Item' => route('issue.show', Item::find($activity->subject_id)->issue_id),
+            'App\Models\Item' => $this->projectItems->has($activity->subject_id)
+                ? route('issue.show', $this->projectItems->get($activity->subject_id)->issue_id)
+                : null,
             default => null,
         };
 

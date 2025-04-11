@@ -32,7 +32,7 @@ class ActivityLog extends Component
     public function subjectLink($activity): string
     {
         $name = match ($activity->subject_type) {
-            'App\Models\User' => User::find($activity->subject_id)?->name,
+            'App\Models\User' => User::find($activity->subject_id)?->name ?? $activity->subject_id,
             default => Str::replace('App\\Models\\', '', $activity->subject_type) . ' ' . $activity->subject_id,
         };
 
