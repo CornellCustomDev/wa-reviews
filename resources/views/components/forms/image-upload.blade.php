@@ -9,7 +9,7 @@
 
     <!-- Show previews of selected images -->
     @if ($existingImages || data_get($this, $name))
-        <div class="flex flex-wrap gap-4 mt-2">
+        <div class="flex flex-wrap gap-4 mt-2 mb-4">
             @foreach ($existingImages as $imagePath)
                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                 <div class="relative mt-2">

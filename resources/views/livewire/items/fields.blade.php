@@ -49,3 +49,5 @@
     wire:model.live="form.images"
     :existing-images="$this->form->image_links"
 />
+
+<x-forms.radios label="Impact" wire:model="form.impact" :values="$form->impactOptions" />

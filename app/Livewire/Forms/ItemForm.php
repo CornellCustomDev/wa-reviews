@@ -3,6 +3,7 @@
 namespace App\Livewire\Forms;
 
 use App\Enums\Assessment;
+use App\Enums\Impact;
 use App\Enums\TestingMethod;
 use App\Events\ItemChanged;
 use App\Models\Guideline;
@@ -37,11 +38,14 @@ class ItemForm extends Form
     public array $images = [];
     #[Validate('boolean|nullable')]
     public ?bool $content_issue = false;
+    public ?Impact $impact;
 
     public Collection $guidelines;
     public Collection $guidelineOptions;
     public Collection $assessmentOptions;
     public Collection $testingMethodOptions;
+    public Collection $impactOptions;
+
     private $storage;
 
     public function __construct(
@@ -70,6 +74,13 @@ class ItemForm extends Form
                 'option' => $test_method->value(),
             ]);
 
+        $this->impactOptions = collect(Impact::cases())
+            ->map(fn ($impact) => [
+                'value' => $impact->value(),
+                'label' => $impact->value(),
+                'description' => $impact->getDescription(),
+            ]);
+
         $this->storage = Storage::disk('public');
     }
 
@@ -78,6 +89,7 @@ class ItemForm extends Form
         return match($field) {
             'guideline_id' => $this->guidelineOptions->toArray(),
             'assessment' => $this->assessmentOptions->toArray(),
+            'impact' => $this->impactOptions->toArray(),
             'testing_method' => $this->testingMethodOptions->toArray(),
             default => [],
         };
@@ -95,6 +107,7 @@ class ItemForm extends Form
         $this->image_links = $item->image_links;
         $this->images = [];
         $this->content_issue = $item->content_issue;
+        $this->impact = $item->impact;
     }
 
     public function getModel(): Item

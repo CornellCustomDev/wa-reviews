@@ -22,4 +22,8 @@
             </flux:tooltip.content>
         </flux:tooltip>
     @endif
+
+    @if($item->impact)
+        {{ $item->impact->value() }}
+    @endif
 </div>

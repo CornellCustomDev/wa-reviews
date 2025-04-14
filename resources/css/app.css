@@ -246,6 +246,7 @@
     [data-flux-radio-group] {
         [data-flux-field] {
             @apply mb-1;
+            @apply gap-y-0;
         }
     }
     [data-flux-radio] {
