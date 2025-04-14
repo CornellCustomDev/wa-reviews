@@ -32,7 +32,7 @@
 <x-forms.textarea label="Recommendations" wire:model="form.recommendation" size="lg" />
 
 <x-forms.select
-    label="Testing Method"
+    label="Testing method"
     variant="listbox"
     :options="$form->testingMethodOptions"
     placeholder="Select a testing method..."
@@ -50,4 +50,4 @@
     :existing-images="$this->form->image_links"
 />
 
-<x-forms.radios label="Impact" wire:model="form.impact" :values="$form->impactOptions" />
+<x-forms.radios label="User impact level" wire:model="form.impact" :values="$form->impactOptions" />
