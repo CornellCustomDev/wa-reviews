@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Assessment;
+use App\Enums\Impact;
 use App\Enums\TestingMethod;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,12 +24,14 @@ class Item extends Model
         'testing',
         'image_links',
         'content_issue',
+        'impact',
     ];
 
     protected $casts = [
         'assessment' => Assessment::class,
         'testing_method' => TestingMethod::class,
         'image_links' => 'array',
+        'impact' => Impact::class,
     ];
 
     public function issue(): BelongsTo

@@ -6,8 +6,8 @@ enum Assessment: string
 {
     use NamedEnum;
 
-    case Pass = 'Pass';
-    case Warn = 'Warn';
     case Fail = 'Fail';
+    case Warn = 'Warn';
+    case Pass = 'Pass';
     case Not_Applicable = 'N/A';
 }
