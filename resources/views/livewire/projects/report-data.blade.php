@@ -10,25 +10,6 @@
 
             <div x-show="!editReport">
                 <div>
-                    <x-forms.field-display label="Responsible unit at Cornell">
-                        {{ $project->responsible_unit ?? '' }}
-                    </x-forms.field-display>
-
-                    <x-forms.field-display label="Point of Contact">
-                        {{ $project->contact_name ?? '' }}
-                        @if($project->contact_netid)
-                            ({{ $project->contact_netid }})
-                        @endif
-                    </x-forms.field-display>
-
-                    <x-forms.field-display label="Who is the Audience?">
-                        {{ $project->audience ?? '' }}
-                    </x-forms.field-display>
-
-                    <x-forms.field-display label="What is the purpose of the site?">
-                        {!! $project->site_purpose ?? '' !!}
-                    </x-forms.field-display>
-
                     <x-forms.field-display label="URLs included in review">
                         {!! $project->urls_included ?? '' !!}
                     </x-forms.field-display>

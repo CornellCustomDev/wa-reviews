@@ -10,16 +10,6 @@ class ReportForm extends Form
 {
     public ?Project $project;
 
-    #[Validate('nullable|string|max:255', as: 'Responsible unit at Cornell')]
-    public string $responsible_unit = '';
-    #[Validate('nullable|string|max:255', as: 'Name')]
-    public string $contact_name = '';
-    #[Validate('nullable|string|max:10', as: 'NetID')]
-    public string $contact_netid = '';
-    #[Validate('nullable|string', as: 'Audience')]
-    public string $audience = '';
-    #[Validate('nullable|string', as: 'Site purpose')]
-    public string $site_purpose = '';
     #[Validate('nullable|string', as: 'URLs included')]
     public string $urls_included = '';
     #[Validate('nullable|string', as: 'URLs excluded')]
@@ -32,11 +22,6 @@ class ReportForm extends Form
     public function setModel(Project $project): void
     {
         $this->project = $project;
-        $this->responsible_unit = $project->responsible_unit ?? '';
-        $this->contact_name = $project->contact_name ?? '';
-        $this->contact_netid = $project->contact_netid ?? '';
-        $this->audience = $project->audience ?? '';
-        $this->site_purpose = $project->site_purpose ?? '';
         $this->urls_included = $project->urls_included ?? '';
         $this->urls_excluded = $project->urls_excluded ?? '';
         $this->review_procedure = $project->review_procedure ?? '';

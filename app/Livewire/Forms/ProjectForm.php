@@ -27,6 +27,16 @@ class ProjectForm extends Form
     public string $siteimprove_url = '';
     #[Validate('nullable|string')]
     public string $siteimprove_id = '';
+    #[Validate('nullable|string|max:255', as: 'Responsible unit at Cornell')]
+    public string $responsible_unit = '';
+    #[Validate('nullable|string|max:255', as: 'Name')]
+    public string $contact_name = '';
+    #[Validate('nullable|string|max:10', as: 'NetID')]
+    public string $contact_netid = '';
+    #[Validate('nullable|string', as: 'Audience')]
+    public string $audience = '';
+    #[Validate('nullable|string', as: 'Site purpose')]
+    public string $site_purpose = '';
 
     public function setModel(Project $project): void
     {
@@ -37,6 +47,11 @@ class ProjectForm extends Form
         $this->description = $project->description;
         $this->siteimprove_url = $project->siteimprove_url ?? '';
         $this->siteimprove_id = $project->siteimprove_id ?? '';
+        $this->responsible_unit = $project->responsible_unit ?? '';
+        $this->contact_name = $project->contact_name ?? '';
+        $this->contact_netid = $project->contact_netid ?? '';
+        $this->audience = $project->audience ?? '';
+        $this->site_purpose = $project->site_purpose ?? '';
     }
 
     public function store(): Project

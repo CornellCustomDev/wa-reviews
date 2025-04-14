@@ -18,13 +18,29 @@
                         <flux:icon.calendar class="inline -mt-0.5" variant="micro" />Created {{ $project->created_at->toFormattedDateString() }}
                     </flux:subheading>
 
-                    @if($project->description)
-                        <hr class="mt-2">
+                    <hr class="mt-2">
 
+                    @if($project->description)
                         <div>
                             {!! $project->description !!}
                         </div>
                     @endif
+
+                    @if($project->responsible_unit)
+                        <div>
+                            {{ $project->responsible_unit }}
+                        </div>
+                    @endif
+
+                    @if($project->contact_name)
+                        <div>Point of contact:
+                            {{ $project->contact_name }}
+                            @if($project->contact_netid)
+                                ({{ $project->contact_netid }})
+                            @endif
+                        </div>
+                    @endif
+
                 </div>
 
                 <div x-show="edit" x-cloak>
