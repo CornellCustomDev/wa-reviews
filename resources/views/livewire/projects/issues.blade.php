@@ -28,6 +28,7 @@
                 <td>
                     @if($issue->items)
                         @foreach($issue->items as $item)
+                            @continue($item->isAiGenerated() &! $item->isAiAccepted())
                             @include('livewire.issues.item-observation', ['item' => $item])
                         @endforeach
                     @endif

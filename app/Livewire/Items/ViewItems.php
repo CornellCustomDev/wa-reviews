@@ -6,7 +6,6 @@ use App\Events\ItemChanged;
 use App\Models\Issue;
 use App\Models\Item;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class ViewItems extends Component
@@ -27,10 +26,29 @@ class ViewItems extends Component
         $this->modal('edit-item')->show();
     }
 
+    #[On('close-edit')]
     public function closeEdit(): void
     {
         $this->modal('edit-item')->close();
         $this->editItem = null;
+    }
+
+    public function acceptAI(Item $item): void
+    {
+        $this->authorize('update', $item);
+        $item->markAiAccepted();
+
+        $this->dispatch('items-updated');
+    }
+
+    public function rejectAI(Item $item): void
+    {
+        $this->authorize('update', $item);
+        $item->markAiRejected();
+
+        $item->delete();
+
+        $this->dispatch('items-updated');
     }
 
     public function viewImage(string $imageUrl): void

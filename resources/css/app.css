@@ -340,3 +340,7 @@
         }
     }
 }
+
+[data-flux-icon] {
+    @apply inline-block;
+}

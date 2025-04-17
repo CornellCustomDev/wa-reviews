@@ -29,7 +29,13 @@ class UpdateItem extends Component
         $this->authorize('update', $this->form->item->issue);
         $this->form->update();
 
-        return redirect()->route('issue.show', $this->form->item->issue);
+        if ($this->form->item->isAiGenerated()) {
+            $this->form->item->markAiModified();
+        }
+
+        $this->dispatch('close-edit');
+        $this->dispatch('items-updated');
+        //return redirect()->route('issue.show', $this->form->item->issue);
     }
 
     #[On('remove-existing-image')]

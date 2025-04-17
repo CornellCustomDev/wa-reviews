@@ -55,21 +55,37 @@
                     {!! $item->testing !!}
                 </td>
                 <td class="text-nowrap">
-                    @can('update', $issue)
-                        <x-forms.button
-                            title="Edit Item {{ $item->id }}"
-                            icon="pencil-square" size="xs"
-                            wire:click="edit('{{ $item->id }}')"
-                        />
-                    @endcan
-                    @can('delete', $issue)
-                        <x-forms.button.delete
-                            title="Delete Item {{ $item->id }}"
-                            size="xs"
-                            wire:click.prevent="delete('{{ $item->id }}')"
-                            wire:confirm="Are you sure you want to delete this item?"
-                        />
-                    @endcan
+                    @if($item->isAiGenerated() &! $item->isAiAccepted())
+                        @can('update', $issue)
+                            <x-forms.button
+                                title="Accept AI recommendation for item {{ $item->id }}"
+                                icon="hand-thumb-up" size="xs"
+                                wire:click="acceptAI('{{ $item->id }}')"
+                            />
+                            <x-forms.button
+                                title="Reject AI recommendation for item {{ $item->id }}"
+                                icon="hand-thumb-down" size="xs"
+                                wire:click="rejectAI('{{ $item->id }}')"
+                            />
+                            <br>
+                        @endcan
+                    @else
+                        @can('update', $issue)
+                            <x-forms.button
+                                title="Edit Item {{ $item->id }}"
+                                icon="pencil-square" size="xs"
+                                wire:click="edit('{{ $item->id }}')"
+                            />
+                        @endcan
+                        @can('delete', $issue)
+                            <x-forms.button.delete
+                                title="Delete Item {{ $item->id }}"
+                                size="xs"
+                                wire:click.prevent="delete('{{ $item->id }}')"
+                                wire:confirm="Are you sure you want to delete this item?"
+                            />
+                        @endcan
+                    @endif
                 </td>
             </tr>
         @endforeach

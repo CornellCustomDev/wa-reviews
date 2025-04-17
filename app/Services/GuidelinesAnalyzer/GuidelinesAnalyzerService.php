@@ -2,7 +2,12 @@
 
 namespace App\Services\GuidelinesAnalyzer;
 
+use App\Enums\Agents;
+use App\Enums\AIStatus;
 use App\Enums\Assessment;
+use App\Enums\Impact;
+use App\Events\ItemChanged;
+use App\Models\Agent;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\CornellAI\OpenAIChatService;
@@ -11,6 +16,11 @@ use Illuminate\Support\Str;
 
 class GuidelinesAnalyzerService
 {
+    public static function getAgent(): Agent
+    {
+        return Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+    }
+
     public static function reviewIssueWithAI(Issue $issue): array
     {
         $issueContext = sprintf(
@@ -34,6 +44,7 @@ class GuidelinesAnalyzerService
                     'applicability' => $response->applicability,
                     'recommendation' => $response->recommendation,
                     'testing' => $response->testing,
+                    'impact' => $response->impact,
                 ];
             }
         } elseif (isset($response->feedback)) {
@@ -45,8 +56,10 @@ class GuidelinesAnalyzerService
 
     public static function addGuidelineItems(Issue $issue, array $result): void
     {
+        $agent = self::getAgent();
+
         foreach ($result as $guideline) {
-            Item::create([
+            $item = Item::create([
                 'issue_id' => $issue->id,
                 'guideline_id' => $guideline['number'],
                 'description' => Str::markdown($guideline['applicability']),
@@ -54,7 +67,12 @@ class GuidelinesAnalyzerService
                 'testing' => Str::markdown($guideline['testing']),
                 // TODO: Have reviewIssueWithAI return non-failing assessments
                 'assessment' => Assessment::Fail,
+                'impact' => Impact::fromName($guideline['impact']),
+                'ai_status' => AIStatus::Generated,
+                'agent_id' => $agent->id,
             ]);
+
+            event(new ItemChanged($item, 'created', $item->getAttributes(), $agent));
         }
     }
 
@@ -72,6 +90,11 @@ Instruction:
    - applicability: Brief description of how the guideline applies to the issue
    - recommendation: Brief remediation recommendations
    - testing: Very brief testing recommendations
+   - impact: How major a barrier the problem will be for a user, selected from the following options:
+      - Critical: A severe barrier that prevents users with affected disabilities from being able to complete primary tasks or access main content.
+      - Serious: A barrier that will make task completion or content access significantly more difficult and time consuming for individuals with affected disabilities, or that may prevent affected users from completing secondary tasks or accessing supplemental content without outside support.
+      - Moderate: A barrier that will make it somewhat more difficult for users with affected disabilities to complete central or secondary tasks or access content.
+      - Low: A barrier that has the potential to force users with affected disabilities to use mildly inconvenient workarounds, but that does not cause much, if any, difficulty completing tasks or accessing content.(
 
 2. If the issue is not a direct failure of a guideline, provide a response named "feedback" with a brief explanation, including suggesting alternative resources or approaches to address the issue.
 
@@ -90,6 +113,7 @@ Example Response when Applicable Guidelines are Found:
       "applicability": "The fieldset must contain a <legend> or be properly labeled using ARIA to describe the grouping of checkboxes.",
       "recommendation": "Add a <legend> element to the fieldset to describe the grouping of checkboxes.",
       "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies."
+      "impact": "Low"
     },
     {
       "number": "61",
@@ -98,6 +122,7 @@ Example Response when Applicable Guidelines are Found:
       "applicability": "The absence of a legend or ARIA label means that the purpose of the checkboxes is not clearly communicated to users.",
       "recommendation": "Add a clear label to each checkbox to describe its purpose.",
       "testing": "Check that each checkbox has a clear label that describes its purpose."
+      "impact": "Moderate"
     }
   ]
 }
