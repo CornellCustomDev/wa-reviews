@@ -2,16 +2,19 @@
 
 namespace App\Models;
 
+use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
 use App\Enums\TestingMethod;
+use App\Events\ItemChanged;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Item extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'issue_id',
@@ -25,6 +28,8 @@ class Item extends Model
         'image_links',
         'content_issue',
         'impact',
+        'ai_status',
+        'agent_id',
     ];
 
     protected $casts = [
@@ -32,6 +37,7 @@ class Item extends Model
         'testing_method' => TestingMethod::class,
         'image_links' => 'array',
         'impact' => Impact::class,
+        'ai_status' => AIStatus::class,
     ];
 
     public function issue(): BelongsTo
@@ -42,5 +48,52 @@ class Item extends Model
     public function guideline(): BelongsTo
     {
         return $this->belongsTo(Guideline::class);
+    }
+
+    public function isAiGenerated(): bool
+    {
+        return in_array($this->ai_status, [
+            AIStatus::Generated,
+            AIStatus::Accepted,
+            AIStatus::Rejected,
+        ]);
+    }
+
+    public function wasAiGenerated(): bool
+    {
+        return ! empty($this->ai_status);
+    }
+
+    public function isAiAccepted(): bool
+    {
+        return $this->ai_status === AIStatus::Accepted;
+    }
+
+    public function markAiAccepted(): void
+    {
+        $this->ai_status = AIStatus::Accepted;
+        $this->save();
+
+        event(new ItemChanged($this, 'accepted', []));
+    }
+
+    /**
+     * TODO: Make this happen automatically when the item is deleted?
+     */
+    public function markAiRejected(): void
+    {
+        $this->ai_status = AIStatus::Rejected;
+        $this->save();
+
+        event(new ItemChanged($this, 'rejected', []));
+    }
+
+    /**
+     * TODO: Make this happen automatically when the item is updated
+     */
+    public function markAiModified(): void
+    {
+        $this->ai_status = AIStatus::Modified;
+        $this->save();
     }
 }

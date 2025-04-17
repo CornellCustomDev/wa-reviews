@@ -18,8 +18,8 @@ class LogModelActivity
         $actor = $modelChangedEvent->actor;
 
         Activity::create([
-            'actor_type'   => $actor ? get_class($actor) : 'system',
-            'actor_id'     => $actor ? $actor->id : null,
+            'actor_type'   => get_class($actor),
+            'actor_id'     => $actor->id,
             'context_type' => $modelChangedEvent->contextType,
             'context_id'   => $modelChangedEvent->contextId,
             'subject_type' => get_class($modelChangedEvent->model),
