@@ -25,7 +25,7 @@ return [
     'api_gateway' => [
         'base_url' => env('CORNELL_AI_GATEWAY_BASE_URL', 'https://api.ai.it.cornell.edu'),
         'api_key' => env('CORNELL_AI_GATEWAY_API_KEY'),
-        'model' => env('CORNELL_AI_GATEWAY_MODEL', 'openai.gpt-4o-mini'),
+        'model' => env('CORNELL_AI_GATEWAY_MODEL', 'openai.gpt-4.1-mini'),
     ],
 
     /*
@@ -41,7 +41,7 @@ return [
         'endpoint' => env('AZURE_OPENAI_ENDPOINT', 'https://wa-review-ai.openai.azure.com/'),
         'api_key' => env('AZURE_OPENAI_API_KEY'),
         'api_version' => env('AZURE_OPENAI_API_VERSION', '2024-05-01-preview'),
-        'model' => env('AZURE_OPENAI_MODEL', 'gpt-4o-mini'),
+        'model' => env('AZURE_OPENAI_MODEL', 'gpt-4.1-mini'),
     ],
 
     /*
@@ -55,6 +55,6 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
-        'model' => env('OPENAI_MODEL', 'gpt-4o-mini'),
+        'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
     ],
 ];
