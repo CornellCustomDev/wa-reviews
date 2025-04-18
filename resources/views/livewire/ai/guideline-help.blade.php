@@ -42,7 +42,7 @@
             <hr>
             <div class="panel">
                 <h3 class="h5">AI Response</h3>
-                {!! Str::of($feedback)->markdown() !!}
+                {!! Str::of(htmlentities($feedback))->markdown() !!}
             </div>
         </div>
     @endif
