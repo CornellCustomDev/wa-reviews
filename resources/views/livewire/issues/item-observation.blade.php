@@ -27,7 +27,8 @@
         <flux:tooltip toggleable position="right" class="align-middle">
             <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!" />
             <flux:tooltip.content class="max-w-[20rem] space-y-2">
-                <p>AI-generated item</p>
+                <flux:subheading class="text-white">AI Reasoning</flux:subheading>
+                <p>"{{ $item->ai_reasoning }}"</p>
             </flux:tooltip.content>
         </flux:tooltip>
     @endif

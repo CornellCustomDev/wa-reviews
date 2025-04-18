@@ -28,6 +28,7 @@ class Item extends Model
         'image_links',
         'content_issue',
         'impact',
+        'ai_reasoning',
         'ai_status',
         'agent_id',
     ];

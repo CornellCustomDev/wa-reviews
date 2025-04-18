@@ -7,7 +7,7 @@ use OpenAI\Exceptions\TransporterException;
 use OpenAI\Exceptions\UnserializableResponse;
 use OpenAI\Resources\Chat;
 
-abstract class OpenAIChatService
+class OpenAIChatService
 {
     protected array $parameters;
     protected array $messages = [];
@@ -31,6 +31,11 @@ abstract class OpenAIChatService
         if ($model) {
             $this->parameters['model'] = $model;
         }
+    }
+
+    public static function make(): OpenAIChatService
+    {
+        return app(OpenAIChatService::class);
     }
 
     public function setPrompt(string $prompt): void
@@ -58,6 +63,20 @@ abstract class OpenAIChatService
     public function getMessages(): array
     {
         return $this->messages;
+    }
+
+    public function requireJsonMode(): void
+    {
+        $this->parameters['response_format'] = ['type' => 'json_object'];
+        $this->setResponseFormat('json_object');
+    }
+
+    public function setResponseFormat(string $type, ?array $schema = null): void
+    {
+        $this->parameters['response_format'] = ['type' => $type];
+        if ($schema) {
+            $this->parameters['response_format']['json_schema'] = $schema;
+        }
     }
 
     /**
