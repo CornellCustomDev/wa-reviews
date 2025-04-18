@@ -30,6 +30,8 @@ class GuidelineHelp extends Component
 
         $result = GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
 
+        $this->response = json_encode($result, JSON_PRETTY_PRINT);
+
         if (isset($result['feedback'])) {
             $this->response = json_encode($result, JSON_PRETTY_PRINT);
             $this->feedback = $result['feedback'];
@@ -67,41 +69,40 @@ class GuidelineHelp extends Component
 
     public function getChatPrompt(): string
     {
-        $issueContext = $this->getIssueContext();
-        $itemsContext = $this->issue->items->isNotEmpty()
-            ? json_encode($this->issue->items, JSON_PRETTY_PRINT)
-            : json_encode('No applicable guidelines have been identified.');
-        $pageContent = $this->issue->scope->page_content ?? '';
+        $prompt = GuidelinesAnalyzerService::getGuidelinesDocumentPrompt();
+//
+//        // If there are no items, provide the guidelines document so people can ask about Guidelines
+//        if ($this->issue->items->isEmpty()) {
+//            $prompt .=
+//        }
 
-        $prompt = <<<PROMPT
-As an expert in web accessibility guidelines, your task is to assist users in understanding applicable guidelines for specific web accessibility issues.
+        $prompt .= "# Task\n\nYou are an expert in web accessibility guidelines, your task is to assist users in understanding applicable guidelines for specific web accessibility issues.\n\n";
 
-## Context:
-- The user has provided an accessibility issue: $issueContext
-- If there are any applicable guidelines that have been identified, they are listed here:
-```JSON
-$itemsContext
-```
+        // Include the page content early, for caching
+        if ($this->issue->scope->page_content) {
+            $prompt .= "# Context: Web page being analyzed\n\n```html\n{$this->issue->scope->page_content}\n```\n\n";
+        }
 
-## Desired Outcome:
-The final output should be informative, succinct, and user-friendly, allowing users to easily understand the relevance and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your descriptions to facilitate quick comprehension.
+        $prompt .= "# Context: Web accessibility issue\n\n";
+        $prompt .= $this->getIssueContext();
+        if ($this->issue->items->isNotEmpty()) {
+            $prompt .= "The following applicable guidelines have been identified:\n";
+            $prompt .= "```json\n".json_encode($this->issue->items()->with('guideline')->get(), JSON_PRETTY_PRINT)."\n```\n\n";
+        }
 
-## Page content:
-```html
-{$pageContent}
-```
+        return $prompt . <<<PROMPT
+# Desired Outcome:
 
-## The content of the Guidelines Document follows.
-
+The final output should be informative, succinct, and user-friendly, allowing users to easily understand the relevance
+and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in
+your descriptions to facilitate quick comprehension.
 PROMPT;
-
-        return $prompt . Storage::get('guidelines.md');
     }
 
     private function getIssueContext(): string
     {
         $issueContext = sprintf(
-            "In the target location of \"%s\" the following issue was found: \n%s",
+            "In the target location of \"%s\" the following issue was found: \n%s\n\n",
             $this->issue->target,
             $this->issue->description
         );
