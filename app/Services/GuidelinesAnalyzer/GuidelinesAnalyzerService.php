@@ -11,6 +11,7 @@ use App\Models\Agent;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\CornellAI\OpenAIChatService;
+use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -30,9 +31,14 @@ class GuidelinesAnalyzerService
         );
 
         $chat = app(OpenAIChatService::class);
-        $chat->setPrompt(self::getGuidelinesPrompt());
+        $chat->setPrompt(self::getGuidelinesReviewPrompt());
         $chat->addMessage($issueContext);
-        $chat->send();
+        $chat->setResponseFormat('json_schema', self::getSchema());
+        try {
+            $chat->send();
+        } catch (Exception $e) {
+            return ['feedback' => $e->getMessage()];
+        }
 
         $response = json_decode($chat->getLastAiResponse());
 
@@ -41,6 +47,8 @@ class GuidelinesAnalyzerService
             foreach ($response->guidelines as $response) {
                 $results[] = [
                     'number' => $response->number,
+                    'reasoning' => $response->reasoning,
+                    'assessment' => $response->assessment,
                     'applicability' => $response->applicability,
                     'recommendation' => $response->recommendation,
                     'testing' => $response->testing,
@@ -62,88 +70,113 @@ class GuidelinesAnalyzerService
             $item = Item::create([
                 'issue_id' => $issue->id,
                 'guideline_id' => $guideline['number'],
-                'description' => Str::markdown($guideline['applicability']),
-                'recommendation' => Str::markdown($guideline['recommendation']),
-                'testing' => Str::markdown($guideline['testing']),
-                // TODO: Have reviewIssueWithAI return non-failing assessments
-                'assessment' => Assessment::Fail,
+                'assessment' => Assessment::fromName($guideline['assessment']),
+                'description' => Str::markdown(htmlentities($guideline['applicability'])),
+                'recommendation' => Str::markdown(htmlentities($guideline['recommendation'])),
+                'testing' => Str::markdown(htmlentities($guideline['testing'])),
                 'impact' => Impact::fromName($guideline['impact']),
+                'ai_reasoning' => htmlentities($guideline['reasoning']),
                 'ai_status' => AIStatus::Generated,
                 'agent_id' => $agent->id,
             ]);
 
-            event(new ItemChanged($item, 'created', $item->getAttributes(), $agent));
+            event(new ItemChanged($item, 'created', [...$item->getAttributes(), 'reasoning' => $guideline['reasoning']], $agent));
         }
     }
 
-    public static function getGuidelinesPrompt(): string
+    public static function getGuidelinesReviewPrompt(): string
     {
-        $prompt = <<<PROMPT
-As an expert in web accessibility guidelines, your task is to assist users in identifying applicable guidelines for specific web accessibility issues.
+        // $testingMethods = collect(\App\Enums\TestingMethod::cases())->pluck('value')->join(', ');
 
-Instruction:
+        return self::getGuidelinesDocumentPrompt()
+            .<<<PROMPT
+# Background
 
-1. When a user presents an accessibility issue, if the issue appears to be a failure of any accessibility issues based on the Guidelines Document referenced below, provide a list named "guidelines" with an element for each relevant guideline that includes these elements:
-   - number: Guideline number
+You are an expert in web accessibility guidelines assisting in review of accessibility issues on web pages. Your
+primary reference for accessibility issues is the Guidelines Document provided above.
+
+# Instructions
+
+Find the Guidelines that apply to the user-reported issue and return them in the specified format. A guideline is
+"applicable" if the issue described could reasonably be assessed as a warning or failure under that guideline,
+according to the Guidelines Document. When an issue could reasonably fall under more than one guideline, include all plausible guidelines with appropriate
+reasoning.
+
+1. When one or more guidelines are applicable to an accessibility issue, return a `guidelines` array containing an object
+for each failure with these fields:
+   - reasoning: Briefly explain:
+      1. How the guideline applies to the issue
+      2. Why it is assessed as a warning or failure
+      3. Why the impact rating was chosen
+   - number: The Guideline heading number from the Guidelines Document
    - heading: Guideline heading
    - criteria: WCAG criteria
-   - applicability: Brief description of how the guideline applies to the issue
-   - recommendation: Brief remediation recommendations
-   - testing: Very brief testing recommendations
-   - impact: How major a barrier the problem will be for a user, selected from the following options:
+   - assessment: Must be either "Fail" or "Warn":
+      - Mark "Warn" if the criterion is technically met, but the implementation results in an undesirable experience for users of assistive technologies.
+      - Mark "Fail" if the criterion is not met in any way, or if the user experience is significantly diminished for users of assistive technologies.
+   - applicability:  Briefly describe how the issue fails to meet the guideline (or why it is only a warning).
+   - recommendation: Brief, actionable remediation steps.
+   - testing: Very brief instructions for how to test or verify the issue.
+   - impact:Rate the significance of the barrier as one of "Critical", "Serious", "Moderate", or "Low" (see definitions below). Always select the most appropriate rating based on the likely effect on users with disabilities.
       - Critical: A severe barrier that prevents users with affected disabilities from being able to complete primary tasks or access main content.
       - Serious: A barrier that will make task completion or content access significantly more difficult and time consuming for individuals with affected disabilities, or that may prevent affected users from completing secondary tasks or accessing supplemental content without outside support.
       - Moderate: A barrier that will make it somewhat more difficult for users with affected disabilities to complete central or secondary tasks or access content.
       - Low: A barrier that has the potential to force users with affected disabilities to use mildly inconvenient workarounds, but that does not cause much, if any, difficulty completing tasks or accessing content.(
 
-2. If the issue is not a direct failure of a guideline, provide a response named "feedback" with a brief explanation, including suggesting alternative resources or approaches to address the issue.
+2. If the issue is not a direct failure of a guideline, return a `feedback` string with a brief explanation (and, if
+helpful, alternative resources). Do not include a `guidelines` in this case.
 
-3. If you need more information about the user-provided accessibility issue to provide accurate guidance, provide a response named "feedback" asking the user for the required clarification.
+3. If you require more information to give accurate guidance, return a `feedback` string asking for the needed
+clarification. Do not include a `guidelines` in this case.
 
-Output Formatting:
-  - All responses should be formatted as a JSON array, not markdown.
-
-Example Response when Applicable Guidelines are Found:
+## Example Response when Applicable Guidelines are Found
 {
   "guidelines": [
     {
+      "reasoning": "Guideline 19 is about semantic grouping of related form inputs, such as checkboxes or radio buttons. Guideline 19 emphasizes the importance of using a <fieldset> element along with a <legend> to provide a clear description of the group. This is marked as a failure because the criteria requires labeling of grouped form elements, which is not present. This is rated a Low impact barrier because while it may require additional effort to understand the grouping, it does not prevent users from completing tasks.",
       "number": "19",
       "heading": "Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",
       "criteria": "1.3.1 Info and Relationships (Level A)",
-      "applicability": "The fieldset must contain a <legend> or be properly labeled using ARIA to describe the grouping of checkboxes.",
+      "assessment": "Fail",
+      "applicability": "The fieldset does not contain a <legend> or be properly labeled using ARIA to describe the grouping of checkboxes.",
       "recommendation": "Add a <legend> element to the fieldset to describe the grouping of checkboxes.",
-      "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies."
+      "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies.",
       "impact": "Low"
     },
     {
+      "reasoning": "Guideline 61 is about labeling form inputs, including checkboxes. It emphasizes the importance of providing clear labels for form elements to ensure that users understand their purpose. This is marked as a failure because the criteria requires labels for form elements and they are not present. This is rated a Serious impact barrier because the user may not understand the purpose of the checkbox, making task completion significantly more difficult.",
       "number": "61",
       "heading": "Labels describe the purpose of the inputs they are associated with.",
       "criteria": "2.4.6 Headings and Labels (Level AA)",
+      "assessment": "Fail",
       "applicability": "The absence of a legend or ARIA label means that the purpose of the checkboxes is not clearly communicated to users.",
       "recommendation": "Add a clear label to each checkbox to describe its purpose.",
-      "testing": "Check that each checkbox has a clear label that describes its purpose."
-      "impact": "Moderate"
+      "testing": "Check that each checkbox has a clear label that describes its purpose.",
+      "impact": "Serious"
     }
-  ]
+  ],
+  "feedback": null
 }
 
-Example Response when No Applicable Guidelines are Found:
+## Example Response when No Applicable Guidelines are Found
 {
-  "feedback": "The issue you described does not appear to be a direct failure of a specific guideline. However, you can improve accessibility by ensuring that all form elements have clear labels and are properly grouped."
+  "guidelines": null,
+  "feedback": "The issue you described does not appear to be a failure of a specific guideline. However, Guideline 19 and Guideline 61 may be relevant since they address labeling and grouping of form elements."
 }
 
-Example Response Requesting Clarification:
+## Example Response Requesting Clarification
 {
+  "guidelines": null,
   "feedback": "To provide accurate guidance, could you please provide more information about the issue you are experiencing?"
 }
 
-Desired Outcome:
-The final output should be informative and user-friendly, allowing users to easily understand the relevance and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your descriptions to facilitate quick comprehension.
+# Desired Outcome
 
-The content of the Guidelines Document follows.
+The final output should be informative and user-friendly, allowing users to easily understand the relevance and
+application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your
+descriptions to facilitate quick comprehension.
 
 PROMPT;
-        return $prompt . Storage::get('guidelines.md');
     }
 
     public static function populateIssueItemsWithAI(Issue $issue): array
@@ -159,7 +192,78 @@ PROMPT;
             self::addGuidelineItems($issue, $result);
         }
 
-        return [];
+        return $result;
+    }
+
+    public static function getSchema(): array
+    {
+        return [
+            'name' => 'guidelines_analyzer_response',
+            'schema' => [
+                'description' => 'Return either a "guidelines" array or a "feedback" string -- never both.',
+                'type' => 'object',
+                'properties' => [
+                    'guidelines' => [
+                        'type' => ['array', 'null'],
+                        'items' => [
+                            'type' => 'object',
+                            'properties' => [
+                                'reasoning'     => ['type' => 'string'],
+                                'number'        => ['type' => 'string'],
+                                'heading'       => ['type' => 'string'],
+                                'criteria'      => ['type' => 'string'],
+                                'assessment'    => [
+                                    'type' => 'string',
+                                    'enum' => ['Fail', 'Warn'],
+                                    'description' => 'Must be one of "Fail" or "Warn".',
+                                ],
+                                'applicability' => ['type' => 'string'],
+                                'recommendation'=> ['type' => 'string'],
+                                'testing'       => ['type' => 'string'],
+                                'impact'        => [
+                                    'type' => 'string',
+                                    'enum' => ['Critical', 'Serious', 'Moderate', 'Low'],
+                                    'description' => 'Select one of the four severity levels.',
+                                ],
+                            ],
+                            'required' => [
+                                'reasoning',
+                                'number',
+                                'heading',
+                                'criteria',
+                                'assessment',
+                                'applicability',
+                                'recommendation',
+                                'testing',
+                                'impact',
+                            ],
+                            'additionalProperties' => false,
+                        ],
+                    ],
+                    'feedback' => [
+                        'type' => ['string', 'null'],
+                        'description' => 'Used when no direct guideline failure applies or more information is needed.',
+                    ],
+                ],
+                'additionalProperties' => false,
+                'required' => ['guidelines', 'feedback'],
+            ],
+            'strict' => true,
+        ];
+    }
+
+    public static function getGuidelinesDocumentPrompt(): string
+    {
+        return <<<PROMPT
+# Guidelines Document
+
+When instructions refer to the Guidelines Document, it is the document below. When Guideline numbers are mentioned,
+they are the numbered sections in the Guidelines Document.
+
+## Guidelines Document content
+
+PROMPT
+            . Storage::get('guidelines-list.md') . "\n\n";
     }
 
 }

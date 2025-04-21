@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services\CornellAI\AzureOpenAI;
+namespace App\Services\CornellAI;
 
 use App\Services\CornellAI\OpenAIChatService;
 use OpenAI;
 
-class ChatService extends OpenAIChatService
+class AzureChatService extends OpenAIChatService
 {
     public function __construct(
         // Azure OpenAI resource connection
@@ -24,8 +24,8 @@ class ChatService extends OpenAIChatService
         parent::__construct($client->chat());
     }
 
-    public static function make(): ChatService
+    public static function make(): AzureChatService
     {
-        return app(ChatService::class);
+        return app(AzureChatService::class);
     }
 }

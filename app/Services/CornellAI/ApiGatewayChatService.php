@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Services\CornellAI\APIGateway;
+namespace App\Services\CornellAI;
 
 use App\Services\CornellAI\OpenAIChatService as BaseChatService;
 use OpenAI;
 
-class OpenAIChatService extends BaseChatService
+class ApiGatewayChatService extends BaseChatService
 {
     public function __construct(
         // Cornell AI API Gateway resource connection
@@ -22,8 +22,8 @@ class OpenAIChatService extends BaseChatService
         parent::__construct($client->chat(), model: $model);
     }
 
-    public static function make(): OpenAIChatService
+    public static function make(): ApiGatewayChatService
     {
-        return app(OpenAIChatService::class);
+        return app(ApiGatewayChatService::class);
     }
 }
