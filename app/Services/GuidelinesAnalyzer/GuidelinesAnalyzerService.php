@@ -80,7 +80,7 @@ class GuidelinesAnalyzerService
                 'agent_id' => $agent->id,
             ]);
 
-            event(new ItemChanged($item, 'created', [...$item->getAttributes(), 'reasoning' => $guideline['reasoning']], $agent));
+            event(new ItemChanged($item, 'created', $item->getAttributes(), $agent));
         }
     }
 
