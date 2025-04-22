@@ -5,7 +5,6 @@ namespace App\Livewire\Ai;
 use App\Models\Issue;
 use App\Services\CornellAI\OpenAIChatService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
-use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 
 class GuidelineHelp extends Component
@@ -28,7 +27,7 @@ class GuidelineHelp extends Component
         $this->showChat = false;
         $this->feedback = '';
 
-        $result = GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
+        $result = app(GuidelinesAnalyzerService::class)->populateIssueItemsWithAI($this->issue);
 
         $this->response = json_encode($result, JSON_PRETTY_PRINT);
 
@@ -41,21 +40,23 @@ class GuidelineHelp extends Component
         $this->dispatch('items-updated');
     }
 
-    public function sendChatMessage()
+    public function sendChatMessage(): void
     {
         $chat = app(OpenAIChatService::class);
+        $guidelinesAnalyzer = app(GuidelinesAnalyzerService::class);
+
         $chat->setPrompt($this->getChatPrompt());
-        if (!empty($this->chatMessages)) {
-            $chat->setMessages($this->chatMessages);
-        }
-        $chat->addMessage($this->userMessage);
+        $chat->setMessages($this->chatMessages ?: []);
+        $chat->addUserMessage($this->userMessage);
+        $chat->setTools($guidelinesAnalyzer->getTools());
         $chat->send();
-        $this->chatMessages = $chat->getMessages();
+
+        $this->chatMessages = $chat->getChatMessages();
         $this->response = $chat->getLastAiResponse();
         $this->userMessage = '';
     }
 
-    public function clearChat()
+    public function clearChat(): void
     {
         $this->chatMessages = [];
         $this->response = '';
@@ -101,11 +102,13 @@ PROMPT;
 
     private function getIssueContext(): string
     {
-        $issueContext = sprintf(
-            "In the target location of \"%s\" the following issue was found: \n%s\n\n",
-            $this->issue->target,
-            $this->issue->description
-        );
-        return $issueContext;
+        $issueData = [
+            'id' => $this->issue->id,
+            'target' => $this->issue->target,
+            'css_selector' => $this->issue->css_selector,
+            'description' => $this->issue->description,
+        ];
+
+        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n";
     }
 }

@@ -72,7 +72,7 @@ class ProjectIssueForm extends Form
         event(new IssueChanged($this->issue, 'created'));
 
         if ($this->generateGuidelines) {
-            GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
+            app(GuidelinesAnalyzerService::class)->populateIssueItemsWithAI($this->issue);
         }
 
         return $this->issue;

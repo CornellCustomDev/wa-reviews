@@ -3,12 +3,11 @@
 namespace App\Livewire\Ai;
 
 use App\Enums\Assessment;
-use App\Models\Guideline;
 use App\Models\Item;
 use App\Models\Scope;
 use App\Models\ScopeRule;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\Tools\AnalyzeIssue;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -110,7 +109,7 @@ class ScopeHelp extends Component
             'description' => $scopeRule->ai_reasoning,
         ]);
 
-        $result = GuidelinesAnalyzerService::reviewIssueWithAI($issue);
+        $result = (new AnalyzeIssue($this->chatServiceFactory))->analyze($issue);
 
         if (count($result) > 0) {
             foreach ($result as $guideline) {

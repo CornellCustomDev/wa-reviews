@@ -29,7 +29,7 @@ class Prompt extends Component
         $prompt = $this->prompt . ($this->includeGuidelines ? Storage::get('guidelines.md') : '');
         $chatService->setPrompt($prompt);
         $chatService->setMessages($this->messages);
-        $chatService->addMessage($this->userMessage);
+        $chatService->addUserMessage($this->userMessage);
 
         try {
             $chatService->send();

@@ -20,7 +20,7 @@ abstract class ChatBot extends Component
         if (!empty($this->chatMessages)) {
             $chat->setMessages($this->chatMessages);
         }
-        $chat->addMessage($this->userMessage);
+        $chat->addUserMessage($this->userMessage);
         $chat->send();
         $this->chatMessages = $chat->getMessages();
         $this->response = $chat->getLastAiResponse();

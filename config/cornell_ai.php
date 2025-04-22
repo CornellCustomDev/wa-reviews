@@ -8,8 +8,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | Options:
-    | - \App\Services\CornellAI\APIGateway\OpenAIChatService::class
-    | - \App\Services\CornellAI\AzureOpenAI\ChatService::class
+    | - \App\Services\CornellAI\ApiGatewayChatService::class
+    | - \App\Services\CornellAI\AzureChatService::class
+    | - \App\Services\CornellAI\OpenAIChatService::class
     |
     */
     'ai_service' => env('AI_SERVICE', \App\Services\CornellAI\ApiGatewayChatService::class),
@@ -57,4 +58,27 @@ return [
         'api_key' => env('OPENAI_API_KEY'),
         'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chat Profiles
+    |--------------------------------------------------------------------------
+    |
+    | Predefined chat profiles for different use cases.
+    |
+    */
+    'profiles' => [
+        \App\Enums\ChatProfile::Reasoning->value => [
+            'model' => env('AI_MODEL_REASONING', 'openai.o4-mini'),
+        ],
+        \App\Enums\ChatProfile::Chat->value => [
+            'model' => env('AI_MODEL_CHAT', 'openai.gpt-4.1-mini'),
+        ],
+        \App\Enums\ChatProfile::Task->value => [
+            'model' => env('AI_MODEL_TASK', 'openai.gpt-4o-mini'),
+        ],
+        \App\Enums\ChatProfile::Default->value => [
+            'model' => env('AI_MODEL_DEFAULT', 'openai.gpt-4.1-mini'),
+        ],
+    ]
 ];

@@ -28,7 +28,7 @@ class Chat extends Component
 
         $chatService->setPrompt($this->prompt.Storage::get('guidelines.md'));
         $chatService->setMessages($this->messages);
-        $chatService->addMessage($this->userMessage);
+        $chatService->addUserMessage($this->userMessage);
 
         try {
             $chatService->send();
