@@ -2,13 +2,18 @@
 
 namespace App\Livewire\Ai;
 
+use App\Enums\ChatProfile;
 use App\Models\Issue;
-use App\Services\CornellAI\OpenAIChatService;
+use App\Services\CornellAI\ChatServiceFactory;
+use App\Services\CornellAI\ChatServiceFactoryInterface;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use Livewire\Component;
 
 class GuidelineHelp extends Component
 {
+    private ChatServiceFactory $chatServiceFactory;
+    private GuidelinesAnalyzerService $guidelinesAnalyzer;
     public Issue $issue;
 
     public bool $useGuidelines = true;
@@ -19,6 +24,13 @@ class GuidelineHelp extends Component
     public bool $showChat = false;
     public array $chatMessages;
     public string $userMessage = '';
+    public string $debug = '';
+
+    public function __construct()
+    {
+        $this->chatServiceFactory = app(ChatServiceFactoryInterface::class);
+        $this->guidelinesAnalyzer = app(GuidelinesAnalyzerServiceInterface::class);
+    }
 
     public function populateGuidelines(): void
     {
@@ -27,7 +39,7 @@ class GuidelineHelp extends Component
         $this->showChat = false;
         $this->feedback = '';
 
-        $result = app(GuidelinesAnalyzerService::class)->populateIssueItemsWithAI($this->issue);
+        $result = $this->guidelinesAnalyzer->populateIssueItemsWithAI($this->issue);
 
         $this->response = json_encode($result, JSON_PRETTY_PRINT);
 
@@ -43,17 +55,17 @@ class GuidelineHelp extends Component
 
     public function sendChatMessage(): void
     {
-        $chat = app(OpenAIChatService::class);
-        $guidelinesAnalyzer = app(GuidelinesAnalyzerService::class);
+        $chat = $this->chatServiceFactory->make(ChatProfile::Task);
 
         $chat->setPrompt($this->getChatPrompt());
         $chat->setMessages($this->chatMessages ?: []);
         $chat->addUserMessage($this->userMessage);
-        $chat->setTools($guidelinesAnalyzer->getTools());
+        $chat->setTools($this->guidelinesAnalyzer->getTools());
         $chat->send();
 
         $this->chatMessages = $chat->getChatMessages();
         $this->response = $chat->getLastAiResponse();
+        $this->debug = json_encode($chat->getMessages(), JSON_PRETTY_PRINT);
         $this->userMessage = '';
     }
 
@@ -71,33 +83,35 @@ class GuidelineHelp extends Component
 
     public function getChatPrompt(): string
     {
-        $prompt = GuidelinesAnalyzerService::getGuidelinesDocumentPrompt();
-//
-//        // If there are no items, provide the guidelines document so people can ask about Guidelines
-//        if ($this->issue->items->isEmpty()) {
-//            $prompt .=
-//        }
+        // Build the issue context block
+        $issueContext = $this->getIssueContext();
 
-        $prompt .= "# Task\n\nYou are an expert in web accessibility guidelines, your task is to assist users in understanding applicable guidelines for specific web accessibility issues.\n\n";
+        // Provide only the fields the model really needs from each guideline item
+        $guidelinesContext = $this->issue->items
+            ->map(fn ($item) => $this->guidelinesAnalyzer->mapItemToSchema($item))
+            ->toJson(JSON_PRETTY_PRINT);
 
-        // Include the page content early, for caching
-        if ($this->issue->scope->page_content) {
-            $prompt .= "# Context: Web page being analyzed\n\n```html\n{$this->issue->scope->page_content}\n```\n\n";
-        }
+        // Get the names of all available tools to help the model knows what it can call
+        $toolNames = implode(', ', array_keys($this->guidelinesAnalyzer->getTools()));
 
-        $prompt .= "# Context: Web accessibility issue\n\n";
-        $prompt .= $this->getIssueContext();
-        if ($this->issue->items->isNotEmpty()) {
-            $prompt .= "The following applicable guidelines have been identified:\n";
-            $prompt .= "```json\n".json_encode($this->issue->items()->with('guideline')->get(), JSON_PRETTY_PRINT)."\n```\n\n";
-        }
+        return <<<PROMPT
+You are an expert the Cornell web accessibility testing guidelines for WCAG 2.2 AA.
+Your job is to help the user understand and remediate the issue described below.
+Always ground your answers in the provided context.
+If you need more data, **call one of the available tools by name**.
 
-        return $prompt . <<<PROMPT
-# Desired Outcome:
+Available tools: {$toolNames}
 
-The final output should be informative, succinct, and user-friendly, allowing users to easily understand the relevance
-and application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in
-your descriptions to facilitate quick comprehension.
+### Issue
+{$issueContext}
+
+### Applicable Guidelines
+```json
+{$guidelinesContext}
+```
+
+— When you cite a guideline, reference its **"number"** field.
+— Keep answers concise unless the user explicitly asks for detail.
 PROMPT;
     }
 
@@ -110,6 +124,8 @@ PROMPT;
             'description' => $this->issue->description,
         ];
 
-        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n";
+        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
+
+
 }

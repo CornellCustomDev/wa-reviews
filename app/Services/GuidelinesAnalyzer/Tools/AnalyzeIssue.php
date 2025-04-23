@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Services\CornellAI\ChatServiceFactoryInterface;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use Exception;
+use Illuminate\Support\Facades\Storage;
 
 class AnalyzeIssue extends Tool
 {
@@ -55,8 +56,8 @@ class AnalyzeIssue extends Tool
     {
         $chat = $this->chatServiceFactory->make(ChatProfile::Chat);
 
-        $chat->setPrompt($this->getGuidelinesReviewPrompt() . $this->getIssueContext($issue));
-        $chat->setResponseFormat('json_schema', $this->getSchema());
+        $chat->setPrompt($this->getGuidelinesReviewPrompt($issue));
+        $chat->setResponseFormat('json_schema', $this->getResponseSchema());
         try {
             $chat->send();
         } catch (Exception $e) {
@@ -85,7 +86,7 @@ class AnalyzeIssue extends Tool
         return $results;
     }
 
-    public function getSchema(): array
+    private function getResponseSchema(): array
     {
         return [
             'name' => 'guidelines_analyzer_response',
@@ -95,7 +96,7 @@ class AnalyzeIssue extends Tool
                 'properties' => [
                     'guidelines' => [
                         'type' => ['array', 'null'],
-                        'items' => StoreGuidelineMatches::getItemsSchema(),
+                        'items' => $this->guidelinesAnalyzerService->getItemsSchema(),
                     ],
                     'feedback' => [
                         'type' => ['string', 'null'],
@@ -109,12 +110,23 @@ class AnalyzeIssue extends Tool
         ];
     }
 
-    public function getGuidelinesReviewPrompt(): string
+    private function getGuidelinesReviewPrompt(Issue $issue): string
     {
         // $testingMethods = collect(\App\Enums\TestingMethod::cases())->pluck('value')->join(', ');
 
-        return $this->guidelinesAnalyzerService->getGuidelinesDocumentPrompt()
-            . <<<PROMPT
+        $issueContext = $this->guidelinesAnalyzerService->getIssueContext($issue);
+        $guidelinesDocument = Storage::get('guidelines-list.md');
+
+        return $guidelinesDocument . <<<PROMPT
+# Guidelines Document
+
+When instructions refer to the Guidelines Document, it is the document below. When Guideline numbers are mentioned,
+they are the numbered sections in the Guidelines Document.
+
+## Guidelines Document content
+
+$guidelinesDocument
+
 # Background
 
 You are an expert in web accessibility guidelines assisting in review of accessibility issues on web pages. Your
@@ -142,7 +154,7 @@ for each failure with these fields:
    - applicability:  Briefly describe how the issue fails to meet the guideline (or why it is only a warning).
    - recommendation: Brief, actionable remediation steps.
    - testing: Very brief instructions for how to test or verify the issue.
-   - impact:Rate the significance of the barrier as one of "Critical", "Serious", "Moderate", or "Low" (see definitions below). Always select the most appropriate rating based on the likely effect on users with disabilities.
+   - impact: Rate the significance of the barrier as one of "Critical", "Serious", "Moderate", or "Low" (see definitions below). Always select the most appropriate rating based on the likely effect on users with disabilities.
       - Critical: A severe barrier that prevents users with affected disabilities from being able to complete primary tasks or access main content.
       - Serious: A barrier that will make task completion or content access significantly more difficult and time consuming for individuals with affected disabilities, or that may prevent affected users from completing secondary tasks or accessing supplemental content without outside support.
       - Moderate: A barrier that will make it somewhat more difficult for users with affected disabilities to complete central or secondary tasks or access content.
@@ -201,21 +213,10 @@ The final output should be informative and user-friendly, allowing users to easi
 application of web accessibility guidelines in relation to their specific issues. Aim for clarity and brevity in your
 descriptions to facilitate quick comprehension.
 
+# Context: Web accessibility issue
+
+$issueContext
+
 PROMPT;
     }
-
-    public function getIssueContext(Issue $issue): string
-    {
-        $issueData = [
-            'id' => $issue->id,
-            'target' => $issue->target,
-            'css_selector' => $issue->css_selector,
-            'description' => $issue->description,
-        ];
-
-        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n";
-    }
-
-
-
 }

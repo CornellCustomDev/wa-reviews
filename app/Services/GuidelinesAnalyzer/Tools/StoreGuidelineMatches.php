@@ -29,10 +29,10 @@ class StoreGuidelineMatches extends Tool
 
     public function call(string $arguments): array
     {
-        $args = json_decode($arguments, true);
-        $issue = Issue::findOrFail($args['issue_id']);
+        $arguments = json_decode($arguments, true);
+        $issue = Issue::findOrFail($arguments['issue_id']);
 
-        return $this->store($issue, $args['guidelines']);
+        return $this->store($issue, $arguments['guidelines']);
     }
 
     public function schema(): array
@@ -49,51 +49,13 @@ class StoreGuidelineMatches extends Tool
                     ],
                     'guidelines' => [
                         'type' => 'array',
-                        'items' => self::getItemsSchema(),
+                        'items' => $this->guidelinesAnalyzerService->getItemsSchema(),
                     ],
                 ],
                 'additionalProperties' => false,
                 'required' => ['issue_id', 'guidelines'],
             ],
             'strict' => true,
-        ];
-    }
-
-    public static function getItemsSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'properties' => [
-                'reasoning' => ['type' => 'string'],
-                'number' => ['type' => 'string'],
-                'heading' => ['type' => 'string'],
-                'criteria' => ['type' => 'string'],
-                'assessment' => [
-                    'type' => 'string',
-                    'enum' => ['Fail', 'Warn'],
-                    'description' => 'Must be one of "Fail" or "Warn".',
-                ],
-                'applicability' => ['type' => 'string'],
-                'recommendation' => ['type' => 'string'],
-                'testing' => ['type' => 'string'],
-                'impact' => [
-                    'type' => 'string',
-                    'enum' => ['Critical', 'Serious', 'Moderate', 'Low'],
-                    'description' => 'Select one of the four severity levels.',
-                ],
-            ],
-            'required' => [
-                'reasoning',
-                'number',
-                'heading',
-                'criteria',
-                'assessment',
-                'applicability',
-                'recommendation',
-                'testing',
-                'impact',
-            ],
-            'additionalProperties' => false,
         ];
     }
 
