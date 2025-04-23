@@ -31,10 +31,11 @@ class GuidelineHelp extends Component
 
         $this->response = json_encode($result, JSON_PRETTY_PRINT);
 
-        if (isset($result['feedback'])) {
-            $this->response = json_encode($result, JSON_PRETTY_PRINT);
+        if (!empty(($result['feedback']))) {
+            if (!is_string($result['feedback'])) {
+                $result['feedback'] = json_encode($result['feedback'], JSON_PRETTY_PRINT);
+            }
             $this->feedback = $result['feedback'];
-            return;
         }
 
         $this->dispatch('items-updated');

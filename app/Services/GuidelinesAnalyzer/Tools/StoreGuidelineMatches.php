@@ -4,8 +4,6 @@ namespace App\Services\GuidelinesAnalyzer\Tools;
 
 use App\Models\Issue;
 use App\Models\Item;
-use App\Services\CornellAI\ChatServiceFactoryInterface;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use App\Events\ItemChanged;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
@@ -99,11 +97,30 @@ class StoreGuidelineMatches extends Tool
         ];
     }
 
-    public function store(Issue $issue, mixed $guidelines): array
+    public function store(Issue $issue, array $guidelines): array
     {
         $agent = $this->guidelinesAnalyzerService->getAgent();
 
+        // Check if the user has permission to update the issue
+        if (!auth()->user()->can('update', $issue)) {
+            return ['status' => 'forbidden', 'feedback' => 'You do not have permission to update this issue.'];
+        }
+
+        $feedback = [];
+
+        $existingGuidelines = $issue->items()->pluck('guideline_id')->toArray();
+
         foreach ($guidelines as $guideline) {
+            // Filter any guidelines that are already in the items
+            if (in_array($guideline['number'], $existingGuidelines)) {
+                $feedback[] = [
+                    'guideline' => $guideline['number'],
+                    'status' => 'already_exists',
+                    'message' => 'This guideline has already been documented for the issue.',
+                ];
+                continue;
+            }
+
             $item = Item::create([
                 'issue_id' => $issue->id,
                 'guideline_id' => $guideline['number'],
@@ -120,6 +137,6 @@ class StoreGuidelineMatches extends Tool
             event(new ItemChanged($item, 'created', $item->getAttributes(), $agent));
         }
 
-        return ['status' => 'stored'];
+        return ['status' => 'stored', 'feedback' => $feedback];
     }
 }
