@@ -4,6 +4,7 @@ namespace App\Services\GuidelinesAnalyzer;
 
 use App\Enums\Agents;
 use App\Models\Agent;
+use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\CornellAI\ChatServiceFactoryInterface;
@@ -33,7 +34,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         $this->reviewApplicabilityInstance = new ReviewGuidelineApplicability($this->chatServiceFactory, $this);
         $this->fetchGuidelinesDocumentInstance = new FetchGuidelinesDocument();
         $this->fetchGuidelinesListInstance = new FetchGuidelinesList();
-        $this->fetchGuidelinesInstance = new FetchGuidelines();
+        $this->fetchGuidelinesInstance = new FetchGuidelines($this);
         $this->fetchIssuePageContent = new FetchIssuePageContent();
     }
 
@@ -162,6 +163,17 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'recommendation' => $item->recommendation,
             'testing' => $item->testing,
             'impact' => $item->impact,
+        ];
+    }
+
+    public function mapGuidelineToSchema(Guideline $guideline): array
+    {
+        return [
+            'number' => $guideline->number,
+            'name' => $guideline->name,
+            'wcag_criterion' => $guideline->criterion->getNumberName(),
+            'category' => "{$guideline->category->name}: {$guideline->category->description}",
+            'text' => $guideline->notes,
         ];
     }
 }

@@ -109,7 +109,8 @@ class ReviewGuidelineApplicability extends Tool
     private function getReviewPrompt(Issue $issue, int $guidelineNumber, array $item): string
     {
         $guideline = Guideline::with(['criterion', 'category'])->firstWhere('id', $guidelineNumber);
-        $guidelineContext = json_encode($guideline, JSON_PRETTY_PRINT);
+        $guidelineData = $this->guidelinesAnalyzerService->mapGuidelineToSchema($guideline);
+        $guidelineContext = json_encode($guidelineData, JSON_PRETTY_PRINT);
         $issueContext = $this->guidelinesAnalyzerService->getIssueContext($issue);
         $itemContext = json_encode($item, JSON_PRETTY_PRINT);
 
@@ -123,7 +124,7 @@ guideline to the issue.
 
 # Instructions
 
-1. Review the guideline, the issue, and the current assessment of applicability.
+1. Review the entire guideline, the issue, and the current assessment of applicability.
    - The guideline is a web accessibility guideline that provides criteria for evaluating web content.
    - The issue is a specific web accessibility issue that has been identified on a web page.
    - The current assessment of applicability is the initial evaluation of whether the guideline applies to the issue.

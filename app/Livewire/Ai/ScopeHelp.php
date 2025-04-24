@@ -5,7 +5,7 @@ namespace App\Livewire\Ai;
 use App\Models\Scope;
 use App\Models\ScopeRule;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -106,7 +106,7 @@ class ScopeHelp extends Component
             'description' => $scopeRule->ai_reasoning,
         ]);
 
-        $guidelinesAnalyzer = app(GuidelinesAnalyzerService::class);
+        $guidelinesAnalyzer = app(GuidelinesAnalyzerServiceInterface::class);
         $result = $guidelinesAnalyzer->analyzeIssue($issue);
 
         if (count($result) > 0) {

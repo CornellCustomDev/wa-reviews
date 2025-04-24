@@ -3,9 +3,14 @@
 namespace App\Services\GuidelinesAnalyzer\Tools;
 
 use App\Models\Guideline;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 
 class FetchGuidelines extends Tool
 {
+    public function __construct(
+        private readonly GuidelinesAnalyzerServiceInterface $guidelinesAnalyzerService,
+    ) {}
+
     public function getName(): string
     {
         return 'fetch_guidelines';
@@ -32,15 +37,8 @@ class FetchGuidelines extends Tool
         $guidelines = Guideline::whereIn('number', $numbers)
             ->with(['criterion', 'category'])
             ->get()
-            ->map(function ($guideline) {
-                return [
-                    'number'        => $guideline->number,
-                    'name'          => $guideline->name,
-                    'wcag_criterion'=> $guideline->criterion->getNumberName(),
-                    'category'      => "{$guideline->category->name}: {$guideline->category->description}",
-                    'text'          => $guideline->notes,
-                ];
-            });
+            ->map(fn ($guideline) => $this->guidelinesAnalyzerService->mapGuidelineToSchema($guideline))
+            ->toArray();
 
         return ['guidelines' => $guidelines];
     }

@@ -22,6 +22,7 @@ class GuidelineHelp extends Component
     public string $feedback = '';
 
     public bool $showChat = false;
+    public array $messageHistory;
     public array $chatMessages;
     public string $userMessage = '';
     public string $debug = '';
@@ -58,19 +59,22 @@ class GuidelineHelp extends Component
         $chat = $this->chatServiceFactory->make(ChatProfile::Task);
 
         $chat->setPrompt($this->getChatPrompt());
-        $chat->setMessages($this->chatMessages ?: []);
+        $chat->setMessages($this->messageHistory ?: []);
         $chat->addUserMessage($this->userMessage);
         $chat->setTools($this->guidelinesAnalyzer->getTools());
         $chat->send();
 
+        $this->messageHistory = $chat->getMessages();
         $this->chatMessages = $chat->getChatMessages();
         $this->response = $chat->getLastAiResponse();
-        $this->debug = json_encode($chat->getMessages(), JSON_PRETTY_PRINT);
         $this->userMessage = '';
+
+        $this->debug = json_encode($this->messageHistory, JSON_PRETTY_PRINT);
     }
 
     public function clearChat(): void
     {
+        $this->messageHistory = [];
         $this->chatMessages = [];
         $this->response = '';
         $this->userMessage = '';
