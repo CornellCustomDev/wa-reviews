@@ -6,10 +6,9 @@ use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Scope;
 use App\Models\SiaRule;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Validate;
-use Livewire\Component;
 use Livewire\Form;
 
 class IssueForm extends Form
@@ -58,7 +57,7 @@ class IssueForm extends Form
         event(new IssueChanged($this->issue, 'created'));
 
         if ($this->generateGuidelines) {
-            GuidelinesAnalyzerService::populateIssueItemsWithAI($this->issue);
+            app(GuidelinesAnalyzerServiceInterface::class)->populateIssueItemsWithAI($this->issue);
         }
 
         return $this->issue;

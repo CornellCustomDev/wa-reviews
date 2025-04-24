@@ -28,7 +28,7 @@
             <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!" />
             <flux:tooltip.content class="max-w-[20rem] space-y-2">
                 <flux:subheading class="text-white">AI Reasoning</flux:subheading>
-                <p>"{{ $item->ai_reasoning }}"</p>
+                <p>"{!! $item->ai_reasoning  !!}"</p>
             </flux:tooltip.content>
         </flux:tooltip>
     @endif

@@ -5,7 +5,11 @@ namespace App\Providers;
 use App\Models\User;
 use App\Services\CornellAI\ApiGatewayChatService;
 use App\Services\CornellAI\AzureChatService;
+use App\Services\CornellAI\ChatServiceFactory;
+use App\Services\CornellAI\ChatServiceFactoryInterface;
 use App\Services\CornellAI\OpenAIChatService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -37,6 +41,14 @@ class AppServiceProvider extends ServiceProvider
                     model: strval(config('cornell_ai.openai.model')),
                 ),
             },
+        );
+        $this->app->singleton(
+            abstract: ChatServiceFactoryInterface::class,
+            concrete: ChatServiceFactory::class,
+        );
+        $this->app->singleton(
+            abstract: GuidelinesAnalyzerServiceInterface::class,
+            concrete: GuidelinesAnalyzerService::class,
         );
         $this->app->singleton(
             abstract: SiteimproveService::class,

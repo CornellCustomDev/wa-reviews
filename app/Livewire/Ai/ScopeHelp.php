@@ -2,15 +2,11 @@
 
 namespace App\Livewire\Ai;
 
-use App\Enums\Assessment;
-use App\Models\Guideline;
-use App\Models\Item;
 use App\Models\Scope;
 use App\Models\ScopeRule;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -110,19 +106,11 @@ class ScopeHelp extends Component
             'description' => $scopeRule->ai_reasoning,
         ]);
 
-        $result = GuidelinesAnalyzerService::reviewIssueWithAI($issue);
+        $guidelinesAnalyzer = app(GuidelinesAnalyzerServiceInterface::class);
+        $result = $guidelinesAnalyzer->analyzeIssue($issue);
 
         if (count($result) > 0) {
-            foreach ($result as $guideline) {
-                Item::create([
-                    'issue_id' => $issue->id,
-                    'guideline_id' => $guideline['number'],
-                    'description' => Str::markdown($guideline['applicability']),
-                    'recommendation' => Str::markdown($guideline['recommendation']),
-                    'testing' => Str::markdown($guideline['testing']),
-                    'assessment' => Assessment::fromName(ucfirst($scopeRule->ai_assessment)),
-                ]);
-            }
+            $guidelinesAnalyzer->storeItems($issue, $result);
         }
 
         $this->dispatch('issues-updated');

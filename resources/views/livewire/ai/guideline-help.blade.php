@@ -51,7 +51,7 @@
         <hr>
         <div class="panel accent-gold fill">
             <h3>Debugging info</h3>
-            <pre>{{ $response }}</pre>
+            <pre>{{ $debug }}</pre>
         </div>
     </div>
 </div>

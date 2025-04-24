@@ -2,6 +2,8 @@
 
 namespace App\Services\CornellAI;
 
+use App\Services\GuidelinesAnalyzer\Tools\Tool;
+use InvalidArgumentException;
 use OpenAI\Exceptions\ErrorException;
 use OpenAI\Exceptions\TransporterException;
 use OpenAI\Exceptions\UnserializableResponse;
@@ -12,6 +14,7 @@ class OpenAIChatService
     protected array $parameters;
     protected array $messages = [];
     protected ?string $lastAiResponse;
+    private array $tools = [];
 
     public function __construct(
         protected Chat   $chat,
@@ -33,11 +36,6 @@ class OpenAIChatService
         }
     }
 
-    public static function make(): OpenAIChatService
-    {
-        return app(OpenAIChatService::class);
-    }
-
     public function setPrompt(string $prompt): void
     {
         $this->prompt = $prompt;
@@ -48,11 +46,9 @@ class OpenAIChatService
         return $this->prompt;
     }
 
-    public function addMessage(string $message, string $role = 'user'): array
+    public function addUserMessage(string $content): void
     {
-        $this->messages[] = ['role' => $role, 'content' => $message];
-
-        return $this->messages;
+        $this->messages[] = ['role' => 'user', 'content' => $content];
     }
 
     public function setMessages(array $messages): void
@@ -63,6 +59,31 @@ class OpenAIChatService
     public function getMessages(): array
     {
         return $this->messages;
+    }
+
+    public function getChatMessages(): array
+    {
+        return collect($this->messages)
+            ->filter(fn ($msg) => in_array($msg['role'], ['user', 'assistant']) && !empty($msg['content']))
+            ->all();
+    }
+
+    public function setTools(array $tools): void
+    {
+        $this->tools = $tools;
+        $this->parameters['tools'] = [];
+        foreach ($tools as $tool) {
+            if (!is_a($tool, Tool::class)) {
+                throw new InvalidArgumentException("Tool must implement the Tool interface.");
+            }
+
+            $toolDefinition = [
+                'type' => 'function',
+                'function' => $tool->schema(),
+            ];
+
+            $this->parameters['tools'][] = $toolDefinition;
+        }
     }
 
     public function requireJsonMode(): void
@@ -82,7 +103,7 @@ class OpenAIChatService
     /**
      * @throws ErrorException|UnserializableResponse|TransporterException
      */
-    public function send(): void
+    public function send(): array
     {
         $parameters = [
             ...$this->parameters,
@@ -94,13 +115,38 @@ class OpenAIChatService
                 ...$this->messages,
             ],
         ];
+        $messageCount = count($parameters['messages']);
 
         $response = $this->chat->create($parameters);
 
         // Add the messages to the chat history
         foreach ($response->choices as $result) {
-            $this->addMessage(message: $result->message->content, role: $result->message->role);
+            $message = $result->message;
+            $this->messages[] = $message->toArray();
+            if ($message->toolCalls) {
+                foreach ($message->toolCalls as $toolCall) {
+                    /** @var Tool $tool */
+                    $tool = $this->tools[$toolCall->function->name] ?? null;
+                    // TODO throw an error if we need to
+                    if (!$tool) {
+                        continue;
+                    }
+                    // TODO implement guardrails for tool calls
+                    $toolResponse = $tool->call($toolCall->function->arguments);
+                    if ($toolResponse) {
+                        $this->messages[] = [
+                            'role' => 'tool',
+                            'content' => json_encode($toolResponse, JSON_PRETTY_PRINT) ?? '',
+                            'tool_call_id' => $toolCall->id,
+                        ];
+                    }
+                }
+                // TODO Don't use recursion?
+                return $this->send();
+            }
         }
+
+        return array_slice($this->messages, $messageCount);
     }
 
     public function getLastAiResponse(): string
@@ -109,4 +155,5 @@ class OpenAIChatService
 
         return $lastMessage['content'];
     }
+
 }
