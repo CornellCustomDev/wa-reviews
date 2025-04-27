@@ -24,7 +24,7 @@
                     @include('livewire.issues.item-observation', ['item' => $item])
                 </td>
                 <td style="vertical-align: top">
-                    {!! $item->description !!}
+                    {{ $item->description }}
 
                     @if(!empty($item->image_links))
                         <div class="flex flex-wrap gap-1 mt-1">
@@ -49,10 +49,10 @@
                     @endif
                 </td>
                 <td style="vertical-align: top">
-                    {!! $item->recommendation !!}
+                    {{ $item->recommendation }}
                 </td>
                 <td style="vertical-align: top">
-                    {!! $item->testing !!}
+                    {{ $item->testing }}
                 </td>
                 <td class="text-nowrap">
                     @if($item->isAiGenerated() &! $item->isAiAccepted())
