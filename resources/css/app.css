@@ -16,6 +16,11 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    #sidebar-top.secondary::after {
+        border-bottom: none;
+        margin-top: 0;
+    }
 }
 
 @theme {

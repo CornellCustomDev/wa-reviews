@@ -67,6 +67,7 @@ return array(
     'App\\Livewire\\Issues\\CreateIssue' => $baseDir . '/app/Livewire/Issues/CreateIssue.php',
     'App\\Livewire\\Issues\\CreateProjectIssue' => $baseDir . '/app/Livewire/Issues/CreateProjectIssue.php',
     'App\\Livewire\\Issues\\CreateSiteimproveIssue' => $baseDir . '/app/Livewire/Issues/CreateSiteimproveIssue.php',
+    'App\\Livewire\\Issues\\IssueSidebar' => $baseDir . '/app/Livewire/Issues/IssueSidebar.php',
     'App\\Livewire\\Issues\\ShowIssue' => $baseDir . '/app/Livewire/Issues/ShowIssue.php',
     'App\\Livewire\\Issues\\UpdateIssue' => $baseDir . '/app/Livewire/Issues/UpdateIssue.php',
     'App\\Livewire\\Issues\\ViewIssues' => $baseDir . '/app/Livewire/Issues/ViewIssues.php',

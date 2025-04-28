@@ -748,6 +748,7 @@ class ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd
         'App\\Livewire\\Issues\\CreateIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/CreateIssue.php',
         'App\\Livewire\\Issues\\CreateProjectIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/CreateProjectIssue.php',
         'App\\Livewire\\Issues\\CreateSiteimproveIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/CreateSiteimproveIssue.php',
+        'App\\Livewire\\Issues\\IssueSidebar' => __DIR__ . '/../..' . '/app/Livewire/Issues/IssueSidebar.php',
         'App\\Livewire\\Issues\\ShowIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/ShowIssue.php',
         'App\\Livewire\\Issues\\UpdateIssue' => __DIR__ . '/../..' . '/app/Livewire/Issues/UpdateIssue.php',
         'App\\Livewire\\Issues\\ViewIssues' => __DIR__ . '/../..' . '/app/Livewire/Issues/ViewIssues.php',

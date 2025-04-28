@@ -93,12 +93,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             return $items;
         }
 
-        $result = $this->storeItems($issue, $items);
-        return $result;
-
-        // TODO: Apply guardrails before storing the items
-        $reviews = $this->reviewItems($issue, $items);
-        return ['feedback' => $reviews];
+        return $this->storeItems($issue, $items);
     }
 
     public function getIssueContext(Issue $issue): string
@@ -125,15 +120,21 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
                 'assessment' => [
                     'type' => 'string',
                     'enum' => ['Fail', 'Warn'],
-                    'description' => 'Must be one of "Fail" or "Warn".',
+                    'description' => '"Fail" if the criterion is not met; "Warn" if it meets the criterion but results in poor experience.',
                 ],
-                'applicability' => ['type' => 'string'],
-                'recommendation' => ['type' => 'string'],
-                'testing' => ['type' => 'string'],
+                'observation' => ['type' => 'string'],
+                'recommendation' => [
+                    'type' => 'string',
+                    'description' => 'Brief, actionable steps to fix the accessibility issue.',
+                ],
+                'testing' => [
+                    'type' => 'string',
+                    'description' => 'Brief instructions to verify the issue with assistive technologies or manual checks.',
+                ],
                 'impact' => [
                     'type' => 'string',
                     'enum' => ['Critical', 'Serious', 'Moderate', 'Low'],
-                    'description' => 'Select one of the four severity levels.',
+                    'description' => 'Severity of the barrier. "Critical" blocks primary tasks; "Serious" makes them very difficult; "Moderate" makes them somewhat harder; "Low" causes mild inconvenience.',
                 ],
             ],
             'required' => [
@@ -142,7 +143,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
                 'heading',
                 'criteria',
                 'assessment',
-                'applicability',
+                'observation',
                 'recommendation',
                 'testing',
                 'impact',
@@ -155,11 +156,11 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     {
         return [
             'reasoning' => $item->ai_reasoning ?? '',
-            'number' => $item->guideline_id,
-            'heading' => $item->heading,
-            'criteria' => $item->criteria,
+            'number' => $item->guideline->number,
+            'name' => $item->guideline->name,
+            'wcag_criterion' => $item->guideline->criterion->getNumberName(),
             'assessment' => $item->assessment,
-            'applicability' => $item->description,
+            'observation' => $item->description,
             'recommendation' => $item->recommendation,
             'testing' => $item->testing,
             'impact' => $item->impact,
@@ -169,11 +170,12 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     public function mapGuidelineToSchema(Guideline $guideline): array
     {
         return [
-            'number' => $guideline->number,
-            'name' => $guideline->name,
+            'number'         => $guideline->number,
+            'name'           => $guideline->name,
             'wcag_criterion' => $guideline->criterion->getNumberName(),
-            'category' => "{$guideline->category->name}: {$guideline->category->description}",
-            'text' => $guideline->notes,
+            'category'       => "{$guideline->category->name}: {$guideline->category->description}",
+            'text'           => $guideline->notes,
+            'url'            => config('app.url') . '/guidelines/' . $guideline->id,
         ];
     }
 }
