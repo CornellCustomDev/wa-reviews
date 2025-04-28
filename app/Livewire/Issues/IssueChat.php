@@ -150,6 +150,8 @@ class IssueChat extends Component
         // Get the names of all available tools to help the model knows what it can call
         $toolNames = implode(', ', array_keys($this->getTools()));
 
+        $guidelineUrl = route('guidelines.show', 2);
+
         return <<<PROMPT
 You are an expert in the Cornell web accessibility testing guidelines for WCAG 2.2 AA
 (which the user calls "accessibility issues" or similar).
@@ -177,7 +179,7 @@ for the user.
 ```
 
 — When you cite a Guideline, reference its **"number"** field. You should also link to the Guideline using it's URL,
-  for example: [Guideline 2](https://SITE_URL/guideline/2).
+  for example: [Guideline 2]($guidelineUrl).
 — Keep answers concise unless the user explicitly asks for detail.
 - Only provide help related to the tasks and tools you have available.
 PROMPT;

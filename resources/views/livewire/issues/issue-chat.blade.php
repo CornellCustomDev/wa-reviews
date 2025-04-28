@@ -11,6 +11,15 @@
                     <x-forms.menu.item icon="pencil-square" wire:click="clearChat()">
                         New Chat
                     </x-forms.menu.item>
+                    @if($selectedChat)
+                        <x-forms.menu.item
+                            icon="trash"
+                            wire:click.prevent="deleteChat()"
+                            wire:confirm="Are you sure you want to delete the chat '{{$selectedChat->name}}'?"
+                        >
+                            Delete Chat
+                        </x-forms.menu.item>
+                    @endif
                     <flux:menu.separator />
                     @foreach($chats as $chatHistory)
                         <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat({{ $chatHistory->id }})">

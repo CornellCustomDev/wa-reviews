@@ -10,9 +10,9 @@
                 <span x-show="$wire.showAnalyzer">Hide </span> Guidelines
             </x-forms.button>
         @endcan
-        <x-forms.button wire:click="clickDebug()" icon="magnifying-glass" @class(['secondary' => $showDebug]) >
-            <span x-show="$wire.showDebug">Hide </span> Debug
-        </x-forms.button>
+{{--        <x-forms.button wire:click="clickDebug()" icon="magnifying-glass" @class(['secondary' => $showDebug]) >--}}
+{{--            <span x-show="$wire.showDebug">Hide </span> Debug--}}
+{{--        </x-forms.button>--}}
     </div>
 
     <div x-show="$wire.showChat" x-cloak>

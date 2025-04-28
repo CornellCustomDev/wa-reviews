@@ -48,6 +48,8 @@ class IssueAnalyzer extends Component
 
     private function getPopulateGuidelinesPrompt(): string
     {
+        $guidelineUrl = route('guidelines.show', 2);
+
         return <<<PROMPT
 You are a tool-using agent tasked with analyzing web accessibility issues and storing the results.
 You have two tools to accomplish this: "analyze_accessibility_issue" and "store_guideline_matches".
@@ -59,7 +61,7 @@ You have two tools to accomplish this: "analyze_accessibility_issue" and "store_
 4. Report back a brief summary of what you were able to accomplish with the tools in a concise manner.
 
 — If you cite a Guideline, reference its **"number"** field. You should also link to the Guideline using it's URL,
-  for example: [Guideline 2](https://SITE_URL/guideline/2).
+  for example: [Guideline 2]($guidelineUrl).
 - The user is not able to respond to you, so you should not ask them any questions.
 
 # Issue Context
