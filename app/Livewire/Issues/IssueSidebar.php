@@ -3,16 +3,20 @@
 namespace App\Livewire\Issues;
 
 use App\Models\Issue;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 class IssueSidebar extends Component
 {
     public Issue $issue;
 
+    #[Url(as: 'chat', history: true)]
     public bool $showChat = false;
+    #[Url(as: 'analyze', history: true)]
     public bool $showAnalyzer = false;
-    public bool $showGuideline = false;
+    #[Url(as: 'debug', history: true)]
     public bool $showDebug = false;
+    public bool $showGuideline = false;
 
     public string $debug = '';
 
