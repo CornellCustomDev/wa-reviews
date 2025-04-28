@@ -2,9 +2,7 @@
     <h2>AI Assistance</h2>
 
     <div class="mb-4">
-        <x-forms.button wire:click="clickChat()"
-            icon="chat-bubble-left-right" @class(['secondary' => $showDebug])
-        >
+        <x-forms.button wire:click="clickChat()" icon="chat-bubble-left-right" @class(['secondary' => $showChat])>
             <span x-show="$wire.showChat">Hide </span> Chat
         </x-forms.button>
         @can('update', $issue)

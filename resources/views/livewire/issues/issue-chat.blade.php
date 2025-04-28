@@ -2,9 +2,25 @@
     x-data
     x-on:messages-updated.window="$refs.chatContainer.scrollTop = $refs.chatContainer.scrollHeight"
 >
-    @if($messages)
-        <x-forms.button wire:click="clearChat()" icon="pencil-square" class="secondary float-right ml-2" size="xs" title="New Chat" />
-    @endif
+    <div class="flex items-center ml-2 mb-2 float-right">
+        @if($chats->isNotEmpty())
+            <flux:dropdown>
+                <x-forms.button icon="chat-bubble-left" title="Select Chat" size="sm" />
+
+                <x-forms.menu>
+                    <x-forms.menu.item icon="pencil-square" wire:click="clearChat()">
+                        New Chat
+                    </x-forms.menu.item>
+                    <flux:menu.separator />
+                    @foreach($chats as $chatHistory)
+                        <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat({{ $chatHistory->id }})">
+                            {{ $chatHistory->name }}
+                        </x-forms.menu.item>
+                    @endforeach
+                </x-forms.menu>
+            </flux:dropdown>
+        @endif
+    </div>
     <div class="mb-3">
         This AI chatbot can answer questions and provide recommendations for this accessibility issue and related guidelines.
     </div>
@@ -19,7 +35,7 @@
             @if(isset($message['tool_calls']))
                 @foreach($message['tool_calls'] as $tool_call)
                     <flux:card size="sm" class="max-w-[90%] overflow-x-auto bg-cds-blue-100!">
-                        <pre class="mb-0">Using tool: {{ $this->getToolCallTool($tool_call)->getName() }}</pre>
+                        <pre class="mb-0">Using tool: {{ $this->getToolCallInformation($tool_call) }}</pre>
                     </flux:card>
                 @endforeach
             @else

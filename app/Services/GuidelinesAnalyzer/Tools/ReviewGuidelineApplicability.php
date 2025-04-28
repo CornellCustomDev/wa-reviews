@@ -111,7 +111,7 @@ class ReviewGuidelineApplicability extends Tool
                     'guideline' => $guidelineSchema,
                 ],
                 'additionalProperties' => false,
-                'required' => ['review', 'review_reasoning'],
+                'required' => ['review', 'review_reasoning', 'guideline'],
             ],
             'strict' => true,
         ];

@@ -329,6 +329,9 @@
                 @apply text-white;
             }
         }
+        [data-flux-separator] {
+            @apply bg-cds-gray-400;
+        }
     }
 }
 

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Scope extends Model
 {
@@ -47,6 +48,12 @@ class Scope extends Model
     public function issues(): HasMany
     {
         return $this->hasMany(Issue::class);
+    }
+
+    public function chats(User $user): MorphMany
+    {
+        return $this->morphMany(ChatHistory::class, 'context')
+            ->where('user_id', $user->id);
     }
 
     public function pageHasBeenRetrieved(): bool
