@@ -4,6 +4,7 @@ namespace App\Livewire\Issues;
 
 use App\Enums\ChatProfile;
 use App\Models\Issue;
+use App\Models\Item;
 use App\Services\CornellAI\ChatServiceFactoryInterface;
 use App\Services\CornellAI\OpenAIChatService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
@@ -142,8 +143,8 @@ class IssueChat extends Component
 
         // Provide only the fields the model really needs from each guideline item
         $guidelinesContext = $this->issue->items()->with('guideline')->get()
-            ->map(fn ($item) => $this->guidelinesAnalyzer->mapItemToSchema($item))
-            ->each(fn ($item) => $item['url'] = config('app.url') . '/guidelines/' . $item['number'])
+            ->map(fn (Item $item) => $this->guidelinesAnalyzer->mapItemToSchema($item))
+            ->each(fn ($item) => $item['url'] = route('guidelines.show', $item['number']))
             ->toJson(JSON_PRETTY_PRINT);
 
         // Get the names of all available tools to help the model knows what it can call

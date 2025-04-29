@@ -155,15 +155,15 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     public function mapItemToSchema(Item $item): array
     {
         return [
-            'reasoning' => $item->ai_reasoning ?? '',
+            'reasoning' => $item->ai_reasoning?->toHtml() ?? '',
             'number' => $item->guideline->number,
             'name' => $item->guideline->name,
             'wcag_criterion' => $item->guideline->criterion->getNumberName(),
-            'assessment' => $item->assessment,
-            'observation' => $item->description,
-            'recommendation' => $item->recommendation,
-            'testing' => $item->testing,
-            'impact' => $item->impact,
+            'assessment' => $item->assessment->value,
+            'observation' => $item->description?->toHtml(),
+            'recommendation' => $item->recommendation?->toHtml(),
+            'testing' => $item->testing?->toHtml(),
+            'impact' => $item->impact->name,
         ];
     }
 
@@ -175,7 +175,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'wcag_criterion' => $guideline->criterion->getNumberName(),
             'category'       => "{$guideline->category->name}: {$guideline->category->description}",
             'text'           => $guideline->notes,
-            'url'            => config('app.url') . '/guidelines/' . $guideline->id,
+            'url'            => route('guidelines.show', $guideline),
         ];
     }
 }
