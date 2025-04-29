@@ -24,7 +24,7 @@ class StoreGuidelineMatches extends Tool
 
     public function getDescription(): string
     {
-        return 'Stores web accessibility guideline matches for an issue into the database. The guidelines are based on the Guidelines Document.';
+        return 'Stores web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
     }
 
     public function call(string $arguments): array
@@ -87,7 +87,7 @@ class StoreGuidelineMatches extends Tool
                 'issue_id' => $issue->id,
                 'guideline_id' => $guideline['number'],
                 'assessment' => Assessment::fromName($guideline['assessment']),
-                'description' => Str::markdown(htmlentities($guideline['applicability'])),
+                'description' => Str::markdown(htmlentities($guideline['observation'])),
                 'recommendation' => Str::markdown(htmlentities($guideline['recommendation'])),
                 'testing' => Str::markdown(htmlentities($guideline['testing'])),
                 'impact' => Impact::fromName($guideline['impact']),

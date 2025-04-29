@@ -16,6 +16,11 @@
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
     }
+
+    #sidebar-top.secondary::after {
+        border-bottom: none;
+        margin-top: 0;
+    }
 }
 
 @theme {
@@ -323,6 +328,9 @@
             [data-flux-menu-item-icon] {
                 @apply text-white;
             }
+        }
+        [data-flux-separator] {
+            @apply bg-cds-gray-400;
         }
     }
 }

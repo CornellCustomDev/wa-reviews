@@ -3,8 +3,9 @@
 namespace App\Services\CornellAI;
 
 use App\Services\GuidelinesAnalyzer\Tools\Tool;
+use ErrorException;
 use InvalidArgumentException;
-use OpenAI\Exceptions\ErrorException;
+use OpenAI\Exceptions\ErrorException as OpenAIErrorException;
 use OpenAI\Exceptions\TransporterException;
 use OpenAI\Exceptions\UnserializableResponse;
 use OpenAI\Resources\Chat;
@@ -101,10 +102,14 @@ class OpenAIChatService
     }
 
     /**
-     * @throws ErrorException|UnserializableResponse|TransporterException
+     * @throws OpenAIErrorException|UnserializableResponse|TransporterException|ErrorException
      */
-    public function send(): array
+    public function send($depth = 0): array
     {
+        if ($depth > 2) {
+            throw new ErrorException('Too many recursive AI tool calls.');
+        }
+
         $parameters = [
             ...$this->parameters,
             'messages' => [
@@ -119,7 +124,7 @@ class OpenAIChatService
 
         $response = $this->chat->create($parameters);
 
-        // Add the messages to the chat history
+        // Process the response
         foreach ($response->choices as $result) {
             $message = $result->message;
             $this->messages[] = $message->toArray();
@@ -136,13 +141,13 @@ class OpenAIChatService
                     if ($toolResponse) {
                         $this->messages[] = [
                             'role' => 'tool',
-                            'content' => json_encode($toolResponse, JSON_PRETTY_PRINT) ?? '',
+                            'content' => json_encode($toolResponse),
                             'tool_call_id' => $toolCall->id,
                         ];
                     }
                 }
-                // TODO Don't use recursion?
-                return $this->send();
+                // Note: Recursion
+                $this->send($depth + 1);
             }
         }
 

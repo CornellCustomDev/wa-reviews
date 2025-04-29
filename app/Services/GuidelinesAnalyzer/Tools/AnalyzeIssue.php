@@ -23,7 +23,10 @@ class AnalyzeIssue extends Tool
 
     public function getDescription(): string
     {
-        return 'Given an issue_id, return applicable web accessibility guidelines. The guidelines are based on the Guidelines Document.';
+        return
+            'Analyze the specified accessibility issue and return applicable web accessibility guidelines based on '
+            . 'the Guidelines Document. If no guideline applies, or more information is needed, return a feedback '
+            . 'message instead.';
     }
 
     public function call(string $arguments): array
@@ -44,7 +47,7 @@ class AnalyzeIssue extends Tool
                 'properties' => [
                     'issue_id' => [
                         'type' => 'integer',
-                        'description' => 'The primary key of the issue to analyze.',
+                        'description' => 'The primary key of the accessibility issue to analyze.',
                     ],
                 ],
                 'required' => ['issue_id'],
@@ -73,7 +76,7 @@ class AnalyzeIssue extends Tool
                     'number' => $response->number,
                     'reasoning' => $response->reasoning,
                     'assessment' => $response->assessment,
-                    'applicability' => $response->applicability,
+                    'observation' => $response->observation,
                     'recommendation' => $response->recommendation,
                     'testing' => $response->testing,
                     'impact' => $response->impact,
@@ -91,16 +94,16 @@ class AnalyzeIssue extends Tool
         return [
             'name' => 'guidelines_analyzer_response',
             'schema' => [
-                'description' => 'Return either a "guidelines" array or a "feedback" string -- never both.',
-                'type' => 'object',
+                'description' => 'Return either a "guidelines" array (if applicable warnings or failures are found) or a "feedback" string (if no warning or failures apply or clarification is needed). Never return both.',                'type' => 'object',
                 'properties' => [
                     'guidelines' => [
                         'type' => ['array', 'null'],
+                        'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
                         'items' => $this->guidelinesAnalyzerService->getItemsSchema(),
                     ],
                     'feedback' => [
                         'type' => ['string', 'null'],
-                        'description' => 'Used when no direct guideline failure applies or more information is needed.',
+                        'description' => 'A brief explanation if no guidelines apply, or a clarification request if more information is needed. Null if applicable guidelines are found.',
                     ],
                 ],
                 'additionalProperties' => false,
@@ -140,7 +143,7 @@ according to the Guidelines Document. When an issue could reasonably fall under 
 reasoning.
 
 1. When one or more guidelines are applicable to an accessibility issue, return a `guidelines` array containing an object
-for each failure with these fields:
+for each warning or failure with these fields:
    - reasoning: Briefly explain:
       1. How the guideline applies to the issue
       2. Why it is assessed as a warning or failure
@@ -151,7 +154,7 @@ for each failure with these fields:
    - assessment: Must be either "Fail" or "Warn":
       - Mark "Warn" if the criterion is technically met, but the implementation results in an undesirable experience for users of assistive technologies.
       - Mark "Fail" if the criterion is not met in any way, or if the user experience is significantly diminished for users of assistive technologies.
-   - applicability:  Briefly describe how the issue fails to meet the guideline (or why it is only a warning).
+   - observation:  Briefly describe how the issue fails to meet the guideline (or why it is only a warning).
    - recommendation: Brief, actionable remediation steps.
    - testing: Very brief instructions for how to test or verify the issue.
    - impact: Rate the significance of the barrier as one of "Critical", "Serious", "Moderate", or "Low" (see definitions below). Always select the most appropriate rating based on the likely effect on users with disabilities.
@@ -160,7 +163,7 @@ for each failure with these fields:
       - Moderate: A barrier that will make it somewhat more difficult for users with affected disabilities to complete central or secondary tasks or access content.
       - Low: A barrier that has the potential to force users with affected disabilities to use mildly inconvenient workarounds, but that does not cause much, if any, difficulty completing tasks or accessing content.(
 
-2. If the issue is not a direct failure of a guideline, return a `feedback` string with a brief explanation (and, if
+2. If the issue is not a direct warning or failure of a guideline, return a `feedback` string with a brief explanation (and, if
 helpful, alternative resources). Do not include a `guidelines` in this case.
 
 3. If you require more information to give accurate guidance, return a `feedback` string asking for the needed
@@ -175,7 +178,7 @@ clarification. Do not include a `guidelines` in this case.
       "heading": "Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",
       "criteria": "1.3.1 Info and Relationships (Level A)",
       "assessment": "Fail",
-      "applicability": "The fieldset does not contain a <legend> or be properly labeled using ARIA to describe the grouping of checkboxes.",
+      "observation": "The fieldset does not contain a <legend> or an ARIA label to describe the grouping of checkboxes.",
       "recommendation": "Add a <legend> element to the fieldset to describe the grouping of checkboxes.",
       "testing": "Check that the grouping of checkboxes is clearly labeled using assistive technologies.",
       "impact": "Low"
@@ -186,7 +189,7 @@ clarification. Do not include a `guidelines` in this case.
       "heading": "Labels describe the purpose of the inputs they are associated with.",
       "criteria": "2.4.6 Headings and Labels (Level AA)",
       "assessment": "Fail",
-      "applicability": "The absence of a legend or ARIA label means that the purpose of the checkboxes is not clearly communicated to users.",
+      "observation": "No <label> element or aria-label is programmatically associated with the checkboxes.",
       "recommendation": "Add a clear label to each checkbox to describe its purpose.",
       "testing": "Check that each checkbox has a clear label that describes its purpose.",
       "impact": "Serious"

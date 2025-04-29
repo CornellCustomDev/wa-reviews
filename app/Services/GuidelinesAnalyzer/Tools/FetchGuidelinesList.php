@@ -26,6 +26,7 @@ class FetchGuidelinesList extends Tool
                     'name'          => $guideline->name,
                     'wcag_criterion'=> $guideline->criterion->getNumberName(),
                     'category'      => $guideline->category->name,
+                    'url'           => config('app.url') . '/guidelines/' . $guideline->id,
                 ];
             });
 
