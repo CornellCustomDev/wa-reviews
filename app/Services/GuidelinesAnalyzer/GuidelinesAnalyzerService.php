@@ -159,11 +159,11 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'number' => $item->guideline->number,
             'name' => $item->guideline->name,
             'wcag_criterion' => $item->guideline->criterion->getNumberName(),
-            'assessment' => $item->assessment->value,
+            'assessment' => $item->assessment?->value,
             'observation' => $item->description?->toHtml(),
             'recommendation' => $item->recommendation?->toHtml(),
             'testing' => $item->testing?->toHtml(),
-            'impact' => $item->impact->name,
+            'impact' => $item->impact?->name,
         ];
     }
 
