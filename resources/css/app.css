@@ -62,6 +62,22 @@
     --color-wa-na: #9fc5e8;
 }
 
+@layer utilities {
+    .scroll-fade-top {
+        background-image: linear-gradient(to bottom, #f7f7f7, rgba(255, 255, 255, 0));
+    }
+
+    .scroll-fade-bottom {
+        background-image: linear-gradient(to top, #f7f7f7, rgba(255, 255, 255, 0));
+    }
+}
+
+@layer components {
+    .scroll-nav-button {
+        @apply absolute inset-x-0 flex items-center justify-center h-8 cursor-pointer;
+    }
+}
+
 @utility bg-radio-checked {
     background-image: url('/cwd-framework/images/layout/checked-radio.svg');
 }
@@ -351,4 +367,10 @@
 
 [data-flux-icon] {
     @apply inline-block;
+}
+
+[data-cds-chat] {
+    li {
+        @apply list-disc ml-6;
+    }
 }

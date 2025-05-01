@@ -22,7 +22,7 @@ return [
      * and changing the name and values
      */
     'providers' => [
-        'default' => [
+        'openai' => [
             'label' => 'openai',
             'api_key' => env('CORNELL_AI_GATEWAY_API_KEY'),
             'api_url' => env('CORNELL_AI_GATEWAY_BASE_URL', 'https://api.ai.it.cornell.edu'),
@@ -34,7 +34,7 @@ return [
 
         'local' => [
             'label' => 'local',
-            'model' => env('LOCAL_AI_MODEL', 'llama3.2:latest'),
+            'model' => env('LOCAL_AI_MODEL', 'llama3.2:3b'),
             'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
             'api_key' => 'ollama',
             'api_url' => env('LOCAL_AI_BASE_URL', 'http://host.docker.internal:11434/v1'),

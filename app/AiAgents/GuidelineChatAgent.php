@@ -37,7 +37,7 @@ class GuidelineChatAgent extends Agent
     {
         return view('ai-agents.GuidelineChat.instructions', [
             'tools' => $this->getTools(),
-            'guideline' => $this->guideline,
+            'guideline' => $this->guideline ?? Guideline::find(1),
         ])->render();
     }
 
