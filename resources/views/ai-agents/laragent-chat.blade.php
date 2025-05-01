@@ -63,14 +63,14 @@
             el.addEventListener('scroll', update);
             update();
         })()"
-        x-effect="
+        x-effect="() => {
             if (scrollToBottom) {
                 $nextTick(() => {
                     $refs.chatContainer.scrollTo({ top: $refs.chatContainer.scrollHeight, behavior: 'smooth' });
                     scrollToBottom = false;
                 });
             }
-        "
+        }"
     >
         <button
             x-show="!atTop"
