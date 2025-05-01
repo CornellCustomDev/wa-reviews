@@ -167,7 +167,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public function mapGuidelineToSchema(Guideline $guideline): array
+    public static function mapGuidelineToSchema(Guideline $guideline): array
     {
         return [
             'number'         => $guideline->number,

@@ -66,5 +66,5 @@ Web accessibility guideline:
 
 {{-- Sidebar for AI help --}}
 <x-slot name="sidebarPrimary">
-    <livewire:ai.guideline-chat :$guideline />
+    <livewire:guidelines.guideline-chat :$guideline />
 </x-slot>
