@@ -22,8 +22,9 @@ return [
      * and changing the name and values
      */
     'providers' => [
-        'openai' => [
+        'default'=> [
             'label' => 'openai',
+            'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
             'api_key' => env('CORNELL_AI_GATEWAY_API_KEY'),
             'api_url' => env('CORNELL_AI_GATEWAY_BASE_URL', 'https://api.ai.it.cornell.edu'),
             'model' => env('CORNELL_AI_GATEWAY_MODEL', 'openai.gpt-4.1-mini'),

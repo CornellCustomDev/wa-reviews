@@ -370,7 +370,10 @@
 }
 
 [data-cds-chat] {
-    li {
+    ul > li {
         @apply list-disc ml-6;
+    }
+    ol > li {
+        @apply list-decimal ml-6;
     }
 }

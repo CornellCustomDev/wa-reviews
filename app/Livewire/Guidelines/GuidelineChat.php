@@ -15,12 +15,14 @@ class GuidelineChat extends Component
 
     protected function getAgent(): GuidelineChatAgent
     {
-        $agent = auth()->check()
-            ? GuidelineChatAgent::forUser(auth()->user())
-            : GuidelineChatAgent::for(crc32(session()->getId()));
-        $agent->setGuideline($this->guideline);
+        if (is_null($this->selectedChatKey)) {
+            $this->newChat();
+        }
+        if ($this->needsRefresh) {
+            $this->guideline->refresh();
+            $this->needsRefresh = false;
+        }
 
-        return $agent;
+        return new GuidelineChatAgent($this->guideline, $this->selectedChatKey);
     }
-
 }
