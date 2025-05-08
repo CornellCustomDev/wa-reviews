@@ -5,7 +5,7 @@ namespace App\AiAgents\Tools;
 use App\Models\Guideline;
 use LarAgent\Tool;
 
-class FetchGuidelinesList extends Tool
+class FetchGuidelinesListTool extends Tool
 {
     protected string $name = 'fetch_guidelines_list';
 

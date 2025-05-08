@@ -5,7 +5,7 @@ namespace App\AiAgents\Tools;
 use Illuminate\Support\Facades\Storage;
 use LarAgent\Tool;
 
-class FetchGuidelinesDocument extends Tool
+class FetchGuidelinesDocumentTool extends Tool
 {
     protected string $name = 'fetch_guidelines_document';
 

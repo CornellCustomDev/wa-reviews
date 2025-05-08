@@ -96,7 +96,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         return $this->storeItems($issue, $items);
     }
 
-    public function getIssueContext(Issue $issue): string
+    public static function getIssueContext(Issue $issue): string
     {
         $issueData = [
             'id' => $issue->id,
@@ -108,7 +108,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\m";
     }
 
-    public function getItemsSchema(): array
+    public static function getItemsSchema(): array
     {
         return [
             'type' => 'object',
@@ -152,7 +152,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public function mapItemToSchema(Item $item): array
+    public static function mapItemToSchema(Item $item): array
     {
         return [
             'reasoning' => $item->ai_reasoning?->toHtml() ?? '',

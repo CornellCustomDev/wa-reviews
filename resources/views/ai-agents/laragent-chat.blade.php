@@ -1,12 +1,7 @@
 @props([
-    'heading' => 'AI Assistance',
     'description' => 'This AI chatbot answers questions about accessibility guidelines and issues.',
 ])
 <div>
-    <h2>
-        {{ $heading }}
-    </h2>
-
     <div class="flex items-center ml-2 mb-2 float-right">
         @if($this->chats()->isNotEmpty())
             <flux:dropdown>
@@ -131,12 +126,14 @@
     <div wire:stream="streamedResponse" wire:show="streaming">{{ $streamedResponse }}</div>
 
     <div wire:show="showFeedback" wire:cloak>
-        <flux:card size="sm" class="flex bg-cds-blue-50!">
-            <div class="flex-1">
+        <flux:card size="sm" class="flex bg-cds-blue-200!">
+            <div class="flex-1 min-w-0">
                 <h3 class="h5">AI Response</h3>
-                {!! Str::of(htmlentities($feedback))->markdown() !!}
+                <div class="overflow-x-auto">
+                    {!! Str::of(htmlentities($feedback))->markdown() !!}
+                </div>
             </div>
-            <div class="-mx-2">
+            <div class="flex-none">
                 <flux:button wire:click="$toggle('showFeedback')" variant="ghost" size="sm" icon="x-mark" inset="top right bottom" />
             </div>
         </flux:card>

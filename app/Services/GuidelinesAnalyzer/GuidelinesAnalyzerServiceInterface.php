@@ -24,11 +24,11 @@ interface GuidelinesAnalyzerServiceInterface
 
     public function populateIssueItemsWithAI(Issue $issue): array;
 
-    public function getIssueContext(Issue $issue): string;
+    public static function getIssueContext(Issue $issue): string;
 
-    public function getItemsSchema(): array;
+    public static function getItemsSchema(): array;
 
-    public function mapItemToSchema(Item $item): array;
+    public static function mapItemToSchema(Item $item): array;
 
     public static function mapGuidelineToSchema(Guideline $guideline): array;
 

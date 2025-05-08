@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Ai;
 
+use App\AiAgents\ModelChatAgent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use LarAgent\Core\Contracts\Message;
@@ -10,6 +11,7 @@ use LarAgent\Core\Enums\Role;
 use LarAgent\Messages\StreamedAssistantMessage;
 use LarAgent\Messages\ToolCallMessage;
 use Livewire\Attributes\Computed;
+use Throwable;
 
 trait LarAgentChat
 {
@@ -22,6 +24,7 @@ trait LarAgentChat
     public bool $needsRefresh = false;
     public string $feedback = '';
     public bool $showFeedback = false;
+    public array $toolsCalled = [];
 
     #[Computed(persist: true)]
     public function chats(): Collection
@@ -49,6 +52,7 @@ trait LarAgentChat
         $this->streaming = false;
         $this->feedback = '';
         $this->showFeedback = false;
+        $this->dispatch('scroll-to-bottom');
     }
 
     public function selectChat($chatKey): void
@@ -72,6 +76,9 @@ trait LarAgentChat
 
     public function sendUserMessage(): void
     {
+        $this->feedback = '';
+        $this->showFeedback = false;
+        $this->toolsCalled = [];
         $this->streaming = true;
         $this->dispatch('scroll-to-bottom');
         $this->js('$wire.streamUserMessage()');
@@ -82,8 +89,8 @@ trait LarAgentChat
         $this->stream('streamedResponse', 'Retrieving response...');
         $start = microtime(true);
 
-        $agent = $this->getAgent();
         try {
+            $agent = $this->getAgent();
             $stream = $agent->respondStreamed($this->userMessage);
             foreach ($stream as $chunk) {
                 $elapsed = round(microtime(true) - $start, 1);
@@ -102,15 +109,21 @@ trait LarAgentChat
             $this->userMessage = '';
 
             $agent->updateChatName();
+            $this->afterAgentResponse($agent);
             unset($this->chats);
             unset($this->chatMessages);
-        } catch (\Exception $e) {
-            $this->feedback = $e->getMessage();
+        } catch (Throwable $e) {
+            $this->feedback = "**Error:** {$e->getMessage()}";
             $this->showFeedback = true;
         }
 
         $this->streaming = false;
         $this->needsRefresh = true;
         $this->dispatch('scroll-to-bottom');
+    }
+
+    protected function afterAgentResponse(ModelChatAgent $agent): void
+    {
+        //
     }
 }
