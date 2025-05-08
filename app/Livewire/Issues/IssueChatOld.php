@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 use Livewire\Component;
 use App\Models\ChatHistory;
 
-class IssueChat extends Component
+class IssueChatOld extends Component
 {
     private OpenAIChatService $chat;
     private ChatServiceFactoryInterface $chatServiceFactory;
@@ -78,7 +78,7 @@ class IssueChat extends Component
             $this->selectedChat->save();
         } else {
             $this->selectedChat = $this->issue->chats(auth()->user())->create([
-                'user_id' => auth()->user()->id,
+                'user_id' => auth()->id(),
                 'context_type' => Issue::class,
                 'context_id' => $this->issue->id,
                 'messages' => $messages,
@@ -148,7 +148,10 @@ class IssueChat extends Component
             ->toJson(JSON_PRETTY_PRINT);
 
         // Get the names of all available tools to help the model knows what it can call
-        $toolNames = implode(', ', array_keys($this->getTools()));
+        $toolNames = '';
+        foreach($this->getTools() as $tool) {
+            $toolNames .= ' - ' . $tool->getName() . ': ' . $tool->getDescription() . "\n";
+        }
 
         $guidelineUrl = route('guidelines.show', 2);
 
@@ -165,7 +168,8 @@ to clarify something, ask them directly, such as "Can you please clarify what yo
 If the user asks about something unrelated to the task, politely inform them that you can only help with
 the task at hand.
 
-Available tools: {$toolNames}
+Available tools:
+{$toolNames}
 
 Always confirm with the user before using store_guideline_matches.
 
@@ -227,15 +231,6 @@ $chatMessages
 ```
 PROMPT;
 
-        "You are naming an AI chat history to be used in a menu of chat histories for accessibility issues and guidelines. "
-        . "The menu is in a UI context of accessibility issues and guidelines, so stick to names that will help "
-        . "the user understand the unique context of this chat history.\n\n"
-        . "1. Generate a very short name for the following AI chat messages:\n\n"
-        . "```json\n" . json_encode($chatMessages, JSON_PRETTY_PRINT) . "\n```\n\n"
-        . "2. The current name is: {$this->selectedChat?->name}\n"
-        . "3. If the generated name is quite similar to the current name, keep the current name.\n\n"
-        . "Return only the name, without any other text.\n\n"
-        . "### Example\n";
         $taskChat->setPrompt($prompt);
         $taskChat->send();
 
