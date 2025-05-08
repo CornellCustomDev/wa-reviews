@@ -17,7 +17,7 @@
 
     <div x-show="$wire.showChat" x-cloak>
         <hr>
-        <livewire:issues.issue-chat-new :$issue />
+        <livewire:issues.issue-chat :$issue />
     </div>
 
     <div x-show="$wire.showAnalyzer" x-cloak>

@@ -8,7 +8,7 @@ use App\Livewire\Ai\LarAgentChat;
 use App\Models\Issue;
 use Livewire\Component;
 
-class IssueChatNew extends Component
+class IssueChat extends Component
 {
     use LarAgentChat;
 
