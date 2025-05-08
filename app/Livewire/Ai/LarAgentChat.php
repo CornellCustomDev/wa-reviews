@@ -5,8 +5,10 @@ namespace App\Livewire\Ai;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use LarAgent\Core\Contracts\Message;
+use LarAgent\Core\Contracts\ToolCall;
 use LarAgent\Core\Enums\Role;
 use LarAgent\Messages\StreamedAssistantMessage;
+use LarAgent\Messages\ToolCallMessage;
 use Livewire\Attributes\Computed;
 
 trait LarAgentChat
@@ -84,8 +86,14 @@ trait LarAgentChat
         try {
             $stream = $agent->respondStreamed($this->userMessage);
             foreach ($stream as $chunk) {
+                $elapsed = round(microtime(true) - $start, 1);
+                if ($chunk instanceof ToolCallMessage) {
+                    /** @var ToolCall $toolCall */
+                    foreach ($chunk->getToolCalls() as $toolCall) {
+                        $this->stream('streamedResponse', "Calling '{$toolCall->getToolName()}'... ({$elapsed}s)", true);
+                    }
+                }
                 if ($chunk instanceof StreamedAssistantMessage) {
-                    $elapsed = round(microtime(true) - $start, 1);
                     $this->stream('streamedResponse', "Retrieving response... ({$elapsed}s)", true);
                 }
             }
