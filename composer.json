@@ -20,6 +20,7 @@
         "livewire/flux-pro": "^2.1",
         "livewire/livewire": "^3.6",
         "maatwebsite/excel": "^3.1",
+        "maestroerror/laragent": "dev-main",
         "openai-php/client": "^0.10.3",
         "santigarcor/laratrust": "^8.4",
         "symfony/dom-crawler": "^7.2"

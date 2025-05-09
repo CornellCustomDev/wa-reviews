@@ -24,7 +24,7 @@ class StoreGuidelineMatches extends Tool
 
     public function getDescription(): string
     {
-        return 'Stores web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
+        return 'Stores applicable web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
     }
 
     public function call(string $arguments): array

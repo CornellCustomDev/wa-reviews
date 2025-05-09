@@ -120,7 +120,7 @@ class AnalyzeIssue extends Tool
         $issueContext = $this->guidelinesAnalyzerService->getIssueContext($issue);
         $guidelinesDocument = Storage::get('guidelines-list.md');
 
-        return $guidelinesDocument . <<<PROMPT
+        return <<<PROMPT
 # Guidelines Document
 
 When instructions refer to the Guidelines Document, it is the document below. When Guideline numbers are mentioned,

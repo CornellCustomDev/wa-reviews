@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'f0a904a7b22f0ac98702d2ee944e653d2fadf5d3',
+        'reference' => 'bc8f73aaa7aa44c106f5daca5b385aff06670e5a',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -64,7 +64,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'f0a904a7b22f0ac98702d2ee944e653d2fadf5d3',
+            'reference' => 'bc8f73aaa7aa44c106f5daca5b385aff06670e5a',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -617,6 +617,17 @@
             'type' => 'library',
             'install_path' => __DIR__ . '/../maennchen/zipstream-php',
             'aliases' => array(),
+            'dev_requirement' => false,
+        ),
+        'maestroerror/laragent' => array(
+            'pretty_version' => 'dev-main',
+            'version' => 'dev-main',
+            'reference' => '908ce999c2fd969ac292b56a54b56287822d1c1d',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../maestroerror/laragent',
+            'aliases' => array(
+                0 => '9999999-dev',
+            ),
             'dev_requirement' => false,
         ),
         'markbaker/complex' => array(

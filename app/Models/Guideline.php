@@ -4,11 +4,13 @@ namespace App\Models;
 
 use App\Enums\GuidelineTools;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Guideline extends Model
 {
@@ -50,6 +52,12 @@ class Guideline extends Model
     public function items(): HasMany
     {
         return $this->hasMany(Item::class);
+    }
+
+    public function chats(User $user): MorphMany
+    {
+        return $this->morphMany(ChatHistory::class, 'context')
+            ->where('user_id', $user->id);
     }
 
     public function hasAutomatedAssessment(): bool

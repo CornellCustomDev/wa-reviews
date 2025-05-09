@@ -13,7 +13,7 @@ class FetchGuidelinesList extends Tool
 
     public function getDescription(): string
     {
-        return 'Return a list of all accessibility guidelines with number, name, wcag_criterion, and category.';
+        return 'Return a list of all accessibility guidelines with number, name, WCAG 2.2 AA criterion, and category.';
     }
 
     public function call(?string $arguments = null): array
