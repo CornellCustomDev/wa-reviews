@@ -13,10 +13,17 @@ class AnalyzeIssueTool extends Tool
 
     public string $description =
         'Analyze the specified accessibility issue and return applicable web accessibility guidelines based on '
-        . 'the Guidelines Document. If no guideline applies, or more information is needed, return a feedback '
+        . 'the Guidelines Document. If no guideline applies, or more information is needed, it returns a feedback '
         . 'message instead.';
 
     public array $required = ['issue_id'];
+
+    public static function call(int $issue_id): array
+    {
+        return (new self())->execute([
+            'issue_id' => $issue_id,
+        ]);
+    }
 
     public function getProperties(): array
     {

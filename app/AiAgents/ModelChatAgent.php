@@ -7,7 +7,6 @@ use App\Models\Issue;
 use Illuminate\Support\Collection;
 use LarAgent\Agent;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
-use LarAgent\Core\Contracts\Message as MessageInterface;
 use LarAgent\Core\Contracts\Tool as ToolInterface;
 use LarAgent\History\FileChatHistory;
 
@@ -39,7 +38,7 @@ abstract class ModelChatAgent extends Agent
     public function createChatHistory(string $sessionId): ChatHistoryInterface
     {
         if (auth()->check()) {
-            return new ModelChatHistory($this->getChatKey(), $this->context, auth()->user());
+            return new ModelChatHistory($this, $this->getChatKey(), $this->context, auth()->user());
         } else {
             // TODO: Store anonymous chats in the database
             return new FileChatHistory($sessionId);

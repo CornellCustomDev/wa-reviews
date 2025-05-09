@@ -16,13 +16,11 @@ interface GuidelinesAnalyzerServiceInterface
 
     public function getTools(): array;
 
-    public function analyzeIssue(Issue $issue): array;
+    public static function analyzeIssue(Issue $issue): array;
 
-    public function reviewApplicability(Item $item): array;
+    public static function storeItems(Issue $issue, array $items): array;
 
-    public function storeItems(Issue $issue, array $items): array;
-
-    public function populateIssueItemsWithAI(Issue $issue): array;
+    public static function populateIssueItemsWithAI(Issue $issue): array;
 
     public static function getIssueContext(Issue $issue): string;
 

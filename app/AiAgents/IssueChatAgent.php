@@ -45,21 +45,9 @@ class IssueChatAgent extends ModelChatAgent
 
         return view('ai-agents.IssueChat.instructions', [
             'tools' => $this->getTools(),
-            'issueContext' => $this->getIssueContext($issue),
+            'issueContext' => GuidelinesAnalyzerService::getIssueContext($issue),
             'guidelinesContext' => $guidelinesContext,
             'guidelineUrl' => route('guidelines.show', 5),
         ])->render();
-    }
-
-    private function getIssueContext(Issue $issue): string
-    {
-        $issueData = [
-            'id' => $issue->id,
-            'target' => $issue->target,
-            'css_selector' => $issue->css_selector,
-            'description' => $issue->description,
-        ];
-
-        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
 }

@@ -7,6 +7,8 @@ use App\Models\Issue;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Facades\Storage;
 use LarAgent\Agent;
+use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
+use LarAgent\Messages\SystemMessage;
 use Throwable;
 
 class GuidelinesAnalyzerAgent extends Agent
@@ -72,7 +74,26 @@ class GuidelinesAnalyzerAgent extends Agent
 
     public function getContext(): string
     {
-        return "# Context: Web accessibility issue\n\n" .
-            GuidelinesAnalyzerService::getIssueContext($this->issue);
+        $context = '';
+        if ($this->issue->scope->pageHasBeenRetrieved()) {
+            $context .= "# Context: Web page being analyzed\n\n"
+                . "```html\n"
+                . $this->issue->scope->page_content
+                . "\n```\n\n";
+        }
+        $context .= "# Context: Web accessibility issue\n\n"
+            . GuidelinesAnalyzerService::getIssueContext($this->issue);
+
+        return $context;
+    }
+
+    protected function beforeSaveHistory(ChatHistoryInterface $history): true
+    {
+        // Remove the instructions from the history
+        if ($history[0] instanceof SystemMessage) {
+            $history->truncateOldMessages(1);
+        }
+
+        return true;
     }
 }

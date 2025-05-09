@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
 use LarAgent\Core\Abstractions\ChatHistory;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
+use LarAgent\Messages\SystemMessage;
 
 class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
 {
@@ -16,9 +17,11 @@ class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
 
     protected bool $saveChatKeys = false;
     protected User $user;
+    private ModelChatAgent $agent;
 
-    public function __construct(string $name, Issue|Guideline $context, User $user)
+    public function __construct(ModelChatAgent $agent, string $name, Issue|Guideline $context, User $user)
     {
+        $this->agent = $agent;
         $this->context = $context;
         $this->user = $user;
 
@@ -36,13 +39,22 @@ class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
     {
         $content = $this->chats()->find($this->getIdentifier());
 
-        $messages = $content ? $this->buildMessages($content->messages) : [];
+        // We remove the instructions from the chat history, so put them back in
+        $messages = $content ? $this->buildMessages([
+            (new SystemMessage($this->agent->instructions()))->toArray(),
+            ...$content->messages
+        ]) : [];
 
         $this->setMessages($messages);
     }
 
     public function writeToMemory(): void
     {
+        // Remove the instructions from the history
+        if ($this->messages[0] instanceof SystemMessage) {
+            $this->truncateOldMessages(1);
+        }
+
         $messages = $this->toArrayForStorage();
 
         /** @var \App\Models\ChatHistory $content */

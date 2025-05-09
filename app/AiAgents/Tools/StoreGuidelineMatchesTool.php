@@ -22,6 +22,14 @@ class StoreGuidelineMatchesTool extends Tool
 
     protected array $required = ['issue_id', 'guidelines'];
 
+    public static function call(int $issue_id, array $guidelines): array
+    {
+        return (new self())->execute([
+            'issue_id' => $issue_id,
+            'guidelines' => $guidelines,
+        ]);
+    }
+
     public function getProperties(): array
     {
         return [

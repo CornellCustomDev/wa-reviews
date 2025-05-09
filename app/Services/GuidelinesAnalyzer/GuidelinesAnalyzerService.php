@@ -2,6 +2,8 @@
 
 namespace App\Services\GuidelinesAnalyzer;
 
+use App\AiAgents\Tools\AnalyzeIssueTool;
+use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Enums\Agents;
 use App\Models\Agent;
 use App\Models\Guideline;
@@ -58,42 +60,25 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public function analyzeIssue(Issue $issue): array
+    public static function analyzeIssue(Issue $issue): array
     {
-        return $this->analyzeIssueInstance->analyze($issue);
+        return AnalyzeIssueTool::call($issue->id);
     }
 
-    public function reviewApplicability(Item $item): array
+    public static function storeItems(Issue $issue, array $items): array
     {
-        return $this->reviewApplicabilityInstance->review($item->issue, $item->guideline_id, $item->toArray());
+        return StoreGuidelineMatchesTool::call($issue->id, $items);
     }
 
-    private function reviewItems(Issue $issue, array $items): array
+    public static function populateIssueItemsWithAI(Issue $issue): array
     {
-        // For each item in the result, get the guideline and the item context and ask AI to confirm it
-        $reviewedItems = [];
-        foreach ($items as $item) {
-            $review = $this->reviewApplicabilityInstance->review($issue, $item['number'], $item);
-            $reviewedItems = ['item' => $item, ...$review];
-        }
-
-        return $reviewedItems;
-    }
-
-    public function storeItems(Issue $issue, array $items): array
-    {
-        return $this->storeGuidelineMatchesInstance->store($issue, $items);
-    }
-
-    public function populateIssueItemsWithAI(Issue $issue): array
-    {
-        $items = $this->analyzeIssue($issue);
+        $items = self::analyzeIssue($issue);
 
         if (!empty(($items['feedback']))) {
             return $items;
         }
 
-        return $this->storeItems($issue, $items);
+        return self::storeItems($issue, $items);
     }
 
     public static function getIssueContext(Issue $issue): string
@@ -105,7 +90,8 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'description' => $issue->description,
         ];
 
-        return "Here is the current issue in JSON format:\n```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\m";
+        return "Here is the current issue in JSON format:\n"
+            . "```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
 
     public static function getItemsSchema(): array
