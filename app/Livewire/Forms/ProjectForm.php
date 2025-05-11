@@ -63,7 +63,7 @@ class ProjectForm extends Form
         event(new ProjectChanged($this->project, 'created'));
         event(new TeamChanged($this->project->team, $this->project, 'created'));
 
-        $this->updateSiteimprove();
+        $this->project->updateSiteimprove();
 
         return $this->project;
     }
@@ -87,19 +87,6 @@ class ProjectForm extends Form
             event(new TeamChanged(Team::find($newTeamId), $this->project, 'added', $delta));
         }
 
-        $this->updateSiteimprove();
-    }
-
-    protected function updateSiteimprove(): void
-    {
-        $siteimprove_id = $this->project->siteimprove_id ?: (SiteimproveService::findSite($this->project->site_url) ?? '');
-        if ($siteimprove_id) {
-            if (empty($this->project->siteimprove_id)) {
-                $this->project->update([
-                    'siteimprove_id' => $siteimprove_id,
-                ]);
-            }
-            SiteimproveService::make($siteimprove_id)->getPagesWithIssues(bustCache: true);
-        }
+        $this->project->updateSiteimprove();
     }
 }

@@ -28,7 +28,15 @@
 
                     @if(!empty($item->image_links))
                         <div class="flex flex-wrap gap-1 mt-1">
-                            @foreach($item->image_links as $imagePath)
+                            @foreach(Arr::wrap($item->image_links) as $imagePath)
+                                @if(!Str::contains($imagePath, config('app.url')))
+                                    <flux:subheading class="items-center">
+                                    <a href="{{ $imagePath }}" target="_blank">
+                                        Image {{ $loop->iteration }}
+                                    </a> <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
+                                    </flux:subheading>
+                                    @continue
+                                @endif
                                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                                 <flux:tooltip position="bottom" class="align-middle">
                                     <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">

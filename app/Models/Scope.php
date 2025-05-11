@@ -14,6 +14,7 @@ class Scope extends Model
     use HasFactory;
 
     protected $fillable = [
+        'project_id',
         'title',
         'url',
         'page_content',
