@@ -3,6 +3,7 @@
 namespace App\Imports\ChecklistSpreadsheet;
 
 use App\Enums\Assessment;
+use App\Enums\Impact;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Models\Project;
@@ -43,7 +44,17 @@ class ChecklistSheetImport implements ToModel, PersistRelations, WithStartRow
         $testing = $row[10];
         $recommendation = $row[11];
         $image_links = $row[12];
-        $content_issue = $row[13];
+        $col13 = $row[13];
+        $col14 = $row[14] ?? null;
+        $col15 = $row[15] ?? null;
+
+        if (is_null($col14) && is_null($col15)) {
+            $impact = null;
+            $content_issue = $col13;
+        } else {
+            $impact = Impact::fromName($col13);
+            $content_issue = $col15;
+        }
 
         // Adapted from https://daringfireball.net/2010/07/improved_regex_for_matching_urls
         $pattern = '/(?i)\b('
@@ -59,6 +70,10 @@ class ChecklistSheetImport implements ToModel, PersistRelations, WithStartRow
         preg_match_all($pattern, $target, $matches);
         $targetUrls = collect($matches[0])->map(fn ($url) => rtrim($url, '/'));
         $scope = $this->scopes->firstWhere(fn ($s) => $targetUrls->contains($s->url));
+
+        // Process $image_links into an array
+        preg_match_all($pattern, $image_links, $matches);
+        $image_links = array_map(fn($url) => rtrim($url, '/'), $matches[0]);
 
         $issue = Issue::create([
             'project_id' => $this->project->id,
@@ -76,6 +91,7 @@ class ChecklistSheetImport implements ToModel, PersistRelations, WithStartRow
             'recommendation' => $recommendation,
             'testing' => $testing,
             'image_links' => $image_links,
+            'impact' => $impact,
             'content_issue' => $content_issue,
         ]);
     }
