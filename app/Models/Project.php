@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProjectStatus;
 use App\Events\ProjectChanged;
+use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -200,5 +201,19 @@ class Project extends Model
         return Project::query()
             ->whereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id))
             ->get();
+    }
+
+    public function updateSiteimprove(): void
+    {
+        $siteimprove_id = $this->siteimprove_id ?: (SiteimproveService::findSite($this->site_url) ?? '');
+        if ($siteimprove_id) {
+            if (empty($this->siteimprove_id)) {
+                $this->update([
+                    'siteimprove_id' => $siteimprove_id,
+                ]);
+            }
+            // Run to cache the siteimprove data
+            SiteimproveService::make($siteimprove_id)->getPagesWithIssues(bustCache: true);
+        }
     }
 }

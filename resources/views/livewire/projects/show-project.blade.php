@@ -7,6 +7,7 @@
                 @can('update', $project)
                     <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
                     <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
+                    <livewire:projects.upload-project-data :project="$project"/>
                 @endcan
 
                 <div x-show="!edit">
@@ -56,7 +57,6 @@
         </div>
     </div>
 
-
     <flux:tab.group>
         <flux:tabs wire:model.live="tab">
             <flux:tab name="issues">Issues ({{ $project->issues()->count() }})</flux:tab>
@@ -99,3 +99,4 @@
     </flux:tab.group>
 
 </div>
+
