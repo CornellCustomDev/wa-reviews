@@ -11,7 +11,7 @@ use LarAgent\Agent;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 use LarAgent\Messages\SystemMessage;
 
-class IssueAnalyzerAgent extends Agent
+class PopulateGuidelinesAgent extends Agent
 {
     protected Issue $issue;
 
