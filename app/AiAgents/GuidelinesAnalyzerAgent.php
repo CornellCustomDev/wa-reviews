@@ -2,6 +2,7 @@
 
 namespace App\AiAgents;
 
+use App\AiAgents\Tools\ScratchPadTool;
 use App\Enums\ChatProfile;
 use App\Models\Issue;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
@@ -75,7 +76,7 @@ class GuidelinesAnalyzerAgent extends Agent
     public function getContext(): string
     {
         $context = '';
-        if ($this->issue->scope->pageHasBeenRetrieved()) {
+        if ($this->issue->scope?->pageHasBeenRetrieved()) {
             $context .= "# Context: Web page being analyzed\n\n"
                 . "```html\n"
                 . $this->issue->scope->page_content

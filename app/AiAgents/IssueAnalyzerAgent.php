@@ -2,14 +2,18 @@
 
 namespace App\AiAgents;
 
-use App\AiAgents\Tools\AnalyzeIssueTool;
-use App\AiAgents\Tools\StoreGuidelineMatchesTool;
+use App\AiAgents\Tools\FetchGuidelinesDocumentTool;
+use App\AiAgents\Tools\FetchGuidelinesListTool;
+use App\AiAgents\Tools\FetchGuidelinesTool;
+use App\AiAgents\Tools\FetchIssuePageContentTool;
+use App\AiAgents\Tools\ScratchPadTool;
 use App\Enums\ChatProfile;
 use App\Models\Issue;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use LarAgent\Agent;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 use LarAgent\Messages\SystemMessage;
+use Throwable;
 
 class IssueAnalyzerAgent extends Agent
 {
@@ -18,14 +22,17 @@ class IssueAnalyzerAgent extends Agent
     protected $history = 'file';
 
     protected $tools = [
-        AnalyzeIssueTool::class,
-        StoreGuidelineMatchesTool::class,
+        FetchGuidelinesTool::class,
+        FetchGuidelinesListTool::class,
+        FetchGuidelinesDocumentTool::class,
+        FetchIssuePageContentTool::class,
+        ScratchPadTool::class,
     ];
 
     public function __construct(Issue $issue, string $key)
     {
         $this->provider = config('cornell_ai.laragent_profile');
-        $this->model = config('cornell_ai.profiles')[ChatProfile::Task->value]['model'];
+        $this->model = config('cornell_ai.profiles')[ChatProfile::Chat->value]['model'];
 
         $this->issue = $issue;
 
@@ -42,31 +49,52 @@ class IssueAnalyzerAgent extends Agent
         );
     }
 
+    /**
+     * @throws Throwable
+     */
     public function instructions(): string
     {
-        $guidelineUrl = route('guidelines.show', 2);
-
-        return <<<PROMPT
-You are a tool-using agent tasked with analyzing web accessibility issues and storing the results. You have
-two tools to accomplish this: "analyze_accessibility_issue" and "store_guideline_matches".
-
-# Instructions
-1. Use the "analyze_accessibility_issue" tool to analyze the issue context provided by the user.
-2. If there are any applicable guidelines, use the "store_guideline_matches" tool to store the results of the analysis.
-3. If there are no applicable guidelines, look at the feedback returned.
-4. Report back a brief summary of what you were able to accomplish with the tools in a concise manner.
-
-— If you cite a Guideline, reference its **"number"** field. You should also link to the Guideline using it's URL,
-  for example: [Guideline 2]($guidelineUrl).
-- The user is not able to respond to you, so you should not ask them any questions.
-
-PROMPT;
+        return view('ai-agents.IssueAnalyzer.instructions', [
+            'guidelinesList' => json_encode(FetchGuidelinesListTool::call(), JSON_PRETTY_PRINT),
+        ])->render();
     }
 
-    public function getContext(): string
+    public function structuredOutput(): array
     {
-        return "# Context: Web accessibility issue\n\n" .
-            GuidelinesAnalyzerService::getIssueContext($this->issue);
+        return [
+            'name' => 'issue_analyzer_response',
+            'schema' => [
+                'description' => 'Return either a "guidelines" array (if applicable warnings or failures are found) or a "feedback" string (if no warning or failures apply or clarification is needed). Never return both.',
+                'type' => 'object',
+                'properties' => [
+                    'guidelines' => [
+                        'type' => ['array', 'null'],
+                        'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
+                        'items' => GuidelinesAnalyzerService::getItemsSchema(),
+                    ],
+                    'feedback' => [
+                        'type' => ['string', 'null'],
+                        'description' => 'A brief explanation if no guidelines apply, or a clarification request if more information is needed. Null if applicable guidelines are found.',
+                    ],
+                ],
+                'additionalProperties' => false,
+                'required' => ['guidelines', 'feedback'],
+            ],
+            'strict' => true,
+        ];
+    }
+
+    public function getContext(?string $additionalContext = null): string
+    {
+        $context = "# Context: Web accessibility issue\n\n"
+            . GuidelinesAnalyzerService::getIssueContext($this->issue);
+
+        if ($additionalContext) {
+            $context .= "\n\n# Additional context\n\n"
+                . $additionalContext;
+        }
+
+        return $context;
     }
 
     protected function beforeSaveHistory(ChatHistoryInterface $history): true

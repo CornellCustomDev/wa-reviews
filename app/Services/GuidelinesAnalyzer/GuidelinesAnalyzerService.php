@@ -88,6 +88,9 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'target' => $issue->target,
             'css_selector' => $issue->css_selector,
             'description' => $issue->description,
+            'page_content' => $issue->scope?->url
+                ? 'Available via "fetch_issue_page_content" tool.'
+                : 'No page content available.',
         ];
 
         return "Here is the current issue in JSON format:\n"
@@ -99,16 +102,31 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         return [
             'type' => 'object',
             'properties' => [
-                'reasoning' => ['type' => 'string'],
-                'number' => ['type' => 'integer'],
-                'heading' => ['type' => 'string'],
-                'criteria' => ['type' => 'string'],
+                'reasoning' => [
+                    'type' => 'string',
+                    'description' => 'Brief explanation of: 1) how the guideline applies to the issue, 2) why it was assessed as a warning or failure, and 3) why the impact rating was chosen.',
+                ],
+                'number' => [
+                    'type' => 'integer',
+                    'description' => 'The Guideline heading number from the Guidelines Document'
+                ],
+                'heading' => [
+                    'type' => 'string',
+                    'description' => 'The Guideline heading name from the Guidelines Document',
+                ],
+                'criteria' => [
+                    'type' => 'string',
+                    'description' => 'WCAG criteria',
+                ],
                 'assessment' => [
                     'type' => 'string',
                     'enum' => ['Fail', 'Warn'],
                     'description' => '"Fail" if the criterion is not met; "Warn" if it meets the criterion but results in poor experience.',
                 ],
-                'observation' => ['type' => 'string'],
+                'observation' => [
+                    'type' => 'string',
+                    'description' => 'Briefly describe how the issue fails to meet the guideline (or why it is only a warning)',
+                    ],
                 'recommendation' => [
                     'type' => 'string',
                     'description' => 'Brief, actionable steps to fix the accessibility issue.',

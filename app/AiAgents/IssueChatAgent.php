@@ -3,11 +3,10 @@
 namespace App\AiAgents;
 
 use App\AiAgents\Tools\AnalyzeIssueTool;
-use App\AiAgents\Tools\FetchGuidelinesTool;
-use App\AiAgents\Tools\FetchGuidelinesDocumentTool;
 use App\AiAgents\Tools\FetchGuidelinesListTool;
 use App\AiAgents\Tools\FetchIssuePageContentTool;
 use App\AiAgents\Tools\ReviewGuidelineApplicabilityTool;
+use App\AiAgents\Tools\ScratchPadTool;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Models\Issue;
 use App\Models\Item;
@@ -17,13 +16,13 @@ use Throwable;
 class IssueChatAgent extends ModelChatAgent
 {
     protected $tools = [
-        FetchGuidelinesTool::class,
-        FetchGuidelinesListTool::class,
-        FetchGuidelinesDocumentTool::class,
-        FetchIssuePageContentTool::class,
+//        FetchGuidelinesTool::class,
+//        FetchGuidelinesListTool::class,
+//        FetchIssuePageContentTool::class,
         AnalyzeIssueTool::class,
-        ReviewGuidelineApplicabilityTool::class,
+//        ReviewGuidelineApplicabilityTool::class,
         StoreGuidelineMatchesTool::class,
+        ScratchPadTool::class,
     ];
 
     public function __construct(Issue $context, string $key) {

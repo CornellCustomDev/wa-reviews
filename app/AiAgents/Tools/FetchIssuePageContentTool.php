@@ -9,7 +9,7 @@ class FetchIssuePageContentTool extends Tool
 {
     protected string $name = 'fetch_issue_page_content';
 
-    protected string $description = 'Fetch the raw HTML of the web page related to the issue, if it is available.';
+    protected string $description = 'Fetch the raw HTML of the web page related to the issue.';
 
     protected array $required = ['issue_id'];
 
