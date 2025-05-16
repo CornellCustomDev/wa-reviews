@@ -7,7 +7,7 @@
         <h1>
             <a href="{{ $guideline->reference_url }}" target="_blank">
                 <span class="deco fa fa-bookmark">
-                    {{ $guideline->number }}
+                    {{ $guideline->getNumber() }}
                 </span>
             </a>
         </h1>

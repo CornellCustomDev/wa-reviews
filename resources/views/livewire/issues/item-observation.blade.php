@@ -6,11 +6,15 @@
             size="xs"
             x-on:click.prevent="$dispatch('show-guideline', {number: {{ $item->guideline->number }} })"
         >
-            {{ $item->guideline->number }}
+            {{ $item->guideline->getNumber() }}
         </x-forms.button>
 
         <flux:tooltip.content class="max-w-[600px]">
-            <p>{{ $item->assessment->description() }} for Guideline {{ $item->guideline->number }}: {{ $item->guideline->name }}</p>
+            @if($item->guideline->number < 100)
+                <p>{{ $item->assessment->description() }} for Guideline {{ $item->guideline->number }}: {{ $item->guideline->name }}</p>
+            @else
+                <p>{{ $item->assessment->description() }} for Best Practice: {{ $item->guideline->name }}</p>
+            @endif
         </flux:tooltip.content>
     </flux:tooltip>
 

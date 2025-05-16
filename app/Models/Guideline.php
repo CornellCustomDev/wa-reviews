@@ -64,4 +64,9 @@ class Guideline extends Model
     {
         return $this->tools->contains(GuidelineTools::Siteimprove);
     }
+
+    public function getNumber(): string
+    {
+        return $this->number < 100 ? $this->number : 'UX';
+    }
 }

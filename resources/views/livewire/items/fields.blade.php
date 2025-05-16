@@ -8,24 +8,26 @@
     required
 />
 
-<flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
-    @foreach ($form->assessmentOptions as $option)
-        @switch(Str::of($option['value'])->lower()->replace('/', ''))
-            @case('pass')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass hover:bg-wa-pass/30"/>
-                @break
-            @case('warn')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-warn hover:bg-wa-warn/30"/>
-                @break
-            @case('fail')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-fail hover:bg-wa-fail/30"/>
-                @break
-            @case('na')
-                <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-na hover:bg-wa-na/30"/>
-                @break
-        @endswitch
-    @endforeach
+<div x-data="{ guideline_id: $wire.entangle('form.guideline_id') }">
+    <flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
+        @foreach ($form->assessmentOptions as $option)
+            @switch(Str::of($option['value'])->lower()->replace('/', ''))
+                @case('pass')
+                    <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass hover:bg-wa-pass/30" />
+                    @break
+                @case('warn')
+                    <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-warn hover:bg-wa-warn/30"/>
+                    @break
+                @case('fail')
+                    <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-fail hover:bg-wa-fail/30" x-bind:disabled="guideline_id >= 100"/>
+                    @break
+                @case('na')
+                    <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-na hover:bg-wa-na/30"/>
+                    @break
+            @endswitch
+        @endforeach
 </flux:radio.group>
+</div>
 
 <x-forms.textarea label="Observations" wire:model="form.description" size="sm" required />
 
