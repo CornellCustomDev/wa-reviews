@@ -17,6 +17,7 @@ class Guideline extends Model
     use HasFactory;
 
     protected $fillable = [
+        'id',
         'number',
         'name',
         'criterion_id',
