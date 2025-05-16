@@ -65,6 +65,9 @@ class AccessibilityAnalyzerService
         return cache()->remember($cacheKey, 3600, function () use ($pageUrl) {
             try {
                 $html = $this->retrieveHtml($pageUrl);
+                if (empty($html)) {
+                    return null;
+                }
                 $crawler = $this->parseDom($html);
                 return $crawler->html();
             } catch (Exception $e) {
