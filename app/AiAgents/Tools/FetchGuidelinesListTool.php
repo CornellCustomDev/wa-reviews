@@ -11,6 +11,11 @@ class FetchGuidelinesListTool extends Tool
 
     protected string $description = 'Return a list of all accessibility guidelines with number, name, WCAG 2.2 AA criterion, and category.';
 
+    public static function call(): array
+    {
+        return (new self())->execute([]);
+    }
+
     public function execute(array $input): array
     {
         $guidelinesList = Guideline::query()->with(['criterion', 'category'])

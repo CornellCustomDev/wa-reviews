@@ -2,7 +2,7 @@
 
 namespace App\AiAgents\Tools;
 
-use App\AiAgents\GuidelinesAnalyzerAgent;
+use App\AiAgents\IssueAnalyzerAgent;
 use App\Models\Issue;
 use Illuminate\Support\Str;
 use LarAgent\Tool;
@@ -18,10 +18,11 @@ class AnalyzeIssueTool extends Tool
 
     public array $required = ['issue_id'];
 
-    public static function call(int $issue_id): array
+    public static function call(int $issue_id, ?string $context = null): array
     {
         return (new self())->execute([
             'issue_id' => $issue_id,
+            'context' => $context,
         ]);
     }
 
@@ -31,6 +32,10 @@ class AnalyzeIssueTool extends Tool
             'issue_id' => [
                 'type' => 'integer',
                 'description' => 'The primary key of the accessibility issue to analyze.',
+            ],
+            'context' => [
+                'type' => ['string', 'null'],
+                'description' => 'Any additional context or information to provide to the agent.',
             ],
         ];
     }
@@ -43,6 +48,8 @@ class AnalyzeIssueTool extends Tool
             return ['error' => 'issue_id_parameter_missing'];
         }
 
+        $additionalContext = $input['context'] ?? null;
+
         // Fetch the issue and analyze it
         $issue = Issue::find($issueId);
         if (!$issue) {
@@ -50,10 +57,11 @@ class AnalyzeIssueTool extends Tool
         }
 
         // TODO: Determine how we want to key these, probably somehow back to the calling chat?
-        $agent = new GuidelinesAnalyzerAgent($issue, Str::ulid());
+        $agent = new IssueAnalyzerAgent($issue, Str::ulid());
 
+        // TODO: Can we stream tool usage? If so, this response should be streamed
         // Perform analysis and return results
-        $response = $agent->respond($agent->getContext());
+        $response = $agent->respond($agent->getContext($additionalContext));
 
         $results = [];
         if (isset($response['guidelines'])) {
