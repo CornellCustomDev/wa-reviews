@@ -15,7 +15,7 @@ class AccessibilityAnalyzerService
     /**
      * @throws Exception
      */
-    public function retrieveHtml(string $url): string
+    public function retrieveHtml(string $url): ?string
     {
         try {
             $response = Http::get($url);
@@ -25,6 +25,10 @@ class AccessibilityAnalyzerService
 
         if ($response->failed()) {
             throw new Exception('Failed to retrieve the URL: ' . $url);
+        }
+
+        if (!$response->ok()) {
+            return null;
         }
 
         return $response->body();
@@ -59,9 +63,13 @@ class AccessibilityAnalyzerService
             cache()->forget($cacheKey);
         }
         return cache()->remember($cacheKey, 3600, function () use ($pageUrl) {
-            $html = $this->retrieveHtml($pageUrl);
-            $crawler = $this->parseDom($html);
-            return $crawler->html();
+            try {
+                $html = $this->retrieveHtml($pageUrl);
+                $crawler = $this->parseDom($html);
+                return $crawler->html();
+            } catch (Exception $e) {
+                return null;
+            }
         });
     }
 
