@@ -519,6 +519,8 @@ class LarAgent
 
             $this->processTools($response);
 
+            $this->message = null;
+
             // Continue the conversation with tool results
             if ($this->isStreaming()) {
                 return $this->runStreamed();
