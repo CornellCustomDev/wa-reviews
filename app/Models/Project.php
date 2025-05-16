@@ -29,8 +29,8 @@ class Project extends Model
         'siteimprove_url',
         'siteimprove_id',
         'status',
+        'completed_at',
         'assignment_id',
-
         'responsible_unit',
         'contact_name',
         'contact_netid',
@@ -44,6 +44,7 @@ class Project extends Model
 
     protected $casts = [
         'status' => ProjectStatus::class,
+        'completed_at' => 'datetime',
     ];
 
     protected $with = [

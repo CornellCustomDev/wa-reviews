@@ -26,13 +26,22 @@ class UpdateStatus extends Component
 
         $this->dispatch('close-update-status');
 
-        $this->project->update([
-            'status' => match ($direction) {
-                'next' => $this->project->status->nextStatus(),
-                'previous' => $this->project->status->previousStatus(),
-                default => throw new \InvalidArgumentException("Invalid direction: $direction"),
-            },
-        ]);
+        switch ($direction) {
+            case 'next':
+                $this->project->update([
+                    'status' => $this->project->status->nextStatus(),
+                    'completed_at' => $this->project->status->nextStatus()->isCompleted() ? now() : null,
+                ]);
+                break;
+            case 'previous':
+                $this->project->update([
+                    'status' => $this->project->status->previousStatus(),
+                    'completed_at' => null,
+                ]);
+                break;
+            default:
+                throw new \InvalidArgumentException("Invalid direction: $direction");
+        }
 
         event(new ProjectChanged($this->project, 'status changed'));
 
