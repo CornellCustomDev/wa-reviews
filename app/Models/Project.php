@@ -204,6 +204,18 @@ class Project extends Model
             ->get();
     }
 
+    public function getReportableIssues(): Collection
+    {
+        return $this->issues()
+            ->with(['scope', 'items'])
+            ->get()
+            ->filter(function ($issue) {
+                $accepted_items = $issue->items
+                    ->filter(fn (Item $item) => $item->isAiAccepted() || ! $item->isAiGenerated());
+                return $accepted_items->isNotEmpty();
+            });
+    }
+
     public function updateSiteimprove(): void
     {
         $siteimprove_id = $this->siteimprove_id ?: (SiteimproveService::findSite($this->site_url) ?? '');

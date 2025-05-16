@@ -17,7 +17,7 @@ class ProjectReportExport implements FromView
     {
         return view('exports.project-report', [
             'project' => $this->project,
-            'issuesByScope' => $this->project->issues()->with(['scope', 'items'])->get()->groupBy('scope_id'),
+            'issuesByScope' => $this->project->getReportableIssues()->groupBy('scope_id'),
         ]);
     }
 }

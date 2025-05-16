@@ -1,15 +1,75 @@
-<div>
+<div class="max-w-[900px]">
     <h1>Report: {{ $project->name }}</h1>
 
-    <div class="float-right print:hidden">
-        <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
-        <x-forms.button icon="arrow-down-tray" wire:click="exportReport()">Export</x-forms.button>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+
+        <div class="col-span-1 order-first md:order-last print:hidden">
+            <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
+            <x-forms.button icon="arrow-down-tray" wire:click="exportReport()">Export</x-forms.button>
+        </div>
+
+        <div class="col-span-3">
+            <table class="table bordered">
+                <tr>
+                    <th style="width: 200px">Prepared by</th>
+                    <td>{{ $project->reviewer->name }} ({{ $project->reviewer->email }})</td>
+                </tr>
+                <tr>
+                    <th>Date review completed</th>
+                    <td>{{ $project->completed_at?->format('F j, Y') }}</td>
+                </tr>
+                <tr>
+                    <th>Site</th>
+                    <td>{{ $project->name }} ({{ $project->site_url }})</td>
+                </tr>
+                <tr>
+                    <th>Responsible unit at Cornell</th>
+                    <td>{{ $project->responsible_unit }}</td>
+                </tr>
+                <tr>
+                    <th>Point of contact</th>
+                    <td>{{ $project->contact_name }} ({{ $project->contact_netid }})</td>
+                </tr>
+                <tr>
+                    <th>Audience</th>
+                    <td>{{ $project->audience }}</td>
+                </tr>
+            </table>
+        </div>
     </div>
 
-    @include('livewire.projects.report-intro')
+
+    <p class="italic">
+        Please note: This summary document is not comprehensive of all accessibility issues.
+        It represents the major issues that should be prioritized but there are likely additional
+        items that will need to be addressed as well. Please continue to utilize
+        <a href="https://it.cornell.edu/siteimprove">Cornell’s Siteimprove tool</a>
+        as well as other
+        <a href="https://it.cornell.edu/accessibility/recommended-web-accessibility-testing-plan">manual testing techniques</a>
+        to identify and address WCAG 2 AA compliance issues.
+    </p>
+
+    <h3>What is the purpose of the site?</h3>
+    {!! $project->site_purpose !!}
+
+    <h3>URLs included in review</h3>
+    {!! $project->urls_included !!}
+
+    <h3>URLs excluded from review</h3>
+    {!! $project->urls_excluded !!}
+
+    <h3>Link to review and any supporting documents</h3>
+    <p>
+        <a href="{{ route('project.show', $project->id) }}">{{ $project->name }} Review</a><br>
+        [{{ route('project.show', $project->id) }}]
+    </p>
+
+    <h3>Testing notes and procedure</h3>
+    {!! $project->review_procedure !!}
+
 
     <h2>Overview of findings</h2>
-    <p>...</p>
+    {!! $project->summary !!}
 
     <h2>List of Issues Found</h2>
 
@@ -17,18 +77,20 @@
         @php($scope = $issues[0]->scope)
         <div class="mb-4">
             @if($scope)
-                <h3 class="mb-0">Source: {{ $scope?->title }}</h3>
-                <flux:subheading class="mb-2">(<a href="{{ $scope->url }}">{{ $scope->url }}</a>)</flux:subheading>
+                <h3 class="mb-0">{{ $scope->title }}</h3>
+                <flux:subheading class="mb-2"><a href="{{ $scope->url }}">{{ $scope->url }}</a></flux:subheading>
             @else
                 <h3 class="mb-0">Source: Not Set</h3>
             @endif
             @foreach($issues as $issue)
                 @foreach($issue->items as $item)
-                    <h4 class="text-blue-900 font-semibold mb-0.5">
+                    <h4 class="font-semibold mb-0.5">
                         <x-forms.button
+                            href="{{ route('guidelines.show', $item->guideline) }}"
+                            title="View Guideline {{ $item->guideline->number }}"
+                            data-cds-button-assessment
+                            class="{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}"
                             size="xs"
-                            class="text-black hover:text-white bg-wa-{{ Str::of($item->assessment->value())->lower()->replace('/', '') }} text-sm! h-5 pt-0.5 mr-1"
-                            href="{{ route('guidelines.show', $item->guideline) }}" title="View Guideline {{ $item->guideline->number }}"
                         >{{ $item->guideline->number }}</x-forms.button>
 
                         <span>{{ $item->guideline->name }}</span>
@@ -40,6 +102,15 @@
                         </a>
                     @endif
                     <h5>WCAG 2 Success Criterion: {{ $item->guideline->criterion->getLongName() }}</h5>
+                    <x-forms.field-display label="Assessment" variation="inline" @class(['mb-0!' => $item->impact])>
+                        {{ $item->assessment->description() }}
+                    </x-forms.field-display>
+
+                    @if($item->impact)
+                        <x-forms.field-display label="Impact" variation="inline">
+                            {{ $item->impact->value() }}
+                        </x-forms.field-display>
+                    @endif
 
                     <x-forms.field-display label="Location">
                         {{ $item->issue->target }}
@@ -47,7 +118,7 @@
                     <x-forms.field-display label="Observation">
                         {!! $item->description !!}
                     </x-forms.field-display>
-                    <x-forms.field-display label="Recommendation">
+                    <x-forms.field-display label="Recommendation for remediation">
                         {!! $item->recommendation !!}
                     </x-forms.field-display>
                     <x-forms.field-display label="Testing">

@@ -18,7 +18,7 @@
                         {!! $project->urls_excluded ?? '' !!}
                     </x-forms.field-display>
 
-                    <x-forms.field-display label="Review Procedure">
+                    <x-forms.field-display label="Testing notes and procedure">
                         {!! $project->review_procedure ?? '' !!}
                     </x-forms.field-display>
 
