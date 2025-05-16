@@ -29,8 +29,8 @@ class Project extends Model
         'siteimprove_url',
         'siteimprove_id',
         'status',
+        'completed_at',
         'assignment_id',
-
         'responsible_unit',
         'contact_name',
         'contact_netid',
@@ -44,6 +44,7 @@ class Project extends Model
 
     protected $casts = [
         'status' => ProjectStatus::class,
+        'completed_at' => 'datetime',
     ];
 
     protected $with = [
@@ -201,6 +202,18 @@ class Project extends Model
         return Project::query()
             ->whereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id))
             ->get();
+    }
+
+    public function getReportableIssues(): Collection
+    {
+        return $this->issues()
+            ->with(['scope', 'items'])
+            ->get()
+            ->filter(function ($issue) {
+                $accepted_items = $issue->items
+                    ->filter(fn (Item $item) => $item->isAiAccepted() || ! $item->isAiGenerated());
+                return $accepted_items->isNotEmpty();
+            });
     }
 
     public function updateSiteimprove(): void

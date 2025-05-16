@@ -9,7 +9,7 @@
     $border = 'border: 1px solid #000;';
     $cellHeading = "$heading $backgroundDark $border";
     $wrap = 'word-wrap: normal;';
-    $columns = '13';
+    $columns = '14';
 @endphp
 <table>
     <tr>
@@ -20,12 +20,12 @@
     </tr>
     <tr>
         <td colspan="4" style="font-style: italic">
-            Prepared by: ...
+            Prepared by: {{ $project->reviewer->name }} ({{ $project->reviewer->email }})
         </td>
     </tr>
     <tr>
         <td colspan="4" style="font-style: italic">
-            Date: ...
+            Date review completed: {{ $project->completed_at?->format('F j, Y') }}
         </td>
     </tr>
     <tr></tr>
@@ -52,13 +52,18 @@
         <td style="{{ $cellHeading }}" width="500px">Recommendation</td>
         <td style="{{ $cellHeading }}" width="350px">Testing</td>
         <td style="{{ $cellHeading }}" width="350px">Images</td>
+        <td style="{{ $cellHeading }}" width="100px">Impact</td>
         <td style="{{ $cellHeading }}">CE Issue</td>
     </tr>
     @foreach($issuesByScope as $scope => $issues)
         @php($scope = $issues[0]->scope)
         <tr style="{{ $backgroundLight }}">
             <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">
-                Source: {{ $scope->title }} ({{ $scope->url }})
+                @if($scope)
+                    {{ $scope->title }} ({{ $scope->url }})
+                @else
+                    Source: Not Set
+                @endif
             </td>
         </tr>
         @foreach($issues as $issue)
@@ -104,6 +109,9 @@
                                 {{ $imageName }}
                             @endforeach
                         @endif
+                    </td>
+                    <td>
+                        {{ $item->impact ? $item->impact->value() : ' ' }}
                     </td>
                     <td>
                         {{ $item->ce_issue ? 'X' : ' ' }}
