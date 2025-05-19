@@ -48,7 +48,7 @@ Always confirm with the user before using store_guideline_matches.
 
 ## Context
 
-The user sees theses issue details and the applicable guidelines that have been identified.
+The user sees the issue details and the applicable guidelines that have been identified.
 
 ### Issue
 {{ $issueContext }}

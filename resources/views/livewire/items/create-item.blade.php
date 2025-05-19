@@ -29,5 +29,18 @@
 </div>
 
 <x-slot:sidebarPrimary>
-    <livewire:ai.guideline-help :$issue :use-guidelines="false" />
+    <div x-data="{ showChat: false }">
+        <h2>AI Assistance</h2>
+
+        <div class="mb-4">
+            <x-forms.button x-on:click="showChat = ! showChat" icon="chat-bubble-left-right" x-bind:class="{ 'secondary': showChat }">
+                <span><span x-show="showChat">Hide </span>Chat</span>
+            </x-forms.button>
+        </div>
+
+        <div x-show="showChat" x-cloak>
+            <hr>
+            <livewire:items.item-chat :$issue />
+        </div>
+    </div>
 </x-slot:sidebarPrimary>
