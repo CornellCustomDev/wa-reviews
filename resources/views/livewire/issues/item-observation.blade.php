@@ -1,4 +1,4 @@
-<div class="inline-block">
+<div class="inline-flex flex-nowrap items-center gap-x-0.5">
     <flux:tooltip position="bottom" class="align-middle">
         <x-forms.button
             data-cds-button-assessment
@@ -27,6 +27,12 @@
         </flux:tooltip>
     @endif
 
+    @if($item->impact)
+        <flux:badge data-cds-impact class="{{ Str::of($item->impact->value())->lower() }}" size="sm">
+            {{ $item->impact->value() }}
+        </flux:badge>
+    @endif
+
     @if($item->wasAiGenerated())
         <flux:tooltip toggleable position="right" class="align-middle">
             <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!" />
@@ -35,9 +41,5 @@
                 <blockquote class="mb-0 pl-2">{!! $item->ai_reasoning  !!}</blockquote>
             </flux:tooltip.content>
         </flux:tooltip>
-    @endif
-
-    @if($item->impact)
-        {{ $item->impact->value() }}
     @endif
 </div>
