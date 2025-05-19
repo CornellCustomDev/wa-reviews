@@ -54,6 +54,8 @@
             window.addEventListener('scroll-to-bottom', () => {
                 $nextTick(() => {
                     el.scrollTo({ top: $refs.chatContainer.scrollHeight, behavior: 'smooth' });
+                    // Force a synthetic scroll event to trigger the update function
+                    el.dispatchEvent(new Event('scroll'));
                 });
             });
         })()"
