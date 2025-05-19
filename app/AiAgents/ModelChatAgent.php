@@ -4,6 +4,7 @@
 use App\Enums\ChatProfile;
 use App\Models\Guideline;
 use App\Models\Issue;
+use App\Models\Scope;
 use Illuminate\Support\Collection;
 use LarAgent\Agent;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
@@ -12,10 +13,10 @@ use LarAgent\History\FileChatHistory;
 
 abstract class ModelChatAgent extends Agent
 {
-    protected Guideline|Issue $context;
+    protected Guideline|Issue|Scope $context;
     protected array $toolsCalled = [];
 
-    public function __construct(Guideline|Issue $context, string $key)
+    public function __construct(Guideline|Issue|Scope $context, string $key)
     {
         $this->provider = config('cornell_ai.laragent_profile');
         $this->model = config('cornell_ai.profiles')[ChatProfile::Chat->value]['model'];
@@ -86,7 +87,7 @@ abstract class ModelChatAgent extends Agent
         $this->chatHistory()->removeChatFromMemory($chatKey);
     }
 
-    public function setChatName(ModelChatHistory $chatHistory): void
+    protected function setChatName(ModelChatHistory $chatHistory): void
     {
         $chats = $chatHistory->loadChatsFromMemory();
         $currentName = $chats->get($chatHistory->getIdentifier())->name ?? 'New chat';

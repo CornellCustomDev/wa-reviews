@@ -37,10 +37,6 @@ class FetchIssuePageContentTool extends Tool
             return ['error' => 'issue_not_found'];
         }
 
-        $pageContent = $issue->scope->page_content ?? '';
-
-        return [
-            'html' => $pageContent,
-        ];
+        return FetchScopePageContentTool::call($issue->scope_id);
     }
 }

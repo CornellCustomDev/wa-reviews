@@ -34,7 +34,7 @@
     </div>
 
     <div class="mb-3">
-        {{ $description }}
+        {!! $description !!}
     </div>
 
     <div
@@ -54,6 +54,8 @@
             window.addEventListener('scroll-to-bottom', () => {
                 $nextTick(() => {
                     el.scrollTo({ top: $refs.chatContainer.scrollHeight, behavior: 'smooth' });
+                    // Force a synthetic scroll event to trigger the update function
+                    el.dispatchEvent(new Event('scroll'));
                 });
             });
         })()"
@@ -142,7 +144,7 @@
     <form wire:submit.prevent="sendUserMessage()" class="mt-4">
         <x-forms.textarea
             label="Chat"
-            :placeholder="'Ask AI about this guideline ...'"
+            :placeholder="'Ask AI ...'"
             wire:model="userMessage"
             size="sm"
             toolbar="bold italic | link code ~ undo redo"
