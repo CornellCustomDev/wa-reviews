@@ -34,7 +34,7 @@
     </div>
 
     <div class="mb-3">
-        {{ $description }}
+        {!! $description !!}
     </div>
 
     <div
@@ -142,7 +142,7 @@
     <form wire:submit.prevent="sendUserMessage()" class="mt-4">
         <x-forms.textarea
             label="Chat"
-            :placeholder="'Ask AI about this guideline ...'"
+            :placeholder="'Ask AI ...'"
             wire:model="userMessage"
             size="sm"
             toolbar="bold italic | link code ~ undo redo"

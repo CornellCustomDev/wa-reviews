@@ -2,9 +2,9 @@
 
 namespace App\Livewire\Ai;
 
-use App\AiAgents\ModelChatAgent;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use LarAgent\Agent;
 use LarAgent\Core\Contracts\Message;
 use LarAgent\Core\Contracts\ToolCall;
 use LarAgent\Core\Enums\Role;
@@ -122,7 +122,7 @@ trait LarAgentChat
         $this->dispatch('scroll-to-bottom');
     }
 
-    protected function afterAgentResponse(ModelChatAgent $agent): void
+    protected function afterAgentResponse(Agent $agent): void
     {
         //
     }

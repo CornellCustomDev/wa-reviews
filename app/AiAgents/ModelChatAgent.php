@@ -87,7 +87,7 @@ abstract class ModelChatAgent extends Agent
         $this->chatHistory()->removeChatFromMemory($chatKey);
     }
 
-    public function setChatName(ModelChatHistory $chatHistory): void
+    protected function setChatName(ModelChatHistory $chatHistory): void
     {
         $chats = $chatHistory->loadChatsFromMemory();
         $currentName = $chats->get($chatHistory->getIdentifier())->name ?? 'New chat';

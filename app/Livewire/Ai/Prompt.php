@@ -18,7 +18,7 @@ class Prompt extends Component
     public function mount(): void
     {
         $chatService = app(OpenAIChatService::class);
-        $this->prompt = Chat::getPrompt();
+        $this->prompt = ChatOld::getPrompt();
         $this->messages = $chatService->getMessages();
     }
 
