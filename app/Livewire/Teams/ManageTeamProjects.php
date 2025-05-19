@@ -2,12 +2,17 @@
 
 namespace App\Livewire\Teams;
 
+use App\Models\Team;
 use Livewire\Component;
 
 class ManageTeamProjects extends Component
 {
-    public function render()
+    public Team $team;
+    public $projects = [];
+
+    public function mount(Team $team)
     {
-        return view('livewire.teams.manage-team-projects');
+        $this->team = $team;
+        $this->projects = $team->projects;
     }
 }

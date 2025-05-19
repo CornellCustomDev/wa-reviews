@@ -13,9 +13,9 @@
         <flux:tab.panel name="members">
             <livewire:teams.manage-team-users :team="$team" />
         </flux:tab.panel>
-{{--        <flux:tab.panel name="projects">--}}
-{{--            <livewire:teams.manage-team-projects :team="$team" />--}}
-{{--        </flux:tab.panel>--}}
+        <flux:tab.panel name="projects">
+            <livewire:teams.manage-team-projects :team="$team" />
+        </flux:tab.panel>
         @can('manage-project', $team)
             <flux:tab.panel name="activity">
                 <livewire:teams.activity-log :team="$team" />
