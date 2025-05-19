@@ -6,7 +6,7 @@ use App\Events\ProjectChanged;
 use App\Events\TeamChanged;
 use App\Models\Project;
 use App\Models\Team;
-use App\Services\SiteImprove\SiteimproveService;
+use Livewire\Attributes\Url;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -15,6 +15,7 @@ class ProjectForm extends Form
     public ?Project $project;
 
     #[Validate('nullable')]
+    #[Url(as: 'team', except: '')]
     public $team_id = '';
     #[Validate('required|string|max:255', as: 'Project Name')]
     public string $name = '';
