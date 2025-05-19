@@ -4,6 +4,7 @@ namespace App\AiAgents;
 
 use App\Models\Guideline;
 use App\Models\Issue;
+use App\Models\Scope;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Collection;
@@ -13,13 +14,13 @@ use LarAgent\Messages\SystemMessage;
 
 class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
 {
-    protected Issue|Guideline $context;
+    protected Guideline|Issue|Scope $context;
 
     protected bool $saveChatKeys = false;
     protected User $user;
     private ModelChatAgent $agent;
 
-    public function __construct(ModelChatAgent $agent, string $name, Issue|Guideline $context, User $user)
+    public function __construct(ModelChatAgent $agent, string $name, Guideline|Issue|Scope $context, User $user)
     {
         $this->agent = $agent;
         $this->context = $context;
