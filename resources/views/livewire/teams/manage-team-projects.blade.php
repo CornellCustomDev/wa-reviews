@@ -41,4 +41,8 @@
         @endforeach
         </tbody>
     </table>
+
+    @can('create', \App\Models\Project::class)
+        <x-forms.button.add :href="route('project.create', ['team' => $team->id])">Create New Project</x-forms.button.add>
+    @endcan
 </div>

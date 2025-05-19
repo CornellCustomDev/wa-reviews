@@ -20,6 +20,11 @@ class CreateProject extends Component
                 'value' => $team->id,
                 'option' => $team->name,
             ]]);
+
+        // If the team_id is not in teams, set it to empty
+        if (!$this->teams->contains('value', $this->form->team_id)) {
+            $this->form->team_id = '';
+        }
     }
 
     public function save()
