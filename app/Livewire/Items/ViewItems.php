@@ -37,7 +37,7 @@ class ViewItems extends Component
 
     public function acceptAI(Item $item): void
     {
-        $this->authorize('update', $item);
+        $this->authorize('update', $item->issue);
         $item->markAiAccepted();
 
         $this->dispatch('items-updated');
@@ -45,7 +45,7 @@ class ViewItems extends Component
 
     public function rejectAI(Item $item): void
     {
-        $this->authorize('update', $item);
+        $this->authorize('update', $item->issue);
         $item->markAiRejected();
 
         $item->delete();
