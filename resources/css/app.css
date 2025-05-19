@@ -60,6 +60,12 @@
     --color-wa-warn: #f6b26b;
     --color-wa-fail: #ea9999;
     --color-wa-na: #9fc5e8;
+
+    /* impact colors */
+    --color-impact-critical: #e6cff2;
+    --color-impact-serious: #ffcfc9;
+    --color-impact-moderate: #ffe5a0;
+    --color-impact-low: #d5edbc;
 }
 
 @layer utilities {
@@ -86,11 +92,11 @@
 }
 
 @utility focus-ring {
-    @apply outline-0 focus:ring-[3px] ring-offset-2 ring-[#2BA3E3]/40;
+    @apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;
 }
 
 [data-flux-button] {
-    @apply cursor-pointer focus-ring;
+    @apply cursor-pointer;
 
     &.primary {
         @apply rounded-none;
@@ -115,6 +121,21 @@
         &.na {
             @apply bg-wa-na;
         }
+    }
+}
+
+[data-cds-impact] {
+    &.critical {
+        @apply bg-impact-critical;
+    }
+    &.serious {
+        @apply bg-impact-serious;
+    }
+    &.moderate {
+        @apply bg-impact-moderate;
+    }
+    &.low {
+        @apply bg-impact-low;
     }
 }
 
