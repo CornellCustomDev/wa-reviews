@@ -109,7 +109,7 @@
     }
 
     &[data-cds-button-assessment] {
-        @apply text-black hover:text-white;
+        @apply text-black;
         &.pass {
             @apply bg-wa-pass;
         }
