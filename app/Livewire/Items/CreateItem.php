@@ -35,12 +35,17 @@ class CreateItem extends Component
 
     protected function getBreadcrumbs(): array
     {
-        return [
-            'Projects' => route('projects'),
-            $this->issue->project->name => route('project.show', $this->issue->project),
-            $this->issue->scope->title => route('scope.show', $this->issue->scope),
-            'Issue' => route('issue.show', $this->issue),
-            'Add Observation' => 'active'
-        ];
+        $breadcrumbs = [];
+        $breadcrumbs['Projects'] = route('projects');
+        $breadcrumbs[$this->issue->project->name] = route('project.show', $this->issue->project);
+
+        if ($this->issue->scope) {
+            $breadcrumbs[$this->issue->scope->title] = route('scope.show', $this->issue->scope);
+        }
+
+        $breadcrumbs['Issue'] = route('issue.show', $this->issue);
+        $breadcrumbs['Add Observation'] = 'active';
+
+        return $breadcrumbs;
     }
 }
