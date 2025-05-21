@@ -34,4 +34,22 @@ class CreateScope extends Component
 
         return redirect()->route('scope.show', $scope);
     }
+
+    public function render()
+    {
+        return view('livewire.scopes.create-scope')
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->project->name => route('project.show', $this->project),
+            'Add Scope' => 'active'
+        ];
+    }
 }

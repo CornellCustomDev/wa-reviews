@@ -6,10 +6,14 @@
     placeholder="Select a guideline..."
     wire:model="form.guideline_id"
     required
-/>
+>
+    <x-slot name="description">
+        The success criterion that this issue is assessing.
+    </x-slot>
+</x-forms.select>
 
 <div x-data="{ guideline_id: $wire.entangle('form.guideline_id') }">
-    <flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required">
+    <flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required" description="Select the assessment for the success criterion.">
         @foreach ($form->assessmentOptions as $option)
             @switch(Str::of($option['value'])->lower()->replace('/', ''))
                 @case('pass')
@@ -29,9 +33,17 @@
 </flux:radio.group>
 </div>
 
-<x-forms.textarea label="Observations" wire:model="form.description" size="sm" required />
+<x-forms.textarea label="Observations" wire:model="form.description" size="sm" required>
+    <x-slot name="description">
+        Describe why there is an issue against this success criterion.
+    </x-slot>
+</x-forms.textarea>
 
-<x-forms.textarea label="Recommendations" wire:model="form.recommendation" size="lg" />
+<x-forms.textarea label="Recommendations" wire:model="form.recommendation" size="lg">
+    <x-slot name="description">
+        Describe what the expected behavior should be. In other words, describe how the element could have been implemented such that you wouldn't be flagging it for an accessibility failure.
+    </x-slot>
+</x-forms.textarea>
 
 <x-forms.select
     label="Testing method"
@@ -39,6 +51,7 @@
     :options="$form->testingMethodOptions"
     placeholder="Select a testing method..."
     wire:model="form.testing"
+    description="Describe how you discovered the issue."
 />
 
 <x-forms.checkbox

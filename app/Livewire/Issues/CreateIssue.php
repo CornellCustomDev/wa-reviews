@@ -21,4 +21,23 @@ class CreateIssue extends Component
 
         return redirect()->route('issue.show', $issue);
     }
+
+    public function render()
+    {
+        return view('livewire.issues.create-issue')
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->scope->project->name => route('project.show', $this->scope->project),
+            $this->scope->title => route('scope.show', $this->scope),
+            'Add Issue' => 'active'
+        ];
+    }
 }

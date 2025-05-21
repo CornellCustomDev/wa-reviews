@@ -20,4 +20,22 @@ class CreateProjectIssue extends Component
 
         return redirect()->route('issue.show', $issue);
     }
+
+    public function render()
+    {
+        return view('livewire.issues.create-project-issue')
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->project->name => route('project.show', $this->project),
+            'Add Issue' => 'active'
+        ];
+    }
 }

@@ -23,4 +23,24 @@ class CreateItem extends Component
 
         return redirect()->route('issue.show', $this->issue);
     }
+
+    public function render()
+    {
+        return view('livewire.items.create-item')
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->issue->project->name => route('project.show', $this->issue->project),
+            $this->issue->scope->title => route('scope.show', $this->issue->scope),
+            'Issue' => route('issue.show', $this->issue),
+            'Add Observation' => 'active'
+        ];
+    }
 }

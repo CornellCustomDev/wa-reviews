@@ -37,4 +37,21 @@ class CreateProject extends Component
 
         return redirect()->route('project.show', $project);
     }
+
+    public function render()
+    {
+        return view('livewire.projects.create-project')
+            ->layout('components.layouts.app', [
+                'sidebar' => true,
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            'Add Project' => 'active'
+        ];
+    }
 }

@@ -14,14 +14,27 @@
     required
 />
 <x-forms.textarea label="Description" wire:model="form.description" size="sm"/>
-<x-forms.input label="Siteimprove Report URL" wire:model="form.siteimprove_url" />
+
+<h3>Site Improve</h3>
+
+<x-forms.input label="Siteimprove Report URL" wire:model="form.siteimprove_url">
+    <x-slot name="description">
+        If there is a Siteimprove review, include the Accessibility report link.
+    </x-slot>
+</x-forms.input>
 <x-forms.input
     label="Siteimprove ID" wire:model="form.siteimprove_id"
     placeholder="The Siteimprove ID will be added automatically when the project is created."
     disabled
 />
 
-<x-forms.input label="Responsible unit at Cornell" wire:model="form.responsible_unit" />
+<h3>Reporting</h3>
+
+<x-forms.input label="Responsible unit at Cornell" wire:model="form.responsible_unit">
+    <x-slot:description>
+        Which Cornell unit is responsible for maintaining this site?
+    </x-slot:description>
+</x-forms.input>
 
 <x-forms.fieldset legend="Point of Contact">
     <x-forms.input label="Name" wire:model="form.contact_name" />
