@@ -91,13 +91,18 @@
     background-image: url('/cwd-framework/images/layout/checked.svg');
 }
 
+@utility default-focus-ring {
+    outline: -webkit-focus-ring-color auto 1px;
+}
+
 @utility focus-ring {
-    @apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;
+    /*@apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;*/
+    @apply focus:default-focus-ring;
 }
 
 [data-flux-button] {
     @apply cursor-pointer;
-    @apply focus-ring focus:ring-offset-0;
+    @apply focus-ring;
 
     &.primary {
         @apply rounded-none;
