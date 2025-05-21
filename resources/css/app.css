@@ -342,15 +342,22 @@
 
 [data-flux-tab-group] {
     [data-flux-tabs] {
+        @apply gap-2 h-9 border-none;
+
         [data-focus] {
             @apply focus-ring;
         }
         [data-flux-tab] {
             @apply cursor-pointer;
+            @apply mb-1 px-5 border-none rounded-xs;
+            @apply text-black bg-cds-gray-100;
+            &[data-active] {
+                @apply text-white bg-cds-blue-600;
+            }
         }
     }
     [data-flux-tab-panel] {
-        @apply pt-6;
+        @apply pt-3;
     }
 }
 
