@@ -1,4 +1,5 @@
 @props([
     'label',
+    'description' => null,
 ])
-<flux:checkbox :$label :$attributes />
+<flux:checkbox :$label :$description :$attributes />

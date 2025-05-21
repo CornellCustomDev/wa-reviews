@@ -6,3 +6,27 @@
         <x-forms.button.submit-group submitName="Create Project" />
     </form>
 </div>
+
+<x-slot:sidebarPrimary>
+    <h3>Instructions</h3>
+    <p>
+        The project name and URL are required, but additional details can be added later.
+    </p>
+
+    <h4>Siteimprove report integration</h4>
+    <p>
+        To automatically link Siteimprove issues and page reports, the Site URL must be identical
+        to the URL used in Siteimprove. This should be completed before adding Scope items.
+    </p>
+    <p>
+        For the Siteimprove Report URL, the Accessibility report link looks similar to this:<br>
+        <span class="text-xs!">https://my2.siteimprove.com/Accessibility/848090/NextGen/Overview</span><br>
+        Note that you do not need to include the query information after <span class="text-xs!">"/Overview"</span>.
+    </p>
+
+    <h4>Report fields</h4>
+    <p>
+        Report fields can be updated at any point.
+    </p>
+
+</x-slot:sidebarPrimary>
