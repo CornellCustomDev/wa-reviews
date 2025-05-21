@@ -97,6 +97,7 @@
 
 [data-flux-button] {
     @apply cursor-pointer;
+    @apply focus-ring focus:ring-offset-0;
 
     &.primary {
         @apply rounded-none;
