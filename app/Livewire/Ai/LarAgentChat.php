@@ -53,6 +53,7 @@ trait LarAgentChat
         $this->feedback = '';
         $this->showFeedback = false;
         $this->dispatch('scroll-to-bottom');
+        $this->dispatch('focus-chat');
     }
 
     public function selectChat($chatKey): void
@@ -61,6 +62,7 @@ trait LarAgentChat
         $this->messages = collect();
         unset($this->chatMessages);
         $this->dispatch('scroll-to-bottom');
+        $this->dispatch('focus-chat');
     }
 
     public function deleteChat(): void
@@ -119,7 +121,7 @@ trait LarAgentChat
 
         $this->streaming = false;
         $this->needsRefresh = true;
-        $this->dispatch('scroll-to-bottom');
+        $this->dispatch('scroll-to-response');
     }
 
     protected function afterAgentResponse(Agent $agent): void
