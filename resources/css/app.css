@@ -97,7 +97,7 @@
 
 @utility focus-ring {
     /*@apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;*/
-    @apply focus:default-focus-ring;
+    @apply focus:default-focus-ring focus:shadow-none;
 }
 
 [data-flux-button] {
@@ -236,6 +236,10 @@
     /* Textarea editor */
     [data-flux-editor] {
         @apply border-cds-gray-300 rounded-none;
+        button {
+            @apply cursor-pointer focus-ring;
+        }
+
         [data-slot="content"] {
             @apply font-systemUi;
         }
@@ -255,8 +259,7 @@
             }
         }
         .ProseMirror-focused {
-            /*@apply focus-ring;*/
-            @apply inset-ring-[3px] inset-ring-[#2BA3E3]/40;
+            @apply focus:default-focus-ring;
         }
     }
 
