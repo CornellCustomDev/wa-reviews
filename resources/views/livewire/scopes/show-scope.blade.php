@@ -16,10 +16,10 @@
 {{--            @endcan--}}
         </flux:tabs>
 
-        <flux:tab.panel name="issues" class="pt-6!">
+        <flux:tab.panel name="issues">
             <livewire:issues.view-issues :$scope />
         </flux:tab.panel>
-        <flux:tab.panel name="siteimprove" class="pt-6!">
+        <flux:tab.panel name="siteimprove">
             <livewire:scopes.siteimprove-issues :$scope />
         </flux:tab.panel>
 {{--        @can('update', $scope)--}}
