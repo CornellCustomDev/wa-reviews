@@ -12,7 +12,6 @@ use Illuminate\Routing\Exceptions\StreamedResponseException;
 use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
-use ReflectionFunction;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedJsonResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -193,16 +192,6 @@ class ResponseFactory implements FactoryContract
      */
     public function stream($callback, $status = 200, array $headers = [])
     {
-        if ((new ReflectionFunction($callback))->isGenerator()) {
-            return new StreamedResponse(function () use ($callback) {
-                foreach ($callback() as $chunk) {
-                    echo $chunk;
-                    ob_flush();
-                    flush();
-                }
-            }, $status, array_merge($headers, ['X-Accel-Buffering' => 'no']));
-        }
-
         return new StreamedResponse($callback, $status, $headers);
     }
 

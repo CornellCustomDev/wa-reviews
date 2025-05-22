@@ -2441,7 +2441,6 @@ class ComposerStaticInitf27103d02ab1422fd36c6caeb7562bcd
         'Illuminate\\Container\\Attributes\\Authenticated' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/Authenticated.php',
         'Illuminate\\Container\\Attributes\\Cache' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/Cache.php',
         'Illuminate\\Container\\Attributes\\Config' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/Config.php',
-        'Illuminate\\Container\\Attributes\\Context' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/Context.php',
         'Illuminate\\Container\\Attributes\\CurrentUser' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/CurrentUser.php',
         'Illuminate\\Container\\Attributes\\DB' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/DB.php',
         'Illuminate\\Container\\Attributes\\Database' => __DIR__ . '/..' . '/laravel/framework/src/Illuminate/Container/Attributes/Database.php',

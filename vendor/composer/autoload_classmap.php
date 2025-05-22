@@ -1755,7 +1755,6 @@ return array(
     'Illuminate\\Container\\Attributes\\Authenticated' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/Authenticated.php',
     'Illuminate\\Container\\Attributes\\Cache' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/Cache.php',
     'Illuminate\\Container\\Attributes\\Config' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/Config.php',
-    'Illuminate\\Container\\Attributes\\Context' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/Context.php',
     'Illuminate\\Container\\Attributes\\CurrentUser' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/CurrentUser.php',
     'Illuminate\\Container\\Attributes\\DB' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/DB.php',
     'Illuminate\\Container\\Attributes\\Database' => $vendorDir . '/laravel/framework/src/Illuminate/Container/Attributes/Database.php',

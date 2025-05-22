@@ -13,7 +13,7 @@
         "php": "^8.3",
         "ext-dom": "*",
         "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
-        "laravel/framework": "^12.15",
+        "laravel/framework": "v12.14.1",
         "laravel/telescope": "^5.7",
         "laravel/tinker": "^2.10",
         "livewire/flux": "^2.1",
