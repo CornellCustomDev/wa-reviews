@@ -1,10 +1,18 @@
 @props([
-    'name' => $attributes->whereStartsWith('wire:model')->first(),
     'toolbar' => null,
     'invalid' => null,
+    'name' => null,
 ])
 
 @php
+// We only want to show the name attribute on the checkbox if it has been set
+// manually, but not if it has been set from the wire:model attribute...
+$showName = isset($name);
+
+if (! isset($name)) {
+    $name = $attributes->whereStartsWith('wire:model')->first();
+}
+
 $invalid ??= ($name && $errors->has($name));
 
 $classes = Flux::classes()
@@ -19,7 +27,7 @@ $classes = Flux::classes()
 @endphp
 
 <flux:with-field :$attributes>
-    <ui-editor {{ $attributes->class($classes) }} aria-label="{{ __('Rich text editor') }}" data-flux-control data-flux-editor>
+    <ui-editor {{ $attributes->class($classes) }} @if($showName) name="{{ $name }}" @endif aria-label="{{ __('Rich text editor') }}" data-flux-control data-flux-editor>
         <?php if ($slot->isEmpty()): ?>
             <flux:editor.toolbar :items="$toolbar" />
 

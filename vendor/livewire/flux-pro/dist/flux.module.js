@@ -1786,7 +1786,7 @@ function lockScroll(allowScroll = false) {
       lockCount++;
       if (lockCount > 1) return;
       setLockStyles(document.documentElement, {
-        paddingRight: `calc(${window.innerWidth - document.documentElement.clientWidth}px + ${document.documentElement.style.paddingRight})`,
+        paddingRight: `calc(${window.innerWidth - document.documentElement.clientWidth}px + ${window.getComputedStyle(document.documentElement).paddingRight})`,
         overflow: "hidden"
       });
     },
@@ -1892,6 +1892,12 @@ function hydrateTemplate(template, slotsAndAttributes = { slots: {}, attrs: {} }
 }
 function isRTL() {
   return document.documentElement.dir === "rtl";
+}
+function isSafari() {
+  return /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && !navigator.userAgent.includes("CriOS") && !navigator.userAgent.includes("FxiOS");
+}
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
 
 // js/element.js
@@ -2051,6 +2057,176 @@ var Controllable = class extends Mixin {
     }));
   }
 };
+
+// js/mixins/dialogable.js
+var lastMouseDownEvent = null;
+document.addEventListener("mousedown", (event) => lastMouseDownEvent = event);
+var Dialogable = class extends Mixin {
+  boot({ options }) {
+    options({
+      clickOutside: true,
+      triggers: []
+    });
+    this.onChanges = [];
+    this.state = false;
+    this.stopDialogFromFocusingTheFirstElement();
+    let triggers = this.options().triggers;
+    let observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName !== "open") return;
+        this.el.hasAttribute("open") ? this.state = true : this.state = false;
+      });
+      this.onChanges.forEach((i) => i());
+    });
+    observer.observe(this.el, { attributeFilter: ["open"] });
+    if (this.options().clickOutside) {
+      this.el.addEventListener("click", (e) => {
+        if (e.target !== this.el) {
+          lastMouseDownEvent = null;
+          return;
+        }
+        if (lastMouseDownEvent && clickHappenedOutside(this.el, lastMouseDownEvent) && clickHappenedOutside(this.el, e)) {
+          this.cancel();
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        lastMouseDownEvent = null;
+      });
+    }
+    if (this.el.hasAttribute("open")) {
+      this.state = true;
+      this.hide();
+      this.show();
+    }
+  }
+  onChange(callback) {
+    this.onChanges.push(callback);
+  }
+  show() {
+    this.el.showModal();
+  }
+  hide() {
+    this.el.close();
+  }
+  toggle() {
+    this.state ? this.hide() : this.show();
+  }
+  cancel() {
+    let event = new Event("cancel", { bubbles: false, cancelable: true });
+    this.el.dispatchEvent(event);
+    if (!event.defaultPrevented) {
+      this.hide();
+    }
+  }
+  getState() {
+    return this.state;
+  }
+  setState(value2) {
+    value2 ? this.show() : this.hide();
+  }
+  // By default, browsers focus the first focusable element inside a dialog when it is opened. This is bad for screen readers because
+  // the focus could potentially be at the end of the dialog skipping all of the content. This also causes issues for iOS devices
+  // as when inputs are focused and the keyboard is shown, hiding half of the dialog content...
+  stopDialogFromFocusingTheFirstElement() {
+    let placeholder = document.createElement("div");
+    placeholder.setAttribute("data-flux-focus-placeholder", "");
+    placeholder.setAttribute("data-appended", "");
+    placeholder.setAttribute("tabindex", "0");
+    this.el.prepend(placeholder);
+    this.onChange(() => {
+      setAttribute2(placeholder, "style", this.state ? "display: none" : "display: block");
+      if (this.state && isSafari() && !this.el.hasAttribute("autofocus") && this.el.querySelectorAll("[autofocus]").length === 0) {
+        setTimeout(() => {
+          this.el.setAttribute("tabindex", "-1");
+          this.el.focus();
+          this.el.blur();
+        });
+      }
+    });
+  }
+};
+function clickHappenedOutside(el, event) {
+  let rect = el.getBoundingClientRect();
+  let x = event.clientX;
+  let y = event.clientY;
+  let isInside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+  return !isInside;
+}
+
+// js/modal.js
+var UIModal = class extends UIElement {
+  boot() {
+    this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
+    this._controllable = new Controllable(this, { disabled: this.hasAttribute("disabled") });
+    let button = this.button();
+    let dialog = this.dialog();
+    if (!dialog) return;
+    dialog._dialogable = new Dialogable(dialog, {
+      clickOutside: !this.hasAttribute("disable-click-outside")
+    });
+    this._controllable.initial((initial) => initial && dialog._dialogable.show());
+    this._controllable.getter(() => dialog._dialogable.getState());
+    let detangled = detangle();
+    this._controllable.setter(detangled((value2) => {
+      dialog._dialogable.setState(value2);
+    }));
+    dialog._dialogable.onChange(detangled(() => {
+      this._controllable.dispatch();
+    }));
+    let refresh = () => {
+      if (dialog._dialogable.getState()) {
+        setAttribute2(this, "data-open", "");
+        button?.setAttribute("data-open", "");
+        setAttribute2(dialog, "data-open", "");
+      } else {
+        removeAttribute(this, "data-open");
+        button?.removeAttribute("data-open");
+        removeAttribute(dialog, "data-open");
+      }
+    };
+    dialog._dialogable.onChange(() => refresh());
+    refresh();
+    let { lock, unlock } = lockScroll();
+    dialog._dialogable.onChange(() => {
+      dialog._dialogable.getState() ? lock() : unlock();
+    });
+    button && on(button, "click", (e) => {
+      dialog._dialogable.show();
+    });
+  }
+  unmount() {
+    let { unlock } = lockScroll();
+    if (this.dialog()._dialogable.getState()) {
+      unlock();
+    }
+  }
+  button() {
+    let button = this.querySelector("button");
+    let dialog = this.dialog();
+    if (dialog?.contains(button)) return;
+    return button;
+  }
+  dialog() {
+    return this.querySelector("dialog");
+  }
+  showModal() {
+    let dialog = this.dialog();
+    if (!dialog) return;
+    dialog.showModal();
+  }
+};
+var UIClose = class extends UIElement {
+  mount() {
+    let button = this.querySelector("button");
+    on(button, "click", () => {
+      let dialogable = closest(this, (el) => !!el._dialogable)?._dialogable;
+      dialogable?.hide();
+    });
+  }
+};
+inject(({ css }) => css`dialog, ::backdrop { margin: auto; }`);
+element("modal", UIModal);
+element("close", UIClose);
 
 // js/mixins/disclosable.js
 var Disclosable = class extends Mixin {
@@ -2445,6 +2621,9 @@ var Selectable = class extends Mixin {
 // js/mixins/disableable.js
 var Disableable = class extends Mixin {
   boot({ options }) {
+    options({
+      disableWithParent: true
+    });
     this.onChanges = [];
     Object.defineProperty(this.el, "disabled", {
       get: () => {
@@ -2460,7 +2639,7 @@ var Disableable = class extends Mixin {
     });
     if (this.el.hasAttribute("disabled")) {
       this.el.disabled = true;
-    } else if (this.el.closest("[disabled]")) {
+    } else if (this.options().disableWithParent && this.el.closest("[disabled]")) {
       this.el.disabled = true;
     }
     let observer = new MutationObserver((mutations) => {
@@ -2492,6 +2671,81 @@ var Disableable = class extends Mixin {
   }
 };
 
+// js/mixins/submittable.js
+var Submittable = class extends Mixin {
+  boot({ options }) {
+    options({
+      name: void 0,
+      value: void 0,
+      includeWhenEmpty: true,
+      shouldUpdateValue: true
+    });
+    this.name = this.options().name;
+    this.value = this.options().value === void 0 ? this.el.value : this.options().value;
+    this.state = false;
+    this.observer = new MutationObserver(() => {
+      this.renderHiddenInputs();
+    });
+    this.observer.observe(this.el, { childList: true });
+  }
+  mount() {
+    this.renderHiddenInputs();
+  }
+  update(value2) {
+    if (this.options().shouldUpdateValue) {
+      this.value = value2;
+    } else {
+      this.state = !!value2;
+    }
+    this.renderHiddenInputs();
+  }
+  valueIsEmpty() {
+    return this.value === void 0 || this.value === null || this.value === "";
+  }
+  renderHiddenInputs() {
+    this.observer.disconnect();
+    if (!this.name) return;
+    let children = this.el.children;
+    let oldInputs = [];
+    for (let i = 0; i < children.length; i++) {
+      let child = children[i];
+      if (child.hasAttribute("data-flux-hidden")) oldInputs.push(child);
+    }
+    oldInputs.forEach((i) => i.remove());
+    let hiddenInputs;
+    if (this.options().shouldUpdateValue) {
+      hiddenInputs = !this.valueIsEmpty() || this.options().includeWhenEmpty ? this.generateInputs(this.name, this.value) : [];
+    } else {
+      hiddenInputs = this.state || this.options().includeWhenEmpty ? this.generateInputs(this.name, this.value) : [];
+    }
+    hiddenInputs.forEach((hiddenInput) => {
+      this.el.append(hiddenInput);
+    });
+    this.observer.observe(this.el, { childList: true });
+  }
+  generateInputs(name, value2, carry = []) {
+    if (this.isObjectOrArray(value2)) {
+      for (let key in value2) {
+        carry = carry.concat(
+          this.generateInputs(`${name}[${key}]`, value2[key])
+        );
+      }
+    } else {
+      let el = document.createElement("input");
+      el.setAttribute("type", "hidden");
+      el.setAttribute("name", name);
+      el.setAttribute("value", value2 === null ? "" : "" + value2);
+      el.setAttribute("data-flux-hidden", "");
+      el.setAttribute("data-appended", "");
+      return [el];
+    }
+    return carry;
+  }
+  isObjectOrArray(value2) {
+    return typeof value2 === "object" && value2 !== null;
+  }
+};
+
 // js/checkbox.js
 var UICheckboxGroup = class _UICheckboxGroup extends UIControl {
   boot() {
@@ -2516,6 +2770,11 @@ var UICheckboxGroup = class _UICheckboxGroup extends UIControl {
       el.addEventListener("input", (e) => e.stopPropagation());
       el.addEventListener("change", (e) => e.stopPropagation());
     });
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this.getAttribute("value"),
+      includeWhenEmpty: false
+    });
     this._controllable.initial((initial) => initial && this._selectable.setState(initial));
     this._controllable.getter(() => this._selectable.getState());
     this._detangled = detangle();
@@ -2525,7 +2784,13 @@ var UICheckboxGroup = class _UICheckboxGroup extends UIControl {
     this._selectable.onChange(this._detangled(() => {
       this._controllable.dispatch();
     }));
+    this._selectable.onInitAndChange(() => {
+      this._submittable.update(this._selectable.getState());
+    });
     setAttribute2(this, "role", "group");
+    queueMicrotask(() => {
+      this._submittable.update(this._selectable.getState());
+    });
   }
   initCheckAll(checkAll) {
     let detangled = detangle();
@@ -2594,8 +2859,18 @@ var UICheckbox = class extends UIControl {
         label: this.hasAttribute("label") ? this.getAttribute("label") : null,
         selectedInitially: this.hasAttribute("checked")
       });
+      this._submittable = new Submittable(this, {
+        name: this.getAttribute("name"),
+        value: this.getAttribute("value") ?? "on",
+        // Default value for checkboxes...
+        includeWhenEmpty: false,
+        shouldUpdateValue: false
+      });
       this._selectable.onChange(() => {
         if (this.indeterminate) this.indeterminate = false;
+      });
+      this._selectable.onInitAndChange(() => {
+        this._submittable.update(this._selectable.isSelected());
       });
       this.value = this._selectable.getValue();
     }
@@ -4168,17 +4443,19 @@ var Anchorable = class extends Mixin {
       gap: "5",
       offset: "0",
       matchWidth: false,
-      crossAxis: false
+      crossAxis: false,
+      scrollY: true
     });
     if (this.options().reference === null) return;
     if (this.options().position === null) return;
-    let [setPosition, cleanupDurablePositioning] = createDurablePositionSetter(this.el);
+    let [setPosition, cleanupDurablePositioning] = createDurablePositionSetter(this.el, { scrollY: this.options().scrollY });
     let reposition = anchor(this.el, this.options().reference, setPosition, {
       position: this.options().position,
       gap: this.options().gap,
       offset: this.options().offset,
       matchWidth: this.options().matchWidth,
-      crossAxis: this.options().crossAxis
+      crossAxis: this.options().crossAxis,
+      scrollY: this.options().scrollY
     });
     let cleanupAutoUpdate = () => {
     };
@@ -4195,7 +4472,9 @@ var Anchorable = class extends Mixin {
     };
   }
 };
-function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis }) {
+function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis, scrollY }) {
+  let elMaxHeight = window.getComputedStyle(target).maxHeight;
+  elMaxHeight = elMaxHeight === "none" ? null : parseFloat(elMaxHeight);
   return (event, forceX, forceY) => {
     computePosition2(invoke, target, {
       placement: compilePlacement(position),
@@ -4216,7 +4495,11 @@ function anchor(target, invoke, setPosition, { position, offset: offsetValue, ga
                 width: `${rects.reference.width}px`
               });
             }
-            elements.floating.style.maxHeight = availableHeight >= elements.floating.scrollHeight ? "" : `${availableHeight}px`;
+            let maxHeight = elMaxHeight;
+            if (maxHeight === null) {
+              maxHeight = scrollY ? elements.floating.scrollHeight : elements.floating.offsetHeight;
+            }
+            elements.floating.style.maxHeight = availableHeight > maxHeight ? "" : `${availableHeight}px`;
           }
         })
       ]
@@ -4237,11 +4520,11 @@ function compilePlacement(anchor2) {
   }
   return placement.join("-");
 }
-function createDurablePositionSetter(target) {
+function createDurablePositionSetter(target, { scrollY = true }) {
   let position = (x, y) => {
     Object.assign(target.style, {
       position: "absolute",
-      overflowY: "auto",
+      overflowY: scrollY ? "auto" : "hidden",
       left: `${x}px`,
       top: `${y}px`,
       // This is required to reset the `popover` default styles, otherwise the dropdown appears in the middle of the screen...
@@ -5438,6 +5721,7 @@ var DateMetadata = class {
 var UICalendar = class extends UIElement {
   boot() {
     let elDrivingConfig = this.closest("ui-date-picker") || this;
+    this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
     let [months, onMonthsChange] = responsiveAttributeValue(elDrivingConfig, "months", 1);
     this.observable = new Observable();
     let locale = elDrivingConfig.hasAttribute("locale") ? elDrivingConfig.getAttribute("locale") : getLocale();
@@ -5470,6 +5754,10 @@ var UICalendar = class extends UIElement {
       });
     }
     this._controllable = new Controllable(this, { bubbles: true });
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this.selectable.getValue()
+    });
     let detangled = detangle();
     this._controllable.initial((initial) => initial && this.selectable.setValue(initial));
     this._controllable.getter(() => this.selectable.getValue());
@@ -5479,6 +5767,7 @@ var UICalendar = class extends UIElement {
     this.observable.subscribe(ObservableTrigger.SELECTION, detangled(() => {
       this.dispatchEvent(new Event("select", { bubbles: false, cancelable: true }));
       this._controllable.dispatch();
+      this._submittable.update(this.selectable.getValue());
     }));
     this.observable.subscribe(ObservableTrigger.SELECTION, () => {
       this.anchorSelection();
@@ -6039,80 +6328,6 @@ function preventInputEventsFromBubblingToSelectRoot(input) {
   on(input, "input", (e) => e.stopPropagation());
 }
 
-// js/mixins/dialogable.js
-var lastMouseDownEvent = null;
-document.addEventListener("mousedown", (event) => lastMouseDownEvent = event);
-var Dialogable = class extends Mixin {
-  boot({ options }) {
-    options({
-      clickOutside: true,
-      triggers: []
-    });
-    this.onChanges = [];
-    this.state = false;
-    let triggers = this.options().triggers;
-    let observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName !== "open") return;
-        this.el.hasAttribute("open") ? this.state = true : this.state = false;
-      });
-      this.onChanges.forEach((i) => i());
-    });
-    observer.observe(this.el, { attributeFilter: ["open"] });
-    if (this.options().clickOutside) {
-      this.el.addEventListener("click", (e) => {
-        if (e.target !== this.el) {
-          lastMouseDownEvent = null;
-          return;
-        }
-        if (lastMouseDownEvent && clickHappenedOutside(this.el, lastMouseDownEvent) && clickHappenedOutside(this.el, e)) {
-          this.cancel();
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        lastMouseDownEvent = null;
-      });
-    }
-    if (this.el.hasAttribute("open")) {
-      this.state = true;
-      this.hide();
-      this.show();
-    }
-  }
-  onChange(callback) {
-    this.onChanges.push(callback);
-  }
-  show() {
-    this.el.showModal();
-  }
-  hide() {
-    this.el.close();
-  }
-  toggle() {
-    this.state ? this.hide() : this.show();
-  }
-  cancel() {
-    let event = new Event("cancel", { bubbles: false, cancelable: true });
-    this.el.dispatchEvent(event);
-    if (!event.defaultPrevented) {
-      this.hide();
-    }
-  }
-  getState() {
-    return this.state;
-  }
-  setState(value2) {
-    value2 ? this.show() : this.hide();
-  }
-};
-function clickHappenedOutside(el, event) {
-  let rect = el.getBoundingClientRect();
-  let x = event.clientX;
-  let y = event.clientY;
-  let isInside = x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-  return !isInside;
-}
-
 // js/calendar/picker.js
 var UIDatePicker = class extends UIControl {
   bootWithCalendar(calendar) {
@@ -6153,6 +6368,10 @@ var UIDatePicker = class extends UIControl {
       gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
       offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
     });
+    if (isIOS()) {
+      inputEl && this.showIOSOverlay(inputEl);
+      secondInputEl && this.showIOSOverlay(secondInputEl);
+    }
     this.querySelectorAll("button").forEach((button) => {
       if (button === triggerEl) return;
       if (popoverEl.contains(button)) return;
@@ -6181,6 +6400,10 @@ var UIDatePicker = class extends UIControl {
     this._controllable = new Controllable(this, { bubbles: true });
     this.calendar.addEventListener("change", (e) => e.stopPropagation());
     this.calendar.addEventListener("input", (e) => e.stopPropagation());
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this.selectable.getValue()
+    });
     let detangled = detangle();
     this._controllable.initial((initial) => initial && this.selectable.setValue(initial));
     this._controllable.getter(() => this.selectable.getValue());
@@ -6188,10 +6411,18 @@ var UIDatePicker = class extends UIControl {
     this.observable.subscribe(ObservableTrigger.SELECTION, detangled(() => {
       this.dispatchEvent(new Event("select", { bubbles: false, cancelable: true }));
       this._controllable.dispatch();
+      this._submittable.update(this.selectable.getValue());
     }));
     this.observable.subscribe(ObservableTrigger.VIEW_CHANGE, () => {
       this.dispatchEvent(new Event("navigate", { bubbles: false, cancelable: true }));
     });
+  }
+  showIOSOverlay(inputEl) {
+    let overlay = document.createElement("button");
+    overlay.setAttribute("data-flux-ios-overlay", "");
+    overlay.setAttribute("data-appended", "");
+    overlay.classList.add("absolute", "inset-0");
+    inputEl.after(overlay);
   }
   input() {
     return this.querySelector("input");
@@ -6499,6 +6730,7 @@ var Activatable = class _Activatable extends Mixin {
     if (this.group()) {
       this.group().walker().each((item) => item.use(_Activatable).deactivate(false));
     }
+    if (this.el.hasAttribute("disabled")) return;
     setAttribute2(this.el, "data-active", "");
     this.el.scrollIntoView({ block: "nearest" });
     this.group() && this.group().activated(this.el);
@@ -6692,19 +6924,23 @@ var UIOptions = class extends UIElement {
 };
 var UIOption = class extends UIElement {
   mount() {
-    this._disabled = this.hasAttribute("disabled");
     let target = this;
-    if (this._disabled) {
-      setAttribute2(target, "disabled", "");
-      setAttribute2(target, "aria-disabled", "true");
-    }
+    this._disableable = new Disableable(target, {
+      disableWithParent: false
+    });
+    this._disableable.onInitAndChange((disabled) => {
+      if (disabled) {
+        setAttribute2(target, "aria-disabled", "true");
+      } else {
+        removeAttribute(target, "aria-disabled");
+      }
+    });
     let id = assignId(target, "option");
     setAttribute2(target, "role", "option");
     this._filterable = new Filterable(target, {
       mirror: this,
       keep: !!this.closest("ui-empty") || this.getAttribute("filter") === "manual"
     });
-    if (this._disabled) return;
     this._activatable = new Activatable(target);
     if (!this.hasAttribute("action")) {
       this._selectable = new Selectable(target, {
@@ -6724,12 +6960,10 @@ var UIOption = class extends UIElement {
     observer.observe(this, { attributeFilter: ["selected"] });
   }
   get selected() {
-    if (this._disabled) return false;
     if (!this?._selectable) return false;
     return this._selectable.isSelected();
   }
   set selected(value2) {
-    if (this._disabled) return;
     if (!this?._selectable) return false;
     this._selectable.setState(value2);
   }
@@ -6970,6 +7204,10 @@ var UISelect = class extends UIControl {
     this._selectable = new SelectableGroup(list, {
       multiple: this.hasAttribute("multiple")
     });
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this._selectable.getState()
+    });
     this._controllable.initial((initial) => initial && this._selectable.setState(initial));
     this._controllable.getter(() => this._selectable.getState());
     let detangled = detangle();
@@ -6980,6 +7218,12 @@ var UISelect = class extends UIControl {
       this._controllable.dispatch();
       this.dispatchEvent(new CustomEvent("select", { bubbles: false }));
     }));
+    this._selectable.onInitAndChange(() => {
+      this._submittable.update(this._selectable.getState());
+    });
+    queueMicrotask(() => {
+      this._submittable.update(this._selectable.getState());
+    });
   }
   mount() {
     this._disableable = new Disableable(this);
@@ -7012,8 +7256,8 @@ var UISelect = class extends UIControl {
       });
     }
     let popoverEl = this.querySelector("[popover]:not(ui-tooltip > [popover])");
-    let popoverInputEl = popoverEl?.querySelector("input");
-    let inputEl = this.querySelector("input");
+    let popoverInputEl = popoverEl?.querySelector('input:not([type="hidden"])');
+    let inputEl = this.querySelector('input:not([type="hidden"])');
     inputEl = popoverEl?.contains(inputEl) ? null : inputEl;
     let buttonEl = this.querySelector("button");
     buttonEl = popoverEl?.contains(buttonEl) ? null : buttonEl;
@@ -7110,7 +7354,8 @@ var UISelect = class extends UIControl {
         matchWidth: true,
         position: this.hasAttribute("position") ? this.getAttribute("position") : void 0,
         gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
-        offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
+        offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0,
+        scrollY: false
       });
       preventInputEventsFromBubblingToSelectRoot2(input2);
       highlightInputContentsWhenFocused2(input2);
@@ -7165,7 +7410,7 @@ var UISelect = class extends UIControl {
     let observer = new MutationObserver(() => {
       setTimeout(() => {
         if (!this._popoverable || this._popoverable.getState()) {
-          let firstSelectedOption = this._selectable.selecteds()[0]?.el;
+          let firstSelectedOption = this._selectable.selecteds().find((selected) => !selected.el._disableable.isDisabled())?.el;
           setTimeout(() => {
             this._activatable.activateSelectedOrFirst(firstSelectedOption);
           });
@@ -7182,7 +7427,7 @@ var UISelect = class extends UIControl {
     ) || null;
   }
   input() {
-    return this.querySelector("input");
+    return this.querySelector('input:not([type="hidden"])');
   }
   list() {
     return this.querySelector("ui-options") || this;
@@ -7293,7 +7538,7 @@ function handleMouseSelection(root, activatable, pointerdown = false) {
   on(root, pointerdown ? "pointerdown" : "click", (e) => {
     if (e.target.closest("ui-option")) {
       let option = e.target.closest("ui-option");
-      if (option._disabled) return;
+      if (option._disableable.isDisabled()) return;
       option._selectable?.trigger();
       root.dispatchEvent(new CustomEvent("action", {
         bubbles: false,
@@ -7306,7 +7551,7 @@ function handleMouseSelection(root, activatable, pointerdown = false) {
 }
 function handleActivationOnFocus(el, activatable, selectable) {
   on(el, "focus", () => {
-    let firstSelectedOption = selectable.selecteds()[0]?.el;
+    let firstSelectedOption = selectable.selecteds().find((selected) => !selected.el._disableable.isDisabled())?.el;
     activatable.activateSelectedOrFirst(firstSelectedOption);
   });
   on(el, "blur", () => {
@@ -7355,7 +7600,7 @@ function initPopover2(root, trigger, popover, popoverable, anchorable) {
 function controlActivationWithPopover(popoverable, activatable, selectable) {
   popoverable.onChange(() => {
     if (popoverable.getState()) {
-      let firstSelectedOption = selectable.selecteds()[0]?.el;
+      let firstSelectedOption = selectable.selecteds().find((selected) => !selected.el._disableable.isDisabled())?.el;
       setTimeout(() => {
         activatable.activateSelectedOrFirst(firstSelectedOption);
       });
@@ -7940,6 +8185,13 @@ var UISwitch = class extends UIControl {
       label: this.hasAttribute("label") ? this.getAttribute("label") : null,
       selectedInitially: this.hasAttribute("checked")
     });
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this.getAttribute("value") ?? "on",
+      // Default value for checkboxes...
+      includeWhenEmpty: false,
+      shouldUpdateValue: false
+    });
     this.value = this._selectable.getValue();
     this._detangled = detangle();
     this._selectable.onChange(this._detangled(() => {
@@ -7947,17 +8199,9 @@ var UISwitch = class extends UIControl {
       this.dispatchEvent(new Event("change", { bubbles: false, cancelable: true }));
     }));
     setAttribute2(button, "role", "switch");
-    if (this.hasAttribute("name")) {
-      let name = this.getAttribute("name");
-      let input = document.createElement("input");
-      input.type = "hidden";
-      input.name = name;
-      input.value = this._selectable.getState();
-      this.appendChild(input);
-      this._selectable.onChange(() => {
-        input.value = this._selectable.getState();
-      });
-    }
+    this._selectable.onInitAndChange(() => {
+      this._submittable.update(this._selectable.getState());
+    });
     this._disableable.onInitAndChange((disabled) => {
       disabled ? removeAttribute(button, "tabindex", "0") : setAttribute2(button, "tabindex", "0");
     });
@@ -9141,9 +9385,10 @@ var UIChart = class extends HTMLElement {
                 tooltipClone.querySelectorAll("slot").forEach((slot) => {
                   let field = slot.getAttribute("field");
                   if (field) {
-                    let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : {};
-                    format = { ...format, timeZone: "UTC" };
+                    let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : null;
                     let value2 = closestXPoint.datum[field];
+                    if (format === null) return slot.textContent = value2;
+                    format = { ...format, timeZone: "UTC" };
                     if (isNumeric(value2)) {
                       value2 = Number(value2).toLocaleString(getLocale(), format);
                     } else if (isDateish2(value2)) {
@@ -9374,80 +9619,6 @@ function getSvgOverflow(svg) {
   };
 }
 
-// js/modal.js
-var UIModal = class extends UIElement {
-  boot() {
-    this._controllable = new Controllable(this, { disabled: this.hasAttribute("disabled") });
-    let button = this.button();
-    let dialog = this.dialog();
-    if (!dialog) return;
-    dialog._dialogable = new Dialogable(dialog, {
-      clickOutside: !this.hasAttribute("disable-click-outside")
-    });
-    this._controllable.initial((initial) => initial && dialog._dialogable.show());
-    this._controllable.getter(() => dialog._dialogable.getState());
-    let detangled = detangle();
-    this._controllable.setter(detangled((value2) => {
-      dialog._dialogable.setState(value2);
-    }));
-    dialog._dialogable.onChange(detangled(() => {
-      this._controllable.dispatch();
-    }));
-    let refresh = () => {
-      if (dialog._dialogable.getState()) {
-        setAttribute2(this, "data-open", "");
-        button?.setAttribute("data-open", "");
-        setAttribute2(dialog, "data-open", "");
-      } else {
-        removeAttribute(this, "data-open");
-        button?.removeAttribute("data-open");
-        removeAttribute(dialog, "data-open");
-      }
-    };
-    dialog._dialogable.onChange(() => refresh());
-    refresh();
-    let { lock, unlock } = lockScroll();
-    dialog._dialogable.onChange(() => {
-      dialog._dialogable.getState() ? lock() : unlock();
-    });
-    button && on(button, "click", (e) => {
-      dialog._dialogable.show();
-    });
-  }
-  unmount() {
-    let { unlock } = lockScroll();
-    if (this.dialog()._dialogable.getState()) {
-      unlock();
-    }
-  }
-  button() {
-    let button = this.querySelector("button");
-    let dialog = this.dialog();
-    if (dialog?.contains(button)) return;
-    return button;
-  }
-  dialog() {
-    return this.querySelector("dialog");
-  }
-  showModal() {
-    let dialog = this.dialog();
-    if (!dialog) return;
-    dialog.showModal();
-  }
-};
-var UIClose = class extends UIElement {
-  mount() {
-    let button = this.querySelector("button");
-    on(button, "click", () => {
-      let dialogable = closest(this, (el) => !!el._dialogable)?._dialogable;
-      dialogable?.hide();
-    });
-  }
-};
-inject(({ css }) => css`dialog, ::backdrop { margin: auto; }`);
-element("modal", UIModal);
-element("close", UIClose);
-
 // js/toast.js
 var UIToast = class extends UIElement {
   mount() {
@@ -9521,6 +9692,11 @@ var UIRadioGroup = class extends UIControl {
     this._selectable = new SelectableGroup(this);
     this._controllable = new Controllable(this, { disabled: this._disabled, bubbles: true });
     this._focusable = new FocusableGroup(this, { wrap: true });
+    this._submittable = new Submittable(this, {
+      name: this.getAttribute("name"),
+      value: this._selectable.getState(),
+      includeWhenEmpty: false
+    });
     this._controllable.initial((initial) => initial && this._selectable.setState(initial));
     this._controllable.getter(() => this._selectable.getState());
     this._detangled = detangle();
@@ -9530,6 +9706,9 @@ var UIRadioGroup = class extends UIControl {
     this._selectable.onChange(this._detangled(() => {
       this._controllable.dispatch();
     }));
+    this._selectable.onInitAndChange(() => {
+      this._submittable.update(this._selectable.getState());
+    });
     on(this, "keydown", (e) => {
       if (["ArrowDown", "ArrowRight"].includes(e.key)) {
         this._focusable.focusNext();
@@ -9542,6 +9721,9 @@ var UIRadioGroup = class extends UIControl {
       }
     });
     setAttribute2(this, "role", "radiogroup");
+    queueMicrotask(() => {
+      this._submittable.update(this._selectable.getState());
+    });
   }
 };
 var UIRadio = class extends UIControl {

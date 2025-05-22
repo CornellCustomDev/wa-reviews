@@ -75,6 +75,12 @@ abstract class LlmDriver implements LlmDriverInterface
         return ! empty($this->getResponseSchema());
     }
 
+    /**
+     * Get the provider data merged with the model defined settings.
+     * Some Model settings override provider settings.
+     *
+     * @return array The settings.
+     */
     public function getSettings(): array
     {
         return $this->settings;
@@ -93,18 +99,22 @@ abstract class LlmDriver implements LlmDriverInterface
     public function formatToolForPayload(ToolInterface $tool): array
     {
         // Default OpenAI-compatible format
-        return [
+        $toolSchema = [
             'type' => 'function',
             'function' => [
                 'name' => $tool->getName(),
                 'description' => $tool->getDescription(),
-                'parameters' => [
-                    'type' => 'object',
-                    'properties' => $tool->getProperties(),
-                    'required' => $tool->getRequired(),
-                ],
             ],
         ];
+        if (! empty($tool->getProperties())) {
+            $toolSchema['function']['parameters'] = [
+                'type' => 'object',
+                'properties' => $tool->getProperties(),
+                'required' => $tool->getRequired(),
+            ];
+        }
+
+        return $toolSchema;
     }
 
     abstract public function toolResultToMessage(ToolCallInterface $toolCall, mixed $result): array;

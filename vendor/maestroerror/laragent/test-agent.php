@@ -142,7 +142,7 @@ class WeatherAgent extends LarAgent\Agent
 
 $stream = WeatherAgent::for('test_chat')
     ->respondStreamed(
-        'What\'s the weather like in Boston and Los Angeles? I prefer fahrenheit.'
+        'What\'s is my current location?'
     );
 
 foreach ($stream as $chunk) {

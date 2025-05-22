@@ -23,7 +23,7 @@ if (is_object($searchable)) $search = $searchable;
         {{ $slot }}
     </ui-options>
 <?php else: ?>
-    <div popover="manual" class="[:where(&)]:min-w-48 rounded-lg shadow-xs border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 p-[.3125rem]" data-flux-options>
+    <div popover="manual" class="[:where(&)]:min-w-48 [&:popover-open]:flex [&:popover-open]:flex-col rounded-lg shadow-xs border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 p-[.3125rem]" data-flux-options>
         <?php if ($search): ?> {{ $search }} <?php else: ?>
             <flux:select.search />
         <?php endif; ?>
