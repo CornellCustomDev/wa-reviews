@@ -16,9 +16,20 @@ enum IssueStatus: string
     {
         return collect(self::cases())
             ->map(fn (self $status) => [
-                'value' => $status->name,
-                'option' => $status->value,
+                'value' => $status->value(),
+                'option' => $status->value(),
             ])
             ->toArray();
+    }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::Reviewed => '', // Don't show anything
+            self::Fixed => '🛠️ Fixed',
+            self::Verified => '✅ Verified',
+            self::FalsePositive => 'False positive',
+            self::WontFix => 'Not being fixed',
+        };
     }
 }

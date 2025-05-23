@@ -5,6 +5,12 @@
                 <x-forms.field-display label="Status" variation="inline" class="mb-0!">
                     {{ $issue->status ?? 'Reviewed' }}
                 </x-forms.field-display>
+                @if($issue->needs_mitigation)
+                    <div>
+                        <flux:icon.exclamation-triangle variant="mini" class="text-yellow-500" />
+                        Requires Barrier Mitigation
+                    </div>
+                @endif
             </flux:card>
         </flux:modal.trigger>
     @else
@@ -12,6 +18,12 @@
             <x-forms.field-display label="Status" variation="inline" class="mb-0!">
                 {{ $issue->status ?? 'Reviewed' }}
             </x-forms.field-display>
+            @if($issue->needs_mitigation)
+                <div>
+                    <flux:icon.exclamation-triangle variant="mini" class="text-yellow-500" />
+                    Requires Barrier Mitigation
+                </div>
+            @endif
         </flux:card>
     @endcan
 
@@ -26,6 +38,13 @@
                 :options="\App\Enums\IssueStatus::toSelectArray()"
                 required
             />
+
+            @can('update-needs-mitigation', $issue)
+                <x-forms.checkbox
+                    label="Requires Barrier Mitigation"
+                    wire:model="needs_mitigation"
+                />
+            @endcan
 
             <x-forms.button wire:click="updateStatus">Update</x-forms.button>
         </form>
