@@ -9,6 +9,12 @@ use App\Models\User;
 
 class IssuePolicy
 {
+    private function isProjectAdministrator(User $user, Project $project): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
+            || $user->isAdministrator();
+    }
+
     public function viewAny(User $user): bool
     {
         return false;
@@ -16,26 +22,56 @@ class IssuePolicy
 
     public function view(User $user, Issue $issue): bool
     {
-        return $issue->project->team->isTeamMember($user)
-            || $issue->project->isReportViewer($user);
+        $project = $issue->project;
+
+        return $project->team->isTeamMember($user)
+            || $project->isReportViewer($user)
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function create(User $user, Project $project): bool
     {
+        if ($project->isCompleted()) {
+            return false;
+        }
+
         return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
+        $project = $issue->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return ($project->isInProgress() && $project->isProjectReviewer($user))
+            || $this->isProjectAdministrator($user, $project);
+    }
+
+    public function updateStatus(User $user, Issue $issue): bool
+    {
+        $project = $issue->project;
+        if ($project->isNotStarted() || $project->isInProgress()) {
+            return false;
+        }
+
+        return $project->isProjectReviewer($user)
+            || $project->isReportViewer($user)
+            || $this->isProjectAdministrator($user, $project);
+
     }
 
     public function delete(User $user, Issue $issue): bool
     {
-        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
+        $project = $issue->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return $project->isProjectReviewer($user)
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function restore(User $user, Issue $issue): bool

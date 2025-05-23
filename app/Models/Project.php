@@ -155,6 +155,11 @@ class Project extends Model
         return $user->id === $this->reviewer?->id;
     }
 
+    public function isNotStarted(): bool
+    {
+        return $this->status->isNotStarted();
+    }
+
     public function isInProgress(): bool
     {
         return $this->status->isInProgress();

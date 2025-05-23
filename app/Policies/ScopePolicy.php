@@ -9,9 +9,12 @@ use App\Models\User;
 
 class ScopePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
+    private function isProjectAdministrator(User $user, Project $project): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
+            || $user->isAdministrator();
+    }
+
     public function viewAny(User $user): bool
     {
         return false;
@@ -19,28 +22,43 @@ class ScopePolicy
 
     public function view(User $user, Scope $scope): bool
     {
-        return $scope->project->team->isTeamMember($user)
-            || $scope->project->isReportViewer($user);
+        $project = $scope->project;
+
+        return $project->team->isTeamMember($user)
+            || $project->isReportViewer($user)
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function create(User $user, Project $project): bool
     {
+        if ($project->isCompleted()) {
+            return false;
+        }
+
         return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function update(User $user, Scope $scope): bool
     {
-        /** @var Project $project */
         $project = $scope->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
         return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function delete(User $user, Scope $scope): bool
     {
-        return ($scope->project->isInProgress() && $scope->project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $scope->project->team);
+        $project = $scope->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return $project->isProjectReviewer($user)
+            || $this->isProjectAdministrator($user, $project);
     }
 
     public function restore(User $user, Scope $scope): bool

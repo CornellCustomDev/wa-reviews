@@ -39,6 +39,11 @@ class TeamPolicy
 
     public function delete(User $user, Team $team): bool
     {
+        // If a team has projects, it cannot be deleted
+        if ($team->projects()->exists()) {
+            return false;
+        }
+
         return $user->isAbleTo(Permissions::ManageTeams);
     }
 

@@ -63,7 +63,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Allow administrative user access to all features
-        Gate::before(fn (User $u) => $u->isAdministrator() ? true : null);
+        //
     }
 }
