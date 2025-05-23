@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\IssueStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,13 @@ class Issue extends Model
         'target',
         'description',
         'recommendation',
+        'status',
+        'needs_mitigation',
+    ];
+
+    protected $casts = [
+        'status' => IssueStatus::class,
+        'needs_mitigation' => 'boolean',
     ];
 
     protected $with = [

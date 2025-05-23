@@ -6,6 +6,9 @@
             <th>Target</th>
             <th>Description</th>
             <th>Observations</th>
+            @if($project->isCompleted())
+                <th>Remediation</th>
+            @endif
             <th>Actions</th>
         </tr>
         </thead>
@@ -33,6 +36,11 @@
                         @endforeach
                     @endif
                 </td>
+                @if($project->isCompleted())
+                    <td>
+                        {!! $issue->status?->value() !!}
+                    </td>
+                @endif
                 <td class="text-nowrap">
                     <x-forms.button.view
                         :href="route('issue.show', $issue)" title="View Issue {{ $issue->id }}" size="xs"
