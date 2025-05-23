@@ -2,7 +2,7 @@
     label="Guideline"
     variant="listbox"
     searchable
-    :options="$form->guidelineOptions"
+    :options="$this->getGuidelinesOptions"
     placeholder="Select a guideline..."
     wire:model="form.guideline_id"
     required
@@ -14,7 +14,7 @@
 
 <div x-data="{ guideline_id: $wire.entangle('form.guideline_id') }">
     <flux:radio.group label="Assessment" variant="cards" :indicator="false" size="sm" wire:model="form.assessment" required badge="Required" description="Select the assessment for the success criterion.">
-        @foreach ($form->assessmentOptions as $option)
+        @foreach (\App\Enums\Assessment::toSelectArray() as $option)
             @switch(Str::of($option['value'])->lower()->replace('/', ''))
                 @case('pass')
                     <flux:radio :value="$option['value']" :label="$option['label']" class="data-checked:bg-wa-pass hover:bg-wa-pass/30" />
@@ -48,7 +48,7 @@
 <x-forms.select
     label="Testing method"
     variant="listbox"
-    :options="$form->testingMethodOptions"
+    :options="\App\Enums\TestingMethod::toSelectArray()"
     placeholder="Select a testing method..."
     wire:model="form.testing"
     description="Describe how you discovered the issue."
@@ -65,4 +65,8 @@
     :existing-images="$this->form->image_links"
 />
 
-<x-forms.radios label="User impact level" wire:model="form.impact" :values="$form->impactOptions" />
+<x-forms.radios
+    label="User impact level"
+    wire:model="form.impact"
+    :values="\App\Enums\Impact::toSelectArray()"
+/>

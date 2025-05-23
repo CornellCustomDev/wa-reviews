@@ -11,7 +11,6 @@ enum Impact: string
     case Moderate = 'Moderate';
     case Low = 'Low';
 
-
     public function getDescription(): string
     {
         return match ($this) {

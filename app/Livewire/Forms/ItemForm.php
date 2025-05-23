@@ -40,12 +40,6 @@ class ItemForm extends Form
     public ?bool $content_issue = false;
     public ?Impact $impact;
 
-    public Collection $guidelines;
-    public Collection $guidelineOptions;
-    public Collection $assessmentOptions;
-    public Collection $testingMethodOptions;
-    public Collection $impactOptions;
-
     private $storage;
 
     public function __construct(
@@ -55,44 +49,28 @@ class ItemForm extends Form
     {
         parent::__construct($component, $this->propertyName);
 
-        $this->guidelines = Guideline::all()->keyBy('number');
-        $this->guidelineOptions = $this->guidelines
-            ->map(fn ($guideline) => [
-                'value' => $guideline->id,
-                'option' => "$guideline->number: $guideline->name",
-            ]);
-
-        $this->assessmentOptions = collect(Assessment::cases())
-            ->map(fn ($assessment) => [
-                'value' => $assessment->value(),
-                'label' => $assessment->value(),
-            ]);
-
-        $this->testingMethodOptions = collect(TestingMethod::cases())
-            ->map(fn ($test_method) => [
-                'value' => $test_method->value(),
-                'option' => $test_method->value(),
-            ]);
-
-        $this->impactOptions = collect(Impact::cases())
-            ->map(fn ($impact) => [
-                'value' => $impact->value(),
-                'label' => $impact->value(),
-                'description' => $impact->getDescription(),
-            ]);
-
         $this->storage = Storage::disk('public');
     }
 
-    public function getOptions($field): array
+    public static function getGuidelineSelectArray(): array
     {
-        return match($field) {
-            'guideline_id' => $this->guidelineOptions->toArray(),
-            'assessment' => $this->assessmentOptions->toArray(),
-            'impact' => $this->impactOptions->toArray(),
-            'testing_method' => $this->testingMethodOptions->toArray(),
-            default => [],
-        };
+        return Guideline::query()
+            ->select([
+                'guidelines.id',
+                'guidelines.number',
+                'guidelines.name',
+                'guidelines.criterion_id',
+                'guidelines.category_id',
+            ])
+            ->with(['criterion:id,number,level', 'category:id,name'])
+            ->get()
+            ->map(function (Guideline $guideline) {
+                return [
+                    'value' => $guideline->id,
+                    'option' => "{$guideline->getNumber()}: {$guideline->getCriterionInfo()} - $guideline->name",
+                ];
+            })
+            ->toArray();
     }
 
     public function setModel(Item $item): void

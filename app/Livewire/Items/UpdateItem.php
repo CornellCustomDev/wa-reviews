@@ -6,6 +6,7 @@ use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\ItemForm;
 use App\Models\Issue;
 use App\Models\Item;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -24,6 +25,12 @@ class UpdateItem extends Component
         $this->form->setModel($item);
     }
 
+    #[Computed(persist: true)]
+    public function getGuidelinesOptions()
+    {
+        return $this->form->getGuidelineSelectArray();
+    }
+
     public function save()
     {
         $this->authorize('update', $this->form->item->issue);
@@ -35,7 +42,6 @@ class UpdateItem extends Component
 
         $this->dispatch('close-edit');
         $this->dispatch('items-updated');
-        //return redirect()->route('issue.show', $this->form->item->issue);
     }
 
     #[On('remove-existing-image')]
