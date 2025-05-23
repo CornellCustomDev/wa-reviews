@@ -4,11 +4,13 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div class="col-span-3 mb-4">
             <div class="border rounded-sm border-cds-gray-200 p-4" x-data="{ edit: $wire.entangle('showEdit').live }">
-                @can('update', $project)
-                    <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
-                    <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
-                    <livewire:projects.upload-project-data :project="$project"/>
-                @endcan
+                @if(!$project->isCompleted())
+                    @can('update', $project)
+                        <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
+                        <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
+                        <livewire:projects.upload-project-data :project="$project"/>
+                    @endcan
+                @endif
 
                 <div x-show="!edit">
                     <flux:subheading class="items-center">

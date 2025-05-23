@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\Permissions;
 use App\Models\Project;
 use App\Models\Issue;
 use App\Models\User;
@@ -16,26 +15,56 @@ class IssuePolicy
 
     public function view(User $user, Issue $issue): bool
     {
-        return $issue->project->team->isTeamMember($user)
-            || $issue->project->isReportViewer($user);
+        $project = $issue->project;
+
+        return $project->team->isTeamMember($user)
+            || $project->isReportViewer($user)
+            || $project->canManageProject($user);
     }
 
     public function create(User $user, Project $project): bool
     {
-        return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return ($project->isInProgress() && $project->isReviewer($user))
+            || $project->canManageProject($user);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
+        $project = $issue->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return ($project->isInProgress() && $project->isReviewer($user))
+            || $project->canManageProject($user);
+    }
+
+    public function updateStatus(User $user, Issue $issue): bool
+    {
+        $project = $issue->project;
+        if ($project->isNotStarted() || $project->isInProgress()) {
+            return false;
+        }
+
+        return $project->isReviewer($user)
+            || $project->isReportViewer($user)
+            || $project->canManageProject($user);
+
     }
 
     public function delete(User $user, Issue $issue): bool
     {
-        return ($issue->project->isInProgress() && $issue->project->isProjectReviewer($user))
-            || $user->isAbleTo(Permissions::ManageTeamProjects, $issue->project->team);
+        $project = $issue->project;
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return $project->isReviewer($user)
+            || $project->canManageProject($user);
     }
 
     public function restore(User $user, Issue $issue): bool

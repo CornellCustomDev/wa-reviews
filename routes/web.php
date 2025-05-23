@@ -49,7 +49,6 @@ Route::group(['middleware' => [CUAuth::class]], function () {
 Route::group(['middleware' => [CUAuth::class]], function () {
     Route::get('projects/', ViewProjects::class)->name('projects')->can('view-any', Project::class);
     Route::prefix('project')->name('project.')->group(function () {
-        Route::get('/create', CreateProject::class)->name('create')->can('create', Project::class);
         Route::get('/{project}', ShowProject::class)->name('show')->can('view', 'project');
         Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
         Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
@@ -74,6 +73,7 @@ Route::group(['middleware' => [CUAuth::class]], function () {
     Route::prefix('teams')->name('teams.')->group(function () {
         Route::get('', Manage::class)->name('manage')->can('view-any', Team::class);
         Route::get('{team}', ShowTeam::class)->name('show')->can('view', 'team');
+        Route::get('{team}/project/create', CreateProject::class)->name('project.create')->can('create-project', 'team');
     });
 
 });

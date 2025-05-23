@@ -31,6 +31,11 @@ enum ProjectStatus: string
         };
     }
 
+    public function isNotStarted(): bool
+    {
+        return $this === self::NotStarted;
+    }
+
     public function isInProgress(): bool
     {
         return $this === self::InProgress;

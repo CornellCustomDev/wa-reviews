@@ -3,7 +3,7 @@
 namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ProjectForm;
-use App\Models\Project;
+use App\Models\Team;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -11,29 +11,12 @@ use Livewire\Component;
 class CreateProject extends Component
 {
     public ProjectForm $form;
-    public $teams;
-
-    public  function mount()
-    {
-        $this->teams = auth()->user()->getManagedTeams()
-            ->mapWithKeys(fn ($team) => [$team->name => [
-                'value' => $team->id,
-                'option' => $team->name,
-            ]]);
-
-        // If the team_id is not in teams, set it to empty
-        if (!$this->teams->contains('value', $this->form->team_id)) {
-            $this->form->team_id = '';
-        }
-    }
+    public Team $team;
 
     public function save()
     {
-        $this->authorize('create', Project::class);
-        if ($this->teams->count() === 1) {
-            $this->form->team_id = $this->teams->first()['value'];
-        }
-        $project = $this->form->store();
+        $this->authorize('create-project', $this->team);
+        $project = $this->form->store($this->team);
 
         return redirect()->route('project.show', $project);
     }
@@ -50,7 +33,7 @@ class CreateProject extends Component
     protected function getBreadcrumbs(): array
     {
         return [
-            'Projects' => route('projects'),
+            $this->team->name => route('teams.show', $this->team),
             'Add Project' => 'active'
         ];
     }

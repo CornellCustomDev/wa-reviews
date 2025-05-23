@@ -1,9 +1,12 @@
 <div>
-    @can('create', \App\Models\Project::class)
-        <div class="cwd-component align-right">
-            <x-forms.button.add :href="route('project.create')">Create New Project</x-forms.button.add>
-        </div>
-    @endcan
+    @if(auth()->user()->teams()->count() == 1)
+        @php($team = auth()->user()->teams()->first())
+        @can('create-project', $team)
+            <div class="cwd-component align-right">
+                <x-forms.button.add :href="route('teams.project.create', ['team' => $team->id])">Create New Project</x-forms.button.add>
+            </div>
+        @endcan
+    @endif
 
     <h1>Projects</h1>
 

@@ -17,17 +17,24 @@ class ProjectPolicy
     public function view(User $user, Project $project): bool
     {
         return $project->team->isTeamMember($user)
-            || $project->isReportViewer($user);
+            || $project->isReportViewer($user)
+            || $project->canManageProject($user);
     }
 
     public function manageProject(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+        return $project->canManageProject($user);
     }
 
-    public function create(User $user, ?Team $team = null): bool
+    public function create(User $user, Team $team): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $team);
+        // TODO: Create a permission for CreateTeamProjects. and add to reviewers
+        if ($team->isReviewer($user)) {
+            return true;
+        }
+
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $team)
+            || $user->isAbleTo(Permissions::ManageTeams);
     }
 
     public function update(User $user, Project $project): bool
@@ -36,24 +43,39 @@ class ProjectPolicy
             return false;
         }
 
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
-            || ($user->id == $project->reviewer->id && ($project->isInProgress()));
+        if ($user->id == $project->reviewer?->id) {
+            return $project->isInProgress();
+        }
+
+        return $project->canManageProject($user);
     }
 
     public function updateReviewer(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team) && ! $project->isCompleted();
+        if ($project->isCompleted()) {
+            return false;
+        }
+
+        return $project->canManageProject($user);
     }
 
     public function updateStatus(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
-            || ($user->id == $project->reviewer->id && ($project->isInProgress() || $project->isCompleted()));
+        if ($user->id == $project->reviewer?->id) {
+            return $project->isInProgress() || $project->isCompleted();
+        }
+
+        return $project->canManageProject($user);
     }
 
     public function delete(User $user, Project $project): bool
     {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team);
+        if ($project->isCompleted()) {
+            // Completed projects cannot be deleted except by a site administrator
+            return $user->isAdministrator();
+        }
+
+        return $project->canManageProject($user);
     }
 
     public function restore(User $user, Project $project): bool
