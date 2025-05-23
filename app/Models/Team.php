@@ -38,7 +38,7 @@ class Team extends LaratrustTeam
     public function removeUser(User $user): void
     {
         // Remove any roles the user has on the team
-        $user->syncRoles([], $this->id);
+        $user->syncRoles([], $this);
         // Remove the user from the team
         $this->users()->detach($user);
 
@@ -47,7 +47,7 @@ class Team extends LaratrustTeam
 
     public function setUserRoles(User $user, array $roles): void
     {
-        $user->syncRoles($roles, $this->id);
+        $user->syncRoles($roles, $this);
 
         event(new UserChanged($user, $this, 'roles updated', [
             'user_name' => $user->name,
@@ -67,11 +67,11 @@ class Team extends LaratrustTeam
 
     public function isTeamAdmin(User $user): bool
     {
-        return $user->hasRole(Roles::TeamAdmin, $this->id);
+        return $user->hasRole(Roles::TeamAdmin, $this);
     }
 
     public function isReviewer(User $user): bool
     {
-        return $user->hasRole(Roles::Reviewer, $this->id);
+        return $user->hasRole(Roles::Reviewer, $this);
     }
 }

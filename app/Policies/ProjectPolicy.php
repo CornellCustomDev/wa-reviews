@@ -9,12 +9,6 @@ use App\Models\User;
 
 class ProjectPolicy
 {
-    private function isProjectAdministrator(User $user, ?Team $team = null): bool
-    {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $team)
-            || $user->isAdministrator();
-    }
-
     public function viewAny(User $user): bool
     {
         return $user->teams()->exists();
@@ -24,17 +18,23 @@ class ProjectPolicy
     {
         return $project->team->isTeamMember($user)
             || $project->isReportViewer($user)
-            || $this->isProjectAdministrator($user, $project->team);
+            || $project->canManageProject($user);
     }
 
     public function manageProject(User $user, Project $project): bool
     {
-        return $this->isProjectAdministrator($user, $project->team);
+        return $project->canManageProject($user);
     }
 
-    public function create(User $user, ?Team $team = null): bool
+    public function create(User $user, Team $team): bool
     {
-        return $this->isProjectAdministrator($user, $team);
+        // TODO: Create a permission for CreateTeamProjects. and add to reviewers
+        if ($team->isReviewer($user)) {
+            return true;
+        }
+
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $team)
+            || $user->isAbleTo(Permissions::ManageTeams);
     }
 
     public function update(User $user, Project $project): bool
@@ -47,7 +47,7 @@ class ProjectPolicy
             return $project->isInProgress();
         }
 
-        return $this->isProjectAdministrator($user, $project->team);
+        return $project->canManageProject($user);
     }
 
     public function updateReviewer(User $user, Project $project): bool
@@ -56,7 +56,7 @@ class ProjectPolicy
             return false;
         }
 
-        return $this->isProjectAdministrator($user, $project->team);
+        return $project->canManageProject($user);
     }
 
     public function updateStatus(User $user, Project $project): bool
@@ -65,7 +65,7 @@ class ProjectPolicy
             return $project->isInProgress() || $project->isCompleted();
         }
 
-        return $this->isProjectAdministrator($user, $project->team);
+        return $project->canManageProject($user);
     }
 
     public function delete(User $user, Project $project): bool
@@ -75,7 +75,7 @@ class ProjectPolicy
             return $user->isAdministrator();
         }
 
-        return $this->isProjectAdministrator($user, $project->team);
+        return $project->canManageProject($user);
     }
 
     public function restore(User $user, Project $project): bool

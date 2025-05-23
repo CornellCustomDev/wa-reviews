@@ -24,7 +24,7 @@ class ViewProjects extends Component
             ->all();
     }
 
-    public function delete(Project $project)
+    public function delete(Project $project): void
     {
         $this->authorize('delete', $project);
         $project->delete();
@@ -34,5 +34,7 @@ class ViewProjects extends Component
             'site url' => $project->site_url,
         ]));
         event(new ProjectChanged($project, 'deleted', []));
+
+        unset($this->projects);
     }
 }

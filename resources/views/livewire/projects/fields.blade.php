@@ -1,12 +1,3 @@
-@if($this->teams->count() > 1)
-    <x-forms.select
-        label="Team"
-        placeholder="Select a team"
-        :options="$this->teams"
-        wire:model="form.team_id"
-        required
-    />
-@endif
 <x-forms.input label="Project Name" wire:model="form.name" required />
 <x-forms.input
     label="Site URL" wire:model="form.site_url"

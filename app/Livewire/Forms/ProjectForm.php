@@ -55,11 +55,11 @@ class ProjectForm extends Form
         $this->site_purpose = $project->site_purpose ?? '';
     }
 
-    public function store(): Project
+    public function store(Team $team): Project
     {
         $this->validate();
 
-        $this->project = Project::create($this->all());
+        $this->project = $team->projects()->create($this->all());
 
         event(new ProjectChanged($this->project, 'created'));
         event(new TeamChanged($this->project->team, $this->project, 'created'));

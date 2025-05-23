@@ -2,19 +2,12 @@
 
 namespace App\Policies;
 
-use App\Enums\Permissions;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Models\User;
 
 class ScopePolicy
 {
-    private function isProjectAdministrator(User $user, Project $project): bool
-    {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $project->team)
-            || $user->isAdministrator();
-    }
-
     public function viewAny(User $user): bool
     {
         return false;
@@ -26,7 +19,7 @@ class ScopePolicy
 
         return $project->team->isTeamMember($user)
             || $project->isReportViewer($user)
-            || $this->isProjectAdministrator($user, $project);
+            || $project->canManageProject($user);
     }
 
     public function create(User $user, Project $project): bool
@@ -35,8 +28,8 @@ class ScopePolicy
             return false;
         }
 
-        return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $this->isProjectAdministrator($user, $project);
+        return ($project->isInProgress() && $project->isReviewer($user))
+            || $project->canManageProject($user);
     }
 
     public function update(User $user, Scope $scope): bool
@@ -46,8 +39,8 @@ class ScopePolicy
             return false;
         }
 
-        return ($project->isInProgress() && $project->isProjectReviewer($user))
-            || $this->isProjectAdministrator($user, $project);
+        return ($project->isInProgress() && $project->isReviewer($user))
+            || $project->canManageProject($user);
     }
 
     public function delete(User $user, Scope $scope): bool
@@ -57,8 +50,8 @@ class ScopePolicy
             return false;
         }
 
-        return $project->isProjectReviewer($user)
-            || $this->isProjectAdministrator($user, $project);
+        return $project->isReviewer($user)
+            || $project->canManageProject($user);
     }
 
     public function restore(User $user, Scope $scope): bool
