@@ -11,7 +11,7 @@
         </tr>
         </thead>
         <tbody>
-        @foreach($this->projects as $project)
+        @foreach($projects as $project)
             <tr wire:key="{{ $project->id }}">
                 <td><a href="{{ route('project.show', $project) }}">{{ $project->name }}</a></td>
                 <td><a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
