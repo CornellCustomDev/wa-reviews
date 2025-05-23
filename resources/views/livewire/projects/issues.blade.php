@@ -6,6 +6,9 @@
             <th>Target</th>
             <th>Description</th>
             <th>Observations</th>
+            @if($project->isCompleted())
+                <th>Remediation</th>
+            @endif
             <th>Actions</th>
         </tr>
         </thead>
@@ -33,6 +36,17 @@
                         @endforeach
                     @endif
                 </td>
+                @if($project->isCompleted())
+                    <td class="text-nowrap">
+                        {!! $issue->status?->description() !!}
+                        @if($issue->needs_mitigation)
+                            <div>
+                                <flux:icon.exclamation-triangle variant="mini" class="text-yellow-500" />
+                                Required
+                            </div>
+                        @endif
+                    </td>
+                @endif
                 <td class="text-nowrap">
                     <x-forms.button.view
                         :href="route('issue.show', $issue)" title="View Issue {{ $issue->id }}" size="xs"

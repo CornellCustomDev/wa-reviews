@@ -46,7 +46,7 @@ class IssuePolicy
     public function updateStatus(User $user, Issue $issue): bool
     {
         $project = $issue->project;
-        if ($project->isNotStarted() || $project->isInProgress()) {
+        if (! $project->isCompleted()) {
             return false;
         }
 
@@ -54,6 +54,17 @@ class IssuePolicy
             || $project->isReportViewer($user)
             || $project->canManageProject($user);
 
+    }
+
+    public function updateNeedsMitigation(User $user, Issue $issue): bool
+    {
+        $project = $issue->project;
+        if (! $project->isCompleted()) {
+            return false;
+        }
+
+        return $project->isReviewer($user)
+            || $project->canManageProject($user);
     }
 
     public function delete(User $user, Issue $issue): bool
