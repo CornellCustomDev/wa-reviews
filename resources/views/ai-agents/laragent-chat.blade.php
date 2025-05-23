@@ -58,6 +58,23 @@
                     el.dispatchEvent(new Event('scroll'));
                 });
             });
+
+            window.addEventListener('scroll-to-response', () => {
+                $nextTick(() => {
+                    const el = $refs.latestResponse;
+                    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    el.focus();
+                    // Force a synthetic scroll event to trigger the update function
+                    el.dispatchEvent(new Event('scroll'));
+                });
+            });
+
+            window.addEventListener('focus-chat', () => {
+                $nextTick(() => {
+                    const el = $refs.userMessage;
+                    el.focus();
+                });
+            });
         })()"
     >
         <button
@@ -99,9 +116,11 @@
                         @case('tool')
                             @break
                         @default
-                            <flux:card size="sm" class="max-w-[90%] bg-cds-blue-50!">
-                                {!! Str::of($message['content'])->markdown() !!}
-                            </flux:card>
+                            <div x-ref="latestResponse" tabindex="-1">
+                                <flux:card size="sm" class="max-w-[90%] bg-cds-blue-50!">
+                                    {!! Str::of($message['content'])->markdown() !!}
+                                </flux:card>
+                            </div>
                             @break
                     @endswitch
                 @endempty
@@ -125,7 +144,7 @@
         </button>
     </div>
 
-    <div wire:stream="streamedResponse" wire:show="streaming">{{ $streamedResponse }}</div>
+    <div wire:stream="streamedResponse" wire:show="streaming" role="status" aria-live="polite" aria-atomic="false">{{ $streamedResponse }}</div>
 
     <div wire:show="showFeedback" wire:cloak>
         <flux:card size="sm" class="flex bg-cds-blue-200!">
@@ -148,8 +167,9 @@
             wire:model="userMessage"
             size="sm"
             toolbar="bold italic | link code ~ undo redo"
+            x-ref="userMessage"
         />
         <x-forms.button type="submit">Send</x-forms.button>
-        <span wire:loading.delay wire:target="sendUserMessage"> Analyzing...</span>
+        <span wire:loading.delay wire:target="sendUserMessage" role="status" aria-live="polite">Analyzing...</span>
     </form>
 </div>

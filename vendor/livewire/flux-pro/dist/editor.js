@@ -16516,6 +16516,9 @@ img.ProseMirror-separator {
   // js/mixins/disableable.js
   var Disableable = class extends Mixin {
     boot({ options }) {
+      options({
+        disableWithParent: true
+      });
       this.onChanges = [];
       Object.defineProperty(this.el, "disabled", {
         get: () => {
@@ -16531,7 +16534,7 @@ img.ProseMirror-separator {
       });
       if (this.el.hasAttribute("disabled")) {
         this.el.disabled = true;
-      } else if (this.el.closest("[disabled]")) {
+      } else if (this.options().disableWithParent && this.el.closest("[disabled]")) {
         this.el.disabled = true;
       }
       let observer = new MutationObserver((mutations) => {
@@ -16560,6 +16563,81 @@ img.ProseMirror-separator {
     }
     isDisabled() {
       return this.el.disabled;
+    }
+  };
+
+  // js/mixins/submittable.js
+  var Submittable = class extends Mixin {
+    boot({ options }) {
+      options({
+        name: void 0,
+        value: void 0,
+        includeWhenEmpty: true,
+        shouldUpdateValue: true
+      });
+      this.name = this.options().name;
+      this.value = this.options().value === void 0 ? this.el.value : this.options().value;
+      this.state = false;
+      this.observer = new MutationObserver(() => {
+        this.renderHiddenInputs();
+      });
+      this.observer.observe(this.el, { childList: true });
+    }
+    mount() {
+      this.renderHiddenInputs();
+    }
+    update(value) {
+      if (this.options().shouldUpdateValue) {
+        this.value = value;
+      } else {
+        this.state = !!value;
+      }
+      this.renderHiddenInputs();
+    }
+    valueIsEmpty() {
+      return this.value === void 0 || this.value === null || this.value === "";
+    }
+    renderHiddenInputs() {
+      this.observer.disconnect();
+      if (!this.name) return;
+      let children = this.el.children;
+      let oldInputs = [];
+      for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        if (child.hasAttribute("data-flux-hidden")) oldInputs.push(child);
+      }
+      oldInputs.forEach((i) => i.remove());
+      let hiddenInputs;
+      if (this.options().shouldUpdateValue) {
+        hiddenInputs = !this.valueIsEmpty() || this.options().includeWhenEmpty ? this.generateInputs(this.name, this.value) : [];
+      } else {
+        hiddenInputs = this.state || this.options().includeWhenEmpty ? this.generateInputs(this.name, this.value) : [];
+      }
+      hiddenInputs.forEach((hiddenInput) => {
+        this.el.append(hiddenInput);
+      });
+      this.observer.observe(this.el, { childList: true });
+    }
+    generateInputs(name, value, carry = []) {
+      if (this.isObjectOrArray(value)) {
+        for (let key in value) {
+          carry = carry.concat(
+            this.generateInputs(`${name}[${key}]`, value[key])
+          );
+        }
+      } else {
+        let el = document.createElement("input");
+        el.setAttribute("type", "hidden");
+        el.setAttribute("name", name);
+        el.setAttribute("value", value === null ? "" : "" + value);
+        el.setAttribute("data-flux-hidden", "");
+        el.setAttribute("data-appended", "");
+        return [el];
+      }
+      return carry;
+    }
+    isObjectOrArray(value) {
+      return typeof value === "object" && value !== null;
     }
   };
 
@@ -20242,13 +20320,96 @@ img.ProseMirror-separator {
   // js/editor.js
   var UIEditor = class extends UIControl {
     boot() {
-      let content = this.value ?? this.querySelector("ui-editor-content").innerHTML;
+      let content = this.getAttribute("value") ?? this.querySelector("ui-editor-content").innerHTML;
       let toolbar = this.querySelector("ui-toolbar");
       this.querySelector("ui-editor-content").innerHTML = "";
       this._controllable = new Controllable(this, { bubbles: true });
       toolbar.addEventListener("input", (e) => e.stopPropagation());
       toolbar.addEventListener("change", (e) => e.stopPropagation());
       this._disableable = new Disableable(this);
+      this._submittable = new Submittable(this, {
+        name: this.getAttribute("name"),
+        value: content
+      });
+      let enabledExtensions = [
+        StarterKit.configure({
+          history: true,
+          paragraph: {
+            keepOnSplit: false,
+            allowNesting: true
+          }
+        }),
+        TextAlign.configure({
+          types: ["paragraph", "heading"],
+          alignments: ["left", "center", "right"]
+        }),
+        Underline,
+        Link.configure({
+          openOnClick: false,
+          linkOnPaste: true
+        }),
+        Highlight,
+        Subscript,
+        Superscript,
+        Placeholder.configure({
+          placeholder: this.getAttribute("placeholder")
+        })
+      ];
+      let disabledExtensions = [];
+      let onBeforeCreateCallbacks = [];
+      let editorHooks = {
+        registerExtension(extension) {
+          let name = extension.name;
+          let index = enabledExtensions.findIndex((ext) => ext.name === name);
+          if (index !== -1) {
+            enabledExtensions[index] = extension;
+          } else {
+            enabledExtensions.push(extension);
+          }
+        },
+        enableExtension(name) {
+          let index = disabledExtensions.findIndex((ext) => ext.name === name);
+          if (index !== -1) {
+            enabledExtensions.push(disabledExtensions[index]);
+            disabledExtensions.splice(index, 1);
+          }
+        },
+        disableExtension(name) {
+          let index = enabledExtensions.findIndex((ext) => ext.name === name);
+          if (index !== -1) {
+            disabledExtensions.push(enabledExtensions[index]);
+            enabledExtensions.splice(index, 1);
+          }
+        },
+        init(callback) {
+          onBeforeCreateCallbacks.push(callback);
+        }
+      };
+      editorHooks.init(({ editor }) => {
+        editor.on("create", ({ editor: editor2 }) => {
+          editor2.view.dom.setAttribute("data-slot", "content");
+          this.addEventListener("keydown", (e) => {
+            let cmdIsHeld = e.metaKey || e.ctrlKey;
+            if (cmdIsHeld && e.key.toLowerCase() === "k") {
+              e.preventDefault();
+              e.stopPropagation();
+              this.querySelector('[data-editor="link"] [data-match-target]')?.click();
+            }
+          });
+          toolbar && initializeToolbar(editor2, toolbar);
+        });
+        editor.on("update", () => {
+          this._controllable.dispatch();
+          this._submittable.update(this.value);
+        });
+        editor.on("blur", () => {
+          this.dispatchEvent(new Event("blur", {
+            bubbles: false,
+            cancelable: true
+          }));
+        });
+      });
+      document.dispatchEvent(new CustomEvent("flux:editor", { detail: editorHooks }));
       this.editor = new Editor({
         element: this.querySelector("ui-editor-content"),
         content,
@@ -20261,50 +20422,9 @@ img.ProseMirror-separator {
             return true;
           } }
         },
-        extensions: [
-          StarterKit.configure({
-            history: true,
-            paragraph: {
-              keepOnSplit: false,
-              allowNesting: true
-            }
-          }),
-          TextAlign.configure({
-            types: ["paragraph", "heading"],
-            alignments: ["left", "center", "right"]
-          }),
-          Underline,
-          Link.configure({
-            openOnClick: false,
-            linkOnPaste: true
-          }),
-          Highlight,
-          Subscript,
-          Superscript,
-          Placeholder.configure({
-            placeholder: this.getAttribute("placeholder")
-          })
-        ],
-        onBlur: () => {
-          this.dispatchEvent(new Event("blur", {
-            bubbles: false,
-            cancelable: true
-          }));
-        },
-        onUpdate: () => {
-          this._controllable.dispatch();
-        },
-        onCreate: ({ editor }) => {
-          editor.view.dom.setAttribute("data-slot", "content");
-          this.addEventListener("keydown", (e) => {
-            let cmdIsHeld = e.metaKey || e.ctrlKey;
-            if (cmdIsHeld && e.key.toLowerCase() === "k") {
-              e.preventDefault();
-              e.stopPropagation();
-              this.querySelector('[data-editor="link"] [data-match-target]')?.click();
-            }
-          });
-          toolbar && initializeToolbar(editor, toolbar);
+        extensions: enabledExtensions,
+        onBeforeCreate: ({ editor }) => {
+          onBeforeCreateCallbacks.forEach((callback) => callback({ editor }));
         }
       });
       let shouldEmitUpdate = false;

@@ -22,11 +22,11 @@
     </div>
     <div class="cu45-helper"></div>
     <div class="container-fluid cu-brand">
-        <h1 class="cu-logo"><a href="https://www.cornell.edu"><img class="sr-only" src="{{ asset('cwd-framework/images/cornell/bold_cornell_logo_simple_b31b1b.svg') }}" alt="Cornell University" width="245" height="62"></a></h1>
+        <div class="cu-logo"><a href="https://www.cornell.edu"><img class="sr-only" src="{{ asset('cwd-framework/images/cornell/bold_cornell_logo_simple_b31b1b.svg') }}" alt="Cornell University" width="245" height="62"></a></div>
         <div class="cu-unit">
-            <h2>{{ $title }}</h2>
+            <div class="h1 font-medium mt-1.5 mb-0">{{ $title }}</div>
             @if($subtitle)
-                <h3 class="sans">{{ $subtitle }}</h3>
+                <div class="h3 sans">{{ $subtitle }}</div>
             @endif
         </div>
         <div class="buttons">

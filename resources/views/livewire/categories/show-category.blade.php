@@ -4,6 +4,13 @@
 
     <table class="table bordered">
         <caption><b>Related Guidelines</b></caption>
+        <thead>
+            <tr>
+                <th scope="col">Guideline</th>
+                <th scope="col">Criterion</th>
+                <th scope="col">Name</th>
+            </tr>
+        </thead>
         <tbody>
         @foreach($guidelines as $guideline)
             <tr>

@@ -61,6 +61,12 @@ class Agent
     /** @var string */
     protected $model;
 
+    /** @var string */
+    protected $apiKey;
+
+    /** @var string */
+    protected $apiUrl;
+
     /** @var int */
     protected $contextWindowSize;
 
@@ -180,10 +186,43 @@ class Agent
 
         $this->prepareAgent($message);
 
-        $response = $this->agent->run();
+        try {
+            $response = $this->agent->run();
+        } catch (\Throwable $th) {
+            $this->onEngineError($th);
+            // Run fallback provider
+            $fallbackProvider = config('laragent.fallback_provider');
+
+            // Throw error if there is no fallback provider
+            if (! $fallbackProvider) {
+                throw $th;
+            }
+
+            // Throw error if fallback provider is same as current provider
+            if ($fallbackProvider === $this->provider) {
+                throw $th;
+            } else {
+                // Run fallback provider
+                $this->changeProvider($fallbackProvider);
+
+                return $this->respond($message);
+            }
+        }
+
         $this->onConversationEnd($response);
 
         return $response;
+    }
+
+    protected function changeProvider(string $provider)
+    {
+        $this->provider = $provider;
+        $config = $this->getProviderData();
+        $this->apiKey = $config['api_key'] ?? null;
+        $this->apiUrl = $config['api_url'] ?? null;
+        $this->model = $config['model'] ?? null;
+        $this->driver = $config['driver'] ?? null;
+        $this->setupProviderData();
     }
 
     /**
@@ -334,6 +373,22 @@ class Agent
     }
 
     /**
+     * Dynamically set the API Key for the driver
+     */
+    public function getApiKey()
+    {
+        return $this->apiKey;
+    }
+
+    /**
+     * Dynamically set the API URL for the driver
+     */
+    public function getApiUrl()
+    {
+        return $this->apiUrl;
+    }
+
+    /**
      * Process a message before sending to the agent
      *
      * @param  string  $message  The message to process
@@ -415,14 +470,17 @@ class Agent
     {
         // Get tools from $tools property (class names)
         $classTools = array_map(function ($tool) {
-            return new $tool;
+            if (is_string($tool) && class_exists($tool)) {
+                return new $tool;
+            }
+
+            return $tool;
         }, $this->tools);
 
         // Get tools from registerTools method (instances)
         $registeredTools = $this->registerTools();
 
         $attributeTools = $this->buildToolsFromAttributeMethods();
-        // print_r($attributeTools);
 
         // Merge both arrays
         return array_merge($classTools, $registeredTools, $attributeTools);
@@ -479,25 +537,40 @@ class Agent
         });
     }
 
-    public function withTool(ToolInterface $tool): static
+    public function withTool(string|ToolInterface $tool): static
     {
+        if (is_string($tool) && class_exists($tool)) {
+            $tool = new $tool;
+        }
         $this->tools[] = $tool;
         $this->onToolChange($tool, true);
 
         return $this;
     }
 
-    public function removeTool(string $name): static
+    public function removeTool(string|ToolInterface $tool): static
     {
-        foreach ($this->tools as $key => $tool) {
-            if ($tool->getName() === $name) {
-                unset($this->tools[$key]);
-                $this->onToolChange($tool, false);
-                break;
+        $toolName = $this->getToolName($tool);
+
+        $this->tools = array_filter($this->tools, function ($existingTool) use ($toolName) {
+            if ($existingTool->getName() !== $toolName) {
+                return true;
             }
-        }
+            $this->onToolChange($existingTool, false);
+
+            return false;
+        });
 
         return $this;
+    }
+
+    private function getToolName(string|ToolInterface $tool): string
+    {
+        if (is_string($tool)) {
+            return class_exists($tool) ? (new $tool)->getName() : $tool;
+        }
+
+        return $tool->getName();
     }
 
     public function withImages(array $imageUrls): static
@@ -593,6 +666,13 @@ class Agent
 
     protected function setupDriverConfigs(array $providerData): void
     {
+        if (! isset($this->apiKey) && isset($providerData['api_key'])) {
+            $this->apiKey = $providerData['api_key'];
+        }
+        if (! isset($this->apiUrl) && isset($providerData['api_url'])) {
+            $this->apiUrl = $providerData['api_url'];
+        }
+
         if (! isset($this->model) && isset($providerData['model'])) {
             $this->model = $providerData['model'];
         }
@@ -633,21 +713,28 @@ class Agent
         $this->providerName = $provider['name'] ?? '';
         $this->setupDriverConfigs($provider);
 
-        $settings = array_merge($provider, $this->buildConfigsForLaragent());
-
+        $settings = array_merge($provider, $this->buildConfigsFromAgent());
         $this->initDriver($settings);
     }
 
     protected function setupAgent(): void
     {
-        $config = $this->buildConfigsForLaragent();
+        $config = $this->buildConfigsFromAgent();
         $this->agent = LarAgent::setup($this->llmDriver, $this->chatHistory, $config);
     }
 
-    protected function buildConfigsForLaragent()
+    /**
+     * Build configuration array from agent properties.
+     * Overrides provider data with ageent properties.
+     *
+     * @return array The configuration array with model, API key, API URL, and optional parameters.
+     */
+    protected function buildConfigsFromAgent(): array
     {
         $config = [
             'model' => $this->model(),
+            'api_key' => $this->getApiKey(),
+            'api_url' => $this->getApiUrl(),
         ];
         if (property_exists($this, 'maxCompletionTokens')) {
             $config['maxCompletionTokens'] = $this->maxCompletionTokens;

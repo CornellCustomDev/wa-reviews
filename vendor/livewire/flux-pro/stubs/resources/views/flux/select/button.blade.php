@@ -42,7 +42,7 @@ $classes = Flux::classes()
 
     <?php if ($clearable): ?>
         <flux:button as="div"
-            class="cursor-pointer ms-2 -me-2 [[data-flux-select-button]:has([data-flux-select-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
+            class="cursor-pointer ms-2 -me-2 [[data-flux-select-button]:has([data-flux-select-placeholder])_&]:hidden [[data-flux-select]:has([disabled][data-selected])_&]:hidden"
             variant="subtle"
             :size="$size === 'sm' ? 'xs' : 'sm'"
             square

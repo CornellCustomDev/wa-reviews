@@ -1,16 +1,25 @@
 @props([
-    'name' => $attributes->whereStartsWith('wire:model')->first(),
     'selectableHeader' => null,
     'weekNumbers' => null,
     'withInputs' => null,
     'navigation' => null,
     'withToday' => null,
     'months' => null,
+    'value' => null,
     'mode' => null,
     'size' => null,
+    'name' => null,
 ])
 
 @php
+// We only want to show the name attribute if it has been set manually
+// but not if it has been set from the `wire:model` attribute...
+$showName = isset($name);
+
+if (! isset($name)) {
+    $name = $attributes->whereStartsWith('wire:model')->first();
+}
+
 // Support adding the .self modifier to the wire:model directive...
 if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wireModel->hasModifier('self')) {
     unset($attributes[$wireModel->directive]);
@@ -39,6 +48,15 @@ $sizeClasses = match ($size) {
     'sm' => $weekNumbers ? 'size-9 sm:size-10' : 'size-11 sm:size-10',
     'xs' => $weekNumbers ? 'size-8 sm:size-9' : 'size-10 sm:size-9',
 };
+
+// Add support for `$value` being an array, if for example it's coming from
+// the `old()` helper or if a user prefers to pass data in as an array...
+if (is_array($value)) {
+    $value = match (true) {
+        $mode === 'range' => isset($value['start']) && isset($value['end']) ? $value['start'] . '/' . $value['end'] : null,
+        default => collect($value)->join(','),
+    };
+}
 @endphp
 
 <ui-calendar
@@ -48,6 +66,8 @@ $sizeClasses = match ($size) {
     @if ($mode) mode="{{ $mode }}" @endif
     months="1"
     sm:months="{{ $months }}"
+    @if ($showName) name="{{ $name }}" @endif
+    @if (isset($value)) value="{{ $value }}" @endif
 >
     <?php if ($withInputs): ?>
         <ui-calendar-inputs class="flex items-center p-2 border-b border-zinc-200 dark:border-white/10">

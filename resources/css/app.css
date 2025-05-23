@@ -91,12 +91,18 @@
     background-image: url('/cwd-framework/images/layout/checked.svg');
 }
 
+@utility default-focus-ring {
+    outline: -webkit-focus-ring-color auto 1px;
+}
+
 @utility focus-ring {
-    @apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;
+    /*@apply outline-0 focus:ring-[3px] focus:ring-offset-2 ring-[#2BA3E3]/40;*/
+    @apply focus:default-focus-ring focus:shadow-none;
 }
 
 [data-flux-button] {
     @apply cursor-pointer;
+    @apply focus-ring;
 
     &.primary {
         @apply rounded-none;
@@ -108,7 +114,7 @@
     }
 
     &[data-cds-button-assessment] {
-        @apply text-black hover:text-white;
+        @apply text-black;
         &.pass {
             @apply bg-wa-pass;
         }
@@ -230,6 +236,10 @@
     /* Textarea editor */
     [data-flux-editor] {
         @apply border-cds-gray-300 rounded-none;
+        button {
+            @apply cursor-pointer focus-ring;
+        }
+
         [data-slot="content"] {
             @apply font-systemUi;
         }
@@ -249,8 +259,7 @@
             }
         }
         .ProseMirror-focused {
-            /*@apply focus-ring;*/
-            @apply inset-ring-[3px] inset-ring-[#2BA3E3]/40;
+            @apply focus:default-focus-ring;
         }
     }
 
@@ -341,15 +350,22 @@
 
 [data-flux-tab-group] {
     [data-flux-tabs] {
+        @apply gap-2 h-9 border-none;
+
         [data-focus] {
             @apply focus-ring;
         }
         [data-flux-tab] {
             @apply cursor-pointer;
+            @apply mb-1 px-5 border-none rounded-xs;
+            @apply text-black bg-cds-gray-100;
+            &[data-active] {
+                @apply text-white bg-cds-blue-600;
+            }
         }
     }
     [data-flux-tab-panel] {
-        @apply pt-6;
+        @apply pt-1;
     }
 }
 

@@ -1,5 +1,4 @@
 @props([
-    'name' => $attributes->whereStartsWith('wire:model')->first(),
     'selectableHeader' => null,
     'withConfirmation' => null,
     'weekNumbers' => null,
@@ -12,11 +11,20 @@
     'trigger' => null,
     'invalid' => null,
     'months' => null,
+    'value' => null,
     'size' => null,
+    'name' => null,
     'mode' => null,
 ])
 
 @php
+// We only want to show the name attribute if it has been set manually
+// but not if it has been set from the `wire:model` attribute...
+$showName = isset($name);
+if (! isset($name)) {
+    $name = $attributes->whereStartsWith('wire:model')->first();
+}
+
 // Support adding the .self modifier to the wire:model directive...
 if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wireModel->hasModifier('self')) {
     unset($attributes[$wireModel->directive]);
@@ -58,6 +66,15 @@ $presetArrayOfStrings = (string) is_string($presets) ? explode(' ', $presets) : 
 $presetArray = array_map(function ($preset) {
     return Flux\DateRangePreset::from($preset);
 }, $presetArrayOfStrings);
+
+// Add support for `$value` being an array, if for example it's coming from
+// the `old()` helper or if a user prefers to pass data in as an array...
+if (is_array($value)) {
+    $value = match (true) {
+        $mode === 'range' => isset($value['start']) && isset($value['end']) ? $value['start'] . '/' . $value['end'] : null,
+        default => collect($value)->join(','),
+    };
+}
 @endphp
 
 <flux:with-field :$attributes>
@@ -68,6 +85,8 @@ $presetArray = array_map(function ($preset) {
         @if ($mode) mode="{{ $mode }}" @endif
         months="1"
         sm:months="{{ $months }}"
+        @if ($showName) name="{{ $name }}" @endif
+        @if (isset($value)) value="{{ $value }}" @endif
     >
         <?php if ($trigger === null): ?>
             <flux:date-picker.button :$placeholder :$invalid :$size :$clearable />
