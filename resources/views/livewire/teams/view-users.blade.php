@@ -23,7 +23,12 @@
                 <td class="text-nowrap">
                     <ul>
                         @foreach($user->teams as $team)
-                            <li>{{ $team->name }}</li>
+                            <li>
+                                {{ $team->name }}
+                                @if($team->isTeamAdmin($user))
+                                    (Team Admin)
+                                @endif
+                            </li>
                         @endforeach
                     </ul>
                 </td>
