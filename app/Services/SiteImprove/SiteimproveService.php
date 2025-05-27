@@ -103,12 +103,14 @@ class SiteimproveService
      */
     private function getPageId(string $url): ?string
     {
+        $trimmedUrl = rtrim($url, '/');
+
         $parameters = [
             'search_in' => 'url',
-            'url' => $url,
+            'url' => $trimmedUrl,
         ];
         $response = $this->siteGet('content/pages', $parameters, 3600 * 30);
-        $page = collect($response['items'])->first(fn($item) => $item['url'] === $url);
+        $page = collect($response['items'])->first(fn($item) => rtrim($item['url'], '/') === $trimmedUrl);
 
         return $page ? $page['id'] : null;
     }
@@ -131,7 +133,7 @@ class SiteimproveService
 
         $pages = [];
         foreach ($response['items'] as $item) {
-            $pages[$item['url']] = [
+            $pages[rtrim($item['url'], '/')] = [
                 'id' => $item['id'],
                 'url' => $item['url'],
                 'issues' => $item['issues'],
@@ -171,18 +173,22 @@ class SiteimproveService
 
     public function getPageReportUrl(string $url): ?string
     {
+        $trimmedUrl = rtrim($url, '/');
+
         try {
-            $pages = $this->getPagesWithIssues(urlQuery: $url);
+            $pages = $this->getPagesWithIssues(urlQuery: $trimmedUrl);
         } catch (Exception) {
             return null;
         }
 
-        return $pages[$url]['page_report'] ?? null;
+        return $pages[$trimmedUrl]['page_report'] ?? null;
     }
 
     public static function getPageReportUrlForScope(Scope $scope): ?string
     {
-        $key = "siteimprove_url_$scope->url";
+        $trimmedUrl = rtrim($scope->url, '/');
+
+        $key = "siteimprove_url_$trimmedUrl";
         $cachedValue = Cache::get($key);
         if ($cachedValue === '') {
             Cache::forget($key);
@@ -191,7 +197,7 @@ class SiteimproveService
         $siteimproveService = SiteimproveService::fromScope($scope);
         return Cache::rememberForever(
             key: $key,
-            callback: fn() => $siteimproveService->getPageReportUrl($scope->url) ?? ''
+            callback: fn() => $siteimproveService->getPageReportUrl($trimmedUrl) ?? ''
         );
     }
 

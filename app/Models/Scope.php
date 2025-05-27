@@ -24,7 +24,7 @@ class Scope extends Model
     ];
 
     protected $with = [
-        'project:id,name,team_id,status',
+        'project:id,name,team_id,status,siteimprove_id',
     ];
 
     protected $casts = [

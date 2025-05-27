@@ -1,6 +1,7 @@
 <div>
+    <flux:separator class="mb-2" />
     @if ($this->siteimproveUrl())
-        <flux:subheading class="mb-4">
+        <flux:subheading class="mt-4 mb-4">
             <a href="{{ $this->siteimproveUrl() }}" target="_blank">
                 View Siteimprove Page Report</a>
             <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />

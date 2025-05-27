@@ -13,7 +13,8 @@ class SiteimprovePages extends Component
 
     public function pageInScope($url): ?Scope
     {
-        return $this->project->scopes->firstWhere('url', rtrim($url, '/'));
+        $trimmedUrl = rtrim($url, '/');
+        return $this->project->scopes->filter(fn ($s) => rtrim($s->url, '/') === $trimmedUrl)->first();
     }
 
     public function addToScope($page): void
