@@ -219,6 +219,9 @@
 
         [data-flux-option] {
             @apply font-systemUi text-white font-normal;
+            div {
+                @apply w-0;
+            }
 
             &[data-active] {
                 @apply bg-[#2471a7] rounded-none;
