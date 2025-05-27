@@ -189,7 +189,7 @@
         [data-flux-input] {
             [data-flux-button] {
                 @apply rounded-none bg-cds-blue-600/95;
-                @apply w-8 h-10 -my-2 -mr-2;
+                @apply w-8 h-10 -my-2 -mr-3;
                 [data-flux-icon] {
                     @apply text-white in-[[disabled]]:text-cds-gray-50;
                 }
