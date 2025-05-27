@@ -70,4 +70,12 @@ class Guideline extends Model
     {
         return $this->number < 100 ? $this->number : 'UX';
     }
+
+    public function getCriterionInfo(): string
+    {
+        if ($this->number < 100) {
+            return "WCAG {$this->criterion->number} ({$this->criterion->level})";
+        }
+        return $this->category->name;
+    }
 }

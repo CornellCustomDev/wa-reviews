@@ -15,7 +15,7 @@
         @foreach($guidelines as $guideline)
             <tr>
                 <th>
-                    <x-forms.button :href="route('guidelines.show', $guideline)">{{ $guideline->number }}</x-forms.button>
+                    <x-forms.button :href="route('guidelines.show', $guideline)">{{ $guideline->getNumber() }}</x-forms.button>
                 </th>
                 <td>
                     {{ $guideline->criterion->getLongName() }}

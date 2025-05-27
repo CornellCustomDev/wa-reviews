@@ -5,6 +5,7 @@ namespace App\Livewire\Items;
 use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\ItemForm;
 use App\Models\Issue;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -22,6 +23,12 @@ class CreateItem extends Component
         $this->form->store($this->issue);
 
         return redirect()->route('issue.show', $this->issue);
+    }
+
+    #[Computed(persist: true)]
+    public function getGuidelinesOptions()
+    {
+        return $this->form->getGuidelineSelectArray();
     }
 
     public function render()
