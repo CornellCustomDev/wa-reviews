@@ -13,7 +13,7 @@ class Manage extends Component
     /** redirect to the team page the user is only on one team */
     public function mount(): void
     {
-        if (auth()->user()->teams->count() === 1) {
+        if (! auth()->user()->isAdministrator() && auth()->user()->teams->count() === 1) {
             $this->redirectRoute('teams.show', auth()->user()->teams->first());
         }
     }
