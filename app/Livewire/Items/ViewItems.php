@@ -14,7 +14,6 @@ class ViewItems extends Component
     public Issue $issue;
     public ?Item $editItem;
     public ?string $selectedImage = null;
-    public ?Guideline $guideline = null;
 
     #[On('items-updated')]
     public function refreshIssue(): void
@@ -63,20 +62,6 @@ class ViewItems extends Component
     {
         $this->modal('view-image')->close();
         $this->selectedImage = null;
-    }
-
-    #[On('show-guideline')]
-    public function showGuideline($number): void
-    {
-        $this->guideline = Guideline::find($number);
-        $this->modal('show-guideline')->show();
-    }
-
-    #[On('close-guideline')]
-    public function closeGuideline(): void
-    {
-        $this->modal('show-guideline')->close();
-        $this->guideline = null;
     }
 
     public function delete(Item $item): void
