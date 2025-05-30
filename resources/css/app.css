@@ -349,6 +349,23 @@
         @apply font-sans font-semibold text-cds-gray-900 text-[15px];
         @apply mb-0;
     }
+    [data-flux-text] {
+        @apply text-cds-gray-950!;
+    }
+}
+
+/* Keep data-cds-field-display elements from complicating div.expander */
+div.expander {
+    [data-cds-field-display] {
+        @apply border-none ml-0 pl-0;
+
+        [data-flux-heading] {
+            @apply border-none ml-0 pl-0;
+        }
+        [data-flux-text] {
+            @apply border-none ml-0 pl-0 mb-0;
+        }
+    }
 }
 
 [data-flux-tab-group] {
