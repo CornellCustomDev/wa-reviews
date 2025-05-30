@@ -9,7 +9,7 @@
 
     <table class="table bordered">
         <tr>
-            <th style="width: 200px">WGAC 2 criteria</th>
+            <th style="width: 200px">WCAG 2 criteria</th>
             <td>
                 @foreach($criteria as $criterion)
                     <a href="{{ route('criteria.show', $criterion) }}">{{ $criterion->getLongName() }}</a>
