@@ -15,7 +15,7 @@
         <tr>
             <th>Project</th>
             <th>Site</th>
-            <th>Team</th>
+            <th>Reviewer</th>
             <th style="width: 150px">Created</th>
             <th style="width: 100px;">Status</th>
             <th style="width: 100px;">Actions</th>
@@ -27,8 +27,13 @@
                 <td><a href="{{ route('project.show', $project) }}">{{ $project->name }}</a></td>
                 <td><a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
                 <td>
-                    @if($project->team)
-                        <a href="{{ route('teams.show', $project->team) }}">{{ $project->team->name }}</a>
+                    @if($project->reviewer)
+                        {{ $project->reviewer->name }}
+                    @else
+                        Not assigned
+                    @endif
+                    @if($this->showTeams() && $project->team)
+                        (<a href="{{ route('teams.show', $project->team) }}">{{ $project->team->name }}</a>)
                     @endif
                 </td>
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
