@@ -41,6 +41,7 @@
         @endforeach
         </tbody>
     </table>
+    <livewire:issues.item-show-guideline />
 
     @can('update', $scope->project)
         <x-forms.button.add :href="route('scope.issue.create', $scope)" icon="plus-circle">Add Issue</x-forms.button.add>

@@ -61,6 +61,7 @@
                     @endforeach
                 </tbody>
             </table>
+            <livewire:issues.item-show-guideline />
         @else
             <p>No issues found</p>
         @endif
