@@ -1,5 +1,5 @@
 <div>
-    <h1>{{ $this->project->name }}: Add Issue</h1>
+    <h1>{{ $project->name }}: Add Issue</h1>
 
     <form wire:submit="save">
         <x-forms.select
@@ -8,7 +8,7 @@
             placeholder="Choose scope..."
             wire:model="form.scope_id"
             :options="$this->form->scopeOptions"
-            description="Select the page or scope where the issue occurs."
+            description="Select the page or scope where the issue occurs or <a href='{{ route('project.scope.create', $project) }}'>add a scope</a>."
         />
 
         @include('livewire.issues.fields', ['form' => $form])
