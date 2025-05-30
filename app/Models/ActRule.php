@@ -48,7 +48,7 @@ class ActRule extends Model
     {
         $metadata = $this->metadata;
         $rule_type = $metadata['rule_type'];
-        $accessibility_requirements = $metadata['accessibility_requirements'];
+        $accessibility_requirements = $metadata['accessibility_requirements'] ?? [];
 
         return $rule_type . ' - ' . join(', ', array_keys($accessibility_requirements));
     }

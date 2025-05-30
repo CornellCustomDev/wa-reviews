@@ -11,7 +11,7 @@
 
         <flux:tooltip.content class="max-w-[600px]">
             @if($item->guideline->number < 100)
-                <p>{{ $item->assessment->description() }} for Guideline {{ $item->guideline->number }}: {{ $item->guideline->name }}</p>
+                <p>{{ $item->assessment->description() }} for Guideline {{ $item->guideline->number }}: {{ $item->guideline->getCriterionInfo() }} - {{ $item->guideline->name }}</p>
             @else
                 <p>{{ $item->assessment->description() }} for Best Practice: {{ $item->guideline->name }}</p>
             @endif

@@ -61,11 +61,11 @@
                     @endforeach
                 </tbody>
             </table>
+            <livewire:issues.item-show-guideline />
         @else
             <p>No issues found</p>
         @endif
     @else
-        <flux:separator class="mb-2" />
         No Siteimprove page report available
     @endif
 </div>
