@@ -3,34 +3,30 @@
 ])
 <div>
     <div class="flex items-center ml-2 mb-2 float-right">
-        @if($this->chats()->isNotEmpty())
-            <flux:dropdown>
-                <x-forms.button icon="chat-bubble-left" title="Select Chat" size="sm" />
+        <flux:dropdown>
+            <x-forms.button icon="chat-bubble-left" title="Select Chat" size="sm" />
 
-                <x-forms.menu>
-                    <x-forms.menu.item icon="pencil-square" wire:click="newChat()">
-                        New Chat
+            <x-forms.menu>
+                <x-forms.menu.item icon="pencil-square" wire:click="newChat()">
+                    New Chat
+                </x-forms.menu.item>
+                @if($this->chats()->get($selectedChatKey))
+                    <x-forms.menu.item
+                        icon="trash"
+                        wire:click.prevent="deleteChat()"
+                        wire:confirm="Are you sure you want to delete the chat '{{ $this->chats()->get($selectedChatKey)->name }}'?"
+                    >
+                        Delete Chat
                     </x-forms.menu.item>
-                    @if($this->chats()->get($selectedChatKey))
-                        <x-forms.menu.item
-                            icon="trash"
-                            wire:click.prevent="deleteChat()"
-                            wire:confirm="Are you sure you want to delete the chat '{{ $this->chats()->get($selectedChatKey)->name }}'?"
-                        >
-                            Delete Chat
-                        </x-forms.menu.item>
-                    @endif
                     <flux:menu.separator />
-                    @foreach($this->chats() as $chatHistory)
-                        <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat('{{ $chatHistory->ulid }}')">
-                            {{ $chatHistory->name }}
-                        </x-forms.menu.item>
-                    @endforeach
-                </x-forms.menu>
-            </flux:dropdown>
-        @else
-            <x-forms.button icon="pencil-square" wire:click="newChat()" label="New Chat" />
-        @endif
+                @endif
+                @foreach($this->chats() as $chatHistory)
+                    <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat('{{ $chatHistory->ulid }}')">
+                        {{ $chatHistory->name }}
+                    </x-forms.menu.item>
+                @endforeach
+            </x-forms.menu>
+        </flux:dropdown>
     </div>
 
     <div class="mb-3">
