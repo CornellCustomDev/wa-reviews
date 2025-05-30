@@ -1,5 +1,5 @@
 @props([
-    'description' => 'This AI chatbot answers questions about accessibility guidelines and issues.',
+    'description' => 'This AI chatbot answers questions about accessibility guidelines and issues. As with all AI tools, it may provide incorrect or incomplete information. Always verify any results that you use.',
 ])
 <div>
     <div class="flex items-center ml-2 mb-2 float-right">
@@ -91,7 +91,6 @@
           ])
           data-cds-chat
           x-ref="chatContainer"
-
         >
             @foreach ($this->chatMessages() as $message)
                 @if(isset($message['tool_calls']))
@@ -165,6 +164,11 @@
             toolbar="bold italic | link code ~ undo redo"
             x-ref="userMessage"
         />
+
+        <div class="text-xs text-gray-500 -mt-2 mb-4">
+            {{ \App\Enums\AIWisdom::getOne() }}
+        </div>
+
         <x-forms.button type="submit">Send</x-forms.button>
         <span wire:loading.delay wire:target="sendUserMessage" role="status" aria-live="polite">Analyzing...</span>
     </form>

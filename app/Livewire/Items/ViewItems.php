@@ -2,10 +2,12 @@
 
 namespace App\Livewire\Items;
 
+use App\Enums\AIStatus;
 use App\Events\ItemChanged;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -32,6 +34,14 @@ class ViewItems extends Component
     {
         $this->modal('edit-item')->close();
         $this->editItem = null;
+    }
+
+    #[Computed]
+    public function hasUnreviewedAI(): bool
+    {
+        return $this->issue->items
+            ->filter(fn(Item $item) => $item->hasUnreviewedAI())
+            ->isNotEmpty();
     }
 
     public function acceptAI(Item $item): void
