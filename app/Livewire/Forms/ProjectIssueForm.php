@@ -5,11 +5,8 @@ namespace App\Livewire\Forms;
 use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Project;
-use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
-use Illuminate\Support\Collection;
 use Livewire\Attributes\Validate;
-use Livewire\Component;
 use Livewire\Form;
 
 class ProjectIssueForm extends Form
@@ -25,27 +22,6 @@ class ProjectIssueForm extends Form
     #[Validate('string')]
     public string $recommendation = '';
     public bool $generateGuidelines = false;
-
-    public Collection $scopeOptions;
-
-    public function __construct(
-        protected Component $component,
-        protected $propertyName
-    )
-    {
-        parent::__construct($component, $this->propertyName);
-
-        if (isset($this->component->project)) {
-            $this->scopeOptions = Scope::where('project_id', $this->component->project->id)
-                ->get()
-                ->map(fn($scope) => [
-                    'value' => $scope->id,
-                    'option' => $scope->title,
-                ]);
-        } else {
-            $this->scopeOptions = collect();
-        }
-    }
 
     public function setModel(Issue $issue): void
     {

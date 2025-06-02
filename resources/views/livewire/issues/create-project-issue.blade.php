@@ -7,9 +7,15 @@
             label="Scope"
             placeholder="Choose scope..."
             wire:model="form.scope_id"
-            :options="$this->form->scopeOptions"
-            description="Select the page or scope where the issue occurs or <a href='{{ route('project.scope.create', $project) }}'>add a scope</a>."
-        />
+            :options="$this->scopeOptions()"
+        >
+            <x-slot name="description">
+                Select the page or scope where the issue occurs
+                @can('create', [\App\Models\Scope::class, $project])
+                    or <a href='#' wire:click.prevent='addScope()'>add a scope</a>.
+                @endcan
+            </x-slot>
+        </x-forms.select>
 
         @include('livewire.issues.fields', ['form' => $form])
 
@@ -25,6 +31,7 @@
 
         <x-forms.button.submit-group submit-name="Add Issue" />
     </form>
+    <livewire:scopes.add-scope :project="$project" />
 </div>
 
 <x-slot:sidebarPrimary>
