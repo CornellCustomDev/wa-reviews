@@ -4,13 +4,11 @@
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div class="col-span-3 mb-4">
             <div class="border rounded-sm border-cds-gray-200 p-4" x-data="{ edit: $wire.entangle('showEdit').live }">
-                @if(!$project->isCompleted())
-                    @can('update', $project)
-                        <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
-                        <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
-                        <livewire:projects.upload-project-data :project="$project"/>
-                    @endcan
-                @endif
+                @can('update', $project)
+                    <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
+                    <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
+                    <livewire:projects.upload-project-data :project="$project"/>
+                @endcan
 
                 <div x-show="!edit">
                     <flux:subheading class="items-center">
@@ -63,9 +61,11 @@
         <flux:tabs wire:model.live="tab">
             <flux:tab name="issues">Issues ({{ $project->issues()->count() }})</flux:tab>
             <flux:tab name="scope">Scope ({{ $project->scopes()->count() }})</flux:tab>
-            <flux:tab name="siteimprove">Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})</flux:tab>
+            <flux:tab name="siteimprove">
+                Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})
+            </flux:tab>
             <flux:tab name="report">Report</flux:tab>
-            @can('manageProject', $project)
+            @can('manage-projects', $project->team)
                 <flux:tab name="log">Activity</flux:tab>
             @endcan
         </flux:tabs>
@@ -85,15 +85,13 @@
                     <livewire:projects.report-data :$project />
                 </div>
                 <div class="col-span-2">
-                    @can('manage-project', $project)
-                        @if($project->isCompleted())
-                            <livewire:projects.report-viewers :$project />
-                        @endif
+                    @can('update-report-viewers', $project)
+                        <livewire:projects.report-viewers :$project />
                     @endcan
                 </div>
             </div>
         </flux:tab.panel>
-        @can('manageProject', $project)
+        @can('manage-projects', $project->team)
             <flux:tab.panel name="log">
                 <livewire:projects.activity-log :$project />
             </flux:tab.panel>

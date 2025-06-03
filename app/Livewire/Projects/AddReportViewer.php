@@ -64,7 +64,7 @@ class AddReportViewer extends Component
 
     public function save()
     {
-        $this->authorize('manage-project', $this->project);
+        $this->authorize('update-report-viewers', $this->project);
 
         $this->validate();
 

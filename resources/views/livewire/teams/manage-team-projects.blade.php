@@ -42,7 +42,7 @@
         </tbody>
     </table>
 
-    @can('create-project', $team)
+    @can('create-projects', $team)
         <x-forms.button.add :href="route('teams.project.create', ['team' => $team->id])">Create New Project</x-forms.button.add>
     @endcan
 </div>
