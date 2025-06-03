@@ -8,6 +8,7 @@ use InvalidArgumentException;
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
+    use WithFakeSiteimproveService;
 
     protected static function fixture(string $name, bool $json = false): array|string
     {

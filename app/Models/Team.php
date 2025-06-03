@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Roles;
 use App\Events\UserChanged;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
@@ -11,7 +12,7 @@ use Laratrust\Models\Team as LaratrustTeam;
 
 class Team extends LaratrustTeam
 {
-//    public $guarded = [];
+    use HasFactory;
 
     public function users(): BelongsToMany
     {
