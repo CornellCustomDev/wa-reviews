@@ -103,6 +103,7 @@
 [data-flux-button] {
     @apply cursor-pointer;
     @apply focus-ring;
+    @apply font-verdana;
 
     &.primary {
         @apply rounded-none;
