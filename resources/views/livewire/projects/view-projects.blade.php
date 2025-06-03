@@ -1,11 +1,24 @@
 <div>
-    @if(auth()->user()->teams()->count() == 1)
-        @php($team = auth()->user()->teams()->first())
-        @can('create-project', $team)
-            <div class="cwd-component align-right">
-                <x-forms.button.add :href="route('teams.project.create', ['team' => $team->id])">Create New Project</x-forms.button.add>
-            </div>
-        @endcan
+    @php($teamsWithPermission = $this->getTeamsWithCreateProjectPermission())
+    @if($teamsWithPermission->count() == 1)
+        <div class="float-right">
+            <x-forms.button.add :href="route('teams.project.create', $teamsWithPermission->first())">
+                Create New Project
+            </x-forms.button.add>
+        </div>
+    @elseif($teamsWithPermission->count() > 1)
+        <div class="float-right">
+            <flux:dropdown>
+                <x-forms.button icon="plus-circle">Create New Project</x-forms.button>
+                <x-forms.menu>
+                    @foreach ($teamsWithPermission as $team)
+                        <x-forms.menu.item icon="plus" href="{{ route('teams.project.create', $team) }}">
+                            {{ $team->name }}
+                        </x-forms.menu.item>
+                    @endforeach
+                </x-forms.menu>
+            </flux:dropdown>
+        </div>
     @endif
 
     <h1>Projects</h1>
@@ -25,7 +38,8 @@
         @foreach($this->projects as $project)
             <tr wire:key="{{ $project->id }}">
                 <td><a href="{{ route('project.show', $project) }}">{{ $project->name }}</a></td>
-                <td><a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
+                <td><a href="{{ $project->site_url }}"
+                       target="_blank">{{ Str::limit($project->site_url, 40) }}</td>
                 <td>
                     @if($project->reviewer)
                         {{ $project->reviewer->name }}

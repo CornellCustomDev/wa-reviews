@@ -64,11 +64,13 @@ class TeamPolicy
 
     public function createProjects(User $user, Team $team): bool
     {
-        return $user->isAbleTo(Permissions::CreateTeamProjects, $team);
+        return $user->isAbleTo(Permissions::CreateTeamProjects, $team)
+            || $user->isAbleTo(Permissions::ManageTeams);
     }
 
     public function editProjects(User $user, Team $team): bool
     {
-        return $user->isAbleTo(Permissions::EditProjects, $team);
+        return $user->isAbleTo(Permissions::EditProjects, $team)
+            || $user->isAbleTo(Permissions::ManageTeams);
     }
 }
