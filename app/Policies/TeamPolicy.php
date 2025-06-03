@@ -36,17 +36,6 @@ class TeamPolicy
             || $user->isAbleTo(Permissions::ManageTeams);
     }
 
-    public function createProject(User $user, Team $team): bool
-    {
-        // TODO: Create a permission for CreateTeamProjects. and add to reviewers
-        if ($team->isReviewer($user)) {
-            return true;
-        }
-
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $team)
-            || $user->isAbleTo(Permissions::ManageTeams);
-    }
-
     public function delete(User $user, Team $team): bool
     {
         // If a team has projects, it cannot be deleted
@@ -65,5 +54,21 @@ class TeamPolicy
     public function forceDelete(User $user, Team $team): bool
     {
         return false;
+    }
+
+    public function manageProjects(User $user, Team $team): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeamProjects, $team)
+            || $user->isAbleTo(Permissions::ManageTeams);
+    }
+
+    public function createProjects(User $user, Team $team): bool
+    {
+        return $user->isAbleTo(Permissions::CreateTeamProjects, $team);
+    }
+
+    public function editProjects(User $user, Team $team): bool
+    {
+        return $user->isAbleTo(Permissions::EditProjects, $team);
     }
 }

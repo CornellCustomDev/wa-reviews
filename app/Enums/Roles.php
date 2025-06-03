@@ -26,14 +26,17 @@ enum Roles: string
                 Permissions::ManageTeams->value,
                 Permissions::ManageTeamMembers->value,
                 Permissions::ManageTeamProjects->value,
+                Permissions::CreateTeamProjects->value,
                 Permissions::EditProjects->value,
             ],
             self::TeamAdmin->value => [
                 Permissions::ManageTeamMembers->value,
                 Permissions::ManageTeamProjects->value,
+                Permissions::CreateTeamProjects->value,
                 Permissions::EditProjects->value,
             ],
             self::Reviewer->value => [
+                Permissions::CreateTeamProjects->value,
                 Permissions::EditProjects->value,
             ],
             default => [],

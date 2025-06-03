@@ -20,7 +20,7 @@ class UploadProjectData extends Component
 
     public function save(): void
     {
-        $this->authorize('manage-project', $this->project);
+        $this->authorize('update', $this->project);
 
         $this->validate([
             'checklist' => 'required|file|mimes:xlsx',

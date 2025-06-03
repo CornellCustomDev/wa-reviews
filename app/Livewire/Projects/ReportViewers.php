@@ -13,7 +13,7 @@ class ReportViewers extends Component
 
     public function removeReportViewer(User $user): void
     {
-        $this->authorize('manage-project', $this->project);
+        $this->authorize('update-report-viewers', $this->project);
 
         $this->project->removeReportViewer($user);
 

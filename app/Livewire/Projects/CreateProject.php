@@ -15,7 +15,7 @@ class CreateProject extends Component
 
     public function save()
     {
-        $this->authorize('create-project', $this->team);
+        $this->authorize('create-projects', $this->team);
         $project = $this->form->store($this->team);
 
         return redirect()->route('project.show', $project);

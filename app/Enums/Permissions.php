@@ -13,6 +13,7 @@ enum Permissions: string
     // Teams
     case ManageTeamMembers = 'manage team members';
     case ManageTeamProjects = 'manage team projects';
+    case CreateTeamProjects = 'create team projects';
 
     // Members
     case EditProjects = 'edit projects';
