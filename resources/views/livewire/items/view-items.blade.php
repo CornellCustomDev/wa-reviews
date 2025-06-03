@@ -7,6 +7,13 @@
 
     <h2>Applicable Guidelines</h2>
 
+    @if($this->hasUnreviewedAI)
+        <div class="panel accent-gold fill">
+            <strong>Note:</strong> Some items have AI-generated recommendations that have not been reviewed yet.
+            Please review them before proceeding.
+        </div>
+    @endif
+
     <table class="table striped bordered">
         <thead>
         <tr>

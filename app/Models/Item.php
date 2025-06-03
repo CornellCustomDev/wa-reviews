@@ -65,6 +65,11 @@ class Item extends Model
         ]);
     }
 
+    public function hasUnreviewedAi(): bool
+    {
+        return $this->ai_status === AIStatus::Generated;
+    }
+
     public function wasAiGenerated(): bool
     {
         return ! empty($this->ai_status);

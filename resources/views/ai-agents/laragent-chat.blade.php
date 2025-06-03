@@ -1,36 +1,32 @@
 @props([
-    'description' => 'This AI chatbot answers questions about accessibility guidelines and issues.',
+    'description' => 'This AI chatbot answers questions about accessibility guidelines and issues. As with all AI tools, it may provide incorrect or incomplete information. Always verify any results that you use.',
 ])
 <div>
     <div class="flex items-center ml-2 mb-2 float-right">
-        @if($this->chats()->isNotEmpty())
-            <flux:dropdown>
-                <x-forms.button icon="chat-bubble-left" title="Select Chat" size="sm" />
+        <flux:dropdown>
+            <x-forms.button icon="chat-bubble-left" title="Select Chat" size="sm" />
 
-                <x-forms.menu>
-                    <x-forms.menu.item icon="pencil-square" wire:click="newChat()">
-                        New Chat
+            <x-forms.menu>
+                <x-forms.menu.item icon="pencil-square" wire:click="newChat()">
+                    New Chat
+                </x-forms.menu.item>
+                @if($this->chats()->get($selectedChatKey))
+                    <x-forms.menu.item
+                        icon="trash"
+                        wire:click.prevent="deleteChat()"
+                        wire:confirm="Are you sure you want to delete the chat '{{ $this->chats()->get($selectedChatKey)->name }}'?"
+                    >
+                        Delete Chat
                     </x-forms.menu.item>
-                    @if($this->chats()->get($selectedChatKey))
-                        <x-forms.menu.item
-                            icon="trash"
-                            wire:click.prevent="deleteChat()"
-                            wire:confirm="Are you sure you want to delete the chat '{{ $this->chats()->get($selectedChatKey)->name }}'?"
-                        >
-                            Delete Chat
-                        </x-forms.menu.item>
-                    @endif
                     <flux:menu.separator />
-                    @foreach($this->chats() as $chatHistory)
-                        <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat('{{ $chatHistory->ulid }}')">
-                            {{ $chatHistory->name }}
-                        </x-forms.menu.item>
-                    @endforeach
-                </x-forms.menu>
-            </flux:dropdown>
-        @else
-            <x-forms.button icon="pencil-square" wire:click="newChat()" label="New Chat" />
-        @endif
+                @endif
+                @foreach($this->chats() as $chatHistory)
+                    <x-forms.menu.item icon="chat-bubble-left" wire:click="selectChat('{{ $chatHistory->ulid }}')">
+                        {{ $chatHistory->name }}
+                    </x-forms.menu.item>
+                @endforeach
+            </x-forms.menu>
+        </flux:dropdown>
     </div>
 
     <div class="mb-3">
@@ -95,7 +91,6 @@
           ])
           data-cds-chat
           x-ref="chatContainer"
-
         >
             @foreach ($this->chatMessages() as $message)
                 @if(isset($message['tool_calls']))
@@ -169,6 +164,11 @@
             toolbar="bold italic | link code ~ undo redo"
             x-ref="userMessage"
         />
+
+        <div class="text-xs text-gray-500 -mt-2 mb-4">
+            {{ \App\Enums\AIWisdom::getOne() }}
+        </div>
+
         <x-forms.button type="submit">Send</x-forms.button>
         <span wire:loading.delay wire:target="sendUserMessage" role="status" aria-live="polite">Analyzing...</span>
     </form>

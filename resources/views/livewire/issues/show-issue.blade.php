@@ -21,10 +21,10 @@
 
         <div x-show="!edit">
             @if($issue->scope?->url)
-                <flux:subheading class="items-center">
+                <x-forms.field-display variation="inline" label="Page URL">
                     <a href="{{ $issue->scope->url }}" target="_blank">{{ $issue->scope->url }}</a>
                     <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
-                </flux:subheading>
+                </x-forms.field-display>
             @endif
             @if($issue->siaRule)
                 <flux:subheading class="items-center">
@@ -34,13 +34,14 @@
                     </a>
                 </flux:subheading>
             @endif
-            <flux:heading class="mb-4">
-                <flux:icon.cursor-arrow-ripple class="inline-block" variant="mini" />
+            <x-forms.field-display variation="inline" label="Target Element">
                 {!! $issue->target !!}
-            </flux:heading>
+            </x-forms.field-display>
 
             @if($issue->description)
-                <p>{!! $issue->description !!}</p>
+                <x-forms.field-display label="Description">
+                    {!! $issue->description !!}
+                </x-forms.field-display>
             @endif
         </div>
 

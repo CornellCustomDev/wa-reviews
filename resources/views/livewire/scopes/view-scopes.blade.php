@@ -45,6 +45,11 @@
     </table>
 
     @can('create', [\App\Models\Scope::class, $project])
-        <x-forms.button.add :href="route('project.scope.create', $project)">Add Scope</x-forms.button.add>
+        <flux:modal.trigger name="add-scope">
+            <x-forms.button icon="plus-circle">
+                Add Scope
+            </x-forms.button>
+        </flux:modal.trigger>
+        <livewire:scopes.add-scope :project="$project" />
     @endcan
 </div>

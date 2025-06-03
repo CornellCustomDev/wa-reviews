@@ -24,6 +24,12 @@ class ViewProjects extends Component
             ->all();
     }
 
+    #[Computed]
+    public function showTeams(): bool
+    {
+        return auth()->user()->isAdministrator() || auth()->user()->teams->count() > 1;
+    }
+
     public function delete(Project $project): void
     {
         $this->authorize('delete', $project);

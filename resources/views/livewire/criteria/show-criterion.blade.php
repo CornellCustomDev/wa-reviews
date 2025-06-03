@@ -13,7 +13,7 @@
 
     <table class="table bordered">
         <tr>
-            <th style="width: 120px">WGAC 2 level</th>
+            <th style="width: 120px">WCAG 2 level</th>
             <td>{{ $criterion->level }}</td>
         </tr>
     </table>

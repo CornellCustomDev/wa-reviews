@@ -103,7 +103,7 @@
                     @endif
                     <h5>WCAG 2 Success Criterion: {{ $item->guideline->criterion->getLongName() }}</h5>
                     <x-forms.field-display label="Assessment" variation="inline" @class(['mb-0!' => $item->impact])>
-                        {{ $item->assessment->description() }}
+                        {{ $item->assessment->getDescription() }}
                     </x-forms.field-display>
 
                     @if($item->impact)

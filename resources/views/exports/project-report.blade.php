@@ -9,7 +9,7 @@
     $border = 'border: 1px solid #000;';
     $cellHeading = "$heading $backgroundDark $border";
     $wrap = 'word-wrap: normal;';
-    $columns = '14';
+    $columns = '15';
 @endphp
 <table>
     <tr>
@@ -54,6 +54,7 @@
         <td style="{{ $cellHeading }}" width="350px">Images</td>
         <td style="{{ $cellHeading }}" width="100px">Impact</td>
         <td style="{{ $cellHeading }}">CE Issue</td>
+        <td style="{{ $cellHeading }}" width="300px">Barrier Mitigation Required</td>
     </tr>
     @foreach($issuesByScope as $scope => $issues)
         @php($scope = $issues[0]->scope)
@@ -79,16 +80,16 @@
                         <p>{{ $item->guideline->name }}</p>
                     </td>
                     <td style="background-color: #caff37; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment->value() == 'Pass' ? 'X' : ' ' }}
+                        {{ $item->assessment == \App\Enums\Assessment::Pass ? 'X' : ' ' }}
                     </td>
                     <td style="background-color: #f6b26b; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment->value() == 'Warn' ? 'X' : ' ' }}
+                        {{ $item->assessment == \App\Enums\Assessment::Warn ? 'X' : ' ' }}
                     </td>
                     <td style="background-color: #ea9999; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment->value() == 'Fail' ? 'X' : ' ' }}
+                        {{ $item->assessment == \App\Enums\Assessment::Fail ? 'X' : ' ' }}
                     </td>
                     <td style="background-color: #9fc5e8; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment->value() == 'N/A' ? 'X' : ' ' }}
+                        {{ $item->assessment == \App\Enums\Assessment::Not_Applicable ? 'X' : ' ' }}
                     </td>
                     <td>
                         {{ $item->issue->target }}
@@ -115,6 +116,9 @@
                     </td>
                     <td>
                         {{ $item->ce_issue ? 'X' : ' ' }}
+                    </td>
+                    <td>
+                        {{ $item->issue->needs_mitigation ? 'X' : ' ' }}
                     </td>
                 </tr>
             @endforeach

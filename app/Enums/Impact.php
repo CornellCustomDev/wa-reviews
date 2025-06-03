@@ -13,6 +13,11 @@ enum Impact: string
 
     public function getDescription(): string
     {
+        return $this->value;
+    }
+
+    public function getLongDescription(): string
+    {
         return match ($this) {
             self::Critical => 'A severe barrier that prevents users with affected disabilities from being able to complete primary tasks or access main content.',
             self::Serious => 'A barrier that will make task completion or content access significantly more difficult and time consuming for individuals with affected disabilities, or that may prevent affected users from completing secondary tasks or accessing supplemental content without outside support.',

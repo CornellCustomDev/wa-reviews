@@ -8,7 +8,7 @@
                     <div class="two-col">
                         <div>
                             <ul class="custom inline no-bullet">
-                                <li><a href="https://www.cornell.edu">Cornell University</a> ©2021</li>
+                                <li><a href="https://www.cornell.edu">Cornell University</a> ©{{ now()->year }}</li>
                                 <li><a href="https://privacy.cornell.edu/">University Privacy</a></li>
                             </ul>
                         </div>

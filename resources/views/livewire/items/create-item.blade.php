@@ -33,23 +33,38 @@
     <p>
         An observation provides the assessment against a specific success criterion.
     </p>
-    <x-forms.field-display label="Assessment">
-        <ul>
-            <li>
-                <strong>Fail</strong>: The item does not meet the success criterion.
-            </li>
-            <li>
-                <strong>Warn</strong>: No strict failures, but the user's experinece is negatively
-                impacted or goes against best practices.
-            </li>
-            <li>
-                <strong>Pass</strong>: The item meets the success criterion.
-            </li>
-            <li>
-                <strong>N/A</strong>: The item is not applicable to the success criterion.
-            </li>
-        </ul>
-    </x-forms.field-display>
+
+    <div class="expander">
+        <h4>Assessment</h4>
+        <div>
+            @foreach(\App\Enums\Assessment::cases() as $case)
+                <div data-cds-field-display class="mb-1.5!">
+                    <flux:heading>
+                        {{ $case->getDescription() }}
+                    </flux:heading>
+                    <flux:text>
+                        {{ $case->getLongDescription() }}
+                    </flux:text>
+                </div>
+            @endforeach
+        </div>
+
+        <h4>Impact</h4>
+        <div>
+            @foreach(\App\Enums\Impact::cases() as $case)
+                <div data-cds-field-display class="mb-1.5!">
+                    <flux:heading>
+                        {{ $case->value() }}
+                    </flux:heading>
+                    <flux:text>
+                        {{ $case->getLongDescription() }}
+                    </flux:text>
+                </div>
+            @endforeach
+        </div>
+    </div>
+
+    <flux:separator class="mb-4 clear-both" />
 
     <div x-data="{ showChat: false }">
         <h3>AI Assistance</h3>

@@ -37,8 +37,13 @@ trait NamedEnum
             ->toArray();
     }
 
-    public function getDescription(): string
+    /**
+     * Returns null by default. Override this method in the enum to provide a description.
+     *
+     * @return string|null
+     */
+    public function getDescription(): ?string
     {
-        return $this->value();
+        return null;
     }
 }

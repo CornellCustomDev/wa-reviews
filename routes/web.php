@@ -37,9 +37,8 @@ use App\Models\Team;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', fn () => view('welcome'))->name('welcome');
+Route::get('/help', fn () => view('help'))->name('help');
 
 Route::group(['middleware' => [CUAuth::class]], function () {
     Route::get('login', fn() => redirect()->route('cu-auth.sso-login'))->name('login');

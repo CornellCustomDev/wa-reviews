@@ -7,6 +7,7 @@ use App\Models\Scope;
 use App\Models\ScopeGuideline;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ViewScopes extends Component
@@ -16,7 +17,7 @@ class ViewScopes extends Component
     #[Computed]
     public function scopes(): mixed
     {
-        return $this->project->scopes;
+        return $this->project->scopes()->get();
     }
 
     #[Computed]
@@ -31,6 +32,12 @@ class ViewScopes extends Component
                 $progress = round($total ? $count / $total * 100 : 0).'%';
                 return [$group->first()->scope_id => $progress];
             });
+    }
+
+    #[On('refresh-scopes')]
+    public function refreshScopes(): void
+    {
+        unset($this->scopes);
     }
 
     public function delete(Scope $scope): void
