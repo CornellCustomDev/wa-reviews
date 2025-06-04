@@ -11,8 +11,12 @@ class ProjectPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->teams()->exists()
-            || $user->isAbleTo(Permissions::ManageTeams);
+        if ($user->isAbleTo(Permissions::ManageTeams) || $user->teams()->exists()) {
+            return true;
+        }
+
+        // If the user is a report viewer, they can view projects
+        return Project::getReportViewerProjects($user)->isNotEmpty();
     }
 
     public function view(User $user, Project $project): bool
