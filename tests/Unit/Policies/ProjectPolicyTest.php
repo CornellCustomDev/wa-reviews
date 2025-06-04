@@ -5,7 +5,6 @@ namespace Tests\Unit\Policies;
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
 use App\Models\Project;
-use App\Models\ProjectAssignment;
 use App\Models\Team;
 use App\Models\User;
 use App\Policies\ProjectPolicy;
@@ -17,6 +16,40 @@ use Tests\UsesTestDatabase;
 class ProjectPolicyTest extends TestCase
 {
     use UsesTestDatabase;
+
+    #[DataProvider('viewProjectProvider')]
+    #[Test] public function view_project($role, $isTeamMember, $isReportViewer, $status, $hasPermission, $description)
+    {
+        $user = User::factory()->create();
+        $projectTeam = Team::factory()->create();
+        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $project = $this->setupProject($projectTeam, $user, isReportViewer: $isReportViewer, status: $status);
+
+        $result = (new ProjectPolicy())->view($user, $project);
+
+        $this->assertEquals($hasPermission, $result, $description);
+    }
+
+    public static function viewProjectProvider(): array
+    {
+        // role, isTeamMember, isReportViewer, status, hasPermission, description
+        return [
+            [Roles::SiteAdmin, false, false, ProjectStatus::InProgress, true, 'Site admin can view in-progress project'],
+            [Roles::TeamAdmin, true, false, ProjectStatus::InProgress, true, 'Team admin can view in-progress project'],
+            [null, true, false, ProjectStatus::InProgress, true, 'Team member can view in-progress project'],
+
+            [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can view non-started project'],
+            [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can view non-started project'],
+            [null, true, false, ProjectStatus::NotStarted, true, 'Team member can view non-started project'],
+
+            [Roles::TeamAdmin, false, false, ProjectStatus::Completed, false, 'Other team admin cannot view completed project'],
+            [null, false, false, ProjectStatus::Completed, false, 'Other team member cannot view completed project'],
+
+            [null, false, true, ProjectStatus::NotStarted, false, 'Report viewer cannot view not-started project'],
+            [null, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot view in-progress project'],
+            [null, false, true, ProjectStatus::Completed, true, 'Report viewer can view completed project'],
+        ];
+    }
 
     #[DataProvider('createProjectProvider')]
     #[Test] public function create_project($role, $isTeamMember, $hasPermission, $description)
@@ -50,7 +83,7 @@ class ProjectPolicyTest extends TestCase
         $user = User::factory()->create();
         $projectTeam = Team::factory()->create();
         $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, $isReviewer, $status);
+        $project = $this->setupProject($projectTeam, $user, $isReviewer, status: $status);
 
         $result = (new ProjectPolicy())->update($user, $project);
 
@@ -72,12 +105,11 @@ class ProjectPolicyTest extends TestCase
 
             [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can update not-started project'],
             [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can update not-started project'],
-            // TODO: Add permission for reviewers to update not-started projects
-            [Roles::Reviewer, true, true, ProjectStatus::NotStarted, false, 'Reviewer cannot update not-started project'],
+            [Roles::Reviewer, true, true, ProjectStatus::NotStarted, true, 'Reviewer can update not-started project'],
             [Roles::Reviewer, true, false, ProjectStatus::NotStarted, false, 'Team member cannot update not-started project'],
 
             [Roles::TeamAdmin, false, false, ProjectStatus::InProgress, false, 'Other team admin cannot update in-progress project'],
-//            [Roles::Reviewer, false, true, ProjectStatus::InProgress, false, 'Other team reviewer cannot update in-progress project'],
+            [Roles::Reviewer, false, true, ProjectStatus::InProgress, false, 'Other team reviewer cannot update in-progress project'],
         ];
     }
 
@@ -94,7 +126,13 @@ class ProjectPolicyTest extends TestCase
         }
     }
 
-    private function setupProject(Team $projectTeam, ?User $user = null, bool $isReviewer = false, ?ProjectStatus $status = null): Project
+    private function setupProject(
+        Team $projectTeam,
+        ?User $user = null,
+        bool $isReviewer = false,
+        bool $isReportViewer = false,
+        ?ProjectStatus $status = null
+    ): Project
     {
         $project = Project::factory()->create([
             'team_id' => $projectTeam->id,
@@ -104,6 +142,9 @@ class ProjectPolicyTest extends TestCase
             $project->assignment()->create([
                 'user_id' => $user->id,
             ]);
+        }
+        if ($isReportViewer) {
+            $project->reportViewers()->attach($user->id);
         }
 
         return $project;
