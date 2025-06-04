@@ -10,7 +10,8 @@ class TeamPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->teams()->exists();
+        return $user->teams()->exists()
+            || $user->isAbleTo(Permissions::ManageTeams);
     }
 
     public function view(User $user, Team $team): bool
