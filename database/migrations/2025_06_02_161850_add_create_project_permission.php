@@ -15,10 +15,10 @@ return new class extends Migration
     public function up(): void
     {
         $create = Permissions::CreateTeamProjects;
-        Permission::create([
-            'name' => $create->value,
-            'display_name' => ucwords($create->value),
-        ]);
+        Permission::updateOrCreate(
+            ['name' => $create->value],
+            ['display_name' => ucwords($create->value)]
+        );
 
         foreach (Laratrust\Models\Role::all() as $role) {
             $permissions = Permission::whereIn('name', Roles::getRolePermissions($role->name))->get();

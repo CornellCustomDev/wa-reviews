@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\Permissions;
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
@@ -33,18 +34,9 @@ class ProjectPolicy
             return false;
         }
 
-        // Projects can be updated only if someone is able to edit projects for the team
-        if ($user->cannot('edit-projects', $project->team)) {
-            return false;
-        }
-
-        // If this is the reviewer's project, they can update it while it's in progress
-        if ($project->isReviewer($user)) {
-            return $project->isInProgress();
-        }
-
-        // Otherwise, the user must have permission to manage projects for the team
-        return $user->can('manage-projects', $project->team);
+        // If this is the reviewer's project, they can update it
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || $user->can('manage-projects', $project->team);
     }
 
     public function updateReviewer(User $user, Project $project): bool
@@ -55,7 +47,7 @@ class ProjectPolicy
         }
 
         // If this is the reviewer's project, they can assign it to another reviewer
-        if ($project->isReviewer($user)) {
+        if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
             return true;
         }
 
@@ -71,8 +63,8 @@ class ProjectPolicy
     public function updateStatus(User $user, Project $project): bool
     {
         // If this is the reviewer's project, they can update the status if it's in progress
-        if ($project->isReviewer($user)) {
-            return $project->isInProgress() || $project->isCompleted();
+        if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
+            return true;
         }
 
         return $user->can('manage-projects', $project->team);
@@ -86,7 +78,7 @@ class ProjectPolicy
         }
 
         // If this is the reviewer's project, they can update report viewers
-        if ($project->isReviewer($user)) {
+        if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
             return true;
         }
 

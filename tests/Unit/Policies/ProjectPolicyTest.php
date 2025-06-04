@@ -114,12 +114,12 @@ class ProjectPolicyTest extends TestCase
     }
 
     #[DataProvider('updateReviewerProvider')]
-    #[Test] public function update_reviewer($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
+    #[Test] public function update_reviewer($role, $isTeamMember, $isReviewer, $hasReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
         $projectTeam = Team::factory()->create();
         $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, status: $status);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, hasReviewer: $hasReviewer, status: $status);
 
         $result = (new ProjectPolicy())->updateReviewer($user, $project);
 
@@ -128,24 +128,25 @@ class ProjectPolicyTest extends TestCase
 
     public static function updateReviewerProvider(): array
     {
-        // role, isTeamMember, isReviewer, status, hasPermission, description
+        // role, isTeamMember, isReviewer, hasReviewer, status, hasPermission, description
         return [
-            [Roles::SiteAdmin, false, false, ProjectStatus::Completed, false, 'SiteAdmin cannot update reviewer of completed project'],
-            [Roles::TeamAdmin, true, true, ProjectStatus::Completed, false, 'Team admin cannot update reviewer of completed project'],
-            [Roles::Reviewer, true, true, ProjectStatus::Completed, false, 'Reviewer cannot update reviewer of completed project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::Completed, false, 'SiteAdmin cannot update reviewer of completed project'],
+            [Roles::TeamAdmin, true, true, true, ProjectStatus::Completed, false, 'Team admin cannot update reviewer of completed project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::Completed, false, 'Reviewer cannot update reviewer of completed project'],
 
-            [Roles::SiteAdmin, false, false, ProjectStatus::InProgress, true, 'Site admin can update reviewer of in-progress project'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::InProgress, true, 'Team admin can update reviewer of in-progress project'],
-            [Roles::Reviewer, true, true, ProjectStatus::InProgress, true, 'Assigned reviewer can update reviewer of in-progress project'],
-            [Roles::Reviewer, true, false, ProjectStatus::InProgress, false, 'Team member cannot update reviewer of in-progress project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::InProgress, true, 'Site admin can update reviewer of in-progress project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::InProgress, true, 'Team admin can update reviewer of in-progress project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::InProgress, true, 'Assigned reviewer can update reviewer of in-progress project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::InProgress, false, 'Team member cannot update reviewer of in-progress project'],
 
-            [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can update reviewer of not-started project'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can update reviewer of not-started project'],
-            [Roles::Reviewer, true, true, ProjectStatus::NotStarted, true, 'Assigned reviewer can update reviewer of not-started project'],
-            [Roles::Reviewer, true, false, ProjectStatus::NotStarted, true, 'Team member can update reviewer of not-started project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::NotStarted, true, 'Site admin can update reviewer of not-started project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::NotStarted, true, 'Team admin can update reviewer of not-started project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::NotStarted, true, 'Assigned reviewer can update reviewer of not-started project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::NotStarted, false, 'Team member cannot update reviewer of not-started project'],
+            [Roles::Reviewer, true, false, false, ProjectStatus::NotStarted, true, 'Team member can set reviewer of not-started project'],
 
-            [Roles::TeamAdmin, false, false, ProjectStatus::NotStarted, false, 'Other team admin cannot update reviewer of project'],
-            [Roles::Reviewer, false, true, ProjectStatus::NotStarted, false, 'Other team member cannot update reviewer of project'],
+            [Roles::TeamAdmin, false, false, false, ProjectStatus::NotStarted, false, 'Other team admin cannot update reviewer of project'],
+            [Roles::Reviewer, false, true, false, ProjectStatus::NotStarted, false, 'Other team member cannot update reviewer of project'],
         ];
     }
 
@@ -236,6 +237,7 @@ class ProjectPolicyTest extends TestCase
         Team $projectTeam,
         ?User $user = null,
         bool $isReviewer = false,
+        bool $hasReviewer = false,
         bool $isReportViewer = false,
         ?ProjectStatus $status = null
     ): Project
@@ -247,6 +249,10 @@ class ProjectPolicyTest extends TestCase
         if ($isReviewer) {
             $project->assignment()->create([
                 'user_id' => $user->id,
+            ]);
+        } elseif ($hasReviewer) {
+            $project->assignment()->create([
+                'user_id' => User::factory()->create()->id,
             ]);
         }
         if ($isReportViewer) {
