@@ -4,14 +4,12 @@ namespace Tests\Unit\Policies;
 
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
-use App\Models\Project;
-use App\Models\Team;
 use App\Models\User;
 use App\Policies\ProjectPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Tests\UsesTestDatabase;
+use Tests\Unit\UsesTestDatabase;
 
 class ProjectPolicyTest extends TestCase
 {
@@ -21,8 +19,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function view_project($role, $isTeamMember, $isReportViewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReportViewer: $isReportViewer, status: $status);
 
         $result = (new ProjectPolicy())->view($user, $project);
@@ -55,8 +52,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function create_project($role, $isTeamMember, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
 
         $result = (new ProjectPolicy())->create($user, $projectTeam);
 
@@ -81,8 +77,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function update_project($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, $isReviewer, status: $status);
 
         $result = (new ProjectPolicy())->update($user, $project);
@@ -117,8 +112,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function update_reviewer($role, $isTeamMember, $isReviewer, $hasReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, hasReviewer: $hasReviewer, status: $status);
 
         $result = (new ProjectPolicy())->updateReviewer($user, $project);
@@ -154,8 +148,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function update_status($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, status: $status);
 
         $result = (new ProjectPolicy())->updateStatus($user, $project);
@@ -190,8 +183,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function delete_project($role, $isTeamMember, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, status: $status);
 
         $result = (new ProjectPolicy())->delete($user, $project);
@@ -220,45 +212,4 @@ class ProjectPolicyTest extends TestCase
         ];
     }
 
-    public static function setupTeam(Team $projectTeam, User $user, $isTeamMember, ?Roles $role): void
-    {
-        if ($isTeamMember) {
-            $team = $projectTeam;
-        } else {
-            $team = Team::factory()->create();
-        }
-        $team->users()->attach($user);
-        if ($role) {
-            $user->addRole($role, $team);
-        }
-    }
-
-    public static function setupProject(
-        Team $projectTeam,
-        ?User $user = null,
-        bool $isReviewer = false,
-        bool $hasReviewer = false,
-        bool $isReportViewer = false,
-        ?ProjectStatus $status = null
-    ): Project
-    {
-        $project = Project::factory()->create([
-            'team_id' => $projectTeam->id,
-            'status' => $status ?? ProjectStatus::NotStarted,
-        ]);
-        if ($isReviewer) {
-            $project->assignment()->create([
-                'user_id' => $user->id,
-            ]);
-        } elseif ($hasReviewer) {
-            $project->assignment()->create([
-                'user_id' => User::factory()->create()->id,
-            ]);
-        }
-        if ($isReportViewer) {
-            $project->reportViewers()->attach($user->id);
-        }
-
-        return $project;
-    }
 }

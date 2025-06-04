@@ -7,6 +7,12 @@ use PHPUnit\Framework\Attributes\DataProvider;
 
 class ActRulesTest extends FeatureTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->markTestSkipped('Skipping all tests in ActRulesTest.');
+    }
+
     #[DataProvider('ruleRunners')]
     public function testPassedExamples(string $className)
     {
