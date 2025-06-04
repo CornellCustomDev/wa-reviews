@@ -9,11 +9,11 @@ use App\Policies\ProjectPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Tests\Unit\UsesTestDatabase;
+use Tests\Unit\TestDatabase;
 
 class ProjectPolicyTest extends TestCase
 {
-    use UsesTestDatabase;
+    use TestDatabase;
 
     #[DataProvider('viewAnyProjectProvider')]
     #[Test] public function viewAny_project($role, $isTeamMember, $isReportViewer, $hasPermission, $description)

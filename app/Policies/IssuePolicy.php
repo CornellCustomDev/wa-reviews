@@ -15,11 +15,7 @@ class IssuePolicy
 
     public function view(User $user, Issue $issue): bool
     {
-        $project = $issue->project;
-
-        return $project->team->isTeamMember($user)
-            || ($project->isReportViewer($user) && $project->isCompleted())
-            || $user->can('manage-projects', $project->team);
+        return $user->can('view', $issue->project);
     }
 
     public function create(User $user, Project $project): bool
@@ -42,7 +38,7 @@ class IssuePolicy
         }
 
         // Status updates can only be made by the reviewer, report viewer, or a team manager
-        return $project->isReviewer($user)
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
             || $project->isReportViewer($user)
             || $user->can('manage-projects', $project->team);
     }
@@ -61,22 +57,13 @@ class IssuePolicy
         }
 
         // Mitigation updates can only be made by the reviewer or a team manager
-        return $project->isReviewer($user)
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team);
     }
 
     public function delete(User $user, Issue $issue): bool
     {
-        $project = $issue->project;
-
-        // Issues can only be deleted if the user can update the project
-        if ($user->cannot('update', $project)) {
-            return false;
-        }
-
-        // Issues can only be deleted by the reviewer or a team manager
-        return $project->isReviewer($user)
-            || $user->can('manage-projects', $project->team);
+        return $user->can('update', $issue->project);
     }
 
     public function restore(User $user, Issue $issue): bool

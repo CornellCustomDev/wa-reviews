@@ -9,7 +9,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
-trait UsesTestDatabase
+trait TestDatabase
 {
     use RefreshDatabase;
 

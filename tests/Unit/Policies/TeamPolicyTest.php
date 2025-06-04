@@ -9,11 +9,11 @@ use App\Policies\TeamPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Tests\Unit\UsesTestDatabase;
+use Tests\Unit\TestDatabase;
 
 class TeamPolicyTest extends TestCase
 {
-    use UsesTestDatabase;
+    use TestDatabase;
 
     #[DataProvider('viewAnyTeamProvider')]
     #[Test] public function viewAny_team($role, $hasTeam, $expected, $description)

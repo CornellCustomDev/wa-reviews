@@ -15,11 +15,7 @@ class ScopePolicy
 
     public function view(User $user, Scope $scope): bool
     {
-        $project = $scope->project;
-
-        return $project->team->isTeamMember($user)
-            || ($project->isReportViewer($user) && $project->isCompleted())
-            || $user->can('manage-projects', $project->team);
+        return $user->can('view', $scope->project);
     }
 
     public function create(User $user, Project $project): bool
@@ -34,16 +30,7 @@ class ScopePolicy
 
     public function delete(User $user, Scope $scope): bool
     {
-        $project = $scope->project;
-
-        // Scopes can only be deleted if the user can update the project
-        if ($user->cannot('update', $project)) {
-            return false;
-        }
-
-        // Scopes can only be deleted by the reviewer or a team manager
-        return $project->isReviewer($user)
-            || $user->can('manage-projects', $project->team);
+        return $user->can('update', $scope->project);
     }
 
     public function restore(User $user, Scope $scope): bool
