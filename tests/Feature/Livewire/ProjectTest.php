@@ -10,6 +10,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Enums\Roles;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;
 
@@ -73,5 +74,87 @@ class ProjectTest extends FeatureTestCase
             ->set('form.description', 'This is an updated project')
             ->call('save')
             ->assertRedirect(route('project.show', $project));
+    }
+
+    #[DataProvider('canCreateProjectProvider')]
+    #[Test] public function can_create_project_authorization_cases(
+        string $description,
+        ?Roles $role,
+        bool $isTeamMember,
+        bool $hasPermission
+    )
+    {
+        $user = User::factory()->create();
+        $projectTeam = $this->makeTestTeam();
+        if ($isTeamMember) {
+            $team = $projectTeam;
+        } else {
+            $team = $this->makeTestTeam();
+        }
+        $team->users()->attach($user);
+        if ($role) {
+            $user->syncRoles([$role], $team);
+        }
+
+        $response = Livewire::actingAs($user)
+            ->test(CreateProject::class, ['team' => $projectTeam])
+            ->set('form.name', 'Test Project')
+            ->set('form.site_url', 'https://testproject.com')
+            ->set('form.description', $description)
+            ->call('save');
+
+        if ($hasPermission) {
+            $response->assertRedirect(route('project.show', Project::latest()->first()));
+        } else {
+            $response->assertForbidden();
+        }
+    }
+
+    public static function canCreateProjectProvider(): array
+    {
+        return [
+            [
+                'description' => 'Site admin, not a team member',
+                'role' => Roles::SiteAdmin,
+                'isTeamMember' => false,
+                'hasPermission' => true,
+            ],
+            [
+                'description' => 'Site admin, team member',
+                'role' => Roles::SiteAdmin,
+                'isTeamMember' => true,
+                'hasPermission' => true,
+            ],
+            [
+                'description' => 'Team admin, team member',
+                'role' => Roles::TeamAdmin,
+                'isTeamMember' => true,
+                'hasPermission' => true,
+            ],
+            [
+                'description' => 'Reviewer, team member',
+                'role' => Roles::Reviewer,
+                'isTeamMember' => true,
+                'hasPermission' => true,
+            ],
+            [
+                'description' => 'No role, team member',
+                'role' => null,
+                'isTeamMember' => true,
+                'hasPermission' => false,
+            ],
+            [
+                'description' => 'Team admin for another team',
+                'role' => Roles::TeamAdmin,
+                'isTeamMember' => false,
+                'hasPermission' => false,
+            ],
+            [
+                'description' => 'Reviewer for another team',
+                'role' => Roles::Reviewer,
+                'isTeamMember' => false,
+                'hasPermission' => false,
+            ],
+        ];
     }
 }

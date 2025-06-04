@@ -16,9 +16,9 @@ class FeatureTestCase extends TestCase
     /**
      * Helper to create an authenticated user with a role assigned to a team.
      */
-    protected function getLoggedInTestUser(string|array $role, ?string $teamName = null, ?User $user = null): User
+    protected function getLoggedInTestUser(string|array $role, ?Team $team = null, ?string $teamName = null, ?User $user = null): User
     {
-        $user = $user ?: $this->getTestUser(Arr::wrap($role), $teamName);
+        $user = $user ?: $this->makeTestUser(Arr::wrap($role), $team, $teamName);
         $this->actingAs($user);
         return $user;
     }
@@ -26,16 +26,23 @@ class FeatureTestCase extends TestCase
     /**
      * Returns a test user, with an optional list of roles and team.
      */
-    protected function getTestUser(array $roles = null, ?string $teamName = null): User
+    protected function makeTestUser(?array $roles = [Roles::TeamAdmin], ?Team $team = null, ?string $teamName = null): User
     {
         $user = User::factory()->create();
-        $team = $this->getTestTeam($teamName);
-        $team->users()->syncWithoutDetaching([$user->id]);
-        if ($roles) {
-            $user->syncRoles($roles, $team);
-        } else {
-            $user->syncRoles([Roles::TeamAdmin], $team);
+        if (in_array(Roles::SiteAdmin, $roles)) {
+            $user->addRole(Roles::SiteAdmin);
+            $user->save();
         }
+
+        // If the user is strictly a site admin, return without creating a team.
+        if ($roles === [Roles::SiteAdmin] && !$team && !$teamName) {
+            return $user;
+        }
+
+        $team = $team ?? $this->makeTestTeam($teamName);
+        $team->users()->syncWithoutDetaching([$user->id]);
+        $user->syncRoles($roles, $team);
+
         return $user;
     }
 
@@ -45,7 +52,7 @@ class FeatureTestCase extends TestCase
      * @param string|null $name
      * @return Team
      */
-    protected function getTestTeam(?string $name = null): Team
+    protected function makeTestTeam(?string $name = null): Team
     {
         return Team::factory()->create([
             'name' => $name ?? 'Test Team ' . uniqid(),
