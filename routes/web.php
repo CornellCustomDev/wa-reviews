@@ -72,7 +72,7 @@ Route::group(['middleware' => [CUAuth::class]], function () {
     Route::prefix('teams')->name('teams.')->group(function () {
         Route::get('', Manage::class)->name('manage')->can('view-any', Team::class);
         Route::get('{team}', ShowTeam::class)->name('show')->can('view', 'team');
-        Route::get('{team}/project/create', CreateProject::class)->name('project.create')->can('create-projects', 'team');
+        Route::get('{team}/project/create', CreateProject::class)->name('project.create')->can('create-project', 'team');
     });
 
 });

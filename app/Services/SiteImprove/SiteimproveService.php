@@ -12,8 +12,8 @@ use Illuminate\Http\Client\RequestException;
 
 class SiteimproveService
 {
-    private string $siteId;
-    private array $conformance = ['a', 'aa', 'aria', 'si'];
+    protected string $siteId;
+    protected array $conformance = ['a', 'aa', 'aria', 'si'];
 
     public function __construct(
         private readonly string $apiKey
@@ -65,7 +65,7 @@ class SiteimproveService
     /**
      * @throws RequestException
      */
-    private function get(string $endpoint, array $parameters = []): Response
+    protected function get(string $endpoint, array $parameters = []): Response
     {
         $response = Http::withHeaders([
             'Authorization' => 'Basic ' . base64_encode($this->apiKey)
@@ -81,7 +81,7 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    private function siteGet(string $endpoint, array $parameters = [], int $ttlMinutes = 120, bool $bustCache = false): array
+    protected function siteGet(string $endpoint, array $parameters = [], int $ttlMinutes = 120, bool $bustCache = false): array
     {
         if (empty($this->siteId)) {
             throw new ErrorException('Site ID is not set');
@@ -101,7 +101,7 @@ class SiteimproveService
     /**
      * @throws RequestException|ErrorException
      */
-    private function getPageId(string $url): ?string
+    protected function getPageId(string $url): ?string
     {
         $trimmedUrl = rtrim($url, '/');
 

@@ -114,6 +114,8 @@ class Project extends Model
         // We need to first remove the existing assignment
         $this->unassign();
 
+        // TODO: Can do this as `$project->assignment()->create(['user_id' => $user?->id]);`
+
         // Create an assignment
         $assignment = ProjectAssignment::create([
             'project_id' => $this->id,
