@@ -2,6 +2,11 @@
 
 namespace Tests;
 
+use App\Enums\ProjectStatus;
+use App\Enums\Roles;
+use App\Models\Project;
+use App\Models\Team;
+use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use InvalidArgumentException;
 

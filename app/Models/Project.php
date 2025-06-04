@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\Permissions;
 use App\Enums\ProjectStatus;
 use App\Events\ProjectChanged;
 use App\Services\SiteImprove\SiteimproveService;
@@ -156,12 +155,6 @@ class Project extends Model
     public function isReviewer(User $user): bool
     {
         return $user->id === $this->reviewer?->id;
-    }
-
-    public function canManageProject(User $user): bool
-    {
-        return $user->isAbleTo(Permissions::ManageTeamProjects, $this->team)
-            || $user->isAbleTo(Permissions::ManageTeams);
     }
 
     public function isNotStarted(): bool

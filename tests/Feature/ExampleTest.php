@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 // use Illuminate\Foundation\Testing\RefreshDatabase;
 
+use PHPUnit\Framework\Attributes\Test;
+
 class ExampleTest extends FeatureTestCase
 {
     /**
      * A basic test example.
      */
-    public function test_the_application_returns_a_successful_response(): void
+    #[Test] public function application_returns_a_successful_response(): void
     {
         $response = $this->get('/');
 

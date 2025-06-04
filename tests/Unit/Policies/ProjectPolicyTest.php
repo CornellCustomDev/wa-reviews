@@ -4,25 +4,46 @@ namespace Tests\Unit\Policies;
 
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
-use App\Models\Project;
-use App\Models\Team;
 use App\Models\User;
 use App\Policies\ProjectPolicy;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
-use Tests\UsesTestDatabase;
+use Tests\Unit\TestDatabase;
 
 class ProjectPolicyTest extends TestCase
 {
-    use UsesTestDatabase;
+    use TestDatabase;
+
+    #[DataProvider('viewAnyProjectProvider')]
+    #[Test] public function viewAny_project($role, $isTeamMember, $isReportViewer, $hasPermission, $description)
+    {
+        $user = User::factory()->create();
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
+        $project = $this->setupProject($projectTeam, $user, isReportViewer: $isReportViewer);
+
+        $result = (new ProjectPolicy())->viewAny($user);
+
+        $this->assertEquals($hasPermission, $result, $description);
+    }
+
+    public static function viewAnyProjectProvider(): array
+    {
+        // role, isTeamMember, isReportViewer, hasPermission, description
+        return [
+            [Roles::SiteAdmin, false, false, true, 'Site admin can view any project'],
+            [Roles::TeamAdmin, true, false, true, 'Team admin can view projects'],
+            [null, true, false, true, 'Team member can view projects'],
+            [null, null, true, true, 'Report viewer can view projects'],
+            [null, null, false, false, 'User without projects cannot view projects'],
+        ];
+    }
 
     #[DataProvider('viewProjectProvider')]
     #[Test] public function view_project($role, $isTeamMember, $isReportViewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReportViewer: $isReportViewer, status: $status);
 
         $result = (new ProjectPolicy())->view($user, $project);
@@ -55,8 +76,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function create_project($role, $isTeamMember, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
 
         $result = (new ProjectPolicy())->create($user, $projectTeam);
 
@@ -81,8 +101,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function update_project($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, $isReviewer, status: $status);
 
         $result = (new ProjectPolicy())->update($user, $project);
@@ -114,12 +133,11 @@ class ProjectPolicyTest extends TestCase
     }
 
     #[DataProvider('updateReviewerProvider')]
-    #[Test] public function update_reviewer($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
+    #[Test] public function update_reviewer($role, $isTeamMember, $isReviewer, $hasReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, status: $status);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, hasReviewer: $hasReviewer, status: $status);
 
         $result = (new ProjectPolicy())->updateReviewer($user, $project);
 
@@ -128,24 +146,25 @@ class ProjectPolicyTest extends TestCase
 
     public static function updateReviewerProvider(): array
     {
-        // role, isTeamMember, isReviewer, status, hasPermission, description
+        // role, isTeamMember, isReviewer, hasReviewer, status, hasPermission, description
         return [
-            [Roles::SiteAdmin, false, false, ProjectStatus::Completed, false, 'SiteAdmin cannot update reviewer of completed project'],
-            [Roles::TeamAdmin, true, true, ProjectStatus::Completed, false, 'Team admin cannot update reviewer of completed project'],
-            [Roles::Reviewer, true, true, ProjectStatus::Completed, false, 'Reviewer cannot update reviewer of completed project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::Completed, false, 'SiteAdmin cannot update reviewer of completed project'],
+            [Roles::TeamAdmin, true, true, true, ProjectStatus::Completed, false, 'Team admin cannot update reviewer of completed project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::Completed, false, 'Reviewer cannot update reviewer of completed project'],
 
-            [Roles::SiteAdmin, false, false, ProjectStatus::InProgress, true, 'Site admin can update reviewer of in-progress project'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::InProgress, true, 'Team admin can update reviewer of in-progress project'],
-            [Roles::Reviewer, true, true, ProjectStatus::InProgress, true, 'Assigned reviewer can update reviewer of in-progress project'],
-            [Roles::Reviewer, true, false, ProjectStatus::InProgress, false, 'Team member cannot update reviewer of in-progress project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::InProgress, true, 'Site admin can update reviewer of in-progress project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::InProgress, true, 'Team admin can update reviewer of in-progress project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::InProgress, true, 'Assigned reviewer can update reviewer of in-progress project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::InProgress, false, 'Team member cannot update reviewer of in-progress project'],
 
-            [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can update reviewer of not-started project'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can update reviewer of not-started project'],
-            [Roles::Reviewer, true, true, ProjectStatus::NotStarted, true, 'Assigned reviewer can update reviewer of not-started project'],
-            [Roles::Reviewer, true, false, ProjectStatus::NotStarted, true, 'Team member can update reviewer of not-started project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::NotStarted, true, 'Site admin can update reviewer of not-started project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::NotStarted, true, 'Team admin can update reviewer of not-started project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::NotStarted, true, 'Assigned reviewer can update reviewer of not-started project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::NotStarted, false, 'Team member cannot update reviewer of not-started project'],
+            [Roles::Reviewer, true, false, false, ProjectStatus::NotStarted, true, 'Team member can set reviewer of not-started project'],
 
-            [Roles::TeamAdmin, false, false, ProjectStatus::NotStarted, false, 'Other team admin cannot update reviewer of project'],
-            [Roles::Reviewer, false, true, ProjectStatus::NotStarted, false, 'Other team member cannot update reviewer of project'],
+            [Roles::TeamAdmin, false, false, false, ProjectStatus::NotStarted, false, 'Other team admin cannot update reviewer of project'],
+            [Roles::Reviewer, false, true, false, ProjectStatus::NotStarted, false, 'Other team member cannot update reviewer of project'],
         ];
     }
 
@@ -153,8 +172,7 @@ class ProjectPolicyTest extends TestCase
     #[Test] public function update_status($role, $isTeamMember, $isReviewer, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, status: $status);
 
         $result = (new ProjectPolicy())->updateStatus($user, $project);
@@ -185,12 +203,47 @@ class ProjectPolicyTest extends TestCase
         ];
     }
 
+    #[DataProvider('updateReportViewersProvider')]
+    #[Test] public function update_report_viewers($role, $isTeamMember, $isReviewer, $hasReviewer, $status, $hasPermission, $description)
+    {
+        $user = User::factory()->create();
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, hasReviewer: $hasReviewer, status: $status);
+
+        $result = (new ProjectPolicy())->updateReportViewers($user, $project);
+
+        $this->assertEquals($hasPermission, $result, $description);
+    }
+
+    public static function updateReportViewersProvider(): array
+    {
+        // role, isTeamMember, isReviewer, hasReviewer, status, hasPermission, description
+        return [
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::Completed, true, 'SiteAdmin can update report viewers of completed project'],
+            [Roles::TeamAdmin, true, true, true, ProjectStatus::Completed, true, 'Team admin can update report viewers of completed project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::Completed, true, 'Reviewer can update report viewers of completed project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::Completed, false, 'Team member cannot update report viewers of completed project'],
+
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::InProgress, false, 'Site admin cannot update report viewers of in-progress project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::InProgress, false, 'Team admin cannot update report viewers of in-progress project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::InProgress, false, 'Reviewer cannot update report viewers of in-progress project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::InProgress, false, 'Team member cannot update report viewers of in-progress project'],
+
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::NotStarted, false, 'Site admin cannot update report viewers of not-started project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::NotStarted, false, 'Team admin cannot update report viewers of not-started project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::NotStarted, false, 'Reviewer cannot update report viewers of not-started project'],
+            [Roles::Reviewer, true, false, true, ProjectStatus::NotStarted, false, 'Team member cannot update report viewers of not-started project'],
+
+            [Roles::TeamAdmin, false, false, false, ProjectStatus::Completed, false, 'Other team admin cannot update report viewers of completed project'],
+            [Roles::Reviewer, false, true, false, ProjectStatus::Completed, false, 'Other team member cannot update report viewers of completed project'],
+        ];
+    }
+
     #[DataProvider('deleteProjectProvider')]
     #[Test] public function delete_project($role, $isTeamMember, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
-        $projectTeam = Team::factory()->create();
-        $this->setupTeam($projectTeam, $user, $isTeamMember, $role);
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, status: $status);
 
         $result = (new ProjectPolicy())->delete($user, $project);
@@ -219,40 +272,4 @@ class ProjectPolicyTest extends TestCase
         ];
     }
 
-    public static function setupTeam(Team $projectTeam, User $user, $isTeamMember, ?Roles $role): void
-    {
-        if ($isTeamMember) {
-            $team = $projectTeam;
-        } else {
-            $team = Team::factory()->create();
-        }
-        $team->users()->attach($user);
-        if ($role) {
-            $user->addRole($role, $team);
-        }
-    }
-
-    public static function setupProject(
-        Team $projectTeam,
-        ?User $user = null,
-        bool $isReviewer = false,
-        bool $isReportViewer = false,
-        ?ProjectStatus $status = null
-    ): Project
-    {
-        $project = Project::factory()->create([
-            'team_id' => $projectTeam->id,
-            'status' => $status ?? ProjectStatus::NotStarted,
-        ]);
-        if ($isReviewer) {
-            $project->assignment()->create([
-                'user_id' => $user->id,
-            ]);
-        }
-        if ($isReportViewer) {
-            $project->reportViewers()->attach($user->id);
-        }
-
-        return $project;
-    }
 }

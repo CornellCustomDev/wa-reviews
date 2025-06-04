@@ -5,6 +5,8 @@ namespace App\Livewire\Projects;
 use App\Events\ProjectChanged;
 use App\Events\TeamChanged;
 use App\Models\Project;
+use App\Models\Team;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -28,6 +30,15 @@ class ViewProjects extends Component
     public function showTeams(): bool
     {
         return auth()->user()->isAdministrator() || auth()->user()->teams->count() > 1;
+    }
+
+    #[Computed(persist: true)]
+    public function getTeamsWithCreateProjectPermission(): Collection
+    {
+        $user = auth()->user();
+        return Team::get()
+            ->filter(fn(Team $team) => $user->can('create-projects', $team))
+            ->sortBy('name');
     }
 
     public function delete(Project $project): void

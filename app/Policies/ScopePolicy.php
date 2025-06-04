@@ -15,43 +15,22 @@ class ScopePolicy
 
     public function view(User $user, Scope $scope): bool
     {
-        $project = $scope->project;
-
-        return $project->team->isTeamMember($user)
-            || $project->isReportViewer($user)
-            || $project->canManageProject($user);
+        return $user->can('view', $scope->project);
     }
 
     public function create(User $user, Project $project): bool
     {
-        if ($project->isCompleted()) {
-            return false;
-        }
-
-        return ($project->isInProgress() && $project->isReviewer($user))
-            || $project->canManageProject($user);
+        return $user->can('update', $project);
     }
 
     public function update(User $user, Scope $scope): bool
     {
-        $project = $scope->project;
-        if ($project->isCompleted()) {
-            return false;
-        }
-
-        return ($project->isInProgress() && $project->isReviewer($user))
-            || $project->canManageProject($user);
+        return $user->can('update', $scope->project);
     }
 
     public function delete(User $user, Scope $scope): bool
     {
-        $project = $scope->project;
-        if ($project->isCompleted()) {
-            return false;
-        }
-
-        return $project->isReviewer($user)
-            || $project->canManageProject($user);
+        return $user->can('update', $scope->project);
     }
 
     public function restore(User $user, Scope $scope): bool

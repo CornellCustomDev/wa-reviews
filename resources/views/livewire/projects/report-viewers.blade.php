@@ -7,7 +7,7 @@
             <ul>
             @foreach($project->reportViewers as $viewer)
                 <li>
-                    @can('manage-project', $project)
+                    @can('update-report-viewers', $project)
                         <div class="float-right">
                             <x-forms.button.delete
                                 title="Remove {{ $viewer->name }} as a report viewer"
@@ -24,7 +24,7 @@
         @else
             <div class="text-gray-500 mb-4">No additional report viewers. Only {{ $project->team->name }} team members can view this project.</div>
         @endif
-        @can('manage-project', $project)
+        @can('update-report-viewers', $project)
             <flux:modal.trigger name="add-report-viewer">
                 <x-forms.button icon="plus-circle">Add Report Viewer</x-forms.button>
             </flux:modal.trigger>
