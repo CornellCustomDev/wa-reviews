@@ -11,6 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Don't run this on a SQLite database
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         DB::statement('ALTER TABLE permissions ENGINE=InnoDB');
         DB::statement('ALTER TABLE permission_role ENGINE=InnoDB');
         DB::statement('ALTER TABLE permission_user ENGINE=InnoDB');
