@@ -29,6 +29,7 @@ review. This is known to the user as the "scope" and is described by the current
 notes. There may already be issues identified for the scope of this page.
 
 ### Current web page scope
+- scope_id: {{ $scope->id }}
 - Scope: {{ $scope->title }}
 - Page URL: {{ $scope->url }}
 - Notes: {!! $scope->notes !!}
