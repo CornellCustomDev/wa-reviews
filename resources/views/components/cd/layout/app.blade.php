@@ -55,7 +55,7 @@
 </div>
 
 <div id="main-content" class="band">
-    <main id="main" class="container-fluid aria-target" tabindex="-1">
+    <main id="main" class="container-fluid aria-target" tabindex="-1" {{ $attributes }}>
         <div class="row">
             @if ($sidebar && ($sidebarPrimary ?? false))
                 <x-cd.layout.sidebar-top>

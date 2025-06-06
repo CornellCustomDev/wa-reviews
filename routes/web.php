@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => view('welcome'))->name('welcome');
 Route::get('/help', fn () => view('help'))->name('help');
+Route::get('/updates', fn () => view('updates'))->name('updates');
 
 Route::group(['middleware' => [CUAuth::class]], function () {
     Route::get('login', fn() => redirect()->route('cu-auth.sso-login'))->name('login');

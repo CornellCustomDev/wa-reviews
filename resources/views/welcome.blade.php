@@ -7,4 +7,10 @@
         </a>
         and checklist.
     </p>
+
+    <h2>Getting Started</h2>
+    <ol>
+        <li>Navigate to <a href="{{ route('projects') }}">Projects</a> to view existing projects or create a new one.</li>
+        <li>Visit the <a href="{{ route('help') }}">Help page</a> for detailed instructions.</li>
+    </ol>
 </x-cd.layout.app>
