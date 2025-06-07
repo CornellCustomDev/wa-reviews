@@ -69,7 +69,7 @@ class AccessibilityAnalyzerService
                     return null;
                 }
                 $crawler = $this->parseDom($html);
-                return $crawler->html();
+                return $crawler->outerHtml();
             } catch (Exception $e) {
                 return null;
             }

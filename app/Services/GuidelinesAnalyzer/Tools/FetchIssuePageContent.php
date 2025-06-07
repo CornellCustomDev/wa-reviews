@@ -27,10 +27,8 @@ class FetchIssuePageContent extends Tool
             return ['error' => 'issue_not_found'];
         }
 
-        $pageContent = $issue->scope->page_content ?? '';
-
         return [
-            'html' => $pageContent,
+            'html' => $issue->scope->getPageContent() ?? '',
         ];
     }
 

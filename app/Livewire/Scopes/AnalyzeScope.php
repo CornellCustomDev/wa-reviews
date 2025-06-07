@@ -17,16 +17,13 @@ class AnalyzeScope extends Component
     public function analyze(): void
     {
         $parser = new AccessibilityAnalyzerService();
-        $body = $parser->getPageContent($this->scope->url, true);
-        $this->scope->update([
-            'page_content' => $body,
-            'retrieved_at' => now(),
-        ]);
+        $pageContent = $parser->getPageContent($this->scope->url, true);
+        $this->scope->setPageContent($pageContent);
 
         if ($this->entirePage) {
-            $content = $body;
+            $content = $pageContent;
         } else {
-            $sections = $parser->extractMajorSections($body);
+            $sections = $parser->extractMajorSections($pageContent);
             $content = $sections['main']['element'];
         }
 

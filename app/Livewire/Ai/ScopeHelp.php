@@ -74,7 +74,7 @@ class ScopeHelp extends Component
         }
         $result = cache()->remember($cache_key, 300, function () use ($ruleRunner, $scopeRules) {
             $analyzerService = new AccessibilityAnalyzerService();
-            $result = $analyzerService->reviewRuleWithAI($ruleRunner, $scopeRules, $this->scope->page_content);
+            $result = $analyzerService->reviewRuleWithAI($ruleRunner, $scopeRules, $this->scope->getPageContent());
             $this->response = $analyzerService->response;
             return $result;
         });
