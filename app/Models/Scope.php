@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\GuidelineStatus;
+use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,7 @@ class Scope extends Model
         'project_id',
         'title',
         'url',
+        'current_page_id',
         'notes',
         'comments'
     ];
@@ -52,12 +54,15 @@ class Scope extends Model
 
     public function pages(): HasMany
     {
-        return $this->hasMany(Page::class);
+        return $this->hasMany(Page::class)
+            ->where('url', $this->url);
     }
 
     public function latestPage(): HasOne
     {
-        return $this->hasOne(Page::class)->latest('retrieved_at');
+        return $this->hasOne(Page::class)
+            ->where('url', $this->url)
+            ->latest('retrieved_at');
     }
 
     public function currentPage(): BelongsTo
@@ -89,12 +94,13 @@ class Scope extends Model
     /**
      * Store a new current page
      */
-    public function setPageContent(string $content): void
+    public function setPageContent(string $url, ?string $content): void
     {
         $page = $this->pages()->create([
-            'url' => $this->url,
+            'url' => $url,
             'page_content' => $content,
             'retrieved_at' => now(),
+            'siteimprove_report_url' => app(SiteimproveService::class)->getPageReportUrl($url),
         ]);
         $this->setCurrentPage($page);
     }

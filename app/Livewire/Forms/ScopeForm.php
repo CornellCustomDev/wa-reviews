@@ -37,7 +37,7 @@ class ScopeForm extends Form
         $this->validate();
 
         $this->scope = $project->scopes()->create($this->all());
-        $this->updatePageContent();
+        $this->fetchPageContent($this->scope->url);
 
         return $this->scope;
     }
@@ -51,13 +51,26 @@ class ScopeForm extends Form
         } else {
             $this->scope->update($this->all());
         }
-        $this->updatePageContent();
+
+        if ($this->scope->wasChanged('url')) {
+            $this->fetchPageContent($this->scope->url);
+        }
     }
 
-    protected function updatePageContent(): void
+    protected function fetchPageContent(string $url): void
     {
+        // If we already have page content, skip fetching
+        if ($this->scope->pages()->count() > 0) {
+            $this->scope->setCurrentPage($this->scope->latestPage);
+            return;
+        }
+
         $parser = new AccessibilityAnalyzerService();
-        $pageContent = $parser->getPageContent($this->scope->url, true);
-        $this->scope->setPageContent($pageContent);
+        $pageContent = $parser->getPageContent($url, true);
+        $this->scope->setPageContent($url, $pageContent);
+
+        if ($pageContent === null) {
+            // TODO: Notify user that the page content could not be fetched
+        }
     }
 }
