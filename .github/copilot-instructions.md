@@ -1,16 +1,19 @@
-# WA Reviews Project Overview
+# Additional instructions
+If you are unable to answer a question or access a resource, please say so.
 
-## Introduction
+## Application overview
+
+### Introduction
 WA Reviews is a web application designed for completing and managing Cornell Web Accessibility reviews. The application helps ensure that web content meets accessibility standards by providing tools for review, issue tracking, and reporting. It is an implementation of [Cornell's WCAG testing guidelines](https://docs.google.com/document/d/16b77RZcTL0bWZXTkMgJNd0rfkrv-x83jktacVB8NY-U/edit?tab=t.0#heading=h.oab37tgoxnuc) and checklist.
 
-## Project Purpose
+### Project Purpose
 The primary purpose of this application is to streamline the process of conducting web accessibility reviews at Cornell University. It provides a structured approach to identifying, documenting, and resolving accessibility issues across web properties.
 
-## Key Features
+### Key Features
 1. **Project Management**
-   - Create and manage accessibility review projects
-   - Track project status and progress
-   - Generate accessibility reports
+- Create and manage accessibility review projects
+- Track project status and progress
+- Generate accessibility reports
 
 2. **Team Collaboration**
    - Team-based access control
@@ -33,7 +36,7 @@ The primary purpose of this application is to streamline the process of conducti
    - Automated suggestions
    - AI agents with specialized tools for accessibility analysis
 
-## Technical Stack
+### Technical Stack
 - **Framework**: Laravel (PHP)
 - **Frontend**: Livewire components using FluxUI and Tailwind CSS
 - **Authentication**: Cornell SSO integration via Apache mod_shib
@@ -42,7 +45,7 @@ The primary purpose of this application is to streamline the process of conducti
 - **Permissions**: Laratrust library for role-based access control
 - **Data Import/Export**: Laravel Excel for spreadsheet handling
 
-## Project Structure
+### Project Structure
 The application follows a standard Laravel project structure with:
 - Livewire components for UI interactions
 - Models for data representation
@@ -50,12 +53,12 @@ The application follows a standard Laravel project structure with:
 - Policies for authorization
 - Migrations for database schema management
 
-## Workflow Process
+### Workflow Process
 The application follows a specific workflow for accessibility reviews:
 
 1. **Create a Project**: Start by creating a new review project from the Projects page or from a Team's Projects page.
-   - Projects can be set up like creating a new WA Checklist
-   - Data can be imported via the Upload button
+- Projects can be set up like creating a new WA Checklist
+- Data can be imported via the Upload button
 
 2. **Add Scope**: Define the scope of the review on the Project page.
    - Add scope items via the Scope tab
@@ -70,7 +73,7 @@ The application follows a specific workflow for accessibility reviews:
 5. **Complete and Report**: Fill out report fields, update status to Complete Review, and view the report.
    - Add read-only viewers via the Report Viewers panel
 
-## Team Structure
+### Team Structure
 The application uses a team-based approach to manage access:
 
 - **Site Admins**: Create teams and manage system-wide settings
@@ -78,7 +81,7 @@ The application uses a team-based approach to manage access:
 - **Reviewers**: Work on assigned projects
 - **Report Viewers**: Have read-only access to specific reports
 
-## Architectural Patterns
+### Architectural Patterns
 The application follows several key architectural patterns:
 
 1. **Model-driven architecture**: Relationships and actions are defined on models rather than directly modifying relationships. Use model actions like `Project→assignTouser()` and `Project→addReportViewer()`.
@@ -88,6 +91,13 @@ The application follows several key architectural patterns:
 3. **AI agent pattern**: AI functionality is implemented using LarAgent with specialized tools and chat history management.
 
 4. **Role-based access control**: Permissions are applied via Policies at the model level using the Laratrust library.
+
+## Development environment
+The application is run in a Lando development environment using the laravel recipe. Lando features that may be useful:
+  - `lando start` to start the environment (rarely needed since the environment is usually running)
+  - `lando artisan` for running Laravel artisan commands
+  - `lando composer` for running Composer commands
+  - `lando mysql` for accessing the MySQL database
 
 ## Database structure
 You can find the current schema in the `database/diagram.dbml` file.
@@ -103,6 +113,3 @@ You can find the current schema in the `database/diagram.dbml` file.
 - **Categories, Criteria, Guidelines**: Reference tables for organizing and applying accessibility standards.
 - **Assignments & Viewers**: Tables linking users to projects as reviewers or read-only viewers.
 - **Team Memberships**: Table linking users to teams.
-
-## Contributing
-When contributing to this project, please ensure you follow the established coding standards and patterns. Create feature branches for new functionality and submit pull requests for review.
