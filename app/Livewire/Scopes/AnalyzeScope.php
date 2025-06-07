@@ -18,7 +18,6 @@ class AnalyzeScope extends Component
     {
         $parser = new AccessibilityAnalyzerService();
         $pageContent = $parser->getPageContent($this->scope->url, true);
-        $this->scope->setPageContent($pageContent);
 
         if ($this->entirePage) {
             $content = $pageContent;
