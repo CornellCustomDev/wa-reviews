@@ -10,7 +10,7 @@ class ScopeChat extends ChatBot
 
     public function getChatPrompt(): string
     {
-        $context = $this->scope->page_content;
+        $context = $this->scope->getPageContent();
 
         return <<<PROMPT
 As an expert in web accessibility guidelines and web development, your task is to answer

@@ -57,10 +57,7 @@ class ScopeForm extends Form
     protected function updatePageContent(): void
     {
         $parser = new AccessibilityAnalyzerService();
-        $body = $parser->getPageContent($this->scope->url, true);
-        $this->scope->update([
-            'page_content' => $body,
-            'retrieved_at' => now(),
-        ]);
+        $pageContent = $parser->getPageContent($this->scope->url, true);
+        $this->scope->setPageContent($pageContent);
     }
 }

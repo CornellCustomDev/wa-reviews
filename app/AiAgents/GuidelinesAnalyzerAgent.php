@@ -79,7 +79,7 @@ class GuidelinesAnalyzerAgent extends Agent
         if ($this->issue->scope?->pageHasBeenRetrieved()) {
             $context .= "# Context: Web page being analyzed\n\n"
                 . "```html\n"
-                . $this->issue->scope->page_content
+                . $this->issue->scope->getPageContent()
                 . "\n```\n\n";
         }
         $context .= "# Context: Web accessibility issue\n\n"

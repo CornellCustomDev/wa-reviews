@@ -42,7 +42,7 @@ class FetchScopePageContentTool extends Tool
             return ['error' => 'scope_not_found'];
         }
 
-        $pageContent = $scope->page_content ?? '';
+        $pageContent = $scope->getPageContent() ?? '';
 
         return [
             'html' => $pageContent,

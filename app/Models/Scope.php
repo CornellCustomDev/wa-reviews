@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Scope extends Model
@@ -17,8 +18,6 @@ class Scope extends Model
         'project_id',
         'title',
         'url',
-        'page_content',
-        'retrieved_at', // @TODO: Store this in a separate table
         'notes',
         'comments'
     ];
@@ -51,6 +50,21 @@ class Scope extends Model
         return $this->hasMany(Issue::class);
     }
 
+    public function pages(): HasMany
+    {
+        return $this->hasMany(Page::class);
+    }
+
+    public function latestPage(): HasOne
+    {
+        return $this->hasOne(Page::class)->latest('retrieved_at');
+    }
+
+    public function currentPage(): BelongsTo
+    {
+        return $this->belongsTo(Page::class, 'current_page_id');
+    }
+
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')
@@ -59,7 +73,42 @@ class Scope extends Model
 
     public function pageHasBeenRetrieved(): bool
     {
-        return $this->retrieved_at !== null;
+        return $this->latestPage()->exists();
+    }
+
+    /**
+     * Get the content of the current page, or the latest page if no current page is set.
+     */
+    public function getPageContent(): ?string
+    {
+        return $this->currentPage?->page_content
+            ?? $this->latestPage?->page_content
+            ?? null;
+    }
+
+    /**
+     * Store a new current page
+     */
+    public function setPageContent(string $content): void
+    {
+        $page = $this->pages()->create([
+            'url' => $this->url,
+            'page_content' => $content,
+            'retrieved_at' => now(),
+        ]);
+        $this->setCurrentPage($page);
+    }
+
+    /**
+     * Set (or unset) a page as the current page.
+     */
+    public function setCurrentPage(?Page $page = null): void
+    {
+        if ($page && $page->scope_id !== $this->id) {
+            throw new \InvalidArgumentException('The page does not belong to this scope.');
+        }
+
+        $this->update(['current_page_id' => $page?->id]);
     }
 
     public function generateScopeGuidelines(): void
