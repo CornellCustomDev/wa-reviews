@@ -35,10 +35,17 @@
         </flux:badge>
     @endif
 
-    @if($item->wasAiGenerated())
+    @if($item->isAiGenerated())
         <flux:tooltip toggleable position="right" class="align-middle">
-            <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!"/>
+            @if($item->hasUnreviewedAi())
+                <flux:button icon="sparkles" size="xs" variant="ghost" class="text-red-600!"/>
+            @elseif($item->isAiAccepted())
+                <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!"/>
+            @endif
             <flux:tooltip.content class="max-w-[20rem] space-y-2">
+                @if($item->hasUnreviewedAi())
+                    <flux:heading class="text-white">This AI-generated response needs to be reviewed</flux:heading>
+                @endif
                 <flux:subheading class="text-white">AI Reasoning</flux:subheading>
                 <blockquote class="mb-0 pl-2">{!! $item->ai_reasoning  !!}</blockquote>
             </flux:tooltip.content>
