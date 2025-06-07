@@ -1,12 +1,12 @@
 <div>
     <table class="table striped bordered">
         <thead>
-            <tr>
-                <th>Target</th>
-                <th>Description</th>
-                <th>Observations</th>
-                <th>Actions</th>
-            </tr>
+        <tr>
+            <th>Target</th>
+            <th>Issue</th>
+            <th>Assessment</th>
+            <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
         @foreach($scope->issues as $issue)
