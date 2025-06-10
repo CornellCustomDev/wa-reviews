@@ -29,11 +29,7 @@
                     {!! $issue->description !!}
                 </td>
                 <td>
-                    @if($issue->items)
-                        @foreach($issue->items as $item)
-                            @include('livewire.issues.item-observation', ['item' => $item])
-                        @endforeach
-                    @endif
+                    @include('livewire.issues.assessment', ['issue' => $issue])
                 </td>
                 @if($project->isCompleted())
                     <td class="text-nowrap">

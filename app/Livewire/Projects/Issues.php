@@ -15,7 +15,7 @@ class Issues extends Component
     #[Computed]
     public function issues()
     {
-        return $this->project->issues()->with('scope')->get()
+        return $this->project->issues()->with(['scope:id,title'])->get()
             ->sortBy(['scope.id', 'issue.id']);
     }
 

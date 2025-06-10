@@ -37,12 +37,21 @@ Table "issues" {
   "id" bigint(20) [pk, not null, increment]
   "project_id" bigint(20) [not null]
   "scope_id" bigint(20) [default: NULL]
+  "guideline_id" bigint(20) [not null]
   "sia_rule_id" bigint(20) [default: NULL]
+  "assessment" varchar(20) [not null]
   "target" varchar(255) [not null]
   "css_selector" varchar(500) [default: NULL]
   "description" text [default: NULL]
+  "testing_method" varchar(255) [default: NULL]
   "recommendation" text [default: NULL]
+  "testing" text [default: NULL]
+  "image_links" longtext [default: NULL]
   "content_issue" tinyint(1) [default: NULL]
+  "impact" varchar(20) [default: NULL]
+  "ai_reasoning" text [default: NULL]
+  "ai_status" varchar(255) [default: NULL]
+  "agent_id" bigint(20) [default: NULL]
   "status" varchar(20) [default: NULL]
   "needs_mitigation" tinyint(1) [not null, default: 0]
   "created_at" timestamp [default: NULL]
@@ -52,6 +61,7 @@ Table "issues" {
   Indexes {
     project_id [name: "issues_project_id_foreign"]
     scope_id [name: "issues_scope_id_foreign"]
+    guideline_id [name: "items_guideline_id_foreign"]
     sia_rule_id [name: "issues_sia_rule_id_foreign"]
   }
 }
@@ -229,6 +239,8 @@ Ref "guidelines_criterion_id_foreign":"criteria"."id" < "guidelines"."criterion_
 Ref "issues_project_id_foreign":"projects"."id" < "issues"."project_id"
 
 Ref "issues_scope_id_foreign":"scopes"."id" < "issues"."scope_id" [delete: set null]
+
+Ref "issues_guideline_id_foreign":"guidelines"."id" < "issues"."guideline_id"
 
 Ref "items_guideline_id_foreign":"guidelines"."id" < "items"."guideline_id"
 

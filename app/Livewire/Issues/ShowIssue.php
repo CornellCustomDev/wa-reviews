@@ -13,6 +13,7 @@ use Livewire\Component;
 class ShowIssue extends Component
 {
     public Issue $issue;
+    public ?string $selectedImage = null;
 
     #[Url(as: 'e', history: true)]
     public bool $showEdit = false;
@@ -51,5 +52,43 @@ class ShowIssue extends Component
             ...($this->issue->scope ? [$this->issue->scope->title => route('scope.show', $this->issue->scope)] : []),
             'Viewing Issue' => 'active'
         ];
+    }
+
+
+    #[Computed]
+    public function hasUnreviewedAI(): bool
+    {
+        return $this->issue->hasUnreviewedAI();
+    }
+
+    public function acceptAI(): void
+    {
+        $this->authorize('update', $this->issue);
+        $this->issue->markAiAccepted();
+
+        $this->dispatch('items-updated');
+    }
+
+    public function rejectAI(): void
+    {
+        $this->authorize('update', $this->issue);
+        $this->issue->markAiRejected();
+
+        $this->issue->delete();
+
+        // Go to the scope page after deleting the issue
+        // @TODO: Redirect to the scope page after deleting the issue
+    }
+
+    public function viewImage(string $imageUrl): void
+    {
+        $this->selectedImage = $imageUrl;
+        $this->modal('view-image')->show();
+    }
+
+    public function closeImage(): void
+    {
+        $this->modal('view-image')->close();
+        $this->selectedImage = null;
     }
 }

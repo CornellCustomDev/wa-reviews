@@ -2,7 +2,9 @@
 
 namespace App\Livewire\Issues;
 
-use App\Livewire\Forms\ProjectIssueForm;
+use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
+use App\Livewire\Forms\IssueForm;
+use App\Models\Issue;
 use App\Models\Project;
 use Flux\Flux;
 use Illuminate\Support\Collection;
@@ -14,15 +16,23 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class CreateProjectIssue extends Component
 {
-    public ProjectIssueForm $form;
+    use WithMultipleFileUploads;
+
+    public IssueForm $form;
     public Project $project;
 
     public function save()
     {
-        $this->authorize('update', $this->project);
+        $this->authorize('create', [Issue::class, $this->project]);
         $issue = $this->form->store($this->project);
 
         return redirect()->route('issue.show', $issue);
+    }
+
+    #[Computed(persist: true)]
+    public function getGuidelinesOptions()
+    {
+        return $this->form->getGuidelineSelectArray();
     }
 
     public function render()
