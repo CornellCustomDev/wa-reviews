@@ -9,6 +9,7 @@ use App\Models\Agent;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
+use App\Models\Scope;
 use App\Services\CornellAI\ChatServiceFactoryInterface;
 use App\Services\GuidelinesAnalyzer\Tools\AnalyzeIssue;
 use App\Services\GuidelinesAnalyzer\Tools\FetchGuidelines;
@@ -97,6 +98,56 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             . "```json\n" . json_encode($issueData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
 
+    public static function getScopeContext(Scope $scope): string
+    {
+        $scopeData = [
+            'id' => $scope->id,
+            'title' => $scope->title,
+            'url' => $scope->url,
+            'page_content' => $scope->pageHasBeenRetrieved()
+                ? 'Available via "fetch_scope_page_content" tool.'
+                : 'No page content available.',
+            'notes' => $scope->notes,
+            'comments' => $scope->comments,
+        ];
+
+        return "Here is the current scope in JSON format:\n"
+            . "```json\n" . json_encode($scopeData, JSON_PRETTY_PRINT) . "\n```\n\n";
+    }
+
+    public static function getScopeIssuesContext(Scope $scope): string
+    {
+
+        $issues = $scope->issues()->with('guideline')->get()
+            ->map(fn (Issue $issue) => self::mapIssueToSchema($issue))
+            ->each(fn ($issue) => $issue['url'] = route('guidelines.show', $issue['number']));
+
+        return empty($issues)
+            ? "No issues found for this page scope."
+            : "Here are the issues in JSON format:\n"
+            . "```json\n" . $issues->toJson(JSON_PRETTY_PRINT) . "\n```\n\n";
+    }
+
+    public static function getIssueSchema(): array
+    {
+        $itemsSchema = self::getItemsSchema();
+        return [
+            'type' => 'object',
+            'properties' => [
+                'target' => [
+                    'type' => 'string',
+                    'description' => 'The target of the issue, such as a description of the element or a CSS selector.',
+                ],
+                ...$itemsSchema['properties'],
+            ],
+            'required' => [
+                'target',
+                ...$itemsSchema['required'],
+            ],
+            'additionalProperties' => false,
+        ];
+    }
+
     public static function getItemsSchema(): array
     {
         return [
@@ -156,7 +207,15 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public static function mapItemToSchema(Item $item): array
+    public static function mapIssueToSchema(Issue $issue): array
+    {
+        return [
+            'target' => $issue->target,
+            ...self::mapItemToSchema($issue),
+        ];
+    }
+
+    public static function mapItemToSchema(Issue|Item $item): array
     {
         return [
             'reasoning' => $item->ai_reasoning?->toHtml() ?? '',
