@@ -2,23 +2,25 @@
 
 namespace App\AiAgents;
 
-use App\AiAgents\Tools\FetchGuidelinesDocumentTool;
+use App\AiAgents\Tools\AnalyzeScopeTool;
 use App\AiAgents\Tools\FetchGuidelinesListTool;
 use App\AiAgents\Tools\FetchGuidelinesTool;
 use App\AiAgents\Tools\FetchScopePageContentTool;
 use App\AiAgents\Tools\ScratchPadTool;
-use App\Models\Issue;
+use App\AiAgents\Tools\StoreIssuesTool;
 use App\Models\Scope;
+use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Throwable;
 
 class ScopeChatAgent extends ModelChatAgent
 {
     protected $tools = [
+        ScratchPadTool::class,
+        AnalyzeScopeTool::class,
+        StoreIssuesTool::class,
         FetchGuidelinesTool::class,
         FetchGuidelinesListTool::class,
-        FetchGuidelinesDocumentTool::class,
         FetchScopePageContentTool::class,
-        ScratchPadTool::class,
     ];
 
     public function __construct(Scope $context, string $key)
@@ -33,15 +35,9 @@ class ScopeChatAgent extends ModelChatAgent
     {
         return view('ai-agents.ScopeChat.instructions', [
             'tools' => $this->getTools(),
-            'scope' => $this->context,
-            'issueContexts' => $this->context->issues->map(function (Issue $issue) {
-                return [
-                    'id' => $issue->id,
-                    'target' => $issue->target,
-                    'css_selector' => $issue->css_selector,
-                    'description' => $issue->description,
-                ];
-            }),
+            'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->context),
+            // Provide only the fields the model really needs from each guideline item
+            'issuesContext' => GuidelinesAnalyzerService::getScopeIssuesContext($this->context),
         ])->render();
     }
 }

@@ -52,7 +52,8 @@ class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
     public function writeToMemory(): void
     {
         // Remove the instructions from the history
-        if ($this->messages[0] instanceof SystemMessage) {
+        $firstMessage = $this->messages[0] ?? null;
+        if ($firstMessage && ($firstMessage instanceof SystemMessage || $firstMessage['role'] === 'system')) {
             $this->truncateOldMessages(1);
         }
 
