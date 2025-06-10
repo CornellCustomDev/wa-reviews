@@ -52,7 +52,7 @@ class SiteimproveIssues extends Component
     #[On('create-issue')]
     public function createIssue(SiaRule $rule, Guideline $guideline): void
     {
-        $this->redirect(route('scope.issue.siteimprove.create', [
+        $this->redirect(route('scope.issue.create', [
             'scope' => $this->scope,
             'rule' => $rule,
             'guideline' => $guideline,
