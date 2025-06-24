@@ -11,7 +11,7 @@
             <span><span x-show="$wire.showChat">Hide </span>Chat</span>
         </x-forms.button>
         @can('update', $scope)
-            <x-forms.button wire:click="clickAnalyzer()" icon="check" @class(['secondary' => $showAnalyzer]) >
+            <x-forms.button wire:click="clickAnalyzer()" icon="sparkles" @class(['secondary' => $showAnalyzer]) >
                 <span x-show="$wire.showAnalyzer">Hide </span> Analyzer
             </x-forms.button>
         @endcan
@@ -29,7 +29,6 @@
 
     <div x-show="$wire.showAnalyzer" x-cloak>
         <hr>
-        Analyzer is not yet implemented for scopes.
-        {{-- <livewire:scopes.scope-analyzer :$scope /> --}}
+        <livewire:scopes.scope-analyzer :$scope />
     </div>
 </div>
