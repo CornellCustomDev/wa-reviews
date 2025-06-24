@@ -37,7 +37,7 @@ class IssueForm extends Form
     #[Validate('string|nullable')]
     public ?string $recommendation;
     #[Validate('string|nullable')]
-    public ?string $testing = '';
+    public ?string $testing;
     public ?array $image_links = [];
     public array $imagesToRemove = [];
     #[Validate(['images.*' => 'nullable|image'])]

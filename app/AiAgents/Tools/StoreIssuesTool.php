@@ -65,6 +65,8 @@ class StoreIssuesTool extends Tool
         $existingIssues = $scope->issues()->pluck('guideline_id')->toArray();
 
         foreach ($issues as $issue) {
+            // Sometimes the issue is a stdClass object, so convert it to an array
+            $issue = (array) $issue;
             // Filter any issues that are already in the issues list
             if (in_array($issue['number'], $existingIssues)) {
                 $feedback[] = [

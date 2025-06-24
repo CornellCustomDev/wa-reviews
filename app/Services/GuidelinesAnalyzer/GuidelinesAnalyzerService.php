@@ -5,6 +5,9 @@ namespace App\Services\GuidelinesAnalyzer;
 use App\AiAgents\Tools\AnalyzeIssueTool;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Enums\Agents;
+use App\Enums\AIStatus;
+use App\Enums\Assessment;
+use App\Enums\Impact;
 use App\Models\Agent;
 use App\Models\Guideline;
 use App\Models\Issue;
@@ -18,6 +21,7 @@ use App\Services\GuidelinesAnalyzer\Tools\FetchGuidelinesList;
 use App\Services\GuidelinesAnalyzer\Tools\FetchIssuePageContent;
 use App\Services\GuidelinesAnalyzer\Tools\ReviewGuidelineApplicability;
 use App\Services\GuidelinesAnalyzer\Tools\StoreGuidelineMatches;
+use Illuminate\Support\Str;
 
 class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 {
@@ -88,8 +92,8 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'id' => $issue->id,
             'target' => $issue->target,
             'css_selector' => $issue->css_selector,
-            'description' => $issue->description,
-            'page_content' => $issue->scope?->url
+            'description' => $issue->description->toHtml(),
+            'page_content' => $issue->scope?->pageHasBeenRetrieved()
                 ? 'Available via "fetch_issue_page_content" tool.'
                 : 'No page content available.',
         ];
@@ -111,7 +115,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'comments' => $scope->comments,
         ];
 
-        return "Here is the current scope in JSON format:\n"
+        return "Here is the current web age scope in JSON format:\n"
             . "```json\n" . json_encode($scopeData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
 
@@ -123,7 +127,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             ->each(fn ($issue) => $issue['url'] = route('guidelines.show', $issue['number']));
 
         return empty($issues)
-            ? "No issues found for this page scope."
+            ? "No issues found for this web page scope."
             : "Here are the issues in JSON format:\n"
             . "```json\n" . $issues->toJson(JSON_PRETTY_PRINT) . "\n```\n\n";
     }
@@ -204,6 +208,20 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
                 'impact',
             ],
             'additionalProperties' => false,
+        ];
+    }
+
+    public static function mapResponseToItemArray(array $response): array
+    {
+        return [
+            'guideline_id' => $response['number'],
+            'assessment' => Assessment::fromName($response['assessment']),
+            'description' => Str::markdown(htmlentities($response['observation'])),
+            'recommendation' => Str::markdown(htmlentities($response['recommendation'])),
+            'testing' => Str::markdown(htmlentities($response['testing'])),
+            'impact' => Impact::fromName($response['impact']),
+            'ai_reasoning' => Str::markdown(htmlentities($response['reasoning'])),
+            'ai_status' => AIStatus::Generated,
         ];
     }
 

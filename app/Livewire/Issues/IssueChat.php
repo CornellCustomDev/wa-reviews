@@ -10,7 +10,9 @@ use Livewire\Component;
 
 class IssueChat extends Component
 {
-    use LarAgentChat;
+    use LarAgentChat {
+        afterAgentResponse as baseAfterAgentResponse;
+    }
 
     public Issue $issue;
 
@@ -29,6 +31,8 @@ class IssueChat extends Component
 
     protected function afterAgentResponse(ModelChatAgent $agent): void
     {
+        $this->baseAfterAgentResponse($agent);
+
         if (in_array('store_guideline_matches', $agent->getToolsCalled())) {
             $this->dispatch('items-updated');
         }

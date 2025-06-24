@@ -51,6 +51,7 @@ class ScopeAnalyzerAgent extends Agent
     public function instructions(): string
     {
         return view('ai-agents.ScopeAnalyzer.instructions', [
+            'tools' => $this->getTools(),
             'guidelinesList' => json_encode(FetchGuidelinesListTool::call(), JSON_PRETTY_PRINT),
         ])->render();
     }
@@ -78,19 +79,6 @@ class ScopeAnalyzerAgent extends Agent
             ],
             'strict' => true,
         ];
-    }
-
-    public function getContext(?string $additionalContext = null): string
-    {
-        $context = "# Context: Scope\n\n"
-            . GuidelinesAnalyzerService::getScopeContext($this->scope);
-
-        if ($additionalContext) {
-            $context .= "\n\n# Additional context\n\n"
-                . $additionalContext;
-        }
-
-        return $context;
     }
 
     protected function beforeSaveHistory(ChatHistoryInterface $history): true

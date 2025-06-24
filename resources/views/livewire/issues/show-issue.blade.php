@@ -151,7 +151,7 @@
                 </p>
             @endif
 
-            @if($issue->testing)
+            @if($issue->testing && !($issue->testing->isEmpty()))
                 <x-forms.field-display label="Testing">
                     {!! $issue->testing !!}
                 </x-forms.field-display>
