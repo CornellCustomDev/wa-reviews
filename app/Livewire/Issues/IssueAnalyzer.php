@@ -23,13 +23,13 @@ class IssueAnalyzer extends Component
 
     public Scope $scope;
     public ?IssueForm $form = null;
-    public ?Issue $issue = null;
+    public Issue $issue;
     public ?Collection $recommendations = null;
 
     protected function getAgent(): GuidelineRecommenderAgent
     {
         if ($this->needsRefresh) {
-            $this->issue?->refresh();
+            $this->issue->refresh();
             $this->needsRefresh = false;
         }
 
@@ -38,7 +38,7 @@ class IssueAnalyzer extends Component
 
     public function unreviewedItems(): Collection
     {
-        return $this->issue?->items
+        return $this->issue->items
             ->filter(fn(Item $item) => $item->hasUnreviewedAI())
             ?: collect();
     }
@@ -49,22 +49,32 @@ class IssueAnalyzer extends Component
         return $this->unreviewedItems()->isNotEmpty();
     }
 
-    public function getContext($form = null): string
-    {
-        return "# Context: Web accessibility issue\n"
-            . GuidelinesAnalyzerService::getIssueContext($this->issue);
-    }
-
     public function recommendGuidelines($form = null): void
     {
+        if (empty($this->scope)) {
+            $this->feedback = 'A Scope is required to recommend guidelines.';
+            $this->showFeedback = true;
+            return;
+        }
+
+        // If target or description are empty, give feedback to the user
+        if (empty($this->form->target) || empty($this->form->description)) {
+            $this->feedback = 'Target and description are required to recommend guidelines.';
+            $this->showFeedback = true;
+            return;
+        }
+
         // Authorize because we delete existing items
         $this->authorize('update', $this->scope);
 
         // Remove any existing recommendation for this issue first
-        $this->issue?->items()->delete();
+        $this->issue->items()->delete();
         unset($this->hasUnreviewedItems);
 
-        $this->userMessage = $this->getContext($form);
+        $context = "# Context: Web accessibility issue\n"
+            . GuidelinesAnalyzerService::getIssueContext($this->issue);
+
+        $this->userMessage = $context;
         $this->initiateAction();
     }
 
