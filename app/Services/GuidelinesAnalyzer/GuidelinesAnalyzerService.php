@@ -115,7 +115,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'comments' => $scope->comments,
         ];
 
-        return "Here is the current web age scope in JSON format:\n"
+        return "Here is the current web page scope in JSON format:\n"
             . "```json\n" . json_encode($scopeData, JSON_PRETTY_PRINT) . "\n```\n\n";
     }
 
