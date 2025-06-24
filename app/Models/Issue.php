@@ -104,11 +104,6 @@ class Issue extends Model
         return $this->ai_status === AIStatus::Generated;
     }
 
-    public function wasAiGenerated(): bool
-    {
-        return ! empty($this->ai_status);
-    }
-
     public function isAiAccepted(): bool
     {
         return $this->ai_status === AIStatus::Accepted;
