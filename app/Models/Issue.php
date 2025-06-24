@@ -141,4 +141,25 @@ class Issue extends Model
         $this->ai_status = AIStatus::Modified;
         $this->save();
     }
+
+    public function applyRecommendation($item_id): void
+    {
+        $this->items->firstWhere('id', $item_id)->markAiAccepted();
+
+        // Use the item content to update the issue
+        $item = $this->items->firstWhere('id', $item_id);
+        $this->update([
+            'guideline_id'   => $item->guideline_id,
+            'assessment'     => $item->assessment,
+            'testing'        => $item->testing,
+            'impact'         => $item->impact,
+            'ai_reasoning'   => $item->ai_reasoning,
+            'recommendation' => $item->recommendation,
+        ]);
+
+        // Reject any other AI recommendations for this issue
+        $this->items
+            ->filter(fn (Item $item) => $item->hasUnreviewedAI())
+            ->each(fn (Item $item) => $item->markAiRejected());
+    }
 }

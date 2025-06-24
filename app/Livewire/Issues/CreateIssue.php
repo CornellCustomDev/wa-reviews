@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Issues;
 
+use App\Enums\Assessment;
+use App\Enums\Impact;
 use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
@@ -9,6 +11,7 @@ use App\Models\Scope;
 use App\Models\SiaRule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -19,6 +22,7 @@ class CreateIssue extends Component
 
     public IssueForm $form;
     public Scope $scope;
+    public array $aiData = [];
 
     #[Url]
     public ?string $rule = null;
@@ -44,7 +48,7 @@ class CreateIssue extends Component
         $this->authorize('create', [Issue::class, $this->scope->project]);
         $this->form->scope_id = $this->scope->id;
         $rule = $this->rule ? SiaRule::find($this->rule) : null;
-        $issue = $this->form->store($this->scope->project, $rule);
+        $issue = $this->form->store($this->scope->project, $rule, aiData: $this->aiData);
 
         return redirect()->route('issue.show', $issue);
     }
@@ -53,6 +57,26 @@ class CreateIssue extends Component
     public function getGuidelinesOptions()
     {
         return $this->form->getGuidelineSelectArray();
+    }
+
+    #[On('analyze-issue')]
+    public function analyzeIssue()
+    {
+        $this->dispatch('recommend-guidelines',
+            target: $this->form->target,
+            description: $this->form->description,
+        );
+    }
+
+    #[On('populate-form')]
+    public function populateForm($item)
+    {
+        // Update the form with the AI recommendations
+        $this->form->guideline_id = $item['guideline_id'];
+        $this->form->assessment = Assessment::fromName($item['assessment']);
+        $this->form->recommendation = $item['recommendation'];
+        $this->form->impact = Impact::fromName($item['impact']);
+        $this->aiData = $item;
     }
 
     public function render()
