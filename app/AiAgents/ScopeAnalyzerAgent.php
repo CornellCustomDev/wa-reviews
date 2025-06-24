@@ -81,6 +81,19 @@ class ScopeAnalyzerAgent extends Agent
         ];
     }
 
+    public function getContext(?string $additionalContext = null): string
+    {
+        $context = "# Context: Web Page Scope\n\n"
+            . GuidelinesAnalyzerService::getScopeContext($this->scope);
+
+        if ($additionalContext) {
+            $context .= "\n\n# Additional context\n\n"
+                . $additionalContext;
+        }
+
+        return $context;
+    }
+
     protected function beforeSaveHistory(ChatHistoryInterface $history): true
     {
         // Remove the instructions from the history
