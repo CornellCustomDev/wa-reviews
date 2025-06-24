@@ -27,7 +27,7 @@
                 <td>
                     @include('livewire.issues.assessment', ['issue' => $issue])
                     <div>
-                        @if($issue->isAiGenerated() &! $issue->isAiAccepted())
+                        @if($issue->isAiGenerated() && ! $issue->isAiAccepted())
                             @can('update', $issue)
                                 <x-forms.button
                                     title="Accept AI recommendation for issue {{ $issue->id }}"
