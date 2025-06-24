@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Scopes;
 
+use App\AiAgents\ModelChatAgent;
 use App\AiAgents\ScopeChatAgent;
 use App\Livewire\Ai\LarAgentChat;
 use App\Models\Scope;
@@ -9,7 +10,9 @@ use Livewire\Component;
 
 class ScopeChat extends Component
 {
-    use LarAgentChat;
+    use LarAgentChat {
+        afterAgentResponse as baseAfterAgentResponse;
+    }
 
     public Scope $scope;
 
@@ -24,5 +27,14 @@ class ScopeChat extends Component
         }
 
         return new ScopeChatAgent($this->scope, $this->selectedChatKey);
+    }
+
+    protected function afterAgentResponse(ModelChatAgent $agent): void
+    {
+        $this->baseAfterAgentResponse($agent);
+
+        if (in_array('store_issues', $agent->getToolsCalled())) {
+            $this->dispatch('issues-updated');
+        }
     }
 }

@@ -112,8 +112,6 @@ trait LarAgentChat
 
             $agent->updateChatName();
             $this->afterAgentResponse($agent);
-            unset($this->chats);
-            unset($this->chatMessages);
         } catch (Throwable $e) {
             $this->feedback = "**Error:** {$e->getMessage()}";
             $this->showFeedback = true;
@@ -126,6 +124,7 @@ trait LarAgentChat
 
     protected function afterAgentResponse(Agent $agent): void
     {
-        //
+        unset($this->chats);
+        unset($this->chatMessages);
     }
 }
