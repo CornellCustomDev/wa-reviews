@@ -6,7 +6,7 @@
             variant="combobox"
             label="Scope"
             placeholder="Choose scope..."
-            wire:model="form.scope_id"
+            wire:model.live="form.scope_id"
             :options="$this->scopeOptions()"
         >
             <x-slot name="description">
@@ -31,4 +31,11 @@
         <a href="{{ route('project.scope.create', $project) }}">add a scope</a>, if needed) so there
         is a page associated with the issue.
     </p>
+
+    @include('livewire.issues.instructions')
+
+    <flux:separator class="mb-4 clear-both" />
+
+    <livewire:issues.issue-form-analyzer :$form />
+
 </x-slot:sidebarPrimary>

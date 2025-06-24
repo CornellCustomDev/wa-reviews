@@ -1,9 +1,9 @@
 <div>
     <div class="mb-4">
-        <x-forms.button wire:click="recommendGuidelines()" icon="sparkles">
-            <span wire:show="$this->hasUnreviewedItems">Re-</span>Analyze Issue
+        <x-forms.button wire:click="$dispatch('analyze-issue')" icon="sparkles">
+            Analyze Issue
         </x-forms.button>
-        <span wire:loading.delay wire:target="recommendGuidelines"> Analyzing...</span>
+        <span wire:loading.delay wire:target="analyzeIssue"> Analyzing...</span>
     </div>
 
     <div wire:stream="streamedResponse" wire:show="streaming" role="status" aria-live="polite"

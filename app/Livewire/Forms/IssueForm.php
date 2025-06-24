@@ -2,12 +2,14 @@
 
 namespace App\Livewire\Forms;
 
+use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
 use App\Models\Guideline;
 use App\Models\Issue;
+use App\Models\Item;
 use App\Models\Project;
 use App\Models\SiaRule;
 use Illuminate\Support\Collection;
@@ -109,7 +111,7 @@ class IssueForm extends Form
         return $this->issue;
     }
 
-    public function store(Project $project, ?SiaRule $rule = null): Issue
+    public function store(Project $project, ?SiaRule $rule = null, ?array $aiData = null): Issue
     {
         $this->validate();
 
@@ -119,6 +121,10 @@ class IssueForm extends Form
         ]);
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
         $attributes['guideline_id'] = $attributes['guideline_id'] ?: null;
+        if ($aiData) {
+            $attributes['ai_reasoning'] = $aiData['ai_reasoning'];
+            $attributes['ai_status'] = AIStatus::Accepted;
+        }
 
         $this->issue = $project->issues()->create($attributes);
 
@@ -132,6 +138,13 @@ class IssueForm extends Form
         $this->issue->save();
 
         event(new IssueChanged($this->issue, 'created'));
+
+        if ($aiData) {
+            Item::create([
+                'issue_id' => $this->issue->id,
+                ...$aiData,
+            ]);
+        }
 
         return $this->issue;
     }
@@ -154,6 +167,8 @@ class IssueForm extends Form
 
         $attributes = $this->all();
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
+        $attributes['ai_status'] = AIStatus::Modified;
+
         /** @var TemporaryUploadedFile $file */
         foreach ($this->images as $file) {
             $originalName = $file->getClientOriginalName();

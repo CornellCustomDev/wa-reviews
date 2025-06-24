@@ -1,9 +1,9 @@
 <div>
-    <h1>{{ $this->scope->title }}: Add Issue</h1>
+    <h1>{{ $scope->title }}: Add Issue</h1>
 
-    @if($this->scope->url)
+    @if($scope->url)
         <x-forms.field-display label="URL" variation="inline">
-            <a href="{{ $this->scope->url }}" target="_blank">{{ $this->scope->url }}</a>
+            <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
         </x-forms.field-display>
     @endif
 
@@ -19,10 +19,10 @@
     <p>
         An Issue identifies an accessibility problem.
     </p>
-    <x-forms.field-display label="Target" variation="inline">
-        Describe <strong>what</strong> exactly is causing the issue.
-    </x-forms.field-display>
-    <x-forms.field-display label="Description" variation="inline">
-        Describe <strong>why</strong> there is an issue.
-    </x-forms.field-display>
+
+    @include('livewire.issues.instructions')
+
+    <flux:separator class="mb-4 clear-both" />
+
+    <livewire:issues.issue-form-analyzer :$scope :$form />
 </x-slot:sidebarPrimary>
