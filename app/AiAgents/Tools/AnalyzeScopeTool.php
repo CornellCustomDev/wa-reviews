@@ -5,52 +5,42 @@ namespace App\AiAgents\Tools;
 use App\AiAgents\ScopeAnalyzerAgent;
 use App\Models\Scope;
 use Illuminate\Support\Str;
-use LarAgent\Tool;
+use Throwable;
 
-class AnalyzeScopeTool extends Tool
+class AnalyzeScopeTool extends BaseTool
 {
-    public string $name = 'analyze_scope';
-
     public string $description =
         'Analyze the specified page scope and return applicable web accessibility guideline issues based on '
         . 'the Guidelines Document. If no guideline applies, or more information is needed, it returns a feedback '
         . 'message instead.';
 
-    public array $required = ['scope_id'];
+    public static array $schema = [
+        'scope_id' => [
+            'type' => 'integer',
+            'description' => 'The primary key of the page scope to analyze.',
+        ],
+        'context' => [
+            'type' => ['string', 'null'],
+            'description' => 'Any additional context or information to provide to the agent.',
+        ],
+    ];
 
-    public static function call(int $scope_id, ?string $context = null): array
+    public static function run(int $scope_id, ?string $context = null): array
     {
-        return (new self())->execute([
+        return (new self())->call([
             'scope_id' => $scope_id,
             'context' => $context,
         ]);
     }
 
-    public function getProperties(): array
+    /**
+     * @throws Throwable
+     */
+    public function handle(array $input): mixed
     {
-        return [
-            'scope_id' => [
-                'type' => 'integer',
-                'description' => 'The primary key of the page scope to analyze.',
-            ],
-            'context' => [
-                'type' => ['string', 'null'],
-                'description' => 'Any additional context or information to provide to the agent.',
-            ],
-        ];
-    }
-
-    public function execute(array $input): array
-    {
-        $scopeId = $input['scope_id'] ?? null;
-
-        if (!is_numeric($scopeId)) {
-            return ['error' => 'scope_id_parameter_missing'];
-        }
-
+        $scopeId = $input['scope_id'];
         $additionalContext = $input['context'] ?? null;
 
-        // Fetch the scope and analyze it
         $scope = Scope::find($scopeId);
         if (!$scope) {
             return ['error' => 'scope_not_found'];

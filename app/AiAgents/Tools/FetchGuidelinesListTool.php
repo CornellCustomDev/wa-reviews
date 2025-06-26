@@ -3,20 +3,13 @@
 namespace App\AiAgents\Tools;
 
 use App\Models\Guideline;
-use LarAgent\Tool;
 
-class FetchGuidelinesListTool extends Tool
+class FetchGuidelinesListTool extends BaseTool
 {
-    protected string $name = 'fetch_guidelines_list';
+    protected string $description =
+        'Return a list of all accessibility guidelines with number, name, WCAG 2.2 AA criterion, and category.';
 
-    protected string $description = 'Return a list of all accessibility guidelines with number, name, WCAG 2.2 AA criterion, and category.';
-
-    public static function call(): array
-    {
-        return (new self())->execute([]);
-    }
-
-    public function execute(array $input): array
+    public function handle(array $input): array
     {
         $guidelinesList = Guideline::query()->with(['criterion', 'category'])
             ->get()

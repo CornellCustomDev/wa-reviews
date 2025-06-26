@@ -25,6 +25,78 @@ use Illuminate\Support\Str;
 
 class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 {
+    const array ITEM_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'reasoning' => [
+                'type' => 'string',
+                'description' => 'Brief explanation of: 1) how the guideline applies to the issue, 2) why it was assessed as a warning or failure, and 3) why the impact rating was chosen.',
+            ],
+            'number' => [
+                'type' => 'integer',
+                'description' => 'The Guideline heading number from the Guidelines Document'
+            ],
+            'heading' => [
+                'type' => 'string',
+                'description' => 'The Guideline heading name from the Guidelines Document',
+            ],
+            'criteria' => [
+                'type' => 'string',
+                'description' => 'WCAG criteria',
+            ],
+            'assessment' => [
+                'type' => 'string',
+                'enum' => ['Fail', 'Warn'],
+                'description' => '"Fail" if the criterion is not met; "Warn" if it meets the criterion but results in poor experience.',
+            ],
+            'observation' => [
+                'type' => 'string',
+                'description' => 'Briefly describe how the issue fails to meet the guideline (or why it is only a warning)',
+            ],
+            'recommendation' => [
+                'type' => 'string',
+                'description' => 'Brief, actionable steps to fix the accessibility issue.',
+            ],
+            'testing' => [
+                'type' => 'string',
+                'description' => 'Brief instructions to verify the issue with assistive technologies or manual checks.',
+            ],
+            'impact' => [
+                'type' => 'string',
+                'enum' => ['Critical', 'Serious', 'Moderate', 'Low'],
+                'description' => 'Severity of the barrier. "Critical" blocks primary tasks; "Serious" makes them very difficult; "Moderate" makes them somewhat harder; "Low" causes mild inconvenience.',
+            ],
+        ],
+        'required' => [
+            'reasoning',
+            'number',
+            'heading',
+            'criteria',
+            'assessment',
+            'observation',
+            'recommendation',
+            'testing',
+            'impact',
+        ],
+        'additionalProperties' => false,
+    ];
+
+    const array ISSUE_SCHEMA = [
+        'type' => 'object',
+        'properties' => [
+            'target' => [
+                'type' => 'string',
+                'description' => 'The target of the issue, such as a description of the element or a CSS selector.',
+            ],
+            ...self::ITEM_SCHEMA['properties'],
+        ],
+        'required' => [
+            'target',
+            ...self::ITEM_SCHEMA['required'],
+        ],
+        'additionalProperties' => false,
+    ];
+
     private AnalyzeIssue $analyzeIssueInstance;
     private StoreGuidelineMatches $storeGuidelineMatchesInstance;
     private ReviewGuidelineApplicability $reviewApplicabilityInstance;
@@ -67,12 +139,12 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
     public static function analyzeIssue(Issue $issue): array
     {
-        return AnalyzeIssueTool::call($issue->id);
+        return AnalyzeIssueTool::run($issue->id);
     }
 
     public static function storeItems(Issue $issue, array $items): array
     {
-        return StoreGuidelineMatchesTool::call($issue->id, $items);
+        return StoreGuidelineMatchesTool::run($issue->id, $items);
     }
 
     public static function populateIssueItemsWithAI(Issue $issue): array
@@ -134,81 +206,12 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
     public static function getIssueSchema(): array
     {
-        $itemsSchema = self::getItemsSchema();
-        return [
-            'type' => 'object',
-            'properties' => [
-                'target' => [
-                    'type' => 'string',
-                    'description' => 'The target of the issue, such as a description of the element or a CSS selector.',
-                ],
-                ...$itemsSchema['properties'],
-            ],
-            'required' => [
-                'target',
-                ...$itemsSchema['required'],
-            ],
-            'additionalProperties' => false,
-        ];
+        return self::ISSUE_SCHEMA;
     }
 
     public static function getItemsSchema(): array
     {
-        return [
-            'type' => 'object',
-            'properties' => [
-                'reasoning' => [
-                    'type' => 'string',
-                    'description' => 'Brief explanation of: 1) how the guideline applies to the issue, 2) why it was assessed as a warning or failure, and 3) why the impact rating was chosen.',
-                ],
-                'number' => [
-                    'type' => 'integer',
-                    'description' => 'The Guideline heading number from the Guidelines Document'
-                ],
-                'heading' => [
-                    'type' => 'string',
-                    'description' => 'The Guideline heading name from the Guidelines Document',
-                ],
-                'criteria' => [
-                    'type' => 'string',
-                    'description' => 'WCAG criteria',
-                ],
-                'assessment' => [
-                    'type' => 'string',
-                    'enum' => ['Fail', 'Warn'],
-                    'description' => '"Fail" if the criterion is not met; "Warn" if it meets the criterion but results in poor experience.',
-                ],
-                'observation' => [
-                    'type' => 'string',
-                    'description' => 'Briefly describe how the issue fails to meet the guideline (or why it is only a warning)',
-                    ],
-                'recommendation' => [
-                    'type' => 'string',
-                    'description' => 'Brief, actionable steps to fix the accessibility issue.',
-                ],
-                'testing' => [
-                    'type' => 'string',
-                    'description' => 'Brief instructions to verify the issue with assistive technologies or manual checks.',
-                ],
-                'impact' => [
-                    'type' => 'string',
-                    'enum' => ['Critical', 'Serious', 'Moderate', 'Low'],
-                    'description' => 'Severity of the barrier. "Critical" blocks primary tasks; "Serious" makes them very difficult; "Moderate" makes them somewhat harder; "Low" causes mild inconvenience.',
-                ],
-            ],
-            'required' => [
-                'reasoning',
-                'number',
-                'heading',
-                'criteria',
-                'assessment',
-                'observation',
-                'recommendation',
-                'testing',
-                'impact',
-            ],
-            'additionalProperties' => false,
-        ];
+        return self::ITEM_SCHEMA;
     }
 
     public static function mapResponseToItemArray(array $response): array

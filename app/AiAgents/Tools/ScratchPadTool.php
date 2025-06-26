@@ -39,7 +39,8 @@ class ScratchPadTool extends Tool
         $data = $input['data'] ?? null;
 
         return match ($action) {
-            'store' => $this->storeScratchPad($data),
+            //'store' => $this->storeScratchPad($data),
+            'store' => $this->appendScratchPad($data),
             'append' => $this->appendScratchPad($data),
 //            'retrieve' => $this->retrieveScratchPad(),
 //            'clear' => $this->clearScratchPad(),

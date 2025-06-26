@@ -8,17 +8,26 @@ use App\Models\Agent;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
-use LarAgent\Tool;
 
-class StoreGuidelineMatchesTool extends Tool
+class StoreGuidelineMatchesTool extends BaseTool
 {
-    protected string $name = 'store_guideline_matches';
-
-    protected string $description = 'Stores applicable web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
+    protected string $description =
+        'Stores applicable web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
 
     protected array $required = ['issue_id', 'guidelines'];
 
-    public static function call(int $issue_id, array $guidelines): array
+    public static array $schema = [
+        'issue_id' => [
+            'type' => 'integer',
+            'description' => 'The primary key of the issue.',
+        ],
+        'guidelines' => [
+            'type' => 'array',
+            'items' => GuidelinesAnalyzerService::ITEM_SCHEMA,
+        ],
+    ];
+
+    public static function run(int $issue_id, array $guidelines): array
     {
         return (new self())->execute([
             'issue_id' => $issue_id,
@@ -26,28 +35,10 @@ class StoreGuidelineMatchesTool extends Tool
         ]);
     }
 
-    public function getProperties(): array
+    public function handle(array $input): array
     {
-        return [
-            'issue_id' => [
-                'type' => 'integer',
-                'description' => 'The primary key of the issue.',
-            ],
-            'guidelines' => [
-                'type' => 'array',
-                'items' => GuidelinesAnalyzerService::getItemsSchema(),
-            ],
-        ];
-    }
-
-    public function execute(array $input): array
-    {
-        $issueId = $input['issue_id'] ?? null;
-        $guidelines = $input['guidelines'] ?? null;
-
-        if (!is_numeric($issueId) || !is_array($guidelines)) {
-            return ['error' => 'invalid_parameters'];
-        }
+        $issueId = $input['issue_id'];
+        $guidelines = $input['guidelines'];
 
         $issue = Issue::findOrFail($issueId);
 

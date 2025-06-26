@@ -89,7 +89,7 @@ class IssueAnalyzer extends Component
         }
 
         if ($response?->guidelines) {
-            StoreGuidelineMatchesTool::call($this->issue->id, $response->guidelines);
+            StoreGuidelineMatchesTool::run($this->issue->id, $response->guidelines);
             unset($this->hasUnreviewedItems);
         }
     }

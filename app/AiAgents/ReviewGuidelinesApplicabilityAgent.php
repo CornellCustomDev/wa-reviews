@@ -5,7 +5,6 @@ namespace App\AiAgents;
 use App\Enums\ChatProfile;
 use App\Models\Guideline;
 use App\Models\Issue;
-use App\Models\Item;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use LarAgent\Agent;
 use Throwable;

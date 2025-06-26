@@ -30,28 +30,21 @@ class StoreIssuesTool extends Tool
         ]);
     }
 
-    public function getProperties(): array
-    {
-        return [
+    public static array $schema = [
             'scope_id' => [
                 'type' => 'integer',
                 'description' => 'The primary key of the scope.',
             ],
             'issues' => [
                 'type' => 'array',
-                'items' => GuidelinesAnalyzerService::getIssueSchema(),
+                'items' => GuidelinesAnalyzerService::ISSUE_SCHEMA,
             ],
         ];
-    }
 
-    public function execute(array $input): array
+    public function handle(array $input): array
     {
-        $scopeId = $input['scope_id'] ?? null;
-        $issues = $input['issues'] ?? null;
-
-        if (!is_numeric($scopeId) || !is_array($issues)) {
-            return ['error' => 'invalid_parameters'];
-        }
+        $scopeId = $input['scope_id'];
+        $issues = $input['issues'];
 
         $scope = Scope::findOrFail($scopeId);
 
