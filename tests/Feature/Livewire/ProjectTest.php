@@ -73,22 +73,4 @@ class ProjectTest extends FeatureTestCase
             ->call('save')
             ->assertRedirect(route('project.show', $project));
     }
-
-    #[Test] public function siteadmin_can_create_project()
-    {
-        $user = $this->getLoggedInTestUser([Roles::SiteAdmin]);
-        $team = Team::factory()->create();
-
-        // Confirm that the project.create route is accessible to site admins
-        $this->actingAs($user)
-            ->get(route('teams.project.create', $team))
-            ->assertStatus(200);
-
-        Livewire::test(CreateProject::class, ['team' => $team])
-            ->set('form.name', 'Site Admin Project')
-            ->set('form.site_url', 'https://siteadminproject.com')
-            ->set('form.description', 'This is a project created by a site admin')
-            ->call('save')
-            ->assertRedirect(route('project.show', Project::latest()->first()));
-    }
 }

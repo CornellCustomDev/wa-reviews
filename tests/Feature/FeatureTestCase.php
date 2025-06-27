@@ -16,7 +16,7 @@ class FeatureTestCase extends TestCase
     /**
      * Helper to create an authenticated user with a role assigned to a team.
      */
-    protected function getLoggedInTestUser(string|array $role, ?Team $team = null, ?string $teamName = null, ?User $user = null): User
+    protected function getLoggedInTestUser(string|array|Roles|null $role = [], ?Team $team = null, ?string $teamName = null, ?User $user = null): User
     {
         $user = $user ?: $this->makeTestUser(Arr::wrap($role), $team, $teamName);
         $this->actingAs($user);
