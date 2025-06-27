@@ -25,8 +25,8 @@ class CreateSiteimproveIssue extends Component
         $this->rule = $rule;
         $this->guideline = $guideline;
         // Get the description from SiteimproveRule
-        $siteimproveRule = $this->rule->siteimproveRules->firstWhere('criterion_id', $this->guideline->criterion_id);
-        $this->form->description = $siteimproveRule->issues;
+        // $siteimproveRule = $this->rule->siteimproveRules->firstWhere('criterion_id', $this->guideline->criterion_id);
+        $this->form->description = $this->rule->name_html; // $siteimproveRule->issues;
     }
 
     #[Computed('siteimproveUrl')]

@@ -1,0 +1,265 @@
+Table "categories" {
+  "id" bigint(20) [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "description" varchar(255) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+Table "criteria" {
+  "id" bigint(20) [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "number" varchar(255) [not null]
+  "level" varchar(255) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+}
+
+
+Table "guidelines" {
+  "id" bigint(20) [pk, not null]
+  "number" int(11) [not null]
+  "name" varchar(255) [not null]
+  "criterion_id" bigint(20) [not null]
+  "category_id" bigint(20) [not null]
+  "notes" text [not null]
+  "tools" longtext [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    criterion_id [name: "guidelines_criterion_id_foreign"]
+    category_id [name: "guidelines_category_id_foreign"]
+  }
+}
+
+Table "issues" {
+  "id" bigint(20) [pk, not null, increment]
+  "project_id" bigint(20) [not null]
+  "scope_id" bigint(20) [default: NULL]
+  "guideline_id" bigint(20) [not null]
+  "sia_rule_id" bigint(20) [default: NULL]
+  "assessment" varchar(20) [not null]
+  "target" varchar(255) [not null]
+  "css_selector" varchar(500) [default: NULL]
+  "description" text [default: NULL]
+  "testing_method" varchar(255) [default: NULL]
+  "recommendation" text [default: NULL]
+  "testing" text [default: NULL]
+  "image_links" longtext [default: NULL]
+  "content_issue" tinyint(1) [default: NULL]
+  "impact" varchar(20) [default: NULL]
+  "ai_reasoning" text [default: NULL]
+  "ai_status" varchar(255) [default: NULL]
+  "agent_id" bigint(20) [default: NULL]
+  "status" varchar(20) [default: NULL]
+  "needs_mitigation" tinyint(1) [not null, default: 0]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "deleted_at" timestamp [default: NULL]
+
+  Indexes {
+    project_id [name: "issues_project_id_foreign"]
+    scope_id [name: "issues_scope_id_foreign"]
+    guideline_id [name: "items_guideline_id_foreign"]
+    sia_rule_id [name: "issues_sia_rule_id_foreign"]
+  }
+}
+
+Table "items" {
+  "id" bigint(20) [pk, not null, increment]
+  "issue_id" bigint(20) [not null]
+  "guideline_id" bigint(20) [not null]
+  "assessment" varchar(20) [not null]
+  "target" varchar(255) [default: NULL]
+  "description" text [default: NULL]
+  "testing_method" varchar(255) [default: NULL]
+  "recommendation" text [default: NULL]
+  "testing" text [default: NULL]
+  "image_links" longtext [default: NULL]
+  "content_issue" tinyint(1) [default: NULL]
+  "impact" varchar(20) [default: NULL]
+  "ai_reasoning" text [default: NULL]
+  "ai_status" varchar(255) [default: NULL]
+  "agent_id" bigint(20) [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "deleted_at" timestamp [default: NULL]
+
+  Indexes {
+    guideline_id [name: "items_guideline_id_foreign"]
+    issue_id [name: "items_issue_id_foreign"]
+    agent_id [name: "items_agent_id_foreign"]
+  }
+}
+
+
+Table "pages" {
+  "id" bigint(20) [pk, not null, increment]
+  "scope_id" bigint(20) [not null]
+  "url" varchar(255) [default: NULL]
+  "page_content" longtext [default: NULL]
+  "retrieved_at" timestamp [default: NULL]
+  "siteimprove_page_id" varchar(255) [default: NULL]
+  "siteimprove_report_url" varchar(255) [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    scope_id [name: "pages_scope_id_foreign"]
+  }
+}
+
+
+Table "project_assignments" {
+  "id" bigint(20) [pk, not null, increment]
+  "project_id" bigint(20) [not null]
+  "user_id" bigint(20) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "deleted_at" timestamp [default: NULL]
+
+  Indexes {
+    project_id [name: "project_assignments_project_id_foreign"]
+    user_id [name: "project_assignments_user_id_foreign"]
+  }
+}
+
+Table "project_viewers" {
+  "id" bigint(20) [pk, not null, increment]
+  "project_id" bigint(20) [not null]
+  "user_id" bigint(20) [not null]
+
+  Indexes {
+    project_id [name: "project_viewers_project_id_foreign"]
+    user_id [name: "project_viewers_user_id_foreign"]
+  }
+}
+
+Table "projects" {
+  "id" bigint(20) [pk, not null, increment]
+  "team_id" bigint(20) [default: NULL]
+  "name" varchar(255) [not null]
+  "site_url" varchar(255) [not null]
+  "description" text [default: NULL]
+  "siteimprove_url" varchar(255) [default: NULL]
+  "siteimprove_id" varchar(255) [default: NULL]
+  "status" varchar(25) [not null, default: 'Not Started']
+  "completed_at" timestamp [default: NULL]
+  "assignment_id" bigint(20) [default: NULL]
+  "responsible_unit" varchar(255) [default: NULL]
+  "contact_name" varchar(255) [default: NULL]
+  "contact_netid" varchar(10) [default: NULL]
+  "audience" text [default: NULL]
+  "site_purpose" text [default: NULL]
+  "urls_included" text [default: NULL]
+  "urls_excluded" text [default: NULL]
+  "review_procedure" text [default: NULL]
+  "summary" text [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "deleted_at" timestamp [default: NULL]
+
+  Indexes {
+    team_id [name: "projects_team_id_foreign"]
+    assignment_id [name: "projects_assignment_id_foreign"]
+  }
+}
+
+Table "scopes" {
+  "id" bigint(20) [pk, not null, increment]
+  "project_id" bigint(20) [not null]
+  "title" varchar(255) [not null]
+  "url" varchar(255) [not null]
+  "current_page_id" bigint(20) [default: NULL]
+  "notes" text [default: NULL]
+  "comments" longtext [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    project_id [name: "scopes_project_id_foreign"]
+    current_page_id [name: "scopes_current_page_id_foreign"]
+  }
+}
+
+
+Table "team_user" {
+  "id" bigint(20) [pk, not null, increment]
+  "team_id" bigint(20) [not null]
+  "user_id" bigint(20) [not null]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    team_id [name: "team_user_team_id_foreign"]
+    user_id [name: "team_user_user_id_foreign"]
+  }
+}
+
+Table "teams" {
+  "id" bigint(20) [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "display_name" varchar(255) [default: NULL]
+  "description" varchar(255) [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+
+  Indexes {
+    name [unique, name: "teams_name_unique"]
+  }
+}
+
+Table "users" {
+  "id" bigint(20) [pk, not null, increment]
+  "name" varchar(255) [not null]
+  "email" varchar(255) [not null]
+  "uid" varchar(255) [not null]
+  "email_verified_at" timestamp [default: NULL]
+  "password" varchar(255) [not null]
+  "remember_token" varchar(100) [default: NULL]
+  "created_at" timestamp [default: NULL]
+  "updated_at" timestamp [default: NULL]
+  "deleted_at" timestamp [default: NULL]
+
+  Indexes {
+    email [unique, name: "users_email_unique"]
+    uid [unique, name: "users_uid_unique"]
+  }
+}
+
+Ref "team_user_team_id_foreign":"teams"."id" < "team_user"."team_id"
+
+Ref "team_user_user_id_foreign":"users"."id" < "team_user"."user_id"
+
+Ref "guidelines_category_id_foreign":"categories"."id" < "guidelines"."category_id"
+
+Ref "guidelines_criterion_id_foreign":"criteria"."id" < "guidelines"."criterion_id"
+
+Ref "issues_project_id_foreign":"projects"."id" < "issues"."project_id"
+
+Ref "issues_scope_id_foreign":"scopes"."id" < "issues"."scope_id" [delete: set null]
+
+Ref "issues_guideline_id_foreign":"guidelines"."id" < "issues"."guideline_id"
+
+Ref "items_guideline_id_foreign":"guidelines"."id" < "items"."guideline_id"
+
+Ref "items_issue_id_foreign":"issues"."id" < "items"."issue_id" [delete: cascade]
+
+Ref "pages_scope_id_foreign":"scopes"."id" < "pages"."scope_id" [delete: cascade]
+
+Ref "project_assignments_project_id_foreign":"projects"."id" < "project_assignments"."project_id" [delete: cascade]
+
+Ref "project_assignments_user_id_foreign":"users"."id" < "project_assignments"."user_id"
+
+Ref "project_viewers_project_id_foreign":"projects"."id" < "project_viewers"."project_id" [delete: cascade]
+
+Ref "project_viewers_user_id_foreign":"users"."id" < "project_viewers"."user_id" [delete: cascade]
+
+Ref "projects_assignment_id_foreign":"project_assignments"."id" < "projects"."assignment_id" [delete: cascade]
+
+Ref "projects_team_id_foreign":"teams"."id" < "projects"."team_id"
+
+Ref "scopes_current_page_id_foreign":"pages"."id" < "scopes"."current_page_id" [delete: set null]
+
+Ref "scopes_project_id_foreign":"projects"."id" < "scopes"."project_id" [delete: cascade]

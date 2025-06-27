@@ -74,7 +74,7 @@ class Guideline extends Model
     public function getCriterionInfo(): string
     {
         if ($this->number < 100) {
-            return "WCAG {$this->criterion->number} ({$this->criterion->level})";
+            return "WCAG {$this->criterion->getLongName()}";
         }
         return $this->category->name;
     }

@@ -5,9 +5,9 @@ namespace App\AiAgents\Tools;
 use App\AiAgents\IssueAnalyzerAgent;
 use App\Models\Issue;
 use Illuminate\Support\Str;
-use LarAgent\Tool;
+use Throwable;
 
-class AnalyzeIssueTool extends Tool
+class AnalyzeIssueTool extends BaseTool
 {
     public string $name = 'analyze_accessibility_issue';
 
@@ -16,41 +16,33 @@ class AnalyzeIssueTool extends Tool
         . 'the Guidelines Document. If no guideline applies, or more information is needed, it returns a feedback '
         . 'message instead.';
 
-    public array $required = ['issue_id'];
+    protected static array $schema = [
+        'issue_id' => [
+            'type' => 'integer',
+            'description' => 'The primary key of the accessibility issue to analyze.',
+        ],
+        'context' => [
+            'type' => ['string', 'null'],
+            'description' => 'Any additional context or information to provide to the agent.',
+        ],
+    ];
 
-    public static function call(int $issue_id, ?string $context = null): array
+    public static function run(int $issue_id, ?string $context = null): array
     {
-        return (new self())->execute([
+        return parent::call([
             'issue_id' => $issue_id,
             'context' => $context,
         ]);
     }
 
-    public function getProperties(): array
+    /**
+     * @throws Throwable
+     */
+    public function handle(array $input): mixed
     {
-        return [
-            'issue_id' => [
-                'type' => 'integer',
-                'description' => 'The primary key of the accessibility issue to analyze.',
-            ],
-            'context' => [
-                'type' => ['string', 'null'],
-                'description' => 'Any additional context or information to provide to the agent.',
-            ],
-        ];
-    }
-
-    public function execute(array $input): array
-    {
-        $issueId = $input['issue_id'] ?? null;
-
-        if (!is_numeric($issueId)) {
-            return ['error' => 'issue_id_parameter_missing'];
-        }
-
+        $issueId = $input['issue_id'];
         $additionalContext = $input['context'] ?? null;
 
-        // Fetch the issue and analyze it
         $issue = Issue::find($issueId);
         if (!$issue) {
             return ['error' => 'issue_not_found'];
@@ -82,5 +74,4 @@ class AnalyzeIssueTool extends Tool
 
         return $results;
     }
-
 }

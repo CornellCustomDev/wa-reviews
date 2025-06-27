@@ -3,40 +3,26 @@
 namespace App\AiAgents\Tools;
 
 use App\Models\Issue;
-use LarAgent\Tool;
 
-class FetchIssuePageContentTool extends Tool
+class FetchIssuePageContentTool extends BaseTool
 {
-    protected string $name = 'fetch_issue_page_content';
-
     protected string $description = 'Fetch the raw HTML of the web page related to the issue.';
 
-    protected array $required = ['issue_id'];
+    public static array $schema = [
+        'issue_id' => [
+            'type' => 'integer',
+            'description' => 'The primary key of the issue.',
+        ],
+    ];
 
-    public function getProperties(): array
+    public function handle(array $input): mixed
     {
-        return [
-            'issue_id' => [
-                'type' => 'integer',
-                'description' => 'The primary key of the issue.',
-            ],
-        ];
-    }
-
-    public function execute(array $input): mixed
-    {
-        $issueId = $input['issue_id'] ?? null;
-
-        if (!is_numeric($issueId)) {
-            return ['error' => 'issue_id_parameter_missing'];
-        }
-
+        $issueId = $input['issue_id'];
         $issue = Issue::find($issueId);
-
         if (!$issue) {
             return ['error' => 'issue_not_found'];
         }
 
-        return FetchScopePageContentTool::call($issue->scope_id);
+        return FetchScopePageContentTool::run($issue->scope_id);
     }
 }

@@ -1,15 +1,22 @@
 <div>
+    @if($this->hasUnreviewedAI())
+        <div class="panel accent-gold fill">
+            <strong>Note:</strong> Some issues have AI-generated recommendations that have not been reviewed yet.
+            Please review them before proceeding.
+        </div>
+    @endif
+
     <table class="table striped bordered">
         <thead>
-            <tr>
-                <th>Target</th>
-                <th>Description</th>
-                <th>Observations</th>
-                <th>Actions</th>
-            </tr>
+        <tr>
+            <th>Target</th>
+            <th>Issue</th>
+            <th>Assessment</th>
+            <th>Actions</th>
+        </tr>
         </thead>
         <tbody>
-        @foreach($scope->issues as $issue)
+        @foreach($this->getIssues() as $issue)
             <tr wire:key="{{ $issue->id }}">
                 <td>
                     {{ $issue->target }}
@@ -18,11 +25,24 @@
                     {!! $issue->description !!}
                 </td>
                 <td>
-                    @if($issue->items)
-                        @foreach($issue->items as $item)
-                            @include('livewire.issues.item-observation', ['item' => $item])
-                        @endforeach
-                    @endif
+                    @include('livewire.issues.assessment', ['issue' => $issue])
+                    <div>
+                        @if($issue->isAiGenerated() && ! $issue->isAiAccepted())
+                            @can('update', $issue)
+                                <x-forms.button
+                                    title="Accept AI recommendation for issue {{ $issue->id }}"
+                                    icon="hand-thumb-up" size="xs"
+                                    wire:click="acceptAI('{{ $issue->id }}')"
+                                />
+                                <x-forms.button
+                                    title="Reject AI recommendation for issue {{ $issue->id }}"
+                                    icon="hand-thumb-down" size="xs"
+                                    wire:click="rejectAI('{{ $issue->id }}')"
+                                />
+                                <br>
+                            @endcan
+                        @endif
+                    </div>
                 </td>
                 <td class="text-nowrap">
                     <x-forms.button.view

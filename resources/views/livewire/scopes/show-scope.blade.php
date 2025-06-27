@@ -32,18 +32,5 @@
 </div>
 
 <x-slot:sidebarPrimary>
-    <div x-data="{ showChat: false }">
-        <h2>AI Assistance</h2>
-
-        <div class="mb-4">
-            <x-forms.button x-on:click="showChat = ! showChat" icon="chat-bubble-left-right" x-bind:class="{ 'secondary': showChat }">
-                <span><span x-show="showChat">Hide </span>Chat</span>
-            </x-forms.button>
-        </div>
-
-        <div x-show="showChat" x-cloak>
-            <hr>
-            <livewire:scopes.scope-chat :$scope />
-        </div>
-    </div>
+    <livewire:scopes.scope-sidebar :$scope />
 </x-slot:sidebarPrimary>

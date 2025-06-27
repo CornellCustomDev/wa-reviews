@@ -2,28 +2,35 @@
 
 namespace App\AiAgents;
 
-use App\AiAgents\Tools\ScratchPadTool;
+use App\AiAgents\Tools\FetchGuidelinesListTool;
+use App\AiAgents\Tools\FetchGuidelinesTool;
+use App\AiAgents\Tools\FetchScopePageContentTool;
 use App\Enums\ChatProfile;
-use App\Models\Issue;
+use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
-use Illuminate\Support\Facades\Storage;
 use LarAgent\Agent;
 use LarAgent\Core\Contracts\ChatHistory as ChatHistoryInterface;
 use LarAgent\Messages\SystemMessage;
 use Throwable;
 
-class GuidelinesAnalyzerAgent extends Agent
+class ScopeAnalyzerAgent extends Agent
 {
+    protected Scope $scope;
+
     protected $history = 'file';
 
-    protected Issue $issue;
+    protected $tools = [
+        FetchGuidelinesTool::class,
+        FetchGuidelinesListTool::class,
+        FetchScopePageContentTool::class,
+    ];
 
-    public function __construct(Issue $issue, string $key)
+    public function __construct(Scope $scope, string $key)
     {
         $this->provider = config('cornell_ai.laragent_profile');
         $this->model = config('cornell_ai.profiles')[ChatProfile::Chat->value]['model'];
 
-        $this->issue = $issue;
+        $this->scope = $scope;
 
         parent::__construct($key);
     }
@@ -33,7 +40,7 @@ class GuidelinesAnalyzerAgent extends Agent
         return sprintf(
             '%s_%s_%s',
             class_basename($this),
-            $this->issue->id,
+            $this->scope->id,
             $this->getChatKey()
         );
     }
@@ -43,23 +50,24 @@ class GuidelinesAnalyzerAgent extends Agent
      */
     public function instructions(): string
     {
-        return view('ai-agents.GuidelinesAnalyzer.instructions', [
-            'guidelinesDocument' => Storage::get('guidelines-list.md'),
+        return view('ai-agents.ScopeAnalyzer.instructions', [
+            'tools' => $this->getTools(),
+            'guidelinesList' => json_encode(FetchGuidelinesListTool::call(), JSON_PRETTY_PRINT),
         ])->render();
     }
 
     public function structuredOutput(): array
     {
         return [
-            'name' => 'guidelines_analyzer_response',
+            'name' => 'scope_analyzer_response',
             'schema' => [
-                'description' => 'Return either a "guidelines" array (if applicable warnings or failures are found) or a "feedback" string (if no warning or failures apply or clarification is needed). Never return both.',
+                'description' => 'Return either an "issues" array (if applicable warnings or failures are found) or a "feedback" string (if no warning or failures apply or clarification is needed). Never return both.',
                 'type' => 'object',
                 'properties' => [
-                    'guidelines' => [
+                    'issues' => [
                         'type' => ['array', 'null'],
-                        'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
-                        'items' => GuidelinesAnalyzerService::getItemsSchema(),
+                        'description' => 'Array of issues when accessibility barriers are found. Null if none are applicable.',
+                        'items' => GuidelinesAnalyzerService::getIssueSchema(),
                     ],
                     'feedback' => [
                         'type' => ['string', 'null'],
@@ -67,23 +75,21 @@ class GuidelinesAnalyzerAgent extends Agent
                     ],
                 ],
                 'additionalProperties' => false,
-                'required' => ['guidelines', 'feedback'],
+                'required' => ['issues', 'feedback'],
             ],
             'strict' => true,
         ];
     }
 
-    public function getContext(): string
+    public function getContext(?string $additionalContext = null): string
     {
-        $context = '';
-        if ($this->issue->scope?->pageHasBeenRetrieved()) {
-            $context .= "# Context: Web page being analyzed\n\n"
-                . "```html\n"
-                . $this->issue->scope->page_content
-                . "\n```\n\n";
+        $context = "# Context: Web Page Scope\n\n"
+            . GuidelinesAnalyzerService::getScopeContext($this->scope);
+
+        if ($additionalContext) {
+            $context .= "\n\n# Additional context\n\n"
+                . $additionalContext;
         }
-        $context .= "# Context: Web accessibility issue\n\n"
-            . GuidelinesAnalyzerService::getIssueContext($this->issue);
 
         return $context;
     }

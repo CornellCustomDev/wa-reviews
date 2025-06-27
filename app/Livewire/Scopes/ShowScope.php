@@ -3,10 +3,7 @@
 namespace App\Livewire\Scopes;
 
 use App\Models\Scope;
-use App\Models\SiteimproveRule;
 use App\Services\SiteImprove\SiteimproveService;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;

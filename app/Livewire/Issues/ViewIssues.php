@@ -6,6 +6,7 @@ use App\Events\IssueChanged;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Scope;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
@@ -16,10 +17,25 @@ class ViewIssues extends Component
     public IssueForm $form;
     public int $editingId = 0;
 
+    #[Computed(persist: true)]
+    public function getIssues()
+    {
+        return $this->scope->issues()->get();
+    }
+
+    #[Computed(persist: true)]
+    public function hasUnreviewedAI(): bool
+    {
+        return $this->getIssues
+            ->filter(fn(Issue $issue) => $issue->hasUnreviewedAI())
+            ->isNotEmpty();
+    }
+
     #[On('issues-updated')]
     public function refreshScope(): void
     {
-        $this->scope->refresh();
+        unset($this->hasUnreviewedAI);
+        unset($this->getIssues);
     }
 
     public function delete(Issue $issue): void
@@ -28,6 +44,23 @@ class ViewIssues extends Component
         $issue->delete();
 
         event(new IssueChanged($issue, 'deleted', []));
+
+        $this->dispatch('issues-updated');
+    }
+
+    public function acceptAI(Issue $issue): void
+    {
+        $this->authorize('update', $issue);
+        $issue->markAiAccepted();
+
+        $this->dispatch('issues-updated');
+    }
+
+    public function rejectAI(Issue $issue): void
+    {
+        $this->authorize('update', $issue);
+        $issue->markAiRejected();
+        $issue->delete();
 
         $this->dispatch('issues-updated');
     }

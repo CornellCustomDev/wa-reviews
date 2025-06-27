@@ -3,49 +3,35 @@
 namespace App\AiAgents\Tools;
 
 use App\Models\Scope;
-use LarAgent\Tool;
 
-class FetchScopePageContentTool extends Tool
+class FetchScopePageContentTool extends BaseTool
 {
-    protected string $name = 'fetch_page_content';
+    protected string $description = 'Fetch the raw HTML of the web page related to the scope.';
 
-    protected string $description = 'Fetch the raw HTML of a web page related to the scope.';
+    protected static array $schema = [
+        'scope_id' => [
+            'type' => 'integer',
+            'description' => 'The primary key of the scope.',
+        ],
+    ];
 
-    protected array $required = ['scope_id'];
-
-    public function getProperties(): array
+    public static function run(int $scope_id): array
     {
-        return [
-            'scope_id' => [
-                'type' => 'integer',
-                'description' => 'The primary key of the scope.',
-            ],
-        ];
+        return parent::call([
+            'scope_id' => $scope_id,
+        ]);
     }
 
-    public static function call($scopeId): array
+    protected function handle(array $input): array
     {
-        return (new self())->execute(['scope_id' => $scopeId]);
-    }
-
-    public function execute(array $input): mixed
-    {
-        $scopeId = $input['scope_id'] ?? null;
-
-        if (!is_numeric($scopeId)) {
-            return ['error' => 'scope_id_parameter_missing'];
-        }
-
+        $scopeId = $input['scope_id'];
         $scope = Scope::find($scopeId);
-
         if (!$scope) {
             return ['error' => 'scope_not_found'];
         }
 
-        $pageContent = $scope->page_content ?? '';
-
         return [
-            'html' => $pageContent,
+            'html' => $scope->getPageContent() ?? '',
         ];
     }
 }

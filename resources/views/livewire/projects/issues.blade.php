@@ -4,8 +4,8 @@
         <tr>
             <th>Scope</th>
             <th>Target</th>
-            <th>Description</th>
-            <th>Observations</th>
+            <th>Issue</th>
+            <th>Assessment</th>
             @if($project->isCompleted())
                 <th>Remediation</th>
             @endif
@@ -29,12 +29,7 @@
                     {!! $issue->description !!}
                 </td>
                 <td>
-                    @if($issue->items)
-                        @foreach($issue->items as $item)
-                            @continue($item->isAiGenerated() &! $item->isAiAccepted())
-                            @include('livewire.issues.item-observation', ['item' => $item])
-                        @endforeach
-                    @endif
+                    @include('livewire.issues.assessment', ['issue' => $issue])
                 </td>
                 @if($project->isCompleted())
                     <td class="text-nowrap">

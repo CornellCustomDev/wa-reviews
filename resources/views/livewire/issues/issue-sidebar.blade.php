@@ -6,13 +6,10 @@
             <span x-show="$wire.showChat">Hide </span> Chat
         </x-forms.button>
         @can('update', $issue)
-            <x-forms.button wire:click="clickAnalyzer()" icon="check" @class(['secondary' => $showAnalyzer]) >
-                <span x-show="$wire.showAnalyzer">Hide </span> Guidelines
+            <x-forms.button wire:click="clickAnalyzer()" icon="sparkles" @class(['secondary' => $showAnalyzer]) >
+                <span x-show="$wire.showAnalyzer">Hide </span> Analyze
             </x-forms.button>
         @endcan
-{{--        <x-forms.button wire:click="clickDebug()" icon="magnifying-glass" @class(['secondary' => $showDebug]) >--}}
-{{--            <span x-show="$wire.showDebug">Hide </span> Debug--}}
-{{--        </x-forms.button>--}}
     </div>
 
     <div x-show="$wire.showChat" x-cloak>
@@ -22,11 +19,6 @@
 
     <div x-show="$wire.showAnalyzer" x-cloak>
         <hr>
-        <livewire:issues.issue-analyzer :$issue />
-    </div>
-
-    <div x-show="$wire.showDebug" x-cloak>
-        <hr>
-        Debug
+        <livewire:issues.issue-analyzer :scope="$issue->scope" :$issue />
     </div>
 </div>

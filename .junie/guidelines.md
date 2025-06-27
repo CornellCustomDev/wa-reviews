@@ -51,7 +51,6 @@ The application follows a standard Laravel project structure with:
 - Migrations for database schema management
 
 ## Workflow Process
-
 The application follows a specific workflow for accessibility reviews:
 
 1. **Create a Project**: Start by creating a new review project from the Projects page or from a Team's Projects page.
@@ -72,7 +71,6 @@ The application follows a specific workflow for accessibility reviews:
    - Add read-only viewers via the Report Viewers panel
 
 ## Team Structure
-
 The application uses a team-based approach to manage access:
 
 - **Site Admins**: Create teams and manage system-wide settings
@@ -81,7 +79,6 @@ The application uses a team-based approach to manage access:
 - **Report Viewers**: Have read-only access to specific reports
 
 ## Architectural Patterns
-
 The application follows several key architectural patterns:
 
 1. **Model-driven architecture**: Relationships and actions are defined on models rather than directly modifying relationships. Use model actions like `Project→assignTouser()` and `Project→addReportViewer()`.
@@ -91,6 +88,21 @@ The application follows several key architectural patterns:
 3. **AI agent pattern**: AI functionality is implemented using LarAgent with specialized tools and chat history management.
 
 4. **Role-based access control**: Permissions are applied via Policies at the model level using the Laratrust library.
+
+## Database structure
+You can find the current schema in the `database/diagram.dbml` file.
+
+### Database Entities Overview
+- **Users**: People who use the application, including admins, reviewers, and viewers.
+- **Teams**: Groups of users collaborating on projects.
+- **Projects**: Accessibility review projects, each linked to a team.
+- **Scopes**: Defined areas or sections within a project.
+- **Pages**: Web pages included in a scope for review.
+- **Issues**: Accessibility problems identified during reviews.
+- **Items**: Specific findings or checks related to issues.
+- **Categories, Criteria, Guidelines**: Reference tables for organizing and applying accessibility standards.
+- **Assignments & Viewers**: Tables linking users to projects as reviewers or read-only viewers.
+- **Team Memberships**: Table linking users to teams.
 
 ## Contributing
 When contributing to this project, please ensure you follow the established coding standards and patterns. Create feature branches for new functionality and submit pull requests for review.
