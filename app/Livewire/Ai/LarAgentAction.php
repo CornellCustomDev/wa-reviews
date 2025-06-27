@@ -28,7 +28,13 @@ trait LarAgentAction
         $this->streaming = true;
 
         // Trigger the streaming response
-        $this->js('$wire.streamResponse()');
+        try {
+            $this->js('$wire.streamResponse()');
+        } catch (Throwable $e) {
+            $this->feedback = "**Error triggering streamResponse:** {$e->getMessage()}";
+            $this->showFeedback = true;
+            $this->streaming = false;
+        }
     }
 
     public function streamResponse(): void
