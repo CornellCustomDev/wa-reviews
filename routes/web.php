@@ -1,7 +1,6 @@
 <?php
 
 use App\Livewire\Ai\AnalyzePage;
-use App\Livewire\Ai\Prompt;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
 use App\Livewire\Ai\Chat;
@@ -76,6 +75,7 @@ Route::group(['middleware' => [CUAuth::class]], function () {
         Route::get('{team}/project/create', CreateProject::class)->name('project.create')->can('create-project', 'team');
     });
 
+    Route::get('chat', Chat::class)->name('chat');
 });
 
 Route::prefix('guidelines')->name('guidelines.')->group(function () {
@@ -107,7 +107,5 @@ Route::prefix('sia-rules')->name('sia-rules.')->group(function () {
     Route::get('/{rule}', ShowSiaRule::class)->name('show');
 });
 
-Route::get('chat', Chat::class)->name('chat');
 Route::get('guidelines.md', Doc::class)->name('guidelines.md');
-Route::get('prompt', Prompt::class)->name('prompt');
 Route::get('analyze', AnalyzePage::class)->name('analyze');
