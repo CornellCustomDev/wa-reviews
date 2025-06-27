@@ -96,13 +96,16 @@ The application follows several key architectural patterns:
 The application is run in a Lando development environment using the laravel recipe. Lando features that may be useful:
   - `lando start` to start the environment (rarely needed since the environment is usually running)
   - `lando artisan` for running Laravel artisan commands
+  - `lando phpunit` for running PHPUnit tests
   - `lando composer` for running Composer commands
   - `lando mysql` for accessing the MySQL database
+
+The local site is available at `http://wa-reviews.lndo.site`.
 
 ## Database structure
 You can find the current schema in the `database/diagram.dbml` file.
 
-### Database Entities Overview
+### Database entities overview
 - **Users**: People who use the application, including admins, reviewers, and viewers.
 - **Teams**: Groups of users collaborating on projects.
 - **Projects**: Accessibility review projects, each linked to a team.
