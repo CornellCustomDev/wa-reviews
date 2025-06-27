@@ -14,12 +14,12 @@ if (! isset($name)) {
 }
 
 $classes = Flux::classes()
-    ->add('flex gap-3')
+    ->add('flex flex-wrap gap-2')
     ;
 @endphp
 
 <flux:with-field :$attributes>
-    <ui-radio-group {{ $attributes->class($classes) }} @if($showName) name="{{ $name }}" @endif data-flux-radio-group-cards>
+    <ui-radio-group {{ $attributes->class($classes) }} @if($showName) name="{{ $name }}" @endif data-flux-radio-group-buttons>
         {{ $slot }}
     </ui-radio-group>
 </flux:with-field>
