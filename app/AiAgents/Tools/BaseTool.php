@@ -48,37 +48,7 @@ abstract class BaseTool extends Tool
 
         parent::__construct($name, $description);
 
-        // Build LarAgent property and required lists from the schema.
-        foreach (static::$schema as $param => $meta) {
-            // --- ① Build the JSON-Schema object for this property ----
-            $typeDef = $meta['type'] ?? 'string';
-
-            if ($typeDef === 'array') {
-                // Promote to full object so items / limits are preserved
-                $typeDef = [
-                    'type'     => 'array',
-                    'items'    => $meta['items'] ?? ['type' => 'string'],
-                ];
-                if (isset($meta['minItems'])) $typeDef['minItems'] = $meta['minItems'];
-                if (isset($meta['maxItems'])) $typeDef['maxItems'] = $meta['maxItems'];
-            }
-
-            // --- ② Hand the enriched definition to LarAgent -------
-            $this->addProperty(
-                name: $param,
-                type: $typeDef,
-                description: $meta['description'] ?? '',
-                enum: $meta['enum'] ?? []
-            );
-
-            if (($meta['required'] ?? true) === true) {
-                $this->setRequired($param);
-            }
-
-            if (isset($meta['enumClass'])) {
-                $this->enumTypes[$param] = $meta['enumClass'];
-            }
-        }
+        $this->properties = static::$schema;
     }
 
     /**
@@ -94,7 +64,6 @@ abstract class BaseTool extends Tool
         }
 
         try {
-            $input = $this->convertEnumValues($input);
             return $this->handle($input);
         } catch (Throwable $e) {
             report($e);
