@@ -19,7 +19,6 @@ use App\Services\GuidelinesAnalyzer\Tools\FetchGuidelines;
 use App\Services\GuidelinesAnalyzer\Tools\FetchGuidelinesDocument;
 use App\Services\GuidelinesAnalyzer\Tools\FetchGuidelinesList;
 use App\Services\GuidelinesAnalyzer\Tools\FetchIssuePageContent;
-use App\Services\GuidelinesAnalyzer\Tools\ReviewGuidelineApplicability;
 use App\Services\GuidelinesAnalyzer\Tools\StoreGuidelineMatches;
 use Illuminate\Support\Str;
 
@@ -99,7 +98,6 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
     private AnalyzeIssue $analyzeIssueInstance;
     private StoreGuidelineMatches $storeGuidelineMatchesInstance;
-    private ReviewGuidelineApplicability $reviewApplicabilityInstance;
     private FetchGuidelinesDocument $fetchGuidelinesDocumentInstance;
     private FetchGuidelinesList $fetchGuidelinesListInstance;
     private FetchGuidelines $fetchGuidelinesInstance;
@@ -110,7 +108,6 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     ) {
         $this->analyzeIssueInstance = new AnalyzeIssue($this->chatServiceFactory, $this);
         $this->storeGuidelineMatchesInstance = new StoreGuidelineMatches($this);
-        $this->reviewApplicabilityInstance = new ReviewGuidelineApplicability($this->chatServiceFactory, $this);
         $this->fetchGuidelinesDocumentInstance = new FetchGuidelinesDocument();
         $this->fetchGuidelinesListInstance = new FetchGuidelinesList();
         $this->fetchGuidelinesInstance = new FetchGuidelines($this);
@@ -128,7 +125,6 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         return [
             'analyze_accessibility_issue' => $this->analyzeIssueInstance,
             'store_guideline_matches' => $this->storeGuidelineMatchesInstance,
-            'review_guideline_applicability' => $this->reviewApplicabilityInstance,
             'fetch_guidelines_document' => $this->fetchGuidelinesDocumentInstance,
             'fetch_guidelines_list' => $this->fetchGuidelinesListInstance,
             'fetch_guidelines' => $this->fetchGuidelinesInstance,
