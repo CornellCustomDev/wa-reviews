@@ -3294,12 +3294,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/MaestroError/LarAgent.git",
-                "reference": "aaf94cb97531f14bde44f376e436de5fd1f0826e"
+                "reference": "45781ec6df5c263ea66426209fb02c0e61b39d7d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MaestroError/LarAgent/zipball/aaf94cb97531f14bde44f376e436de5fd1f0826e",
-                "reference": "aaf94cb97531f14bde44f376e436de5fd1f0826e",
+                "url": "https://api.github.com/repos/MaestroError/LarAgent/zipball/45781ec6df5c263ea66426209fb02c0e61b39d7d",
+                "reference": "45781ec6df5c263ea66426209fb02c0e61b39d7d",
                 "shasum": ""
             },
             "require": {
@@ -3320,7 +3320,7 @@
                 "phpstan/extension-installer": "^1.3",
                 "phpstan/phpstan": "^2.1.3"
             },
-            "time": "2025-05-20T15:16:11+00:00",
+            "time": "2025-06-26T16:12:09+00:00",
             "default-branch": true,
             "type": "library",
             "extra": {

@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'a319771ee93caa87e9cbc369356df50886eb9d80',
+        'reference' => 'e51ab182e8fc8898f71d35dae137285cc7fad777',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -64,7 +64,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'a319771ee93caa87e9cbc369356df50886eb9d80',
+            'reference' => 'e51ab182e8fc8898f71d35dae137285cc7fad777',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -622,7 +622,7 @@
         'maestroerror/laragent' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'aaf94cb97531f14bde44f376e436de5fd1f0826e',
+            'reference' => '45781ec6df5c263ea66426209fb02c0e61b39d7d',
             'type' => 'library',
             'install_path' => __DIR__ . '/../maestroerror/laragent',
             'aliases' => array(

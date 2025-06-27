@@ -246,23 +246,47 @@ class Agent
 
         $this->prepareAgent($message);
 
-        // Run the agent with streaming enabled
-        $stream = $this->agent->runStreamed(function ($streamedMessage) use ($callback) {
-            if ($streamedMessage instanceof StreamedAssistantMessage) {
-                // Call onConversationEnd when the stream message is complete
-                if ($streamedMessage->isComplete()) {
-                    $this->onConversationEnd($streamedMessage);
+        $instance = $this;
+
+        $generator = (function () use ($instance, $message, $callback) {
+            try {
+                // Run the agent with streaming enabled
+                $stream = $instance->agent->runStreamed(function ($streamedMessage) use ($callback, $instance) {
+                    if ($streamedMessage instanceof StreamedAssistantMessage) {
+                        // Call onConversationEnd when the stream message is complete
+                        if ($streamedMessage->isComplete()) {
+                            $instance->onConversationEnd($streamedMessage);
+                        }
+                    }
+
+                    // Run callback if defined
+                    if ($callback) {
+                        $callback($streamedMessage);
+                    }
+                });
+
+                foreach ($stream as $chunk) {
+                    yield $chunk;
+                }
+            } catch (\Throwable $th) {
+                $instance->onEngineError($th);
+                $fallbackProvider = config('laragent.fallback_provider');
+
+                if (! $fallbackProvider || $fallbackProvider === $instance->provider) {
+                    throw $th;
+                }
+
+                $instance->changeProvider($fallbackProvider);
+
+                $fallbackStream = $instance->respondStreamed($message, $callback);
+
+                foreach ($fallbackStream as $chunk) {
+                    yield $chunk;
                 }
             }
+        })();
 
-            // Run callback if defined
-            if ($callback) {
-                $callback($streamedMessage);
-            }
-        });
-
-        // Return the stream generator
-        return $stream;
+        return $generator;
     }
 
     /**
@@ -282,9 +306,11 @@ class Agent
         };
 
         return response()->stream(function () use ($message, $format) {
+            $accumulated = '';
             $stream = $this->respondStreamed($message, function ($chunk) use (&$accumulated, $format) {
                 if ($chunk instanceof \LarAgent\Messages\StreamedAssistantMessage) {
                     $delta = $chunk->getLastChunk();
+                    $accumulated .= $delta;
 
                     if ($format === 'plain') {
                         echo $delta;
@@ -632,7 +658,7 @@ class Agent
             responseSchema: $this->responseSchema,
             configuration: [
                 'history' => $this->history,
-                'model' => $this->llmDriver->getModel(),
+                'model' => $this->model(),
                 'driver' => $this->driver,
                 ...$driverConfigs,
             ]
@@ -725,7 +751,7 @@ class Agent
 
     /**
      * Build configuration array from agent properties.
-     * Overrides provider data with ageent properties.
+     * Overrides provider data with agent properties.
      *
      * @return array The configuration array with model, API key, API URL, and optional parameters.
      */
