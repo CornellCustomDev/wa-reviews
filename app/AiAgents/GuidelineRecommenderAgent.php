@@ -23,7 +23,7 @@ class GuidelineRecommenderAgent extends Agent
     protected $tools = [
         FetchGuidelinesTool::class,
         FetchScopePageContentTool::class,
-        FetchIssuePageContentTool::class,
+//        FetchIssuePageContentTool::class,
     ];
 
     public function __construct(Scope $scope, string $key)
