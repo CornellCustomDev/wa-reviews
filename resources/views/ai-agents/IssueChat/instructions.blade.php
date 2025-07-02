@@ -51,10 +51,10 @@ Always confirm with the user before using store_guideline_matches.
 The user sees the issue details and the applicable guidelines that have been identified.
 
 ### Issue
-{{ $issueContext }}
+{!! $issueContext !!}
 
 ### Applicable Guidelines
 These have already been stored and associated with the issue.
 ```json
-{{ $guidelinesContext }}
+{!! $guidelinesContext !!}
 ```
