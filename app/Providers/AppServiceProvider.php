@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Ai\Prism\Providers\CornellApi;
 use App\Models\User;
 use App\Services\CornellAI\ApiGatewayChatService;
 use App\Services\CornellAI\AzureChatService;
@@ -63,6 +64,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $this->app['prism-manager']->extend('cornell', function ($app, $config) {
+            return new CornellApi(
+                apiKey: $config['api_key'],
+                url: $config['url'],
+                organization: null,
+                project: null,
+            );
+        });
     }
 }

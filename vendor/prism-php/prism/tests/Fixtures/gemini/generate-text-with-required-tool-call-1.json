@@ -1,0 +1,46 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "functionCall": {
+              "name": "weather",
+              "args": {
+                "options": {
+                  "decimals": false,
+                  "days": 1,
+                  "alerts": [],
+                  "unit": "Fahrenheit"
+                },
+                "city": "Detroit"
+              }
+            }
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.64373282591501868
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 124,
+    "candidatesTokenCount": 12,
+    "totalTokenCount": 136,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 124
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 12
+      }
+    ]
+  },
+  "modelVersion": "gemini-1.5-flash",
+  "responseId": "TBM3aMLqO42RsbQP1MbQ6AY"
+}
