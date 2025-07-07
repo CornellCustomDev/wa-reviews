@@ -47,7 +47,7 @@ class ScopeAnalyzerAgent extends PendingRequest
         $guidelinesListTool = new FetchGuidelinesListTool();
 
         return view('ai-agents.ScopeAnalyzer.instructions', [
-            'guidelinesList' => json_encode($guidelinesListTool(), JSON_PRETTY_PRINT),
+            'guidelinesList' => $guidelinesListTool(),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
     }
