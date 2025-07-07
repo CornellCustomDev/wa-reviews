@@ -162,7 +162,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             //'css_selector' => $issue->css_selector,
             'description' => $issue->description->toHtml(),
             'page_content' => $issue->scope?->pageHasBeenRetrieved()
-                ? 'Available via "fetch_issue_page_content" tool.'
+                ? 'Available via "fetch_scope_page_content" tool.'
                 : 'No page content available.',
         ];
 
