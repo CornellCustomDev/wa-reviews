@@ -5,6 +5,7 @@ namespace App\Ai\Prism\Agents;
 use App\Ai\Prism\Tools\FetchGuidelinesListTool;
 use App\Ai\Prism\Tools\FetchGuidelinesTool;
 use App\Ai\Prism\Tools\FetchScopePageContentTool;
+use App\Ai\Prism\Tools\ScratchPadTool;
 use App\Enums\ChatProfile;
 use App\Models\Scope;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
@@ -24,7 +25,8 @@ class GuidelineRecommenderAgent extends PendingTextRequest
             new FetchGuidelinesTool(),
             new FetchGuidelinesListTool(),
             $scope->pageHasBeenRetrieved() ? new FetchScopePageContentTool() : null,
-        ]))->withMaxSteps(5);
+            new ScratchPadTool(),
+        ]))->withMaxSteps(10);
 
         $this->usingTemperature(0.2);
 
