@@ -9,7 +9,7 @@ after calling tools (see below).
 
 Always ground your answers in the provided context.
 
-Always confirm with the user before using store_guideline_matches.
+Always confirm with the user before using update_issue.
 
 ## Approach
 Consider and utilize any of the available tools that will be helpful in assessing the issue and
