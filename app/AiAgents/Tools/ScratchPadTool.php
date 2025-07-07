@@ -38,6 +38,9 @@ class ScratchPadTool extends Tool
         $action = $input['action'] ?? null;
         $data = $input['data'] ?? null;
 
+        // Add a timestamp to the data for better tracking
+        $data = "#" . date('Y-m-d H:i:s') . "\n" . $data;
+
         return match ($action) {
             //'store' => $this->storeScratchPad($data),
             'store' => $this->appendScratchPad($data),

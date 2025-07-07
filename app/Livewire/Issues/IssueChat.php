@@ -33,7 +33,7 @@ class IssueChat extends Component
     {
         $this->baseAfterAgentResponse($agent);
 
-        if (in_array('store_guideline_matches', $agent->getToolsCalled())) {
+        if (in_array('update_issue', $agent->getToolsCalled())) {
             $this->dispatch('items-updated');
         }
     }

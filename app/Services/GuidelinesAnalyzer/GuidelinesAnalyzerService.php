@@ -159,7 +159,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         $issueData = [
             'id' => $issue->id,
             'target' => $issue->target,
-            'css_selector' => $issue->css_selector,
+            //'css_selector' => $issue->css_selector,
             'description' => $issue->description->toHtml(),
             'page_content' => $issue->scope?->pageHasBeenRetrieved()
                 ? 'Available via "fetch_issue_page_content" tool.'
