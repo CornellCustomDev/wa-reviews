@@ -9,10 +9,10 @@ use App\Ai\Prism\Tools\ScratchPadTool;
 use App\Enums\ChatProfile;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
-use Prism\Prism\Text\PendingRequest as PendingTextRequest;
+use Prism\Prism\Text\PendingRequest;
 use Throwable;
 
-class GuidelineRecommenderAgent extends PendingTextRequest
+class ScopeAnalyzerAgent extends PendingRequest
 {
     public function __construct(
         private readonly Scope $scope
@@ -46,7 +46,7 @@ class GuidelineRecommenderAgent extends PendingTextRequest
     {
         $guidelinesListTool = new FetchGuidelinesListTool();
 
-        return view('ai-agents.GuidelineRecommender.instructions', [
+        return view('ai-agents.ScopeAnalyzer.instructions', [
             'guidelinesList' => json_encode($guidelinesListTool(), JSON_PRETTY_PRINT),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
