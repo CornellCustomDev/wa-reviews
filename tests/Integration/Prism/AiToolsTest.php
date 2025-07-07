@@ -57,7 +57,7 @@ class AiToolsTest extends TestCase
             $finalResponse = $streamedResponse;
         }
 
-        $text = $finalResponse->text;
+        $text = $finalResponse->text ?? '';
 
         $this->assertStringContainsString('Paris', $text);
         $this->assertStringContainsString('sunny', $text);
