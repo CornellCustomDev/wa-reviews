@@ -5,7 +5,7 @@ mentioned, they are the numbered sections in the Guidelines Document.
 
 ## Guidelines Document content
 
-{{ $guidelinesDocument }}
+{!! $guidelinesDocument !!}
 
 # Background
 

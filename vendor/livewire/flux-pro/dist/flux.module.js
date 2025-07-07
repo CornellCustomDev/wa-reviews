@@ -1777,23 +1777,44 @@ function debounce(callback, delay) {
   };
 }
 var lockCount = 0;
-function lockScroll(allowScroll = false) {
+var pointerEventsLocked = false;
+inject(({ css }) => css`[data-flux-allow-scroll] { pointer-events: auto; }`);
+function lockScroll(el = null, allowScroll = false) {
   if (allowScroll) return { lock: () => {
   }, unlock: () => {
   } };
+  let applyDocumentLockStyles = (disablePointerEvents = false) => {
+    undoLockStyles(document.documentElement);
+    setLockStyles(document.documentElement, {
+      paddingRight: `calc(${window.innerWidth - document.documentElement.clientWidth}px + ${window.getComputedStyle(document.documentElement).paddingRight})`,
+      overflow: "hidden",
+      ...disablePointerEvents ? { pointerEvents: "none" } : {}
+    });
+    if (disablePointerEvents) {
+      setAttribute2(el, "data-flux-allow-scroll", "");
+      pointerEventsLocked = true;
+    }
+  };
+  let removeDocumentLockStyles = (enablePointerEvents = false) => {
+    undoLockStyles(document.documentElement);
+    if (enablePointerEvents) {
+      removeAndReleaseAttribute(el, "data-flux-allow-scroll");
+      pointerEventsLocked = false;
+    }
+  };
   return {
     lock() {
       lockCount++;
-      if (lockCount > 1) return;
-      setLockStyles(document.documentElement, {
-        paddingRight: `calc(${window.innerWidth - document.documentElement.clientWidth}px + ${window.getComputedStyle(document.documentElement).paddingRight})`,
-        overflow: "hidden"
-      });
+      if (lockCount > 1 && el !== null && pointerEventsLocked) return;
+      applyDocumentLockStyles(el !== null && !pointerEventsLocked);
     },
     unlock() {
       lockCount = Math.max(0, lockCount - 1);
-      if (lockCount > 0) return;
-      undoLockStyles(document.documentElement);
+      if (lockCount > 0 && el !== null && !pointerEventsLocked) return;
+      removeDocumentLockStyles(el !== null && pointerEventsLocked);
+      if (lockCount > 0) {
+        applyDocumentLockStyles(false);
+      }
     }
   };
 }
@@ -4571,7 +4592,7 @@ var UIDropdown = class extends UIElement {
       overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
     });
     if (["ui-menu", "ui-context"].includes(overlay.localName)) {
-      let { lock, unlock } = lockScroll();
+      let { lock, unlock } = lockScroll(overlay._popoverable.el);
       overlay._popoverable.onChange(() => {
         overlay._popoverable.getState() ? lock() : unlock();
       });
@@ -5617,19 +5638,30 @@ var CalendarViewState = class {
   }
   setMonth(month) {
     if (!month) return;
-    if (this.config.min && DateValue.fromParts(this.year, month).isBefore(DateValue.firstDayOfMonth(this.config.min))) return;
-    if (this.config.max && DateValue.fromParts(this.year, month).isAfter(this.config.max)) return;
-    this.month = month;
+    if (this.isWithinMinAndMax(month, this.year)) {
+      this.month = month;
+    }
     this.observable.notify(ObservableTrigger.VIEW_CHANGE);
   }
   setYear(year) {
-    this.year = year;
+    if (!year) return;
+    if (this.isWithinMinAndMax(this.month, year)) {
+      this.year = year;
+    }
     this.observable.notify(ObservableTrigger.VIEW_CHANGE);
   }
   setDate(date) {
-    this.setMonth(date.getMonth());
-    this.setYear(date.getYear());
+    if (!date) return;
+    if (this.isWithinMinAndMax(date.getMonth(), date.getYear())) {
+      this.month = date.getMonth();
+      this.year = date.getYear();
+    }
     this.observable.notify(ObservableTrigger.VIEW_CHANGE);
+  }
+  isWithinMinAndMax(month, year) {
+    if (this.config.min && DateValue.fromParts(year, month).isBefore(DateValue.firstDayOfMonth(this.config.min))) return false;
+    if (this.config.max && DateValue.fromParts(year, month).isAfter(this.config.max)) return false;
+    return true;
   }
   adjustMonth(delta) {
     let [nextYear, nextMonth] = new DateValue(this.year, this.month).addMonths(delta).toParts();
@@ -5744,9 +5776,11 @@ var UICalendar = class extends UIElement {
     this.selectable = Selectable2.createFromValueStringAttribute(elDrivingConfig.getAttribute("value"), this.config, this.observable);
     this.metadata = new DateMetadata(this.observable);
     this.validator = new Validator(this.selectable, this.metadata, this.config);
-    let openToDate = elDrivingConfig.hasAttribute("open-to") ? elDrivingConfig.getAttribute("open-to") === "today" ? DateValue.today() : DateValue.fromIsoDateString(elDrivingConfig.getAttribute("open-to")) : this.selectable.lowerBound(() => DateValue.today());
+    let openToDate = this.selectable.getValue() === null && elDrivingConfig.hasAttribute("open-to") ? elDrivingConfig.getAttribute("open-to") === "today" ? DateValue.today() : DateValue.fromIsoDateString(elDrivingConfig.getAttribute("open-to")) : this.selectable.lowerBound(() => DateValue.today());
     this.viewState = new CalendarViewState(openToDate.getMonth(), openToDate.getYear(), this.config, this.observable);
-    this._disableable = new Disableable(this);
+    this._disableable = new Disableable(this, {
+      disableWithParent: false
+    });
     if (!this.hasAttribute("static")) {
       let { enable: enableListeners, disable: disableListeners } = initializeEventListeners(this, this.selectable, this.viewState, this.validator);
       this._disableable.onInitAndChange((disabled) => {
@@ -6354,7 +6388,7 @@ var UIDatePicker = class extends UIControl {
     if (!triggerEl) return;
     setAttribute2(triggerEl, "role", "combobox");
     setAttribute2(triggerEl, "aria-controls", calendarId);
-    this.calendar._disableable.onInitAndChange((disabled) => {
+    this._disableable.onInitAndChange((disabled) => {
       if (disabled) setAttribute2(triggerEl, "disabled", "");
       else removeAttribute(triggerEl, "disabled");
     });
@@ -6561,7 +6595,7 @@ function highlightInputContentsWhenFocused(input) {
   on(input, "focus", () => input.select());
 }
 function preventScrollWhenPopoverIsOpen(root, dialogable) {
-  let { lock, unlock } = lockScroll();
+  let { lock, unlock } = lockScroll(dialogable.el);
   dialogable.onChange(() => {
     dialogable.getState() ? lock() : unlock();
   });
@@ -6595,7 +6629,7 @@ var UIContext = class extends UIElement {
       gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
       offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
     });
-    let { lock, unlock } = lockScroll();
+    let { lock, unlock } = lockScroll(this._popoverable.el);
     this._popoverable.onChange(() => {
       this._popoverable.getState() ? lock() : unlock();
     });
@@ -7327,6 +7361,7 @@ var UISelect = class extends UIControl {
       controlPopoverWithInput(input2, this._popoverable);
       controlPopoverWithKeyboard2(input2, this._popoverable, this._activatable, this._selectable);
       openPopoverWithMouse(input2, this._popoverable);
+      controlPopoverWithEscapeKey(this, this._popoverable);
       handleKeyboardNavigation(input2, this._activatable);
       handleKeyboardSelection(this, input2, this._activatable);
       handleMouseSelection(this, this._activatable);
@@ -7367,6 +7402,7 @@ var UISelect = class extends UIControl {
       handleInputClearing(this, input2, this._selectable, this._popoverable);
       controlPopoverWithKeyboard2(button2, this._popoverable, this._activatable, this._selectable);
       togglePopoverWithMouse2(button2, this._popoverable);
+      controlPopoverWithEscapeKey(this, this._popoverable);
       handleKeyboardNavigation(input2, this._activatable);
       handleKeyboardSearchNavigation(button2, this._activatable, this._popoverable);
       handleKeyboardSelection(this, input2, this._activatable);
@@ -7400,6 +7436,8 @@ var UISelect = class extends UIControl {
       linkExpandedStateToPopover2(button2, this._popoverable);
       controlPopoverWithKeyboard2(button2, this._popoverable, this._activatable, this._selectable);
       togglePopoverWithMouse2(button2, this._popoverable);
+      trackActiveDescendant(button2, this._activatable);
+      controlPopoverWithEscapeKey(this, this._popoverable);
       handleKeyboardNavigation(button2, this._activatable);
       handleKeyboardSearchNavigation(button2, this._activatable, this._popoverable);
       handleKeyboardSelection(this, button2, this._activatable);
@@ -7499,7 +7537,7 @@ inject(({ css }) => css`ui-selected-option { display: contents; }`);
 inject(({ css }) => css`ui-empty { display: block; cursor: default; }`);
 function handleKeyboardNavigation(el, activatable) {
   on(el, "keydown", (e) => {
-    if (!["ArrowDown", "ArrowUp", "Escape"].includes(e.key)) return;
+    if (!["ArrowDown", "ArrowUp"].includes(e.key)) return;
     if (e.key === "ArrowDown") {
       activatable.activateNext();
       e.preventDefault();
@@ -7609,9 +7647,18 @@ function controlActivationWithPopover(popoverable, activatable, selectable) {
     }
   });
 }
+function controlPopoverWithEscapeKey(root, popoverable) {
+  on(root, "keydown", (e) => {
+    if (e.key === "Escape" && popoverable.getState()) {
+      popoverable.setState(false);
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  });
+}
 function controlPopoverWithKeyboard2(button, popoverable) {
   on(button, "keydown", (e) => {
-    if (!["ArrowDown", "ArrowUp", "Escape"].includes(e.key)) return;
+    if (!["ArrowDown", "ArrowUp"].includes(e.key)) return;
     if (e.key === "ArrowDown") {
       if (!popoverable.getState()) {
         popoverable.setState(true);
@@ -7621,12 +7668,6 @@ function controlPopoverWithKeyboard2(button, popoverable) {
     } else if (e.key === "ArrowUp") {
       if (!popoverable.getState()) {
         popoverable.setState(true);
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    } else if (e.key === "Escape") {
-      if (popoverable.getState()) {
-        popoverable.setState(false);
         e.preventDefault();
         e.stopImmediatePropagation();
       }
@@ -7765,7 +7806,7 @@ function handleAutocomplete(autocomplete, isStrict, root, input, selectable, pop
   }
 }
 function preventScrollWhenPopoverIsOpen2(root, popoverable) {
-  let { lock, unlock } = lockScroll();
+  let { lock, unlock } = lockScroll(popoverable.el);
   popoverable.onChange(() => {
     popoverable.getState() ? lock() : unlock();
   });
@@ -7789,6 +7830,7 @@ var UIMenu = class _UIMenu extends UIElement {
     search(this, (query) => this._focusable.focusBySearch(query));
     if (this.hasAttribute("popover")) {
       this.addEventListener("lofi-close-popovers", () => {
+        if (this.hasAttribute("keep-open")) return;
         setTimeout(() => this.hidePopover(), 50);
       });
     }
@@ -7876,7 +7918,9 @@ var UIMenuCheckbox = class extends UIElement {
       this._controllable.dispatch();
     }));
     on(button, "click", () => {
-      this.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      if (!this.hasAttribute("keep-open")) {
+        this.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      }
       button._selectable.press();
     });
     respondToKeyboardClick(button);
@@ -7904,7 +7948,9 @@ var UIMenuRadio = class extends UIElement {
       selectedInitially: this.hasAttribute("checked")
     });
     on(button, "click", () => {
-      this.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      if (!this.hasAttribute("keep-open")) {
+        this.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      }
       button._selectable.press();
     });
     respondToKeyboardClick(button);
@@ -7924,6 +7970,12 @@ var UIMenuRadioGroup = class extends UIElement {
     this._selectable.onChange(detangled(() => {
       this._controllable.dispatch();
     }));
+    on(this, "lofi-close-popovers", (e) => {
+      if (this.hasAttribute("keep-open")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
   }
 };
 var UIMenuCheckboxGroup = class extends UIElement {
@@ -7990,7 +8042,9 @@ function initializeMenuItem(el) {
   target._focusable = new Focusable(target, { disableable: el._disableable, hover: true, tabbableAttr: "data-active" });
   if (!submenu) {
     el.hasAttribute("disabled") || on(el, "click", () => {
-      el.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      if (!el.hasAttribute("keep-open")) {
+        el.dispatchEvent(new CustomEvent("lofi-close-popovers", { bubbles: true }));
+      }
     });
     respondToKeyboardClick(button);
   } else {
@@ -8167,7 +8221,7 @@ var UITooltip = class extends UIElement {
     return this.firstElementChild;
   }
   overlay() {
-    return this.lastElementChild !== this.button() && this.lastElementChild;
+    return this.lastElementChild !== this.button() && this.lastElementChild.tagName !== "TEMPLATE" && this.lastElementChild;
   }
 };
 element("tooltip", UITooltip);

@@ -147,6 +147,8 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
 
                 // Yield the message
                 yield $streamedMessage;
+            } elseif (! isset($delta->content)) {
+                $streamedMessage->resetLastChunk();
             }
         }
 
@@ -256,8 +258,6 @@ abstract class BaseOpenAiDriver extends LlmDriver implements LlmDriverInterface
         $content = json_decode($toolCall->getArguments(), true);
         $content[$toolCall->getToolName()] = $result;
 
-        $content = $result;
-        
         return [
             'role' => 'tool',
             'content' => json_encode($content),

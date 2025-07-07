@@ -5,7 +5,6 @@ namespace App\Livewire\Issues;
 use App\AiAgents\GuidelineRecommenderAgent;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Livewire\Ai\LarAgentAction;
-use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Models\Scope;
@@ -22,7 +21,6 @@ class IssueAnalyzer extends Component
     use LarAgentAction;
 
     public Scope $scope;
-    public ?IssueForm $form = null;
     public Issue $issue;
     public ?Collection $recommendations = null;
 
@@ -49,7 +47,7 @@ class IssueAnalyzer extends Component
         return $this->unreviewedItems()->isNotEmpty();
     }
 
-    public function recommendGuidelines($form = null): void
+    public function recommendGuidelines(): void
     {
         if (empty($this->scope)) {
             $this->feedback = 'A Scope is required to recommend guidelines.';
@@ -58,7 +56,7 @@ class IssueAnalyzer extends Component
         }
 
         // If target or description are empty, give feedback to the user
-        if (empty($this->form->target) || empty($this->form->description)) {
+        if (empty($this->issue->target) || empty($this->issue->description)) {
             $this->feedback = 'Target and description are required to recommend guidelines.';
             $this->showFeedback = true;
             return;

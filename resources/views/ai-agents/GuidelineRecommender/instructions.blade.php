@@ -11,7 +11,7 @@ are mentioned, that refers to the "number" field for an item in the list below.
 
 ## Guidelines List
 
-{{ $guidelinesList }}
+NOTE: Call fetch_guidelines_list to retrieve th list of Guidelines.
 
 # Instructions
 
@@ -96,7 +96,7 @@ needed clarification. Do not include a `guidelines` in this case.
 The user sees the page scope and has the ability to create issues related to it.
 
 ## Scope
-{{ $scopeContext }}
+{!! $scopeContext !!}
 
 # Tools available
 You have access to the following tools and should use them as needed to assist in finding which guidelines

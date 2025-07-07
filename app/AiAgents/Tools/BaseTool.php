@@ -2,6 +2,7 @@
 
 namespace App\AiAgents\Tools;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use LarAgent\Tool;
 use Throwable;
@@ -28,6 +29,12 @@ abstract class BaseTool extends Tool
     protected string $description = '';
 
     /**
+     * Whether to enable OpenAI strict mode.
+     * See: https://platform.openai.com/docs/guides/function-calling?api-mode=chat#strict-mode
+     */
+    protected bool $strict = true;
+
+    /**
      * Parameter schema.
      *
      * Format:
@@ -48,37 +55,56 @@ abstract class BaseTool extends Tool
 
         parent::__construct($name, $description);
 
-        // Build LarAgent property and required lists from the schema.
-        foreach (static::$schema as $param => $meta) {
-            // --- ① Build the JSON-Schema object for this property ----
-            $typeDef = $meta['type'] ?? 'string';
-
-            if ($typeDef === 'array') {
-                // Promote to full object so items / limits are preserved
-                $typeDef = [
-                    'type'     => 'array',
-                    'items'    => $meta['items'] ?? ['type' => 'string'],
-                ];
-                if (isset($meta['minItems'])) $typeDef['minItems'] = $meta['minItems'];
-                if (isset($meta['maxItems'])) $typeDef['maxItems'] = $meta['maxItems'];
-            }
-
-            // --- ② Hand the enriched definition to LarAgent -------
+        $this->properties = static::$schema;
+        foreach (static::$schema as $name => $property) {
             $this->addProperty(
-                name: $param,
-                type: $typeDef,
-                description: $meta['description'] ?? '',
-                enum: $meta['enum'] ?? []
+                $name,
+                $property['type'] ?? 'string',
+                $property['description'] ?? '',
+                $property['enum'] ?? []
             );
 
-            if (($meta['required'] ?? true) === true) {
-                $this->setRequired($param);
+            // Base "addProperty" does not handle items, minItems, maxItems, so we handle those manually
+            if ($property['type'] == 'array' && isset($property['items'])) {
+                $this->properties[$name]['items'] = $property['items'];
+                if (isset($property['minItems'])) {
+                    $this->properties[$name]['minItems'] = $property['minItems'];
+                }
+                if (isset($property['maxItems'])) {
+                    $this->properties[$name]['maxItems'] = $property['maxItems'];
+                }
             }
 
-            if (isset($meta['enumClass'])) {
-                $this->enumTypes[$param] = $meta['enumClass'];
+            // @TODO: Handle allowed string and number properties
+            // Per https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat#supported-properties
+
+            if ($this->strict) {
+                $this->setRequired($name);
             }
         }
+    }
+
+    public function useStrict(): bool
+    {
+        return $this->strict;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * Overrides LarAgent\Tool::toArray() to address OpenAI strict mode
+     * See: https://platform.openai.com/docs/guides/function-calling?api-mode=chat#strict-mode
+     */
+    public function toArray(): array
+    {
+        $toolDefinition = parent::toArray();
+
+        if ($this->strict) {
+            $toolDefinition['function']['strict'] = true;
+            $toolDefinition['function']['parameters']['additionalProperties'] = false;
+        }
+
+        return $toolDefinition;
     }
 
     /**
@@ -94,7 +120,6 @@ abstract class BaseTool extends Tool
         }
 
         try {
-            $input = $this->convertEnumValues($input);
             return $this->handle($input);
         } catch (Throwable $e) {
             report($e);
@@ -111,60 +136,33 @@ abstract class BaseTool extends Tool
     protected function validateInput(array $input): array
     {
         $errors = [];
+        $required = $this->getRequired();
 
-        foreach (static::$schema as $param => $meta) {
-            $exists = array_key_exists($param, $input);
-            $required = $meta['required'] ?? true;
-
-            if ($required && !$exists) {
-                $errors[$param][] = 'required';
+        foreach($this->getProperties() as $name => $meta) {
+            // Check for required properties
+            if (Arr::exists($required, $name) && !Arr::has($input, $name)) {
+                $errors[$name][] = 'required';
                 continue;
             }
 
-            if (!$exists) {
-                continue; // optional and missing – fine
+            $type = $meta['type'];
+            $inputVal = $input[$name];
+
+            if (!$this->valueMatchesType($inputVal, $type)) {
+                $errors[$name][] = "must_be_{$type}";
+                continue;
             }
 
-            $value = $input[$param];
-            $type  = $meta['type'] ?? 'string';
-
-            // basic scalar / array type check
-            if (!$this->valueMatchesType($value, $type)) {
-                $errors[$param][] = "must_be_{$type}";
-            }
-
-            // enum list check
-            if (isset($meta['enum']) && !in_array($value, $meta['enum'], true)) {
-                $errors[$param][] = 'invalid_enum_value';
-            }
-
-            // array item typing and length constraints
-            if ($type === 'array') {
-                $itemsType = $meta['items']['type'] ?? null;
-                $maxItems  = $meta['maxItems'] ?? null;
-                $minItems  = $meta['minItems'] ?? null;
-
-                if ($itemsType) {
-                    foreach ($value as $i => $v) {
-                        if (!$this->valueMatchesType($v, $itemsType)) {
-                            $errors[$param][] = "item_{$i}_must_be_{$itemsType}";
-                        }
-                    }
-                }
-
-                $count = count($value);
-                if ($maxItems && $count > $maxItems) {
-                    $errors[$param][] = "too_many_items";
-                }
-                if ($minItems && $count < $minItems) {
-                    $errors[$param][] = "too_few_items";
-                }
+            if ($error = $this->valueMeetsConstraints($inputVal, $meta)) {
+                $errors[$name][] = $error;
             }
         }
 
-        $unknownInputs = array_diff_key($input, static::$schema);
-        if (!empty($unknownInputs)) {
-            $errors['unknown_inputs'] = array_keys($unknownInputs);
+        if ($this->strict) {
+            $unknownInputs = array_diff_key($input, $this->getProperties());
+            if (!empty($unknownInputs)) {
+                $errors['unknown_inputs'] = array_keys($unknownInputs);
+            }
         }
 
         return $errors;
@@ -172,17 +170,63 @@ abstract class BaseTool extends Tool
 
     /**
      * Simple type matcher for scalar types used in prompts.
+     *
+     * See: https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat#supported-schemas
      */
-    protected function valueMatchesType(mixed $value, string $type): bool
+    protected function valueMatchesType(mixed $value, string|array $type): bool
     {
+        if (is_array($type)) {
+            // At least one type must match
+            return collect($type)->contains(fn ($t) => $this->valueMatchesType($value, $t));
+        }
+
         return match ($type) {
-            'integer'  => is_int($value),
-            'float'    => is_float($value) || is_numeric($value),
-            'array'    => is_array($value),
-            'boolean'  => is_bool($value),
             'string'   => is_string($value),
-            default    => true,
+            'number'   => is_numeric($value),
+            'boolean'  => is_bool($value),
+            'integer'  => is_int($value) || (is_numeric($value) && (int)$value == $value),
+            'object'   => is_object($value),
+            'array'    => is_array($value),
+            // @TODO: Need to do more to confirm enum types?
+            'enum'     => is_string($value),
+            'null'     => empty($value),
+            // If strict, only allow known types
+            default    => $this->strict ? false : true,
         };
+    }
+
+    /**
+     * Checks if the value meets any additional constraints defined in the schema.
+     *
+     * See: https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat#supported-properties
+     */
+    protected function valueMeetsConstraints(mixed $value, array $meta): ?string
+    {
+        $type = $meta['type'];
+
+        // @TODO: Implement string, number, and enum constraints
+
+        if ($type === 'array') {
+            $itemsType = $meta['items']['type'] ?? null;
+            foreach ($value as $v) {
+                if (!$this->valueMatchesType($v, $itemsType)) {
+                    return "array_item_must_be_{$itemsType}";
+                }
+            }
+
+            $count = count($value);
+            $minItems  = $meta['minItems'] ?? null;
+            if ($minItems && $count < $minItems) {
+                return "too_few_array_items";
+            }
+
+            $maxItems  = $meta['maxItems'] ?? null;
+            if ($maxItems && $count > $maxItems) {
+                return "too_many_array_items";
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -5,7 +5,6 @@ namespace App\AiAgents;
 use App\AiAgents\Tools\AnalyzeIssueTool;
 use App\AiAgents\Tools\FetchGuidelinesListTool;
 use App\AiAgents\Tools\FetchIssuePageContentTool;
-use App\AiAgents\Tools\ReviewGuidelineApplicabilityTool;
 use App\AiAgents\Tools\ScratchPadTool;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Models\Issue;
@@ -20,7 +19,6 @@ class IssueChatAgent extends ModelChatAgent
 //        FetchGuidelinesListTool::class,
 //        FetchIssuePageContentTool::class,
         AnalyzeIssueTool::class,
-//        ReviewGuidelineApplicabilityTool::class,
         StoreGuidelineMatchesTool::class,
         ScratchPadTool::class,
     ];

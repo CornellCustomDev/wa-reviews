@@ -111,6 +111,7 @@ function attributeObserver(el, initialAttributes) {
     }
   };
 }
+inject(({ css }) => css`[data-flux-allow-scroll] { pointer-events: auto; }`);
 
 // js/element.js
 var UIElement = class extends HTMLElement {

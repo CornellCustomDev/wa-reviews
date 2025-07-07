@@ -14,8 +14,6 @@ class StoreGuidelineMatchesTool extends BaseTool
     protected string $description =
         'Stores applicable web accessibility guidelines for an issue into the database. The guidelines are based on the Guidelines Document.';
 
-    protected array $required = ['issue_id', 'guidelines'];
-
     public static array $schema = [
         'issue_id' => [
             'type' => 'integer',

@@ -11,7 +11,7 @@ are mentioned, that refers to the "number" field for an item in the list below.
 
 ## Guidelines List
 
-{{ $guidelinesList }}
+{!! $guidelinesList !!}
 
 # Instructions
 

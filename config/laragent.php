@@ -16,10 +16,22 @@ return [
     'default_chat_history' => \LarAgent\History\InMemoryChatHistory::class,
 
     /**
+     * Autodiscovery namespaces for Agent classes.
+     * Used by `agent:chat` to locate agents.
+     */
+    'namespaces' => [
+        'App\\AiAgents\\',
+        'App\\Agents\\',
+    ],
+
+    /**
      * Always keep provider named 'default'
      * You can add more providers in array
      * by copying the 'default' provider
      * and changing the name and values
+     *
+     * You can remove any other providers
+     * which your project doesn't need
      */
     'providers' => [
         'default'=> [
@@ -43,5 +55,31 @@ return [
             'default_max_completion_tokens' => 10000,
             'default_temperature' => 1,
         ],
+
+        'openai-direct' => [
+            'label' => 'openai-direct',
+            'driver' => \App\AiAgents\LlmDrivers\OpenAiCompatibleStrict::class,
+            'api_key' => env('OPENAI_API_KEY'),
+            'model' => env('OPENAI_MODEL', 'gpt-4.1-mini'),
+            'default_context_window' => 100000,
+            'default_max_completion_tokens' => 10000,
+            'default_temperature' => 1,
+        ],
+
+        'anthropic-direct' => [
+            'label' => 'anthropic-direct',
+            'driver' => \LarAgent\Drivers\OpenAi\OpenAiCompatible::class,
+            'api_key' => env('ANTHROPIC_API_KEY'),
+            'api_url' => env('ANTHROPIC_API_URL', 'https://api.anthropic.com/v1'),
+            'model' => env('ANTHROPIC_MODEL', 'claude-sonnet-4-0'),
+            'default_context_window' => 20000,
+            'default_max_completion_tokens' => 8000,
+            'default_temperature' => 1,
+        ],
+
+        /**
+         * Fallback provider to use when any provider fails.
+         */
+        //'fallback_provider' => 'default',
     ],
 ];

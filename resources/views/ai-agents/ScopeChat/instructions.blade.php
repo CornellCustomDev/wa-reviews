@@ -51,10 +51,10 @@ the store_issues_matches tool.
 The user sees the scope and the issues that have been identified.
 
 ### Scope
-{{ $scopeContext }}
+{!! $scopeContext !!}
 
 ### Issues
 These have already been stored and associated with the scope.
 ```json
-{{ $issuesContext }}
+{!! $issuesContext !!}
 ```
