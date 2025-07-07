@@ -44,7 +44,7 @@
                                      class="text-cds-blue-600!"/>
                         <flux:tooltip.content class="max-w-[20rem] space-y-2">
                             <flux:subheading class="text-white">AI Reasoning</flux:subheading>
-                            <blockquote class="mb-0 pl-2">{!! $item->reasoning !!}</blockquote>
+                            <blockquote class="mb-0 pl-2">{!! $item->ai_reasoning !!}</blockquote>
                         </flux:tooltip.content>
                     </flux:tooltip>
                 </div>

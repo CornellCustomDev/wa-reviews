@@ -4,22 +4,22 @@ namespace App\AiAgents;
 
 use App\AiAgents\Tools\AnalyzeIssueTool;
 use App\AiAgents\Tools\FetchGuidelinesListTool;
-use App\AiAgents\Tools\FetchIssuePageContentTool;
+use App\AiAgents\Tools\FetchGuidelinesTool;
+use App\AiAgents\Tools\FetchScopePageContentTool;
 use App\AiAgents\Tools\ScratchPadTool;
-use App\AiAgents\Tools\StoreGuidelineMatchesTool;
+use App\AiAgents\Tools\UpdateIssueTool;
 use App\Models\Issue;
-use App\Models\Item;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Throwable;
 
 class IssueChatAgent extends ModelChatAgent
 {
     protected $tools = [
-//        FetchGuidelinesTool::class,
-//        FetchGuidelinesListTool::class,
-//        FetchIssuePageContentTool::class,
         AnalyzeIssueTool::class,
-        StoreGuidelineMatchesTool::class,
+        FetchGuidelinesListTool::class,
+        FetchGuidelinesTool::class,
+        FetchScopePageContentTool::class,
+        UpdateIssueTool::class,
         ScratchPadTool::class,
     ];
 
@@ -34,14 +34,28 @@ class IssueChatAgent extends ModelChatAgent
     {
         $issue = $this->context;
 
-        // Provide only the fields the model really needs from each guideline item
-        $guidelinesContext = $issue->items()->with('guideline')->get()
-            ->map(fn (Item $item) => GuidelinesAnalyzerService::mapItemToSchema($item))
-            ->each(fn ($item) => $item['url'] = route('guidelines.show', $item['number']))
-            ->toJson(JSON_PRETTY_PRINT);
+        $guideline = $issue->guideline;
+
+        if (!$guideline) {
+            return json_encode('No guideline associated with this issue.');
+        }
+
+        $guidelineArray = [
+            'reasoning' => $issue->ai_reasoning?->toHtml() ?? '',
+            'number' => $guideline->number,
+            'name' => $guideline->name,
+            'wcag_criterion' => $guideline->criterion->getNumberName(),
+            'assessment' => $issue->assessment?->value,
+            'observation' => $issue->description?->toHtml(),
+            'recommendation' => $issue->recommendation?->toHtml(),
+            'testing' => $issue->testing?->toHtml(),
+            'impact' => $issue->impact?->name,
+            'url' => route('guidelines.show', $guideline->number),
+        ];
+
+        $guidelinesContext = json_encode($guidelineArray, JSON_PRETTY_PRINT);
 
         return view('ai-agents.IssueChat.instructions', [
-            'tools' => $this->getTools(),
             'issueContext' => GuidelinesAnalyzerService::getIssueContext($issue),
             'guidelinesContext' => $guidelinesContext,
             'guidelineUrl' => route('guidelines.show', 5),

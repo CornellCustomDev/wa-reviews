@@ -75,6 +75,10 @@ abstract class BaseTool extends Tool
                 }
             }
 
+            if ($property['type'] == 'object') {
+                $this->properties[$name] = $property;
+            }
+
             // @TODO: Handle allowed string and number properties
             // Per https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat#supported-properties
 
@@ -185,7 +189,7 @@ abstract class BaseTool extends Tool
             'number'   => is_numeric($value),
             'boolean'  => is_bool($value),
             'integer'  => is_int($value) || (is_numeric($value) && (int)$value == $value),
-            'object'   => is_object($value),
+            'object'   => is_object($value) || is_array($value),
             'array'    => is_array($value),
             // @TODO: Need to do more to confirm enum types?
             'enum'     => is_string($value),

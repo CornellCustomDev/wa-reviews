@@ -2,47 +2,41 @@
 
 namespace App\Livewire\Scopes;
 
-use App\AiAgents\ScopeAnalyzerAgent;
-use App\AiAgents\Tools\StoreIssuesTool;
-use App\Livewire\Ai\LarAgentAction;
+use App\Ai\Prism\Agents\ScopeAnalyzerAgent;
+use App\Ai\Prism\PrismAction;
+use App\Ai\Prism\Tools\StoreIssuesTool;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
-use Illuminate\Support\Str;
-use LarAgent\Agent;
 use Livewire\Component;
+use Prism\Prism\Text\Response;
 
 class ScopeAnalyzer extends Component
 {
-    use LarAgentAction;
+    use PrismAction;
 
     public Scope $scope;
 
-    protected function getAgent(): ScopeAnalyzerAgent
-    {
-        if ($this->needsRefresh) {
-            $this->scope->refresh();
-            $this->needsRefresh = false;
-        }
-
-        return new ScopeAnalyzerAgent($this->scope, Str::ulid());
-    }
-
-    public function getContext(?string $additionalContext = null): string
-    {
-        return "# Context: Web page scope\n"
-            . GuidelinesAnalyzerService::getScopeContext($this->scope);
-    }
-
     public function recommendGuidelines(): void
     {
-        $this->userMessage = $this->getContext();
+        // Authorize because we add issues
+        $this->authorize('update', $this->scope);
+
+        $context = "# Context: Web page scope\n"
+            . GuidelinesAnalyzerService::getScopeContext($this->scope);
+
+        $this->userMessage = $context;
         $this->initiateAction();
     }
 
-    protected function afterAgentResponse(Agent $agent): void
+    public function getAgent(): ScopeAnalyzerAgent
     {
-        $content = $agent->lastMessage()->getContent();
-        $response = json_decode($content);
+        return ScopeAnalyzerAgent::for($this->scope)
+            ->withPrompt($this->userMessage);
+    }
+
+    protected function afterAgentResponse(Response $prismResponse): void
+    {
+        $response = json_decode($prismResponse->text);
 
         if ($response?->feedback) {
             $this->feedback = $response->feedback;
@@ -50,7 +44,8 @@ class ScopeAnalyzer extends Component
         }
 
         if ($response?->issues) {
-            StoreIssuesTool::call($this->scope->id, $response->issues);
+            $storeIssuesTool = new StoreIssuesTool();
+            $storeIssuesTool($this->scope->id, $response->issues);
             $this->dispatch('issues-updated');
         }
     }

@@ -2,31 +2,25 @@
 
 namespace App\Livewire\Issues;
 
-use App\AiAgents\GuidelineRecommenderAgent;
-use App\Livewire\Ai\LarAgentAction;
+use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
+use App\Ai\Prism\PrismAction;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Item;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
-use LarAgent\Agent;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Prism\Prism\Text\Response;
 
 class IssueFormAnalyzer extends Component
 {
-    use LarAgentAction;
+    use PrismAction;
 
     public ?Scope $scope = null;
     public IssueForm $form;
     public ?Collection $recommendations = null;
-
-    protected function getAgent(): GuidelineRecommenderAgent
-    {
-        return new GuidelineRecommenderAgent($this->scope, Str::ulid());
-    }
 
     public function unreviewedItems(): Collection
     {
@@ -81,10 +75,15 @@ class IssueFormAnalyzer extends Component
         $this->initiateAction();
     }
 
-    protected function afterAgentResponse(Agent $agent): void
+    public function getAgent(): GuidelineRecommenderAgent
     {
-        $content = $agent->lastMessage()->getContent();
-        $response = json_decode($content);
+        return GuidelineRecommenderAgent::for($this->scope)
+            ->withPrompt($this->userMessage);
+    }
+
+    protected function afterAgentResponse(Response $prismResponse): void
+    {
+        $response = json_decode($prismResponse->text);
 
         if ($response?->feedback) {
             $this->feedback = $response->feedback;
