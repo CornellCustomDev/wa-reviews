@@ -3,7 +3,6 @@
 namespace App\Ai\Prism\Tools;
 
 use Illuminate\Support\Facades\Storage;
-use Prism\Prism\Schema\EnumSchema;
 use Prism\Prism\Tool;
 
 class ScratchPadTool extends Tool
