@@ -5,6 +5,7 @@ namespace App\Livewire\Issues;
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\PrismAction;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
+use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Models\Scope;
@@ -100,6 +101,7 @@ class IssueAnalyzer extends Component
 
         $item = $this->issue->items->firstWhere('guideline_id', $guidelineNumber);
         $this->issue->applyRecommendation($item->id);
+        event(new IssueChanged($this->issue, 'updated'));
 
         $this->showFeedback = false;
         unset($this->hasUnreviewedItems);

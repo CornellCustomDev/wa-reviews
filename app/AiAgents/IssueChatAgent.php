@@ -3,6 +3,9 @@
 namespace App\AiAgents;
 
 use App\AiAgents\Tools\AnalyzeIssueTool;
+use App\AiAgents\Tools\FetchGuidelinesListTool;
+use App\AiAgents\Tools\FetchGuidelinesTool;
+use App\AiAgents\Tools\FetchScopePageContentTool;
 use App\AiAgents\Tools\ScratchPadTool;
 use App\AiAgents\Tools\UpdateIssueTool;
 use App\Models\Issue;
@@ -13,6 +16,9 @@ class IssueChatAgent extends ModelChatAgent
 {
     protected $tools = [
         AnalyzeIssueTool::class,
+        FetchGuidelinesListTool::class,
+        FetchGuidelinesTool::class,
+        FetchScopePageContentTool::class,
         UpdateIssueTool::class,
         ScratchPadTool::class,
     ];
@@ -50,7 +56,6 @@ class IssueChatAgent extends ModelChatAgent
         $guidelinesContext = json_encode($guidelineArray, JSON_PRETTY_PRINT);
 
         return view('ai-agents.IssueChat.instructions', [
-            'tools' => $this->getTools(),
             'issueContext' => GuidelinesAnalyzerService::getIssueContext($issue),
             'guidelinesContext' => $guidelinesContext,
             'guidelineUrl' => route('guidelines.show', 5),

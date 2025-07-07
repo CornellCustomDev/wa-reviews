@@ -49,7 +49,7 @@ class UpdateIssueTool extends BaseTool
 
         $issue->update(GuidelinesAnalyzerService::mapResponseToItemArray($data));
 
-        event(new IssueChanged($issue, 'created', $issue->getAttributes(), $agent));
+        event(new IssueChanged($issue, 'updated', actor: $agent));
 
         return ['status' => 'stored', 'feedback' => $feedback];
     }

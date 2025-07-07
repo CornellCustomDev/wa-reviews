@@ -158,6 +158,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     {
         $issueData = [
             'id' => $issue->id,
+            'scope_id' => $issue->scope_id,
             'target' => $issue->target,
             //'css_selector' => $issue->css_selector,
             'description' => $issue->description->toHtml(),
@@ -177,7 +178,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             'title' => $scope->title,
             'url' => $scope->url,
             'page_content' => $scope->pageHasBeenRetrieved()
-                ? 'Available via "fetch_scope_page_content" tool.'
+                ? "Available via 'fetch_scope_page_content($scope->id)' tool."
                 : 'No page content available.',
             'notes' => $scope->notes,
             'comments' => $scope->comments,
