@@ -11,7 +11,7 @@ are mentioned, that refers to the "number" field for an item in the list below.
 
 ## Guidelines List
 
-NOTE: Call fetch_guidelines_list to retrieve th list of Guidelines.
+NOTE: Call fetch_guidelines_list if you need to retrieve the list of Guidelines from the Cornell University's "Web accessibility testing guidelines for WCAG 2.2 AA".
 
 # Instructions
 
@@ -102,7 +102,7 @@ The user sees the page scope and has the ability to create issues related to it.
 You have access to the following tools and should use them as needed to assist in finding which guidelines
 apply to the scope:
 @foreach($tools as $tool)
-    - {{ $tool->getName() }}: {{ $tool->getDescription() }}
+    - {{ $tool->name() }}: {{ $tool->description() }}
 @endforeach
 
 # Desired Outcome

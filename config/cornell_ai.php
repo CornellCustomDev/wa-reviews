@@ -15,6 +15,7 @@ return [
     */
     'ai_service' => env('AI_SERVICE', \App\Services\CornellAI\ApiGatewayChatService::class),
     'laragent_profile' => env('LARAGENT_PROFILE', 'default'),
+    'prism_provider' => env('PRISM_PROVIDER', 'cornell'),
 
     /*
     |--------------------------------------------------------------------------
