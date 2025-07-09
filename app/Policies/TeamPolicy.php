@@ -20,7 +20,12 @@ class TeamPolicy
             || $user->isAbleTo(Permissions::ManageTeams);
     }
 
-    public function manageTeam(User $user, Team $team): bool
+    public function manageTeams(User $user): bool
+    {
+        return $user->isAbleTo(Permissions::ManageTeams);
+    }
+
+    public function manageTeamMembers(User $user, Team $team): bool
     {
         return $user->isAbleTo(Permissions::ManageTeamMembers, $team)
             || $user->isAbleTo(Permissions::ManageTeams);

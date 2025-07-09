@@ -28,7 +28,9 @@ class Report extends Component
     #[Computed]
     public function issues()
     {
-        return $this->project->getReportableIssues()->groupBy('scope_id');
+        return $this->project->getReportableIssues()
+            ->groupBy('scope_id')
+            ->sortKeys();
     }
 
     #[Computed('siteimproveUrl')]

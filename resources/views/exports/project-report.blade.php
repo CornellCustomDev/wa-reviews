@@ -63,65 +63,67 @@
                 @if($scope)
                     {{ $scope->title }} ({{ $scope->url }})
                 @else
-                    Source: Not Set
+                    Issues
                 @endif
             </td>
         </tr>
         @foreach($issues as $issue)
-            @foreach($issue->items as $item)
-                <tr>
-                    <td>
-                        <a href="{{ route('guidelines.show', $item->guideline) }}">{{ $item->guideline->number }}</a>
-                    </td>
-                    <td>
-                        <p>{{ $item->guideline->criterion->getLongName() }}</p>
-                    </td>
-                    <td>
-                        <p>{{ $item->guideline->name }}</p>
-                    </td>
-                    <td style="background-color: #caff37; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment == \App\Enums\Assessment::Pass ? 'X' : ' ' }}
-                    </td>
-                    <td style="background-color: #f6b26b; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment == \App\Enums\Assessment::Warn ? 'X' : ' ' }}
-                    </td>
-                    <td style="background-color: #ea9999; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment == \App\Enums\Assessment::Fail ? 'X' : ' ' }}
-                    </td>
-                    <td style="background-color: #9fc5e8; text-align: center; border: 1px solid #000;">
-                        {{ $item->assessment == \App\Enums\Assessment::Not_Applicable ? 'X' : ' ' }}
-                    </td>
-                    <td>
-                        {{ $item->issue->target }}
-                    </td>
-                    <td>
-                        {!! $item->description !!}
-                    </td>
-                    <td>
-                        {!! $item->recommendation !!}
-                    </td>
-                    <td>
-                        {!! $item->testing !!}
-                    </td>
-                    <td>
-                        @if($item->image_links)
-                            @foreach($item->image_links as $imagePath)
-                                @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                                {{ $imageName }}
-                            @endforeach
-                        @endif
-                    </td>
-                    <td>
-                        {{ $item->impact ? $item->impact->value() : ' ' }}
-                    </td>
-                    <td>
-                        {{ $item->ce_issue ? 'X' : ' ' }}
-                    </td>
-                    <td>
-                        {{ $item->issue->needs_mitigation ? 'X' : ' ' }}
-                    </td>
-                </tr>
-            @endforeach
+            <tr>
+                <td>
+                    <a href="{{ route('guidelines.show', $issue->guideline) }}">{{ $issue->guideline->number }}</a>
+                </td>
+                <td>
+                    <p>{{ $issue->guideline->criterion->getLongName() }}</p>
+                </td>
+                <td>
+                    <p>{{ $issue->guideline->name }}</p>
+                </td>
+                <td style="background-color: #caff37; text-align: center; border: 1px solid #000;">
+                    {{ $issue->assessment == \App\Enums\Assessment::Pass ? 'X' : ' ' }}
+                </td>
+                <td style="background-color: #f6b26b; text-align: center; border: 1px solid #000;">
+                    {{ $issue->assessment == \App\Enums\Assessment::Warn ? 'X' : ' ' }}
+                </td>
+                <td style="background-color: #ea9999; text-align: center; border: 1px solid #000;">
+                    {{ $issue->assessment == \App\Enums\Assessment::Fail ? 'X' : ' ' }}
+                </td>
+                <td style="background-color: #9fc5e8; text-align: center; border: 1px solid #000;">
+                    {{ $issue->assessment == \App\Enums\Assessment::Not_Applicable ? 'X' : ' ' }}
+                </td>
+                <td>
+                    {{ $issue->target }}
+                </td>
+                <td>
+                    {!! $issue->description !!}
+                </td>
+                <td>
+                    {!! $issue->recommendation !!}
+                </td>
+                <td>
+                    @if($issue->testing && !($issue->testing->isEmpty()))
+                        {!! $issue->testing !!}
+                    @elseif($issue->testing_method)
+                        {{ $issue->testing_method->value() }}
+                    @endif
+                </td>
+                <td>
+                    @if($issue->image_links)
+                        @foreach($issue->image_links as $imagePath)
+                            @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
+                            {{ $imageName }}
+                        @endforeach
+                    @endif
+                </td>
+                <td>
+                    {{ $issue->impact ? $issue->impact->value() : ' ' }}
+                </td>
+                <td>
+                    {{ $issue->ce_issue ? 'X' : ' ' }}
+                </td>
+                <td>
+                    {{ $issue->needs_mitigation ? 'X' : ' ' }}
+                </td>
+            </tr>
         @endforeach
     @endforeach
 </table>

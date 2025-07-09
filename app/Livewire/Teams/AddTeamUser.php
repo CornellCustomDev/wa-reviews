@@ -68,7 +68,7 @@ class AddTeamUser extends Component
 
     public function save()
     {
-        $this->authorize('manage-team', $this->team);
+        $this->authorize('manage-team-members', $this->team);
 
         $this->validate();
 

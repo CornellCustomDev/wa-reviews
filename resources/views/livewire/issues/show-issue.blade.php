@@ -155,6 +155,10 @@
                 <x-forms.field-display label="Testing">
                     {!! $issue->testing !!}
                 </x-forms.field-display>
+            @elseif($issue->testing_method)
+                <x-forms.field-display label="Testing Method">
+                    {{ $issue->testing_method->value() }}
+                </x-forms.field-display>
             @endif
         </div>
 

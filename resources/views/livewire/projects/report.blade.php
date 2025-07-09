@@ -80,74 +80,78 @@
                 <h3 class="mb-0">{{ $scope->title }}</h3>
                 <flux:subheading class="mb-2"><a href="{{ $scope->url }}">{{ $scope->url }}</a></flux:subheading>
             @else
-                <h3 class="mb-0">Source: Not Set</h3>
+                <h3 class="mb-0">Issues</h3>
             @endif
             @foreach($issues as $issue)
-                @foreach($issue->items as $item)
-                    <h4 class="font-semibold mb-0.5">
-                        <x-forms.button
-                            href="{{ route('guidelines.show', $item->guideline) }}"
-                            title="View Guideline {{ $item->guideline->number }}"
-                            data-cds-button-assessment
-                            class="{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}"
-                            size="xs"
-                        >{{ $item->guideline->number }}</x-forms.button>
+                <h4 class="font-semibold mb-0.5">
+                    <x-forms.button
+                        href="{{ route('guidelines.show', $issue->guideline) }}"
+                        title="View Guideline {{ $issue->guideline->number }}"
+                        data-cds-button-assessment
+                        class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
+                        size="xs"
+                    >{{ $issue->guideline->number }}</x-forms.button>
 
-                        <span>{{ $item->guideline->name }}</span>
-                    </h4>
-                    @if($issue->siaRule)
-                        <a href="{{ $this->siteimproveUrl($scope) }}#/sia-r{{ $issue->siaRule->id }}/failed" target="_blank">
-                            Siteimprove Issue Detail
-                            <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
-                        </a>
-                    @endif
-                    <h5>WCAG 2 Success Criterion: {{ $item->guideline->criterion->getLongName() }}</h5>
-                    <x-forms.field-display label="Assessment" variation="inline" @class(['mb-0!' => $item->impact])>
-                        {{ $item->assessment->getDescription() }}
-                    </x-forms.field-display>
+                    <span>{{ $issue->guideline->name }}</span>
+                </h4>
+                @if($issue->siaRule)
+                    <a href="{{ $this->siteimproveUrl($scope) }}#/sia-r{{ $issue->siaRule->id }}/failed" target="_blank">
+                        Siteimprove Issue Detail
+                        <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
+                    </a>
+                @endif
+                <h5>WCAG 2 Success Criterion: {{ $issue->guideline->criterion->getLongName() }}</h5>
+                <x-forms.field-display label="Assessment" variation="inline" @class(['mb-0!' => $issue->impact])>
+                    {{ $issue->assessment->getDescription() }}
+                </x-forms.field-display>
 
-                    @if($item->impact)
-                        <x-forms.field-display label="Impact" variation="inline">
-                            {{ $item->impact->value() }}
-                        </x-forms.field-display>
-                    @endif
+                @if($issue->impact)
+                    <x-forms.field-display label="Impact" variation="inline">
+                        {{ $issue->impact->value() }}
+                    </x-forms.field-display>
+                @endif
 
-                    <x-forms.field-display label="Location">
-                        {{ $item->issue->target }}
-                    </x-forms.field-display>
-                    <x-forms.field-display label="Observation">
-                        {!! $item->description !!}
-                    </x-forms.field-display>
-                    <x-forms.field-display label="Recommendation for remediation">
-                        {!! $item->recommendation !!}
-                    </x-forms.field-display>
+                <x-forms.field-display label="Location">
+                    {{ $issue->target }}
+                </x-forms.field-display>
+                <x-forms.field-display label="Observation">
+                    {!! $issue->description !!}
+                </x-forms.field-display>
+                <x-forms.field-display label="Recommendation for remediation">
+                    {!! $issue->recommendation !!}
+                </x-forms.field-display>
+                @if($issue->testing)
                     <x-forms.field-display label="Testing">
-                        {!! $item->testing !!}
+                        {!! $issue->testing !!}
                     </x-forms.field-display>
+                @elseif($issue->testing_method)
+                    <x-forms.field-display label="Test Method" variation="inline">
+                        {{ $issue->testing_method }}
+                    </x-forms.field-display>
+                @endif
 
-                    @if($item->image_links)
-                        <flux:subheading>Images:</flux:subheading>
-                        <div class="flex flex-wrap gap-1 mt-1 mb-4">
-                            @foreach($item->image_links as $imagePath)
-                                @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                                <flux:tooltip position="bottom" class="align-middle">
-                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! overflow-hidden hover:border-cds-blue-900 h-auto">
-                                        <div class="relative py-1">
-                                            <img
-                                                src="{{ $imagePath }}"
-                                                alt="Preview of image: {{ $imageName }}"
-                                                class="max-w-60"
-                                            />
-                                        </div>
-                                    </flux:button>
-                                    <flux:tooltip.content>
-                                        View image {{ $imageName }}
-                                    </flux:tooltip.content>
-                                </flux:tooltip>
-                            @endforeach
-                        </div>
-                    @endif
-                @endforeach
+                @if($issue->image_links)
+                    <flux:subheading>Images:</flux:subheading>
+                    <div class="flex flex-wrap gap-1 mt-1 mb-4">
+                        @foreach($issue->image_links as $imagePath)
+                            @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
+                            <flux:tooltip position="bottom" class="align-middle">
+                                <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! overflow-hidden hover:border-cds-blue-900 h-auto">
+                                    <div class="relative py-1">
+                                        <img
+                                            src="{{ $imagePath }}"
+                                            alt="Preview of image: {{ $imageName }}"
+                                            class="max-w-60"
+                                        />
+                                    </div>
+                                </flux:button>
+                                <flux:tooltip.content>
+                                    View image {{ $imageName }}
+                                </flux:tooltip.content>
+                            </flux:tooltip>
+                        @endforeach
+                    </div>
+                @endif
             @endforeach
         </div>
         @if(!$loop->last)

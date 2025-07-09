@@ -2,6 +2,7 @@
     <h1>Create Project</h1>
 
     <form wire:submit="save">
+        <x-forms.field-display label="Team" variation="inline">{{ $team->name }}</x-forms.field-display>
         @include('livewire.projects.fields')
         <x-forms.button.submit-group submitName="Create Project"/>
     </form>

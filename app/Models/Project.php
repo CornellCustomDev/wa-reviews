@@ -214,13 +214,10 @@ class Project extends Model
     public function getReportableIssues(): Collection
     {
         return $this->issues()
-            ->with(['scope', 'items'])
+            ->with(['scope', 'guideline', 'guideline.criterion'])
             ->get()
-            ->filter(function ($issue) {
-                $accepted_items = $issue->items
-                    ->filter(fn (Item $item) => $item->isAiAccepted() || ! $item->isAiGenerated());
-                return $accepted_items->isNotEmpty();
-            });
+            ->filter(fn ($issue) => $issue->isAiAccepted() || ! $issue->isAiGenerated())
+            ->sort(fn ($a, $b) => $a->guideline_id <=> $b->guideline_id);
     }
 
     public function updateSiteimprove(): void

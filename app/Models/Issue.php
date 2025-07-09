@@ -23,17 +23,17 @@ class Issue extends Model
     protected $fillable = [
         'project_id',
         'scope_id',
+        'target',
+        'description',
         'guideline_id',
         'sia_rule_id',
         'assessment',
-        'target',
-        'description',
+        'impact',
         'testing_method',
         'recommendation',
         'testing',
         'image_links',
         'content_issue',
-        'impact',
         'ai_reasoning',
         'ai_status',
         'agent_id',
@@ -42,13 +42,13 @@ class Issue extends Model
     ];
 
     protected $casts = [
-        'assessment' => Assessment::class,
         'description' => AsHtmlString::class,
+        'assessment' => Assessment::class,
+        'impact' => Impact::class,
         'testing_method' => TestingMethod::class,
         'recommendation' => AsHtmlString::class,
         'testing' => AsHtmlString::class,
         'image_links' => 'array',
-        'impact' => Impact::class,
         'ai_reasoning' => AsHtmlString::class,
         'ai_status' => AIStatus::class,
         'status' => IssueStatus::class,
@@ -146,8 +146,8 @@ class Issue extends Model
         $this->update([
             'guideline_id'   => $item->guideline_id,
             'assessment'     => $item->assessment,
-            'testing'        => $item->testing,
             'impact'         => $item->impact,
+            'testing'        => $item->testing,
             'ai_reasoning'   => $item->ai_reasoning,
             'recommendation' => $item->recommendation,
         ]);

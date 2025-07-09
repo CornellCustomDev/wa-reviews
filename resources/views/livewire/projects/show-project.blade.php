@@ -22,26 +22,37 @@
                     <hr class="mt-2">
 
                     @if($project->description)
-                        <div>
+                        <div class="mb-4">
                             {!! $project->description !!}
                         </div>
                     @endif
 
                     @if($project->responsible_unit)
-                        <div>
+                        <x-forms.field-display label="Responsible unit" variation="inline" class="mb-0!">
                             {{ $project->responsible_unit }}
-                        </div>
+                        </x-forms.field-display>
                     @endif
 
                     @if($project->contact_name)
-                        <div>Point of contact:
+                        <x-forms.field-display label="Point of contact" variation="inline" class="mb-0!">
                             {{ $project->contact_name }}
                             @if($project->contact_netid)
                                 ({{ $project->contact_netid }})
                             @endif
-                        </div>
+                        </x-forms.field-display>
                     @endif
 
+                    @if($project->audience)
+                        <x-forms.field-display label="Audience" variation="inline" class="mb-0!">
+                            {{ $project->audience }}
+                        </x-forms.field-display>
+                    @endif
+
+                    @if($project->site_purpose)
+                        <x-forms.field-display label="Site purpose" variation="inline" class="mb-0!">
+                            {!! $project->site_purpose !!}
+                        </x-forms.field-display>
+                    @endif
                 </div>
 
                 <div x-show="edit" x-cloak>
@@ -59,8 +70,8 @@
 
     <flux:tab.group>
         <flux:tabs wire:model.live="tab">
-            <flux:tab name="issues">Issues ({{ $project->issues()->count() }})</flux:tab>
             <flux:tab name="scope">Scope ({{ $project->scopes()->count() }})</flux:tab>
+            <flux:tab name="issues">Issues ({{ $project->issues()->count() }})</flux:tab>
             <flux:tab name="siteimprove">
                 Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})
             </flux:tab>
@@ -70,11 +81,11 @@
             @endcan
         </flux:tabs>
 
-        <flux:tab.panel name="issues">
-            <livewire:projects.issues :$project />
-        </flux:tab.panel>
         <flux:tab.panel name="scope">
             <livewire:scopes.view-scopes :$project />
+        </flux:tab.panel>
+        <flux:tab.panel name="issues">
+            <livewire:projects.issues :$project />
         </flux:tab.panel>
         <flux:tab.panel name="siteimprove">
             <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />

@@ -57,12 +57,12 @@ class TeamPolicyTest extends TestCase
     }
 
     #[DataProvider('manageTeamProvider')]
-    #[Test] public function manage_team($role, $isTeamMember, $expected, $description)
+    #[Test] public function manage_team_members($role, $isTeamMember, $expected, $description)
     {
         $user = User::factory()->create();
         $team = $this->setupTeam($user, $isTeamMember, $role);
 
-        $result = (new TeamPolicy())->manageTeam($user, $team);
+        $result = (new TeamPolicy())->manageTeamMembers($user, $team);
         $this->assertEquals($expected, $result, $description);
     }
 
