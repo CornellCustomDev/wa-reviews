@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Page;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -23,12 +24,17 @@ return new class extends Migration
             DB::table('pages')->insert([
                 'scope_id' => $scope->id,
                 'url' => $scope->url,
-                'page_content' => $scope->page_content,
                 'retrieved_at' => $scope->retrieved_at,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
             $pageId = DB::getPdo()->lastInsertId();
+            $page = Page::find($pageId);
+            if ($scope->page_content) {
+                $page->storePageContent($scope->page_content);
+                $page->retrieved_at = $scope->retrieved_at;
+                $page->save();
+            }
             DB::table('scopes')
                 ->where('id', $scope->id)
                 ->update(['current_page_id' => $pageId]);
@@ -51,12 +57,12 @@ return new class extends Migration
         });
 
         // Repopulate data from pages table, assume no data has been added, so 1-to-1 data
-        $pages = DB::table('pages')->get();
+        $pages = Page::all();
         foreach ($pages as $page) {
             DB::table('scopes')
                 ->where('id', $page->scope_id)
                 ->update([
-                    'page_content' => $page->page_content,
+                    'page_content' => $page->getPageContent(),
                     'retrieved_at' => $page->retrieved_at
                 ]);
         }
@@ -65,5 +71,14 @@ return new class extends Migration
             $table->dropForeign(['current_page_id']);
             $table->dropColumn('current_page_id');
         });
+
+        // Truncate the pages table
+        DB::table('pages')->truncate();
+
+        // Delete the page_content directory and all its contents
+        $storagePath = Page::STORAGE_PATH;
+        if (Storage::exists($storagePath)) {
+            Storage::deleteDirectory($storagePath);
+        }
     }
 };

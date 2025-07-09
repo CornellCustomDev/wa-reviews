@@ -82,8 +82,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Remove fields added from items table
         Schema::table('issues', function (Blueprint $table) {
             $table->dropForeign(['guideline_id']);
+            $table->dropForeign(['agent_id']);
             $table->dropColumn([
                 'guideline_id',
                 'assessment',

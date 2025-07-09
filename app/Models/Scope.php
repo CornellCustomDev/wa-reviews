@@ -86,8 +86,8 @@ class Scope extends Model
      */
     public function getPageContent(): ?string
     {
-        return $this->currentPage?->page_content
-            ?? $this->latestPage?->page_content
+        return $this->currentPage?->getPageContent()
+            ?? $this->latestPage?->getPageContent()
             ?? null;
     }
 
@@ -96,12 +96,12 @@ class Scope extends Model
      */
     public function setPageContent(string $url, ?string $content): void
     {
-        $page = $this->pages()->create([
-            'url' => $url,
-            'page_content' => $content,
-            'retrieved_at' => now(),
-            'siteimprove_report_url' => app(SiteimproveService::class)->getPageReportUrl($url),
-        ]);
+        $page = Page::createPageContent($this, $url, $content);
+        // @TODO: Should this be a function on Page?
+        if ($siteImproveUrl = app(SiteimproveService::class)->getPageReportUrl($url)) {
+            $page->siteimprove_report_url = $siteImproveUrl;
+            $page->save();
+        }
         $this->setCurrentPage($page);
     }
 
