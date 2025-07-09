@@ -5,7 +5,7 @@ namespace Feature\Livewire;
 use App\Enums\ProjectStatus;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\UpdateReviewer;
-use App\Livewire\Projects\UpdateStatus;
+use App\Livewire\Projects\Workflow;
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
@@ -93,7 +93,7 @@ class ProjectReviewerTest extends FeatureTestCase
         $project = Project::factory()->create(['team_id' => $team->id]);
 
         // Cannot update if not assigned as reviewer
-        Livewire::test(UpdateStatus::class, ['project' => $project])
+        Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'next')
             ->assertForbidden();
 
@@ -101,13 +101,13 @@ class ProjectReviewerTest extends FeatureTestCase
         $project->assignToUser($user);
 
         // Now the reviewer can update the status
-        Livewire::test(UpdateStatus::class, ['project' => $project])
+        Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'next')
             ->assertDispatched('refresh-project');
 
         $this->assertEquals(ProjectStatus::InProgress, $project->fresh()->status);
 
-        Livewire::test(UpdateStatus::class, ['project' => $project])
+        Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'previous')
             ->assertDispatched('refresh-project');
 
