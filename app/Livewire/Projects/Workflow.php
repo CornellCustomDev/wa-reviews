@@ -7,9 +7,19 @@ use App\Models\Project;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class UpdateStatus extends Component
+class Workflow extends Component
 {
     public Project $project;
+
+    public function assignCurrentUser(): void
+    {
+        $this->authorize('update-reviewer', [$this->project, auth()->user()]);
+
+        // Assign the current user as the reviewer
+        $this->project->assignToUser(auth()->user());
+
+        $this->dispatch('refresh-project');
+    }
 
     public function removeReviewer(): void
     {

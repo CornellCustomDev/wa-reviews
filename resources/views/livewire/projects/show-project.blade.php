@@ -52,7 +52,7 @@
 
         <div class="col-span-1 mb-4">
             <div class="border rounded-sm border-cds-gray-200 p-4">
-                <livewire:projects.update-status :project="$project"/>
+                <livewire:projects.workflow :project="$project"/>
             </div>
         </div>
     </div>
