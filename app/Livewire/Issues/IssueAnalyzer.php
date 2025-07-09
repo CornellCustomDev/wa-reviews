@@ -8,7 +8,6 @@ use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Events\IssueChanged;
 use App\Models\Issue;
 use App\Models\Item;
-use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -20,7 +19,6 @@ class IssueAnalyzer extends Component
 {
     use PrismAction;
 
-    public Scope $scope;
     public Issue $issue;
     public ?Collection $recommendations = null;
 
@@ -39,7 +37,7 @@ class IssueAnalyzer extends Component
 
     public function recommendGuidelines(): void
     {
-        if (empty($this->scope)) {
+        if (empty($this->issue->scope)) {
             $this->feedback = 'A Scope is required to recommend guidelines.';
             $this->showFeedback = true;
             return;
@@ -53,7 +51,7 @@ class IssueAnalyzer extends Component
         }
 
         // Authorize because we delete existing items
-        $this->authorize('update', $this->scope);
+        $this->authorize('update', $this->issue->scope);
 
         // Remove any existing recommendation for this issue first
         $this->issue->items()->delete();
@@ -66,9 +64,9 @@ class IssueAnalyzer extends Component
         $this->initiateAction();
     }
 
-    public function getAgent(): GuidelineRecommenderAgent
+    protected function getAgent(): GuidelineRecommenderAgent
     {
-        return GuidelineRecommenderAgent::for($this->scope)
+        return GuidelineRecommenderAgent::for($this->issue->scope)
             ->withPrompt($this->userMessage);
     }
 
