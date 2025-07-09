@@ -5,7 +5,6 @@ namespace App\Imports\ChecklistSpreadsheet;
 use App\Enums\Assessment;
 use App\Enums\Impact;
 use App\Models\Issue;
-use App\Models\Item;
 use App\Models\Project;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\PersistRelations;
@@ -21,7 +20,7 @@ class ChecklistSheetImport implements ToModel, PersistRelations, WithStartRow
         $this->scopes = $this->project->scopes()->select('id', 'url')->get();
     }
 
-    public function model(array $row): ?Item
+    public function model(array $row): ?Issue
     {
         if (empty($row[0])) {
             return null; // Skip empty rows
@@ -75,23 +74,18 @@ class ChecklistSheetImport implements ToModel, PersistRelations, WithStartRow
         preg_match_all($pattern, $image_links, $matches);
         $image_links = array_map(fn($url) => rtrim($url, '/'), $matches[0]);
 
-        $issue = Issue::create([
+        return Issue::create([
             'project_id' => $this->project->id,
             'scope_id' => $scope ? $scope->id : null,
             'target' => $target,
             'description' => $description,
-        ]);
-
-        return new Item([
-            'issue_id' => $issue->id,
             'guideline_id' => $guideline_number,
             'assessment' => $assessment,
-            'description' => $description,
+            'impact' => $impact,
             'testing_method' => $testing,
             'recommendation' => $recommendation,
             'testing' => $testing,
             'image_links' => $image_links,
-            'impact' => $impact,
             'content_issue' => $content_issue,
         ]);
     }
