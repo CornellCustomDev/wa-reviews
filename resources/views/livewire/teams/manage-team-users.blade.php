@@ -35,7 +35,7 @@
                     @endif
                 </td>
                 <td>
-                    @can('manage-team', $team)
+                    @can('manage-team-members', $team)
                         <x-forms.button
                             title="Edit Roles for {{ $user->name }}"
                             icon="pencil-square"
@@ -55,7 +55,7 @@
         </tbody>
     </table>
 
-    @can('manage-team', $team)
+    @can('manage-team-members', $team)
         <flux:modal.trigger name="add-user">
             <x-forms.button icon="plus-circle">Add User</x-forms.button>
         </flux:modal.trigger>
