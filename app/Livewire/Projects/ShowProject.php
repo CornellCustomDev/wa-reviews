@@ -16,7 +16,7 @@ class ShowProject extends Component
     public Project $project;
 
     #[Url]
-    public string $tab = 'issues';
+    public string $tab = 'scope';
     #[Url(as: 'e', history: true)]
     public bool $showEdit = false;
 

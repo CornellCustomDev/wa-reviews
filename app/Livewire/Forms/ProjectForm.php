@@ -15,7 +15,6 @@ class ProjectForm extends Form
     public ?Project $project;
 
     #[Validate('nullable')]
-    #[Url(as: 'team', except: '')]
     public $team_id = '';
     #[Validate('required|string|max:255', as: 'Project Name')]
     public string $name = '';
