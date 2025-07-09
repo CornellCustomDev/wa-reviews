@@ -19,6 +19,6 @@
 
     <div x-show="$wire.showAnalyzer" x-cloak>
         <hr>
-        <livewire:issues.issue-analyzer :scope="$issue->scope" :$issue />
+        <livewire:issues.issue-analyzer :$issue />
     </div>
 </div>

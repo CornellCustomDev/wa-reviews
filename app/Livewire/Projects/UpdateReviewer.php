@@ -33,9 +33,9 @@ class UpdateReviewer extends Component
 
     public function save()
     {
-        $this->authorize('update-reviewer', $this->project);
+        $this->authorize('update-reviewer', [$this->project, User::find($this->user)]);
 
-        // Validate that the user exists and is not already on the team
+        // Validate that the user exists and is not already assigned to the project
         $validated = $this->validate([
             'user' => [
                 'required',

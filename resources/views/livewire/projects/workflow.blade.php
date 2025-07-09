@@ -4,11 +4,13 @@
 
     <div class="mb-2">
         @if($project->reviewer)
-            @can('update-reviewer', $project)
+            @can('update-reviewer', [$project, auth()->user()])
                 <div class="float-right">
-                    <flux:modal.trigger name="update-reviewer">
-                        <x-forms.button icon="pencil-square" size="xs" title="Edit reviewer" />
-                    </flux:modal.trigger>
+                    @can('manage-projects', $project->team)
+                        <flux:modal.trigger name="update-reviewer">
+                            <x-forms.button icon="pencil-square" size="xs" title="Edit reviewer" />
+                        </flux:modal.trigger>
+                    @endcan
                     <x-forms.button.delete
                         title="Remove {{ $project->reviewer->name }} from project"
                         size="xs"
@@ -21,10 +23,16 @@
                 {{ $project->reviewer->name }}
             </x-forms.field-display>
         @else
-            @can('update-reviewer', $project)
-                <flux:modal.trigger name="update-reviewer">
-                    <x-forms.button icon="plus-circle">Assign Reviewer</x-forms.button>
-                </flux:modal.trigger>
+            @can('update-reviewer', [$project, auth()->user()])
+                @can('manage-projects', $project->team)
+                    <flux:modal.trigger name="update-reviewer">
+                        <x-forms.button icon="plus-circle">Assign Reviewer</x-forms.button>
+                    </flux:modal.trigger>
+                @else
+                    <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentUser">
+                        Assign to Me
+                    </x-forms.button>
+                @endcan
             @else
                 <x-forms.field-display label="Reviewer" class="mb-0!">
                     <span class="text-gray-500">No reviewer assigned</span>

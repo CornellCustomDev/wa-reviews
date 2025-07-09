@@ -10,5 +10,5 @@ class ShowTeam extends Component
 {
     public Team $team;
     #[Url]
-    public string $tab = 'projects';
+    public string $tab = 'members';
 }

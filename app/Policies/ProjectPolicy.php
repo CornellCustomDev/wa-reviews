@@ -43,7 +43,7 @@ class ProjectPolicy
             || $user->can('manage-projects', $project->team);
     }
 
-    public function updateReviewer(User $user, Project $project): bool
+    public function updateReviewer(User $user, Project $project, ?User $reviewer = null): bool
     {
         // No updating the reviewer if the project is completed
         if ($project->isCompleted()) {
@@ -55,9 +55,12 @@ class ProjectPolicy
             return true;
         }
 
-        // If there is no reviewer, the user can assign the review if they have permission
+        // If there is no reviewer, the user can assign to self
         if (is_null($project->reviewer)) {
-            return $user->can('create-projects', $project->team);
+            // Assigning to the current user
+            if ($reviewer && $reviewer->id == $user->id) {
+                return $user->can('create-projects', $project->team);
+            }
         }
 
         // Otherwise, the user must have permission to manage projects for the team
