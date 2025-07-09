@@ -54,32 +54,6 @@
     </flux:radio.group>
 </div>
 
-<x-forms.textarea label="Recommendations" wire:model="form.recommendation">
-    <x-slot name="description">
-        Describe what the expected behavior should be. In other words, describe how the element could have been implemented such that you wouldn't be flagging it for an accessibility failure.
-    </x-slot>
-</x-forms.textarea>
-
-<x-forms.select
-    label="Testing method"
-    variant="listbox"
-    :options="\App\Enums\TestingMethod::toSelectArray()"
-    placeholder="Select a testing method..."
-    wire:model="form.testing"
-    description="Describe how you discovered the issue."
-/>
-
-<x-forms.checkbox
-    label="Content entry issue"
-    wire:model="form.content_issue"
-/>
-
-<x-forms.image-upload
-    label="Image examples"
-    wire:model.live="form.images"
-    :existing-images="$this->form->image_links"
-/>
-
 <flux:radio.group
     label="User impact level"
     wire:model="form.impact"
@@ -105,3 +79,28 @@
     @endforeach
 </flux:radio.group>
 
+<x-forms.textarea label="Recommendations" wire:model="form.recommendation">
+    <x-slot name="description">
+        Describe what the expected behavior should be. In other words, describe how the element could have been implemented such that you wouldn't be flagging it for an accessibility failure.
+    </x-slot>
+</x-forms.textarea>
+
+<x-forms.select
+    label="Testing method"
+    variant="listbox"
+    :options="\App\Enums\TestingMethod::toSelectArray()"
+    placeholder="Select a testing method..."
+    wire:model="form.testing"
+    description="Describe how you discovered the issue."
+/>
+
+<x-forms.checkbox
+    label="Content entry issue"
+    wire:model="form.content_issue"
+/>
+
+<x-forms.image-upload
+    label="Image examples"
+    wire:model.live="form.images"
+    :existing-images="$this->form->image_links"
+/>

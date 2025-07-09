@@ -41,6 +41,31 @@
 </flux:radio.group>
 </div>
 
+<flux:radio.group
+    label="User impact level"
+    wire:model="form.impact"
+    variant="cards"
+    :indicator="false"
+    description="Select the level of impact on the user. See instructions for detailed descriptions."
+>
+    @foreach (\App\Enums\Impact::toSelectArray() as $option)
+        @switch(Str::of($option['value'])->lower())
+            @case('critical')
+                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-critical hover:bg-impact-critical/30"/>
+                @break
+            @case('serious')
+                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-serious hover:bg-impact-serious/30"/>
+                @break
+            @case('moderate')
+                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-moderate hover:bg-impact-moderate/30"/>
+                @break
+            @case('low')
+                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-low hover:bg-impact-low/30"/>
+                @break
+        @endswitch
+    @endforeach
+</flux:radio.group>
+
 <x-forms.textarea label="Observations" wire:model="form.description" size="sm" required>
     <x-slot name="description">
         Describe why there is an issue against this success criterion.
@@ -72,29 +97,3 @@
     wire:model.live="form.images"
     :existing-images="$this->form->image_links"
 />
-
-<flux:radio.group
-    label="User impact level"
-    wire:model="form.impact"
-    variant="cards"
-    :indicator="false"
-    description="Select the level of impact on the user. See instructions for detailed descriptions."
->
-    @foreach (\App\Enums\Impact::toSelectArray() as $option)
-        @switch(Str::of($option['value'])->lower())
-            @case('critical')
-                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-critical hover:bg-impact-critical/30"/>
-                @break
-            @case('serious')
-                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-serious hover:bg-impact-serious/30"/>
-                @break
-            @case('moderate')
-                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-moderate hover:bg-impact-moderate/30"/>
-                @break
-            @case('low')
-                <flux:radio :value="$option['value']" :label="$option['value']" class="data-checked:bg-impact-low hover:bg-impact-low/30"/>
-                @break
-        @endswitch
-    @endforeach
-</flux:radio.group>
-
