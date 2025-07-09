@@ -1,3 +1,13 @@
+@can('manage-teams', \App\Models\Team::class)
+    <x-forms.select
+        label="Team"
+        wire:model="form.team_id"
+        :options="$teams"
+        placeholder="Select a team"
+        required
+    />
+@endcan
+
 <x-forms.input label="Project Name" wire:model="form.name" required />
 <x-forms.input
     label="Site URL" wire:model="form.site_url"
