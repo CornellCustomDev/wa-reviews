@@ -44,19 +44,19 @@ trait PrismAction
 
     public function streamResponse(): void
     {
-        $this->stream('streamedResponse', 'Retrieving response...');
+        $this->stream('streamedResponse', 'AI request sent...');
         $start = microtime(true);
 
         try {
             $pendingRequest = $this->getAgent();
 
             $generator = $this->collectStream($pendingRequest);
-            $elapsed = 0;
+            $elapsed = 0.0;
             $finalResponse = null;
 
             // Process the generator
             foreach ($generator as $message => $streamedResponse) {
-                $elapsed = round(microtime(true) - $start, 1);
+                $elapsed = number_format(microtime(true) - $start, 1, '.', '');
                 $this->stream('streamedResponse', $message."... ({$elapsed}s)", true);
                 $finalResponse = $streamedResponse;
             }
@@ -88,6 +88,7 @@ trait PrismAction
         $data['messages'][] = $userMessage;
         $pendingResponse->addResponseMessage($userMessage);
 
+        $lastStreamMessage = 'Awaiting response';
         foreach ($stream as $chunk) {
             switch ($chunk->chunkType) {
                 case ChunkType::ToolCall:
@@ -98,7 +99,9 @@ trait PrismAction
                     $data['messages'][] = $toolCallsMessage;
                     $pendingResponse->addResponseMessage($toolCallsMessage);
 
-                    yield "Called '". $toolCallsMessage->toolCalls[0]->name ."'" => null;
+                    $toolCalled = $toolCallsMessage->toolCalls[0]->name;
+                    $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
+                    yield $lastStreamMessage => null;
                     break;
                 case ChunkType::ToolResult:
                     $data['toolResults'][] = $chunk->toolResults[0];
@@ -124,7 +127,8 @@ trait PrismAction
                         $message = new AssistantMessage($data['text']);
                         $data['messages'][] = $message;
                         $pendingResponse->addResponseMessage($message);
-                        yield "Retrieving response" => $pendingResponse->toResponse();
+                        $lastStreamMessage = 'Retrieving response';
+                        yield $lastStreamMessage => $pendingResponse->toResponse();
 
                         // Add the step and reset the accumulator
                         $this->addStreamedStep($data, $pendingResponse);
@@ -133,6 +137,7 @@ trait PrismAction
                     break;
                 default:
                     $data['text'] .= $chunk->text;
+                    yield $lastStreamMessage => null;
             }
 
             if ($chunk->finishReason) {
