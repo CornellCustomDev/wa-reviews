@@ -59,6 +59,13 @@ class ScopeForm extends Form
 
     protected function fetchPageContent(string $url): void
     {
+        // If the URL is empty, remove any pages associated with the scope
+        if (empty($url)) {
+            $this->scope->pages()->delete();
+            $this->scope->setCurrentPage();
+            return;
+        }
+
         // If we already have page content, skip fetching
         if ($this->scope->pages()->count() > 0) {
             $this->scope->setCurrentPage($this->scope->latestPage);
@@ -66,10 +73,10 @@ class ScopeForm extends Form
         }
 
         $parser = new AccessibilityAnalyzerService();
-        $pageContent = $parser->getPageContent($url, true);
+        $pageContent = $parser->getPageContent($url, true) ?? null;
         $this->scope->setPageContent($url, $pageContent);
 
-        if ($pageContent === null) {
+        if (empty($pageContent)) {
             // TODO: Notify user that the page content could not be fetched
         }
     }

@@ -48,7 +48,6 @@ class ScopeTest extends FeatureTestCase
 
         Livewire::test(CreateScope::class, ['project' => $project])
             ->set('form.title', 'Test Scope')
-            ->set('form.url', 'https://testscope.com')
             ->set('form.notes', 'This is a test scope')
             ->call('save')
             ->assertRedirect(route('scope.show', Scope::latest()->first()));
@@ -64,7 +63,6 @@ class ScopeTest extends FeatureTestCase
 
         Livewire::test(AddScope::class, ['project' => $project])
             ->set('form.title', 'Test Scope')
-            ->set('form.url', 'https://testscope.com')
             ->set('form.notes', 'This is a test scope')
             ->call('save')
             ->assertDispatched('refresh-scopes');
@@ -78,7 +76,6 @@ class ScopeTest extends FeatureTestCase
         $scope = Scope::factory()->create([
             'project_id' => $project->id,
             'title' => 'Test Scope',
-            'url' => 'https://testscope.com'
         ]);
 
         Livewire::test(ShowScope::class, ['scope' => $scope])
@@ -95,12 +92,10 @@ class ScopeTest extends FeatureTestCase
         $scope = Scope::factory()->create([
             'project_id' => $project->id,
             'title' => 'Test Scope',
-            'url' => 'https://testscope.com'
         ]);
 
         Livewire::test(UpdateScope::class, ['scope' => $scope])
             ->set('form.title', 'Updated Scope')
-            ->set('form.url', 'https://updatedscope.com')
             ->set('form.notes', 'This is an updated scope')
             ->call('save')
             ->assertRedirect(route('scope.show', $scope));
@@ -108,7 +103,6 @@ class ScopeTest extends FeatureTestCase
         $this->assertDatabaseHas('scopes', [
             'id' => $scope->id,
             'title' => 'Updated Scope',
-            'url' => 'https://updatedscope.com',
             'notes' => 'This is an updated scope',
         ]);
     }
@@ -121,12 +115,10 @@ class ScopeTest extends FeatureTestCase
         $scope = Scope::factory()->create([
             'project_id' => $project->id,
             'title' => 'Test Scope',
-            'url' => 'https://testscope.com'
         ]);
 
         Livewire::test(UpdateScope::class, ['scope' => $scope])
             ->set('form.title', 'Updated Scope')
-            ->set('form.url', 'https://updatedscope.com')
             ->set('form.notes', 'This is an updated scope')
             ->call('save')
             ->assertForbidden();
