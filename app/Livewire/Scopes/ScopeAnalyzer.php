@@ -21,7 +21,7 @@ class ScopeAnalyzer extends Component
         // Authorize because we add issues
         $this->authorize('update', $this->scope);
 
-        $context = "# Context: Web page scope\n"
+        $context = "# Context: Web page scope needing review for accessibility issues\n"
             . GuidelinesAnalyzerService::getScopeContext($this->scope);
 
         $this->userMessage = $context;
