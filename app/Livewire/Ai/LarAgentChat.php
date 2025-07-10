@@ -3,6 +3,7 @@
 namespace App\Livewire\Ai;
 
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use LarAgent\Agent;
 use LarAgent\Core\Contracts\Message;
@@ -115,6 +116,17 @@ trait LarAgentChat
         } catch (Throwable $e) {
             $this->feedback = "**Error:** {$e->getMessage()}";
             $this->showFeedback = true;
+
+            Log::error('LarAgentChat streamResponse error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'streamedResponse' => $this->chatMessages,
+            ]);
+            Log::channel('slack')->error('LarAgentChat streamResponse error', [
+                'message' => $e->getMessage(),
+                //'trace' => $e->getTraceAsString(),
+                'last message' => $agent->chatHistory()->getLastMessage() ?? '',
+            ]);
         }
 
         $this->streaming = false;
