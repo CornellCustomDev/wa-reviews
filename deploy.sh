@@ -64,7 +64,7 @@ while getopts ":gom:cvqh-:" OPT; do
       echo "  -o, --optimize            Run 'php artisan optimize:clear && php artisan optimize'"
       echo "  -v, --views               Run 'php artisan view:clear'"
       echo "  -q, --queue               Run 'php artisan queue:restart'"
-      echo "      --all                 Run git, optimize, migrate, and queue"
+      echo "      --all                 Run git, optimize"
       echo "  -h, --help                Display this help screen"
       exit 0 ;;
     ??* )
