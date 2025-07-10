@@ -1,6 +1,6 @@
 <?php
 
-namespace Feature\Livewire;
+namespace Tests\Feature\Livewire;
 
 use App\Enums\ProjectStatus;
 use App\Livewire\Projects\CreateProject;

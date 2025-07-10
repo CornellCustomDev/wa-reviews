@@ -149,6 +149,7 @@ class Issue extends Model
             'impact'         => $item->impact,
             'testing'        => $item->testing,
             'ai_reasoning'   => $item->ai_reasoning,
+            'ai_status'      => AIStatus::Accepted,
             'recommendation' => $item->recommendation,
         ]);
 

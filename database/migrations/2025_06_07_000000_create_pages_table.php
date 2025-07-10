@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('scope_id')->constrained()->cascadeOnDelete();
             $table->string('url')->nullable();
-            $table->longText('page_content')->nullable();
+            $table->string('page_content')->nullable();
             $table->timestamp('retrieved_at')->nullable();
             $table->string('siteimprove_page_id')->nullable();
             $table->string('siteimprove_report_url')->nullable();

@@ -13,7 +13,7 @@
                 </x-forms.field-display>
 
                 <div class="mb-4">
-                    @can('update', $scope)
+                    @can('update', $issue->scope)
                         <div class="float-right">
                             <x-forms.button
                                     title="Accept AI recommendation for guideline {{ $item->guideline->number }}"
