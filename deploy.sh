@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# We need to force the PHP version, otherwise it uses the system default PHP version
+PHP="/usr/local/bin/ea-php83"
+
 usage="Usage: deploy -gomfcvq | --all [--prune] [-h|--help]";
 
 if [ -z $1 ]; then
@@ -100,22 +103,22 @@ if [ $git ]; then
 fi
 if [ $migrate ]; then
   echo "Running artisan migrate..."
-  php artisan migrate $migrate_opts || exit 1
+  $PHP artisan migrate $migrate_opts || exit 1
 fi
 if [ $config ]; then
   echo "Running artisan config:cache..."
-  php artisan config:cache || exit 1
+  $PHP artisan config:cache || exit 1
 fi
 if [ $views ]; then
   echo "Running artisan view:clear..."
-  php artisan view:clear || exit 1
+  $PHP artisan view:clear || exit 1
 fi
 if [ $optimize ]; then
   echo "Running artisan optimize..."
-  php artisan optimize:clear || exit 1
-  php artisan optimize || exit 1
+  $PHP artisan optimize:clear || exit 1
+  $PHP artisan optimize || exit 1
 fi
 if [ $queue ]; then
   echo "Running artisan queue:restart..."
-  php artisan queue:restart || exit 1
+  $PHP artisan queue:restart || exit 1
 fi
