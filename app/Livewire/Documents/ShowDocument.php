@@ -11,7 +11,6 @@ class ShowDocument extends Component
     public string $slug;
     public Document $document;
     public DocumentForm $form;
-    public bool $showEdit = false;
     public bool $showTitle = false;
 
     public function mount(string $slug)
@@ -32,6 +31,6 @@ class ShowDocument extends Component
             $this->document = $this->form->update();
         }
 
-        $this->showEdit = false;
+        $this->dispatch('close-edit');
     }
 }
