@@ -3,18 +3,19 @@
 namespace App\Policies;
 
 use App\Enums\Permissions;
+use App\Models\Guideline;
 use App\Models\User;
 
-class UserPolicy
+class GuidelinePolicy
 {
     public function viewAny(User $user): bool
     {
         return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
-    public function view(User $user, User $model): bool
+    public function view(User $user, Guideline $guideline): bool
     {
-        return $user->isAbleTo(Permissions::ManageSiteConfig);
+        return true;
     }
 
     public function create(User $user): bool
@@ -22,22 +23,22 @@ class UserPolicy
         return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
-    public function update(User $user, User $model): bool
+    public function update(User $user, Guideline $guideline): bool
     {
         return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
-    public function delete(User $user, User $model): bool
+    public function delete(User $user, Guideline $guideline): bool
     {
         return $user->isAbleTo(Permissions::ManageSiteConfig);
     }
 
-    public function restore(User $user, User $model): bool
+    public function restore(User $user, Guideline $guideline): bool
     {
         return false;
     }
 
-    public function forceDelete(User $user, User $model): bool
+    public function forceDelete(User $user, Guideline $guideline): bool
     {
         return false;
     }

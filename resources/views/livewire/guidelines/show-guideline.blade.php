@@ -13,54 +13,56 @@
         </h1>
     </div>
 
-    <h2>
-        {{ $guideline->name }}
-    </h2>
+    <x-forms.edit-model-wrapper :model="$guideline">
+        <x-slot:view>
+            <h2>
+                {{ $guideline->name }}
+            </h2>
 
-    <table class="table bordered">
-        <tr>
-            <th style="width: 200px">WCAG 2 criterion</th>
-            <td><a href="{{ route('criteria.show', [$guideline->criterion]) }}">{{ $guideline->criterion->getLongName() }}</a></td>
-        </tr>
-        <tr>
-            <th>Category</th>
-            <td>
-                <a href="{{ route('categories.show', $guideline->category) }}">
-                    {{ $guideline->category->name }}
-                </a>
-            </td>
-        </tr>
-        <tr class="hidden">
-            <th>ACT Rules</th>
-            <td>
-                @if($guideline->actRules->isNotEmpty())
-                    <ul>
-                        @foreach($guideline->actRules as $rule)
-                            <li><a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a></li>
-                        @endforeach
-                    </ul>
-                @endif
-            </td>
-        </tr>
-    </table>
+            <table class="table bordered">
+                <tr>
+                    <th style="width: 200px">WCAG 2 criterion</th>
+                    <td><a href="{{ route('criteria.show', [$guideline->criterion]) }}">{{ $guideline->criterion->getLongName() }}</a></td>
+                </tr>
+                <tr>
+                    <th>Category</th>
+                    <td>
+                        <a href="{{ route('categories.show', $guideline->category) }}">
+                            {{ $guideline->category->name }}
+                        </a>
+                    </td>
+                </tr>
+                <tr class="hidden">
+                    <th>ACT Rules</th>
+                    <td>
+                        @if($guideline->actRules->isNotEmpty())
+                            <ul>
+                                @foreach($guideline->actRules as $rule)
+                                    <li><a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a></li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </td>
+                </tr>
+            </table>
 
-    {!! Str::markdown($guideline->notes) !!}
+            {!! Str::markdown($guideline->notes) !!}
+        </x-slot:view>
 
-    <div class="hidden">
-        <h2>AI Prompt</h2>
-        <aside class="panel">
-            <button style="float:right" onclick="navigator.clipboard.writeText(document.getElementById('ai-prompt').innerText).then(() => {alert('Prompt copied to clipboard!')})">Copy to Clipboard</button>
-<pre id="ai-prompt">Create a PHP class in the namespace "App\Services\AccessibilityAnalyzer\GuidelineRules"
-that extends "App\Services\AccessibilityAnalyzer\GuidelineRuleRunner" and is called "Guideline{{ $guideline->id }}" that has a function with the signature "protected function findApplicableElements(Crawler $crawler): Crawler". The base class includes the function "protected function isElementIncludedInAccessibilityTree(\DOMNode $element): bool" for determining if an element is included in the accessibility tree.
+        <x-slot:edit>
+            <form wire:submit="save">
+                <x-forms.input label="Name" wire:model="form.name" />
 
-Web accessibility guideline:
+                <x-forms.select label="WCAG 2 criterion" wire:model="form.criterion_id" :options="$this->criterionOptions" />
 
-## {{ $guideline->name }}
+                <x-forms.select label="Category" wire:model="form.category_id" :options="$this->categoryOptions" />
 
-{!! e($guideline->notes) !!}
-</pre>
-        </aside>
-    </div>
+                <x-forms.textarea label="Notes" wire:model="form.notes" size="lg"/>
+
+                <x-forms.button.submit-group submitName="Update Guideline" />
+            </form>
+        </x-slot:edit>
+    </x-forms.edit-model-wrapper>
 
 </div>
 
