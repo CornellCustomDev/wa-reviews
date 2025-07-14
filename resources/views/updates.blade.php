@@ -11,8 +11,4 @@
     </flux:callout>
 
     <livewire:documents.show-document slug="updates" />
-
-    <x-slot:sidebarPrimary>
-        <livewire:documents.show-versions slug="updates" />
-    </x-slot>
 </x-cd.layout.app>
