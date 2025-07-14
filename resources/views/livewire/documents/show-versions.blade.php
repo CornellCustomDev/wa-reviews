@@ -11,7 +11,7 @@
                         wire:click="makeCurrentVersion({{ $version->id }})"
                         icon="star"
                         size="xs"
-                        title="Make this version current"
+                        title="Make version {{ $version->version }} current version"
                         class="inline-flex items-center"
                     />
                 @endif

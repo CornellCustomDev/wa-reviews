@@ -10,6 +10,7 @@ use Livewire\Component;
 
 class ShowVersions extends Component
 {
+    public string $slug;
     public Document $document;
 
     public function mount(string $slug)
@@ -20,22 +21,25 @@ class ShowVersions extends Component
     #[Computed]
     public function versions(): Collection
     {
-        return $this->document->versions()
-            ->select(['id', 'is_current', 'created_at'])
+        return Document::versions($this->slug)
+            ->select(['id', 'version', 'is_current', 'created_at'])
             ->get();
     }
 
     #[On('document-updated')]
     public function refreshVersions(): void
     {
-        $this->document = Document::get($this->document->slug);
+        unset($this->versions);
+        $this->document = Document::get($this->slug);
     }
 
     public function makeCurrentVersion(int $id): void
     {
         $this->authorize('update', $this->document);
 
-        $this->document->setCurrentVersion($id);
+        $this->document = $this->document->setCurrentVersion($id);
+        unset($this->versions);
+
         $this->dispatch('version-updated', ['id' => $id]);
     }
 }

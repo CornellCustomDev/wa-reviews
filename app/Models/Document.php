@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
@@ -18,22 +19,19 @@ class Document extends Model
         'is_current' => 'boolean',
     ];
 
-    public function versions()
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function versions(Builder $query, string $slug): void
     {
-        return static::where('slug', $this->slug)
+        $query->where('slug', $slug)
             ->orderBy('version', 'desc');
     }
 
-    public function scopeCurrentVersion($query)
+    public function setCurrentVersion(int $id): Document
     {
-        return $query->where('is_current', true);
-    }
+        Document::where('slug', $this->slug)->update(['is_current' => false]);
+        Document::where('id', $id)->update(['is_current' => true]);
 
-    public function setCurrentVersion(int $id)
-    {
-        $this->versions()->update(['is_current' => false]);
-
-        return $this->versions()->where('id', $id)->update(['is_current' => true]);
+        return Document::find($id);
     }
 
     public function createNewVersion(array $attributes): self
@@ -41,7 +39,7 @@ class Document extends Model
         // mark this one as historical
         $this->update(['is_current' => false]);
 
-        $nextVersion = ($this->versions()->max('version') ?? 0) + 1;
+        $nextVersionNumber = (Document::where('slug', $this->slug)->max('version') ?? 0) + 1;
 
         // spin up the new row, bumping version
         return self::create([
@@ -49,14 +47,20 @@ class Document extends Model
             'title'     => $attributes['title'],
             'content'   => $attributes['content'],
             'is_current' => true,
-            'version'   => $nextVersion,
+            'version'   => $nextVersionNumber,
         ]);
     }
 
     public static function get(string $slug): static
     {
-        return static::where('slug', $slug)->currentVersion()->firstOr(
-            fn () => new static(['slug' => $slug, 'title' => 'New Document', 'content' => ''])
-        );
+        return Document::where('slug', $slug)
+            ->where('is_current', true)
+            ->firstOr(
+                fn () => new static([
+                    'slug' => $slug,
+                    'title' => 'New Document',
+                    'content' => '',
+                ])
+            );
     }
 }
