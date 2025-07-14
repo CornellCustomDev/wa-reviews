@@ -4,6 +4,7 @@ namespace App\Livewire\Documents;
 
 use App\Livewire\Forms\DocumentForm;
 use App\Models\Document;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowDocument extends Component
@@ -13,10 +14,16 @@ class ShowDocument extends Component
     public DocumentForm $form;
     public bool $showTitle = false;
 
-    public function mount(string $slug)
+    public function mount()
     {
-        $this->document = Document::get($slug);
+        $this->getDocument();
+    }
 
+    #[On('version-updated')]
+    public function getDocument(): void
+    {
+        $this->dispatch('close-edit');
+        $this->document = Document::get($this->slug);
         $this->form->setModel($this->document);
     }
 
@@ -31,6 +38,7 @@ class ShowDocument extends Component
             $this->document = $this->form->update();
         }
 
+        $this->dispatch('document-updated', ['id' => $this->document->id]);
         $this->dispatch('close-edit');
     }
 }

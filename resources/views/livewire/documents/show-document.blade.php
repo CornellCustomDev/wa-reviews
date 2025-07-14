@@ -1,11 +1,11 @@
 <div>
     <x-forms.edit-model-wrapper :model="$document">
         <x-slot:view>
-            @if($form->title)
-                <h1>{{ $form->title }}</h1>
+            @if($document->title)
+                <h1>{{ $document->title }}</h1>
             @endif
             <div>
-                {!! $form->content !!}
+                {!! $document->content !!}
             </div>
         </x-slot:view>
         <x-slot:edit>

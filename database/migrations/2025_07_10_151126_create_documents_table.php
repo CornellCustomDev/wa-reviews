@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedInteger('version')->default(1);
             $table->string('title')->nullable();
             $table->text('content')->nullable();
-            $table->boolean('is_latest')->default(true);
+            $table->boolean('is_current')->default(true);
             $table->timestamps();
             $table->softDeletes();
 
