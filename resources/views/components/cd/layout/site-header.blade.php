@@ -6,13 +6,13 @@
                 @can('view-any', \App\Models\Project::class)
                     <li><a href="{{ route('projects') }}">Projects</a></li>
                 @endcan
+                @can('view-any', \App\Models\Team::class)
+                    <li><a href="{{ route('teams.manage') }}">Teams</a></li>
+                @endcan
                 <li><a href="{{ route('guidelines.index') }}">Guidelines</a></li>
                 <li><a href="{{ route('categories.index') }}">Categories</a></li>
                 <li><a href="{{ route('criteria.index') }}">Criteria</a></li>
                 <li><a href="{{ route('chat') }}">AI Chat</a></li>
-                @can('view-any', \App\Models\Team::class)
-                    <li><a href="{{ route('teams.manage') }}">Teams</a></li>
-                @endcan
             </ul>
         </div>
     </nav>
