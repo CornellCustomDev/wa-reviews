@@ -9,4 +9,6 @@
             <a href="https://github.com/CornellCustomDev/wa-reviews">GitHub repository</a>.
         </flux:callout.text>
     </flux:callout>
+
+    <livewire:documents.show-document slug="updates" />
 </x-cd.layout.app>
