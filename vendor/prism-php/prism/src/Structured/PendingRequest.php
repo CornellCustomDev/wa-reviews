@@ -55,7 +55,7 @@ class PendingRequest
         $messages = $this->messages;
 
         if ($this->prompt) {
-            $messages[] = new UserMessage($this->prompt);
+            $messages[] = new UserMessage($this->prompt, $this->additionalContent);
         }
 
         if (! $this->schema instanceof \Prism\Prism\Contracts\Schema) {
@@ -64,6 +64,7 @@ class PendingRequest
 
         return new Request(
             model: $this->model,
+            providerKey: $this->providerKey(),
             systemPrompts: $this->systemPrompts,
             prompt: $this->prompt,
             messages: $messages,

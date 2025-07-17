@@ -5402,17 +5402,17 @@
         },
         {
             "name": "prism-php/prism",
-            "version": "v0.78.0",
-            "version_normalized": "0.78.0.0",
+            "version": "v0.80.0",
+            "version_normalized": "0.80.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/prism-php/prism.git",
-                "reference": "a16dc7b7c34152d19db1453d31f9c67f15576446"
+                "reference": "b9ce9a67d4f8c409790963f189c2ebabd766279e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/prism-php/prism/zipball/a16dc7b7c34152d19db1453d31f9c67f15576446",
-                "reference": "a16dc7b7c34152d19db1453d31f9c67f15576446",
+                "url": "https://api.github.com/repos/prism-php/prism/zipball/b9ce9a67d4f8c409790963f189c2ebabd766279e",
+                "reference": "b9ce9a67d4f8c409790963f189c2ebabd766279e",
                 "shasum": ""
             },
             "require": {
@@ -5436,7 +5436,7 @@
                 "spatie/laravel-ray": "^1.39",
                 "symplify/rule-doc-generator-contracts": "^11.2"
             },
-            "time": "2025-06-24T12:28:49+00:00",
+            "time": "2025-07-13T19:23:20+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -5470,7 +5470,7 @@
             "description": "A powerful Laravel package for integrating Large Language Models (LLMs) into your applications.",
             "support": {
                 "issues": "https://github.com/prism-php/prism/issues",
-                "source": "https://github.com/prism-php/prism/tree/v0.78.0"
+                "source": "https://github.com/prism-php/prism/tree/v0.80.0"
             },
             "funding": [
                 {

@@ -10,6 +10,8 @@
 
 ## Search grounding
 
+Google Gemini offers built-in search grounding capabilities that allow your AI to search the web for real-time information. This is a provider tool that uses Google's search infrastructure. For more information about the difference between custom tools and provider tools, see [Tools & Function Calling](/core-concepts/tools-function-calling#provider-tools).
+
 You may enable Google search grounding on text requests using withProviderTools:
 
 ```php
@@ -88,7 +90,7 @@ To store content in the cache, use the Gemini provider cache method as follows:
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Prism;
 use Prism\Prism\Providers\Gemini\Gemini;
-use Prism\Prism\ValueObjects\Messages\Support\Document;
+use Prism\Prism\ValueObjects\Media\Document;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 
@@ -186,3 +188,73 @@ $response = Prism::text()
 ```
 > [!NOTE]
 > Do not specify a `thinkingBudget` on 2.0 or prior series Gemini models as your request will fail.
+
+## Media Support
+
+Gemini has robust support for processing multimedia content:
+
+### Video Analysis
+
+Gemini can process and analyze video content including standard video files and YouTube videos. Prism implements this through the `Video` value object which maps to Gemini's video processing capabilities.
+
+```php
+use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\Media\Video;
+use Prism\Prism\Enums\Provider;
+
+$response = Prism::text()
+    ->using(Provider::Gemini, 'gemini-1.5-flash')
+    ->withMessages([
+        new UserMessage(
+            'What is happening in this video?',
+            additionalContent: [
+                Video::fromUrl('https://example.com/sample-video.mp4'),
+            ],
+        ),
+    ])
+    ->asText();
+```
+
+### YouTube Integration
+
+Gemini has special support for YouTube videos. You can easily `analyze/summarize` YouTube content by providing the URL:
+
+```php
+use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\Media\Video;
+use Prism\Prism\Enums\Provider;
+
+$response = Prism::text()
+    ->using(Provider::Gemini, 'gemini-1.5-flash')
+    ->withMessages([
+        new UserMessage(
+            'Summarize this YouTube video:',
+            additionalContent: [
+                Video::fromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+            ],
+        ),
+    ])
+    ->asText();
+```
+### Audio Processing
+
+Gemini can analyze audio files for various tasks like transcription, content analysis, and audio scene understanding. The implementation in Prism uses the `Audio` value object which is specifically designed for Gemini's audio processing capabilities.
+
+```php
+use Prism\Prism\ValueObjects\Messages\UserMessage;
+use Prism\Prism\ValueObjects\Media\Audio;
+use Prism\Prism\Enums\Provider;
+
+$response = Prism::text()
+    ->using(Provider::Gemini, 'gemini-1.5-flash')
+    ->withMessages([
+        new UserMessage(
+            'Transcribe this audio file:',
+            additionalContent: [
+                Audio::fromLocalPath('/path/to/audio.mp3'),
+            ],
+        ),
+    ])
+    ->asText();
+```
+
