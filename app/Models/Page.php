@@ -57,7 +57,7 @@ class Page extends Model
             'scope_id' => $scope->id,
             'url' => $url,
         ]);
-        $page->storePageContent($content);
+        $page->storePageContent($content ?? '');
 
         return $page->refresh();
     }
