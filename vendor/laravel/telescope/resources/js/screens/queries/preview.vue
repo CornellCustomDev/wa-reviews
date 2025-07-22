@@ -1,22 +1,22 @@
 <script type="text/ecmascript-6">
-    import hljs from 'highlight.js/lib/core';
-    import sql from 'highlight.js/lib/languages/sql';
-    import { format } from 'sql-formatter';
+import hljs from 'highlight.js/lib/core';
+import sql from 'highlight.js/lib/languages/sql';
+import { format } from 'sql-formatter';
 
-    hljs.registerLanguage('sql', sql);
+hljs.registerLanguage('sql', sql);
 
-    export default {
-        methods: {
-            highlightSQL() {
-                this.$nextTick(() => {
-                    hljs.highlightElement(this.$refs.sqlcode);
-                });
-            },
-            formatSql(sql) {
-                return format(sql);
-            }
+export default {
+    methods: {
+        highlightSQL() {
+            this.$nextTick(() => {
+                hljs.highlightElement(this.$refs.sqlcode);
+            });
+        },
+        formatSql(sql) {
+            return format(sql);
         }
     }
+}
 </script>
 
 <template>
@@ -25,27 +25,23 @@
             <tr>
                 <td class="table-fit text-muted">Connection</td>
                 <td>
-                    {{slotProps.entry.content.connection}}
+                    {{ slotProps.entry.content.connection }}
                 </td>
             </tr>
 
-            <tr  v-if="slotProps.entry.content.file">
+            <tr v-if="slotProps.entry.content.file">
                 <td class="table-fit text-muted">Location</td>
-                <td>
-                    {{slotProps.entry.content.file}}:{{slotProps.entry.content.line}}
-                </td>
+                <td>{{ slotProps.entry.content.file }}:{{ slotProps.entry.content.line }}</td>
             </tr>
 
             <tr>
                 <td class="table-fit text-muted">Duration</td>
                 <td>
                     <span class="badge badge-danger" v-if="slotProps.entry.content.slow">
-                        {{slotProps.entry.content.time}}ms
+                        {{ slotProps.entry.content.time }}ms
                     </span>
 
-                    <span v-else>
-                        {{slotProps.entry.content.time}}ms
-                    </span>
+                    <span v-else> {{ slotProps.entry.content.time }}ms </span>
                 </td>
             </tr>
         </template>
@@ -59,7 +55,7 @@
                 </ul>
                 <div class="code-bg p-4 mb-0 text-white">
                     <copy-clipboard :data="formatSql(slotProps.entry.content.sql)">
-                      <pre class="code-bg text-white" ref="sqlcode">{{ formatSql(slotProps.entry.content.sql) }}</pre>
+                        <pre class="code-bg text-white" ref="sqlcode">{{ formatSql(slotProps.entry.content.sql) }}</pre>
                     </copy-clipboard>
                 </div>
             </div>
