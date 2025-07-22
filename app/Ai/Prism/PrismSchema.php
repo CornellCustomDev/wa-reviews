@@ -85,6 +85,11 @@ trait PrismSchema
      */
     private function getStructuredResponse(string $data): mixed
     {
+        // If $data is already a valid JSON string, presume it is structured already
+        if ($response = json_decode($data)) {
+            return $response;
+        }
+
         $structuredResponse = StructuredOutputAgent::for(
             schema: $this->getSchema(),
             data: $data
