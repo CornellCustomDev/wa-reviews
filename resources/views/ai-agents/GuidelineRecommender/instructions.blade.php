@@ -42,6 +42,10 @@ assessment. Present them in order of most relevant to least relevant.
 
 1. When one or more guidelines are applicable to an accessibility issue, return a `guidelines` array containing an object
 for each warning or failure with these fields:
+   - target: The element that is the subject of the issue
+      - This should be a short description of the element, such as "The fieldset containing the checkboxes for 'I am a student' and 'I am a teacher'".
+      - If the issue is not related to a specific element, use a general description like "The page content".
+      - It can be a CSS selector, but it should be a short description that is understandable to a human.
    - reasoning: Briefly explain:
       1. How the guideline applies to the issue
       2. Why it is assessed as a warning or failure
@@ -61,7 +65,7 @@ for each warning or failure with these fields:
       - Moderate: A barrier that will make it somewhat more difficult for users with affected disabilities to complete central or secondary tasks or access content.
       - Low: A barrier that has the potential to force users with affected disabilities to use mildly inconvenient workarounds, but that does not cause much, if any, difficulty completing tasks or accessing content.(
 
-2. If the issue is not a direct warning or failure of a guideline, return a `feedback` string with a brief
+2. If the page scope has no direct warning or failure of a guideline, return a `feedback` string with a brief
 explanation (and, if helpful, alternative resources). Do not include a `guidelines` in this case.
 
 3. If you require more information to give accurate guidance, return a `feedback` string asking for the
@@ -73,7 +77,8 @@ needed clarification. Do not include a `guidelines` in this case.
 {
   "guidelines": [
     {
-      "reasoning": "Guideline 19 is about semantic grouping of related form inputs, such as checkboxes or radio buttons. Guideline 19 emphasizes the importance of using a <fieldset> element along with a <legend> to provide a clear description of the group. This is marked as a failure because the criteria requires labeling of grouped form elements, which is not present. This is rated a Low impact barrier because while it may require additional effort to understand the grouping, it does not prevent users from completing tasks.",
+      "target": "The fieldset containing the checkboxes for 'I am a student' and 'I am a teacher'",
+      "reasoning": "Guideline 19 is about semantic grouping of related form inputs, such as checkboxes or radio buttons. Guideline 19 emphasizes the importance of using a <fieldset> element along with a <legend> to provide a clear description of the group. This is marked as a failure because the WCAG 1.3.1 requires labeling of grouped form elements, which is not present. This is rated a Low impact barrier because while it may require additional effort to understand the grouping, it does not prevent users from completing tasks.",
       "number": "19",
       "heading": "Form input groupings (i.e., related radio buttons, related checkboxes, related text inputs like First/Last name) are grouped semantically.",
       "criteria": "1.3.1 Info and Relationships (Level A)",
@@ -84,7 +89,8 @@ needed clarification. Do not include a `guidelines` in this case.
       "impact": "Low"
     },
     {
-      "reasoning": "Guideline 61 is about labeling form inputs, including checkboxes. It emphasizes the importance of providing clear labels for form elements to ensure that users understand their purpose. This is marked as a failure because the criteria requires labels for form elements and they are not present. This is rated a Serious impact barrier because the user may not understand the purpose of the checkbox, making task completion significantly more difficult.",
+      "target": "The checkboxes for 'I am a student' and 'I am a teacher'",
+      "reasoning": "Guideline 61 is about labeling form inputs, including checkboxes. It emphasizes the importance of providing clear labels for form elements to ensure that users understand their purpose. This is marked as a failure because WCAG 2.4.6 requires labels for form elements and they are not present. This is rated a Serious impact barrier because the user may not understand the purpose of the checkbox, making task completion significantly more difficult.",
       "number": "61",
       "heading": "Labels describe the purpose of the inputs they are associated with.",
       "criteria": "2.4.6 Headings and Labels (Level AA)",

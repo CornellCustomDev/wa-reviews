@@ -62,23 +62,7 @@ class GuidelineRecommenderAgent extends Agent
     {
         return [
             'name' => 'guideline_recommender_response',
-            'schema' => [
-                'description' => 'Return a "guidelines" array (if applicable warnings or failures are found) and a "feedback" string',
-                'type' => 'object',
-                'properties' => [
-                    'guidelines' => [
-                        'type' => ['array', 'null'],
-                        'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
-                        'items' => GuidelinesAnalyzerService::getItemsSchema(),
-                    ],
-                    'feedback' => [
-                        'type' => ['string'],
-                        'description' => 'A brief explanation or summary, or a clarification request if more information is needed.',
-                    ],
-                ],
-                'additionalProperties' => false,
-                'required' => ['guidelines', 'feedback'],
-            ],
+            'schema' => GuidelinesAnalyzerService::getRecommendedGuidelinesSchema(),
             'strict' => true,
         ];
     }

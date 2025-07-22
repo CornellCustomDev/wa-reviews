@@ -4,6 +4,7 @@ namespace App\Livewire\Issues;
 
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\PrismAction;
+use App\Ai\Prism\PrismSchema;
 use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Events\IssueChanged;
 use App\Models\Issue;
@@ -13,11 +14,14 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Text\Response;
+use UnexpectedValueException;
 
 class IssueAnalyzer extends Component
 {
     use PrismAction;
+    use PrismSchema;
 
     public Issue $issue;
     public ?Collection $recommendations = null;
@@ -70,9 +74,21 @@ class IssueAnalyzer extends Component
             ->withPrompt($this->userMessage);
     }
 
+    public function getSchema(): Schema
+    {
+        return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
+    }
+
     protected function afterAgentResponse(Response $prismResponse): void
     {
-        $response = json_decode($prismResponse->text);
+        try {
+            $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
+            $response = $this->getStructuredResponse($prismResponse->text);
+        } catch (UnexpectedValueException $e) {
+            $this->feedback = "Error processing response: " . $e->getMessage();
+            $this->showFeedback = true;
+            return;
+        }
 
         if ($response?->feedback) {
             $this->feedback = $response->feedback;
