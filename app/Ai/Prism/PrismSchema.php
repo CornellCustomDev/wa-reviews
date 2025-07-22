@@ -98,12 +98,12 @@ trait PrismSchema
         try {
             return json_decode($structuredResponse->text, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            Log::channel('slack')->error('ScopeAnalyzer: JSON decode error', [
+            Log::channel('slack')->error('getStructuredResponse: JSON decode error', [
                 'error' => $e->getMessage(),
                 'response' => $structuredResponse->text,
                 'trace' => $e->getTraceAsString(),
             ]);
-            Log::error('ScopeAnalyzer: JSON decode error', [
+            Log::error('getStructuredResponse: JSON decode error', [
                 'error' => $e->getMessage(),
                 'response' => $structuredResponse->text,
             ]);
