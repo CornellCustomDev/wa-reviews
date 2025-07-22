@@ -23,7 +23,7 @@
     </div>
 
     @if($scope && $this->hasUnreviewedItems)
-        @include('livewire.issues.items-recommended', ['items' => $this->unreviewedItems(), 'scope' => $scope] )
+        @include('livewire.issues.items-recommended', ['items' => $this->unreviewedItems(), 'model' => $scope] )
         <livewire:issues.confirm-recommendation />
     @endif
 </div>
