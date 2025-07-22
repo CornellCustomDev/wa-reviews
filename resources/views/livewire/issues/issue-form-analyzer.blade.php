@@ -3,7 +3,7 @@
         <x-forms.button wire:click="$dispatch('analyze-issue')" icon="sparkles">
             Analyze Issue
         </x-forms.button>
-        <span wire:loading.delay wire:target="analyzeIssue"> Analyzing...</span>
+        <span wire:loading.delay wire:target="analyze-issue"> Analyzing...</span>
     </div>
 
     <div wire:stream="streamedResponse" wire:show="streaming" role="status" aria-live="polite"
@@ -22,8 +22,8 @@
         </flux:card>
     </div>
 
-    @if($this->hasUnreviewedItems)
-        @include('livewire.issues.items-recommended', $items = $this->unreviewedItems())
+    @if($scope && $this->hasUnreviewedItems)
+        @include('livewire.issues.items-recommended', ['items' => $this->unreviewedItems(), 'scope' => $scope] )
         <livewire:issues.confirm-recommendation />
     @endif
 </div>

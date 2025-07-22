@@ -2,7 +2,7 @@
     'issue',
 ])
 <div class="inline-flex flex-nowrap items-center gap-x-0.5">
-    @if($issue->assessment)
+    @if($issue->assessment && $issue->guideline)
         <flux:tooltip position="bottom" class="align-middle">
             <x-forms.button
                 data-cds-button-assessment

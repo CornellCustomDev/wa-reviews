@@ -22,8 +22,8 @@
         </flux:card>
     </div>
 
-    @if($this->hasUnreviewedItems)
-        @include('livewire.issues.items-recommended', $items = $this->unreviewedItems())
+    @if(isset($scope) && $this->hasUnreviewedItems)
+        @include('livewire.issues.items-recommended', ['items' => $this->unreviewedItems(), 'scope' => $scope] )
         <livewire:issues.confirm-recommendation />
     @endif
 </div>
