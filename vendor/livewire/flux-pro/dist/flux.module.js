@@ -2536,19 +2536,29 @@ var Selectable = class extends Mixin {
     this.value = this.value + "";
     this.label = this.options().label;
     let state = this.options().selectedInitially;
-    if (this.group()) {
-      if (this.group().hasValue(this.value)) state = true;
-    }
-    this.multiple = this.hasGroup() ? this.group().options().multiple : false;
-    this.toggleable = this.options().toggleable || this.multiple;
     this.onSelects = [];
     this.onUnselects = [];
     this.onChanges = [];
-    if (state) {
-      this.select(true);
-    } else {
-      this.state = state;
-      this.surgicallyDeselect(true);
+    let initState = () => {
+      if (this.group()) {
+        if (this.group().hasValue(this.value)) state = true;
+      }
+      this.multiple = this.hasGroup() ? this.group().options().multiple : false;
+      this.toggleable = this.options().toggleable || this.multiple;
+      if (state) {
+        this.select(true);
+      } else {
+        this.state = state;
+        this.surgicallyDeselect(true);
+      }
+    };
+    initState();
+    if (!this.hasGroup() && !this.el.isConnected) {
+      queueMicrotask(() => {
+        if (this.hasGroup()) {
+          initState();
+        }
+      });
     }
   }
   mount() {
@@ -2894,6 +2904,9 @@ var UICheckbox = class extends UIControl {
         this._submittable.update(this._selectable.isSelected());
       });
       this.value = this._selectable.getValue();
+      queueMicrotask(() => {
+        this._submittable.update(this._selectable.isSelected());
+      });
     }
     this._detangled = detangle();
     this._selectable.onChange(this._detangled(() => {
@@ -9379,17 +9392,17 @@ var UIChart = class extends HTMLElement {
           svg.appendChild(tickLabelGroupEl);
           handleTickOverflow(tickLabelGroupEl, chart.axes.y);
         }
-        if (templates.zeroLine && chart.axes.y.domain[0] < 0 && chart.axes.y.domain[1] > 0) {
-          svg.querySelector('[data-zero-line][data-axis="y"]')?.remove();
-          let zeroLineEl = hydrateSvgTemplate(templates.zeroLine);
-          zeroLineEl.setAttribute("data-zero-line", "");
-          zeroLineEl.setAttribute("data-axis", "y");
-          zeroLineEl.setAttribute("x1", chart.axes.x.scale(chart.axes.x.domain[0]));
-          zeroLineEl.setAttribute("x2", chart.axes.x.scale(chart.axes.x.domain[1]));
-          zeroLineEl.setAttribute("y1", chart.axes.y.scale(0));
-          zeroLineEl.setAttribute("y2", chart.axes.y.scale(0));
-          svg.appendChild(zeroLineEl);
-        }
+      }
+      if (templates.zeroLine && chart.axes.y.domain[0] < 0 && chart.axes.y.domain[1] > 0) {
+        svg.querySelector('[data-zero-line][data-axis="y"]')?.remove();
+        let zeroLineEl = hydrateSvgTemplate(templates.zeroLine);
+        zeroLineEl.setAttribute("data-zero-line", "");
+        zeroLineEl.setAttribute("data-axis", "y");
+        zeroLineEl.setAttribute("x1", chart.axes.x.scale(chart.axes.x.domain[0]));
+        zeroLineEl.setAttribute("x2", chart.axes.x.scale(chart.axes.x.domain[1]));
+        zeroLineEl.setAttribute("y1", chart.axes.y.scale(0));
+        zeroLineEl.setAttribute("y2", chart.axes.y.scale(0));
+        svg.appendChild(zeroLineEl);
       }
       if (overlay) {
         overlay.setAttribute("width", chart.width);

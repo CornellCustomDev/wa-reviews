@@ -20321,7 +20321,7 @@ img.ProseMirror-separator {
   // js/editor.js
   var UIEditor = class extends UIControl {
     boot() {
-      let content = this.getAttribute("value") ?? this.querySelector("ui-editor-content").innerHTML;
+      let content = this.value ?? this.getAttribute("value") ?? this.querySelector("ui-editor-content").innerHTML;
       let toolbar = this.querySelector("ui-toolbar");
       this.querySelector("ui-editor-content").innerHTML = "";
       this._controllable = new Controllable(this, { bubbles: true });
