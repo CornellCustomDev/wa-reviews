@@ -70,12 +70,12 @@ trait PrismAction
             Log::error('PrismAction streamResponse error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'streamedResponse' => $finalResponse->responseMessages,
+                'streamedResponse' => $finalResponse?->responseMessages,
             ]);
             Log::channel('slack')->error('PrismAction streamResponse error', [
                 'message' => $e->getMessage(),
                 //'trace' => $e->getTraceAsString(),
-                'last_message' => $finalResponse->responseMessages->last() ?? '',
+                'last_message' => $finalResponse?->responseMessages->last() ?? '',
             ]);
             $this->feedback = "**Error:** {$e->getMessage()}";
             $this->showFeedback = true;
