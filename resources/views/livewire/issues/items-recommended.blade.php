@@ -1,5 +1,7 @@
 @props([
     'items' => [],
+    // Issue or Scope
+    'model' => null,
 ])
 <div class="mt-4">
     <h3 class="h5">Suggested Guidelines</h3>
@@ -13,7 +15,7 @@
                 </x-forms.field-display>
 
                 <div class="mb-4">
-                    @can('update', $issue->scope)
+                    @can('update', $model)
                         <div class="float-right">
                             <x-forms.button
                                     title="Accept AI recommendation for guideline {{ $item->guideline->number }}"

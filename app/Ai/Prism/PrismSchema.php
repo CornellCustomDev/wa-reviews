@@ -2,6 +2,9 @@
 
 namespace App\Ai\Prism;
 
+use App\Ai\Prism\Agents\StructuredOutputAgent;
+use Illuminate\Support\Facades\Log;
+use JsonException;
 use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Schema\ArraySchema;
 use Prism\Prism\Schema\BooleanSchema;
@@ -9,6 +12,7 @@ use Prism\Prism\Schema\EnumSchema;
 use Prism\Prism\Schema\NumberSchema;
 use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
+use UnexpectedValueException;
 
 trait PrismSchema
 {
@@ -74,5 +78,37 @@ trait PrismSchema
             name: $schema['name'] ?? 'unknown',
             description: $schema['description'] ?? ''
         );
+    }
+
+    /**
+     * @throws UnexpectedValueException
+     */
+    private function getStructuredResponse(string $data): mixed
+    {
+        // If $data is already a valid JSON string, presume it is structured already
+        if ($response = json_decode($data)) {
+            return $response;
+        }
+
+        $structuredResponse = StructuredOutputAgent::for(
+            schema: $this->getSchema(),
+            data: $data
+        )->getResponse();
+
+        try {
+            return json_decode($structuredResponse->text, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException $e) {
+            Log::channel('slack')->error('getStructuredResponse: JSON decode error', [
+                'error' => $e->getMessage(),
+                'response' => $structuredResponse->text,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            Log::error('getStructuredResponse: JSON decode error', [
+                'error' => $e->getMessage(),
+                'response' => $structuredResponse->text,
+            ]);
+
+            throw new UnexpectedValueException('Error processing structured response: ' . $e->getMessage(), 0, $e);
+        }
     }
 }

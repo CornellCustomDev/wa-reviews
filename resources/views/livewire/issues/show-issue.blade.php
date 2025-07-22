@@ -76,7 +76,7 @@
                 </div>
             @endif
 
-            @if($issue->assessment)
+            @if($issue->assessment && $issue->guideline)
                 <div data-cds-field-display>
                     <flux:heading level="3">
                         Assessment

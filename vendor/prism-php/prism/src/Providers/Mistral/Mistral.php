@@ -27,15 +27,15 @@ use Prism\Prism\Structured\Request as StructuredRequest;
 use Prism\Prism\Structured\Response as StructuredResponse;
 use Prism\Prism\Text\Request as TextRequest;
 use Prism\Prism\Text\Response as TextResponse;
-use Prism\Prism\ValueObjects\Messages\Support\Document;
+use Prism\Prism\ValueObjects\Media\Document;
 
 class Mistral extends Provider
 {
     use InitializesClient, ProcessRateLimits;
 
     public function __construct(
-        #[\SensitiveParameter] readonly public string $apiKey,
-        readonly public string $url,
+        #[\SensitiveParameter] public readonly string $apiKey,
+        public readonly string $url,
     ) {}
 
     #[\Override]
@@ -113,8 +113,8 @@ class Mistral extends Provider
                 rateLimits: $this->processRateLimits($e->response),
                 retryAfter: null
             ),
-            529 => throw PrismProviderOverloadedException::make(ProviderName::Groq),
-            413 => throw PrismRequestTooLargeException::make(ProviderName::Groq),
+            529 => throw PrismProviderOverloadedException::make(ProviderName::Mistral),
+            413 => throw PrismRequestTooLargeException::make(ProviderName::Mistral),
             default => throw PrismException::providerRequestError($model, $e),
         };
     }

@@ -242,7 +242,7 @@ export default {
         {
           name: "Groq",
           text: Supported,
-          streaming: Unsupported,
+          streaming: Supported,
           structured: Supported,
           embeddings: Planned,
           image: Supported,
@@ -270,6 +270,16 @@ export default {
           documents: Unsupported,
         },
         {
+          name: "OpenRouter",
+          text: Supported,
+          streaming: Supported,
+          structured: Supported,
+          embeddings: Unsupported,
+          image: Unsupported,
+          tools: Supported,
+          documents: Unsupported,
+        },
+        {
           name: "OpenAI",
           text: Supported,
           streaming: Supported,
@@ -292,8 +302,8 @@ export default {
         {
           name: "xAI",
           text: Supported,
-          streaming: Unsupported,
-          structured: Unsupported,
+          streaming: Supported,
+          structured: Supported,
           embeddings: Unsupported,
           image: Supported,
           tools: Supported,

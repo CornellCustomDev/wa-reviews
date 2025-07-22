@@ -883,9 +883,9 @@
             'dev_requirement' => true,
         ),
         'prism-php/prism' => array(
-            'pretty_version' => 'v0.78.0',
-            'version' => '0.78.0.0',
-            'reference' => 'a16dc7b7c34152d19db1453d31f9c67f15576446',
+            'pretty_version' => 'v0.80.0',
+            'version' => '0.80.0.0',
+            'reference' => 'b9ce9a67d4f8c409790963f189c2ebabd766279e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../prism-php/prism',
             'aliases' => array(),

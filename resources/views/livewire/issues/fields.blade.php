@@ -90,7 +90,7 @@
     variant="listbox"
     :options="\App\Enums\TestingMethod::toSelectArray()"
     placeholder="Select a testing method..."
-    wire:model="form.testing"
+    wire:model="form.testing_method"
     description="Describe how you discovered the issue."
 />
 

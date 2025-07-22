@@ -26,6 +26,7 @@ trait PrismAction
     public string $feedback = '';
     public bool $showFeedback = false;
     public array $toolsCalled = [];
+    private float $streamStart;
 
     public function initiateAction(): void
     {
@@ -47,11 +48,10 @@ trait PrismAction
 
     public function streamResponse(): void
     {
-        $this->stream('streamedResponse', 'AI request sent...');
-        $start = microtime(true);
+        $this->startStreamTimer();
+        $this->sendStreamMessage('AI request sent...');
 
         try {
-            $elapsed = 0.0;
             $finalResponse = null;
 
             $pendingRequest = $this->getAgent();
@@ -59,11 +59,10 @@ trait PrismAction
 
             // Process the stream
             foreach ($stream as $message => $streamedResponse) {
-                $elapsed = number_format(microtime(true) - $start, 1, '.', '');
-                $this->stream('streamedResponse', $message."... ({$elapsed}s)", true);
+                $this->sendStreamMessage($message.'... ({:elapsed}s)');
                 $finalResponse = $streamedResponse;
             }
-            $this->stream('streamedResponse', "Response received in {$elapsed}s", true);
+            $this->sendStreamMessage('Response received in {:elapsed}s');
             $this->userMessage = '';
 
             $this->afterAgentResponse($finalResponse->toResponse());
@@ -198,5 +197,36 @@ trait PrismAction
             'usage' => new Usage(0, 0),
             'messages' => [],
         ];
+    }
+
+    protected function sendStreamMessage(string $streamMessage, ?bool $withElapsed = true, ?bool $replace = true): void
+    {
+        if ($withElapsed) {
+            $elapsedTime = $this->getElapsedTime();
+            $streamMessage = strtr($streamMessage, [
+                '{:elapsed}' => $elapsedTime,
+                ':elapsed' => $elapsedTime,
+            ]);
+        }
+
+        $this->stream(
+            to: 'streamedResponse',
+            content: $streamMessage,
+            replace: $replace,
+        );
+    }
+
+    private function startStreamTimer(): void
+    {
+        $this->streamStart = microtime(true);
+    }
+
+    private function getElapsedTime(): string
+    {
+        if (!isset($this->streamStart)) {
+            $this->startStreamTimer();
+        }
+
+        return number_format(microtime(true) - $this->streamStart, 1, '.', '');
     }
 }

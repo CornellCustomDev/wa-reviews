@@ -33,11 +33,11 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             ],
             'number' => [
                 'type' => 'integer',
-                'description' => 'The Guideline heading number from the Guidelines Document'
+                'description' => 'The Guideline heading number (integer) from the Guidelines List'
             ],
             'heading' => [
                 'type' => 'string',
-                'description' => 'The Guideline heading name from the Guidelines Document',
+                'description' => 'The Guideline heading name from the Guidelines List',
             ],
             'criteria' => [
                 'type' => 'string',
@@ -118,7 +118,6 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     {
         return Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
     }
-
 
     public function getTools(): array
     {
@@ -209,6 +208,27 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     public static function getItemsSchema(): array
     {
         return self::ITEM_SCHEMA;
+    }
+
+    public static function getRecommendedGuidelinesSchema(): array
+    {
+        return [
+            'description' => 'Return a "guidelines" array (if applicable warnings or failures are found) and a "feedback" string',
+            'type' => 'object',
+            'properties' => [
+                'guidelines' => [
+                    'type' => ['array', 'null'],
+                    'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
+                    'items' => self::getItemsSchema(),
+                ],
+                'feedback' => [
+                    'type' => ['string'],
+                    'description' => 'A brief explanation or summary, or a clarification request if more information is needed.',
+                ],
+            ],
+            'additionalProperties' => false,
+            'required' => ['guidelines', 'feedback'],
+        ];
     }
 
     public static function mapResponseToItemArray(array $response): array
