@@ -18,18 +18,13 @@
                         @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
                         @if(in_array($fileType, ['pdf', 'eml']))
                             <div class="max-w-60 bg-black/60 text-white text-center p-2">
-                                <a href="{{ $imagePath }}" class=" text-white" target="_blank" rel="noopener noreferrer">
+                                <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
                                     <i class="fa fa-file"></i> {{ $imageName }}
                                 </a>
                             </div>
                         @else
                             @if(in_array($fileType, ['mp4', 'webm']))
-                                <video
-                                    src="{{ $imagePath }}"
-                                    alt="Preview of video: {{ $imageName }}"
-                                    class="max-w-60"
-                                    controls
-                                ></video>
+                                <video src="{{ $imagePath }}" class="max-w-60" controls></video>
                             @else
                                 <img
                                     src="{{ $imagePath }}"
