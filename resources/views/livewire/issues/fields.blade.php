@@ -103,4 +103,5 @@
     label="Image examples"
     wire:model.live="form.images"
     :existing-images="$this->form->image_links"
+    accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.pdf,.eml"
 />
