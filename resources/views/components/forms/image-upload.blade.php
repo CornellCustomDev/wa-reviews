@@ -2,10 +2,11 @@
     'label',
     'name' => $attributes->whereStartsWith('wire:model')->first(),
     'existingImages' => [],
+    'accept' => '.jpg,.jpeg,.png,.gif,.webp',
 ])
 
 <div x-data="images" class="max-w-[600px]">
-    <flux:input type="file" size="sm" :$label {{ $attributes }} multiple accept=".jpg,.jpeg,.png,.gif,.webp" />
+    <flux:input type="file" size="sm" :$label {{ $attributes }} multiple accept="{{ $accept }}" />
 
     <!-- Show previews of selected images -->
     @if ($existingImages || data_get($this, $name))
@@ -14,14 +15,27 @@
                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                 <div class="relative mt-2">
                     <div class="relative border border-cds-gray-900 p-px">
-                        <img
-                            src="{{ $imagePath }}"
-                            alt="Preview of image: {{ $imageName }}"
-                            class="max-w-60"
-                        />
-                        <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
-                            {{ $imageName }}
-                        </div>
+                        @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
+                        @if(in_array($fileType, ['pdf', 'eml']))
+                            <div class="max-w-60 bg-black/60 text-white text-center p-2">
+                                <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa fa-file"></i> {{ $imageName }}
+                                </a>
+                            </div>
+                        @else
+                            @if(in_array($fileType, ['mp4', 'webm']))
+                                <video src="{{ $imagePath }}" class="max-w-60" controls></video>
+                            @else
+                                <img
+                                    src="{{ $imagePath }}"
+                                    alt="Preview of image: {{ $imageName }}"
+                                    class="max-w-60"
+                                />
+                            @endif
+                            <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
+                                {{ $imageName }}
+                            </div>
+                        @endif
                     </div>
                     <flux:button
                         variant="danger"

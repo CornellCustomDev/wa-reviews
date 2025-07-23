@@ -214,6 +214,7 @@ class Project extends Model
     public function getReportableIssues(): Collection
     {
         return $this->issues()
+            ->whereNotNull('guideline_id')
             ->with(['scope', 'guideline', 'guideline.criterion'])
             ->get()
             ->filter(fn ($issue) => $issue->isAiAccepted() || ! $issue->isAiGenerated())

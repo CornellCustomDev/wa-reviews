@@ -57,21 +57,41 @@
                             </flux:subheading>
                             @continue
                         @endif
+
+                        @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
                         @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                        <flux:tooltip position="bottom" class="align-middle">
-                            <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">
-                                <div class="relative w-full h-full">
-                                    <img
-                                        src="{{ $imagePath }}"
-                                        alt="Preview of image: {{ $imageName }}"
-                                        class="absolute top-0.5 left-0 object-cover object-top rounded-sm"
-                                    />
+                        @if(in_array($fileType, ['pdf', 'eml']))
+                            <div class="max-w-60 bg-black/60 text-white text-center p-2">
+                                <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
+                                    <i class="fa fa-file"></i> {{ $imageName }}
+                                </a>
+                            </div>
+                        @else
+                            @if(in_array($fileType, ['mp4', 'webm']))
+                                <div class="relative">
+                                <video src="{{ $imagePath }}" class="max-w-60" controls></video>
+                                <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
+                                    {{ $imageName }}
                                 </div>
-                            </flux:button>
-                            <flux:tooltip.content>
-                                View image {{ $imageName }}
-                            </flux:tooltip.content>
-                        </flux:tooltip>
+                                </div>
+                            @else
+                                <flux:tooltip position="bottom" class="align-middle">
+                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">
+                                        <div class="relative w-full h-full">
+                                            <img
+                                                src="{{ $imagePath }}"
+                                                alt="Preview of image: {{ $imageName }}"
+                                                class="absolute top-0.5 left-0 object-cover object-top rounded-sm"
+                                            />
+                                        </div>
+                                    </flux:button>
+                                    <flux:tooltip.content>
+                                        View image {{ $imageName }}
+                                    </flux:tooltip.content>
+                                </flux:tooltip>
+                            @endif
+                        @endif
+
                     @endforeach
                 </div>
             @endif

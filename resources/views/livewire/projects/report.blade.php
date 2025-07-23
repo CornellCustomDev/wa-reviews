@@ -131,24 +131,51 @@
                 @endif
 
                 @if($issue->image_links)
-                    <flux:subheading>Images:</flux:subheading>
+                    <flux:subheading>Images/Files:</flux:subheading>
                     <div class="flex flex-wrap gap-1 mt-1 mb-4">
                         @foreach($issue->image_links as $imagePath)
+                            @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
                             @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                            <flux:tooltip position="bottom" class="align-middle">
-                                <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! overflow-hidden hover:border-cds-blue-900 h-auto">
-                                    <div class="relative py-1">
-                                        <img
-                                            src="{{ $imagePath }}"
-                                            alt="Preview of image: {{ $imageName }}"
-                                            class="max-w-60"
-                                        />
+                            @if(in_array($fileType, ['pdf', 'eml']))
+                                <div class="max-w-60 bg-black/60 text-white text-center p-2 print:hidden">
+                                    <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
+                                        <i class="fa fa-file"></i> {{ $imageName }}
+                                    </a>
+                                </div>
+                                <div class="not-print:hidden">
+                                    {{ $imagePath }}
+                                </div>
+                            @else
+                                @if(in_array($fileType, ['mp4', 'webm']))
+                                    <div class="relative print:hidden">
+                                        <video src="{{ $imagePath }}" class="max-w-60" controls></video>
+                                        <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
+                                            {{ $imageName }}
+                                        </div>
                                     </div>
-                                </flux:button>
-                                <flux:tooltip.content>
-                                    View image {{ $imageName }}
-                                </flux:tooltip.content>
-                            </flux:tooltip>
+                                    <div class="not-print:hidden">
+                                        {{ $imagePath }}
+                                    </div>
+                                @else
+                                    <flux:tooltip position="bottom" class="align-middle">
+                                        <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! overflow-hidden hover:border-cds-blue-900 h-auto">
+                                            <div class="relative py-1">
+                                                <img
+                                                    src="{{ $imagePath }}"
+                                                    alt="Preview of image: {{ $imageName }}"
+                                                    class="max-w-60"
+                                                />
+                                            </div>
+                                        </flux:button>
+                                        <flux:tooltip.content>
+                                            View image {{ $imageName }}
+                                        </flux:tooltip.content>
+                                    </flux:tooltip>
+                                    <div class="not-print:hidden">
+                                        {{ $imagePath }}
+                                    </div>
+                                @endif
+                            @endif
                         @endforeach
                     </div>
                 @endif
