@@ -37,7 +37,7 @@
                 </flux:subheading>
             @endif
             <x-forms.field-display variation="inline" label="Target Element">
-                {!! $issue->target !!}
+                {{ $issue->target }}
             </x-forms.field-display>
 
             @if($issue->description)
