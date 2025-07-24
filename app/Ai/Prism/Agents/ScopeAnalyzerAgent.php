@@ -24,7 +24,6 @@ class ScopeAnalyzerAgent extends PendingRequest
 
         $this->withTools(array_values(array_filter([
             new FetchGuidelinesTool(),
-            new FetchGuidelinesListTool(),
             $scope->pageHasBeenRetrieved() ? new FetchScopePageContentTool() : null,
             new ScratchPadTool(),
         ])))->withMaxSteps(10);

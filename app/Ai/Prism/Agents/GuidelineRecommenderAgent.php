@@ -24,7 +24,6 @@ class GuidelineRecommenderAgent extends PendingTextRequest
 
         $this->withTools(array_values(array_filter([
             new FetchGuidelinesTool(),
-            new FetchGuidelinesListTool(),
             $scope->pageHasBeenRetrieved() ? new FetchScopePageContentTool() : null,
             new ScratchPadTool(),
         ])))->withMaxSteps(10);
@@ -47,7 +46,7 @@ class GuidelineRecommenderAgent extends PendingTextRequest
         $guidelinesListTool = new FetchGuidelinesListTool();
 
         return view('ai-agents.GuidelineRecommender.instructions', [
-            'guidelinesList' => json_encode($guidelinesListTool(), JSON_PRETTY_PRINT),
+            'guidelinesList' => $guidelinesListTool(),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
     }
