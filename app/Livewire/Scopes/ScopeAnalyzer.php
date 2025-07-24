@@ -38,6 +38,11 @@ class ScopeAnalyzer extends Component
             ->withPrompt($this->userMessage);
     }
 
+    protected function getContextModel(): Scope
+    {
+        return $this->scope;
+    }
+
     public function getSchema(): Schema
     {
         return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());

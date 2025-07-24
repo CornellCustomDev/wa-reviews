@@ -74,6 +74,11 @@ class IssueAnalyzer extends Component
             ->withPrompt($this->userMessage);
     }
 
+    protected function getContextModel(): Issue
+    {
+        return $this->issue;
+    }
+
     public function getSchema(): Schema
     {
         return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());

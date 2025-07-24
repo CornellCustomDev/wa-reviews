@@ -733,6 +733,7 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'App\\Ai\\Prism\\Agents\\ScopeAnalyzerAgent' => __DIR__ . '/../..' . '/app/Ai/Prism/Agents/ScopeAnalyzerAgent.php',
         'App\\Ai\\Prism\\Agents\\StructuredOutputAgent' => __DIR__ . '/../..' . '/app/Ai/Prism/Agents/StructuredOutputAgent.php',
         'App\\Ai\\Prism\\PrismAction' => __DIR__ . '/../..' . '/app/Ai/Prism/PrismAction.php',
+        'App\\Ai\\Prism\\PrismHistory' => __DIR__ . '/../..' . '/app/Ai/Prism/PrismHistory.php',
         'App\\Ai\\Prism\\PrismSchema' => __DIR__ . '/../..' . '/app/Ai/Prism/PrismSchema.php',
         'App\\Ai\\Prism\\Providers\\CornellApi' => __DIR__ . '/../..' . '/app/Ai/Prism/Providers/CornellApi.php',
         'App\\Ai\\Prism\\Tools\\FetchGuidelinesListTool' => __DIR__ . '/../..' . '/app/Ai/Prism/Tools/FetchGuidelinesListTool.php',

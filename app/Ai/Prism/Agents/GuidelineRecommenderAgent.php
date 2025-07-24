@@ -9,7 +9,9 @@ use App\Ai\Prism\Tools\ScratchPadTool;
 use App\Enums\ChatProfile;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use Prism\Prism\Providers\OpenAI\Maps\MessageMap;
 use Prism\Prism\Text\PendingRequest as PendingTextRequest;
+use Prism\Prism\Text\Response;
 use Throwable;
 
 class GuidelineRecommenderAgent extends PendingTextRequest
@@ -49,5 +51,10 @@ class GuidelineRecommenderAgent extends PendingTextRequest
             'guidelinesList' => $guidelinesListTool(),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
+    }
+
+    public function mapMessages(Response $response): array
+    {
+        return (new MessageMap($response->responseMessages->toArray(), []))();
     }
 }

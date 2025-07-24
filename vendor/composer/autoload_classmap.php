@@ -35,6 +35,7 @@ return array(
     'App\\Ai\\Prism\\Agents\\ScopeAnalyzerAgent' => $baseDir . '/app/Ai/Prism/Agents/ScopeAnalyzerAgent.php',
     'App\\Ai\\Prism\\Agents\\StructuredOutputAgent' => $baseDir . '/app/Ai/Prism/Agents/StructuredOutputAgent.php',
     'App\\Ai\\Prism\\PrismAction' => $baseDir . '/app/Ai/Prism/PrismAction.php',
+    'App\\Ai\\Prism\\PrismHistory' => $baseDir . '/app/Ai/Prism/PrismHistory.php',
     'App\\Ai\\Prism\\PrismSchema' => $baseDir . '/app/Ai/Prism/PrismSchema.php',
     'App\\Ai\\Prism\\Providers\\CornellApi' => $baseDir . '/app/Ai/Prism/Providers/CornellApi.php',
     'App\\Ai\\Prism\\Tools\\FetchGuidelinesListTool' => $baseDir . '/app/Ai/Prism/Tools/FetchGuidelinesListTool.php',
