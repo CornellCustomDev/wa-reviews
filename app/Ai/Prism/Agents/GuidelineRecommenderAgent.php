@@ -22,12 +22,11 @@ class GuidelineRecommenderAgent extends PendingTextRequest
             model: config('cornell_ai.profiles')[ChatProfile::Chat->value]['model'],
         );
 
-        $this->withTools(array_filter([
+        $this->withTools(array_values(array_filter([
             new FetchGuidelinesTool(),
-            new FetchGuidelinesListTool(),
             $scope->pageHasBeenRetrieved() ? new FetchScopePageContentTool() : null,
             new ScratchPadTool(),
-        ]))->withMaxSteps(10);
+        ])))->withMaxSteps(10);
 
         $this->usingTemperature(0.2);
 
@@ -47,7 +46,7 @@ class GuidelineRecommenderAgent extends PendingTextRequest
         $guidelinesListTool = new FetchGuidelinesListTool();
 
         return view('ai-agents.GuidelineRecommender.instructions', [
-            'guidelinesList' => json_encode($guidelinesListTool(), JSON_PRETTY_PRINT),
+            'guidelinesList' => $guidelinesListTool(),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
     }
