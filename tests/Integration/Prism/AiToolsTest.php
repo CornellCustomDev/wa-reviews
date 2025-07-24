@@ -53,7 +53,7 @@ class AiToolsTest extends TestCase
             ->withTools([$weatherTool]);
 
         $finalResponse = null;
-        foreach ($this->collectStream($pendingRequest) as $streamedResponse) {
+        foreach ($this->collectStream($pendingRequest->toRequest(), $pendingRequest->asStream()) as $streamedResponse) {
             $finalResponse = $streamedResponse;
         }
 

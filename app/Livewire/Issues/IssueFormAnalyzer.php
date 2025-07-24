@@ -71,7 +71,7 @@ class IssueFormAnalyzer extends Component
             . "- Target element: $target\n"
             . "- Issue description: $description\n"
             . '- Page content: ' . ($this->scope->pageHasBeenRetrieved()
-                ? 'Available via "fetch_scope_page_content" tool.'
+                ? "Available via 'fetch_scope_page_content({$this->scope->id})' tool."
                 : 'Not available.')
             . "\n\n";
 
@@ -83,6 +83,11 @@ class IssueFormAnalyzer extends Component
     {
         return GuidelineRecommenderAgent::for($this->scope)
             ->withPrompt($this->userMessage);
+    }
+
+    protected function getContextModel(): Scope
+    {
+        return $this->scope;
     }
 
     public function getSchema(): Schema
