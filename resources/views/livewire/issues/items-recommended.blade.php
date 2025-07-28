@@ -29,18 +29,22 @@
                             />
                         </div>
                     @endcan
-                    <x-forms.button
-                            data-cds-button-assessment
-                            class="{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}"
-                            size="xs"
-                            x-on:click.prevent="$dispatch('show-guideline', {number: {{ $item->guideline->number }} })"
-                    >
-                        {{ $item->guideline->number }}
-                    </x-forms.button>
-                    <flux:badge data-cds-impact class="{{ Str::of($item->impact->value())->lower() }}"
-                                size="sm">
-                        {{ $item->impact->value() }}
-                    </flux:badge>
+                    @if($item->assessment)
+                        <x-forms.button
+                                data-cds-button-assessment
+                                class="{{ Str::of($item->assessment->value())->lower()->replace('/', '') }}"
+                                size="xs"
+                                x-on:click.prevent="$dispatch('show-guideline', {number: {{ $item->guideline->number }} })"
+                        >
+                            {{ $item->guideline->number }}
+                        </x-forms.button>
+                    @endif
+                    @if($item->impact)
+                        <flux:badge data-cds-impact class="{{ Str::of($item->impact->value())->lower() }}"
+                                    size="sm">
+                            {{ $item->impact->value() }}
+                        </flux:badge>
+                    @endif
                     <flux:tooltip toggleable position="right" class="align-middle">
                         <flux:button icon="sparkles" size="xs" variant="ghost"
                                      class="text-cds-blue-600!"/>
