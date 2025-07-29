@@ -133,5 +133,3 @@ are mentioned, that refers to the "number" field for an item in the list below.
 # Context
 The user sees the page scope and has the ability to create issues related to it.
 
-## Scope
-{!! $scopeContext !!}
