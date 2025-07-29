@@ -44,9 +44,6 @@ class UpdateIssueTool extends BaseTool
         $agent = Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
         $feedback = [];
 
-        // Sometimes the data is a stdClass object, so convert it to an array
-        $data = (array) $data;
-
         $issue->update(GuidelinesAnalyzerService::mapResponseToItemArray($data));
 
         event(new IssueChanged($issue, 'updated', actor: $agent));

@@ -114,8 +114,6 @@ class IssueFormAnalyzer extends Component
         if ($response?->guidelines) {
             $this->recommendations = collect();
             foreach ($response->guidelines as $guideline) {
-                // Sometimes the guideline is a stdClass object, so convert it to an array
-                $guideline = (array) $guideline;
                 $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
                 $this->recommendations->push($itemVals);
             }

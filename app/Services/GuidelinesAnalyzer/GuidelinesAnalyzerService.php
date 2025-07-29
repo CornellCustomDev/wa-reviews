@@ -231,8 +231,10 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public static function mapResponseToItemArray(array $response): array
+    public static function mapResponseToItemArray(mixed $response): array
     {
+        $response = (array) $response; // Ensure we are working with an array
+
         return [
             'guideline_id' => $response['number'],
             'assessment' => Assessment::fromName($response['assessment']),
