@@ -7,4 +7,6 @@ enum Agents: string
     use NamedEnum;
 
     case GuidelinesAnalyzer = 'GuidelinesAnalyzer';
+
+    case GuidelineRecommender = 'GuidelineRecommender';
 }

@@ -2,20 +2,21 @@
 
 namespace App\Ai\Prism;
 
+use App\Models\Agent;
 use App\Models\ChatHistory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Prism\Prism\Text\Response;
-use Symfony\Component\Uid\Ulid;
 
 trait PrismHistory
 {
-    public function storeHistory(Model $contextModel, ?Response $response, array $messages): Ulid
-    {
-        $ulid = Str::ulid();
+    protected ChatHistory $chatHistory;
 
-        ChatHistory::create([
-            'ulid' => $ulid,
+    protected function storeHistory(Agent $agent, Model $contextModel, ?Response $response, array $messages): void
+    {
+        $this->chatHistory = ChatHistory::create([
+            'ulid' => Str::ulid(),
+            'agent_id' => $agent->getKey(),
             'user_id' => auth()->id(),
             'context_type' => get_class($contextModel),
             'context_id' => $contextModel->getKey(),
@@ -26,8 +27,5 @@ trait PrismHistory
             ] : [],
             'name' => get_class($this),
         ]);
-
-        return $ulid;
     }
-
 }

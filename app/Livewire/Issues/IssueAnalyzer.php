@@ -101,7 +101,16 @@ class IssueAnalyzer extends Component
         }
 
         if ($response?->guidelines) {
-            StoreGuidelineMatchesTool::run($this->issue->id, $response->guidelines);
+            // Create an item for each guideline
+            foreach ($response->guidelines as $guideline) {
+                $item = Item::create([
+                    'issue_id' => $this->issue->id,
+                    ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
+                    'chat_history_ulid' => $this->chatHistory->ulid,
+                ]);
+
+                event(new ItemChanged($item, 'created', $item->getAttributes(), $this->chatHistory->agent));
+            }
             unset($this->hasUnreviewedItems);
         }
     }

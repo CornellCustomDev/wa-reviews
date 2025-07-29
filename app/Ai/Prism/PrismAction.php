@@ -57,8 +57,8 @@ trait PrismAction
         try {
             $finalResponse = null;
 
-            $pendingRequest = $this->getAgent();
-            $stream = $this->collectStream($pendingRequest->toRequest(), $pendingRequest->asStream());
+            $actionAgent = $this->getAgent();
+            $stream = $this->collectStream($actionAgent->toRequest(), $actionAgent->asStream());
 
             // Process the stream
             foreach ($stream as $message => $streamedResponse) {
@@ -69,11 +69,11 @@ trait PrismAction
             $this->userMessage = '';
             $response = $finalResponse?->toResponse();
 
-            // Store the chat history
-            $historyUlid = $this->storeHistory(
+            $this->storeHistory(
+                agent: $actionAgent->getAgent(),
                 contextModel: $this->getContextModel(),
                 response: $response,
-                messages: $response ? $pendingRequest->mapMessages($response) : [],
+                messages: $response ? $actionAgent->mapMessages($response) : [],
             );
 
             // Handle response results

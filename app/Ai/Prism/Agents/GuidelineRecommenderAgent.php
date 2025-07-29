@@ -6,7 +6,9 @@ use App\Ai\Prism\Tools\FetchGuidelinesListTool;
 use App\Ai\Prism\Tools\FetchGuidelinesTool;
 use App\Ai\Prism\Tools\FetchScopePageContentTool;
 use App\Ai\Prism\Tools\ScratchPadTool;
+use App\Enums\Agents;
 use App\Enums\ChatProfile;
+use App\Models\Agent;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Prism\Prism\Providers\OpenAI\Maps\MessageMap;
@@ -16,9 +18,13 @@ use Throwable;
 
 class GuidelineRecommenderAgent extends PendingTextRequest
 {
+    protected Agent $agent;
+
     public function __construct(
         private readonly Scope $scope
     ) {
+        $this->agent = Agent::firstWhere('name', Agents::GuidelineRecommender->value);
+
         $this->using(
             provider: config('cornell_ai.prism_provider'),
             model: config('cornell_ai.profiles')[ChatProfile::Chat->value]['model'],
@@ -51,6 +57,11 @@ class GuidelineRecommenderAgent extends PendingTextRequest
             'guidelinesList' => $guidelinesListTool(),
             'scopeContext' => GuidelinesAnalyzerService::getScopeContext($this->scope),
         ])->render();
+    }
+
+    public function getAgent(): Agent
+    {
+        return $this->agent;
     }
 
     public function mapMessages(Response $response): array
