@@ -117,7 +117,11 @@ trait PrismAction
             foreach ($stream as $chunk) {
                 switch ($chunk->chunkType) {
                     case ChunkType::ToolCall:
-                        $data['toolCalls'][] = $chunk->toolCalls[0];
+                        $toolCall = $chunk->toolCalls[0] ?? null;
+                        if (!$toolCall) {
+                            break;
+                        }
+                        $data['toolCalls'][] = $toolCall;
 
                         // Add tool call message
                         $toolCallsMessage = new AssistantMessage($data['text'], $data['toolCalls']);
