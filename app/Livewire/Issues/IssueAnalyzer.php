@@ -128,7 +128,7 @@ class IssueAnalyzer extends Component
         $this->authorize('update', $this->issue);
 
         $item = $this->issue->items->firstWhere('guideline_id', $guidelineNumber);
-        $this->issue->applyRecommendation($item->id);
+        $this->issue->applyRecommendation($item);
         event(new IssueChanged($this->issue, 'updated'));
 
         $this->showFeedback = false;

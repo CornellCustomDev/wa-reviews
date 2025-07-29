@@ -138,12 +138,11 @@ class Issue extends Model
         $this->save();
     }
 
-    public function applyRecommendation($item_id): void
+    public function applyRecommendation(Item $item): void
     {
-        $this->items->firstWhere('id', $item_id)->markAiAccepted();
+        $item->markAiAccepted();
 
         // Use the item content to update the issue
-        $item = $this->items->firstWhere('id', $item_id);
         $this->update([
             'guideline_id'   => $item->guideline_id,
             'assessment'     => $item->assessment,
