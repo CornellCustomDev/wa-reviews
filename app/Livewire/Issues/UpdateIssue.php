@@ -25,6 +25,13 @@ class UpdateIssue extends Component
         $this->form->setModel($issue);
     }
 
+    #[On('items-updated')]
+    public function refreshIssue(): void
+    {
+        $issue = $this->form->issue->fresh();
+        $this->form->setModel($issue);
+    }
+
     #[Computed(persist: true)]
     public function getGuidelinesOptions()
     {
