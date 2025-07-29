@@ -43,16 +43,13 @@ class ScopeAnalyzer extends Component
         return $this->scope;
     }
 
-    public function getSchema(): Schema
-    {
-        return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-    }
-
     protected function afterAgentResponse(Response $prismResponse): void
     {
+        $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
+
         try {
-            $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
-            $response = $this->getStructuredResponse($prismResponse->text);
+            $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
+            $response = $this->getStructuredResponse($schema, $prismResponse->text);
         } catch (UnexpectedValueException $e) {
             $this->feedback = "Error processing response: " . $e->getMessage();
             $this->showFeedback = true;

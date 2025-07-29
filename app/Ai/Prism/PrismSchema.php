@@ -83,7 +83,7 @@ trait PrismSchema
     /**
      * @throws UnexpectedValueException
      */
-    private function getStructuredResponse(string $data): mixed
+    private function getStructuredResponse(Schema $schema, string $data): mixed
     {
         // If $data is already a valid JSON string, presume it is structured already
         if ($response = json_decode($data)) {
@@ -91,7 +91,7 @@ trait PrismSchema
         }
 
         $structuredResponse = StructuredOutputAgent::for(
-            schema: $this->getSchema(),
+            schema: $schema,
             data: $data
         )->getResponse();
 

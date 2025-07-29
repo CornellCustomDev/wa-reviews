@@ -5,8 +5,8 @@ namespace App\Livewire\Issues;
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\PrismAction;
 use App\Ai\Prism\PrismSchema;
-use App\AiAgents\Tools\StoreGuidelineMatchesTool;
 use App\Events\IssueChanged;
+use App\Events\ItemChanged;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
@@ -14,7 +14,6 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Text\Response;
 use UnexpectedValueException;
 
@@ -79,16 +78,14 @@ class IssueAnalyzer extends Component
         return $this->issue;
     }
 
-    public function getSchema(): Schema
-    {
-        return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-    }
-
     protected function afterAgentResponse(Response $prismResponse): void
     {
+        $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
+
         try {
-            $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
-            $response = $this->getStructuredResponse($prismResponse->text);
+            $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
+            $response = $this->getStructuredResponse($schema, $prismResponse->text);
+            // @TODO: Add the structuredResponse to the chat history
         } catch (UnexpectedValueException $e) {
             $this->feedback = "Error processing response: " . $e->getMessage();
             $this->showFeedback = true;
