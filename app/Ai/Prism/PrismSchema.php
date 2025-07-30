@@ -3,6 +3,7 @@
 namespace App\Ai\Prism;
 
 use App\Ai\Prism\Agents\StructuredOutputAgent;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use JsonException;
 use Prism\Prism\Contracts\Schema;
@@ -12,6 +13,8 @@ use Prism\Prism\Schema\EnumSchema;
 use Prism\Prism\Schema\NumberSchema;
 use Prism\Prism\Schema\ObjectSchema;
 use Prism\Prism\Schema\StringSchema;
+use Prism\Prism\Structured\Response as StructuredResponse;
+use Prism\Prism\Text\Response as TextResponse;
 use UnexpectedValueException;
 
 trait PrismSchema
@@ -83,29 +86,32 @@ trait PrismSchema
     /**
      * @throws UnexpectedValueException
      */
-    private function getStructuredResponse(Schema $schema, string $data): mixed
+    protected function getStructuredResponse(
+        TextResponse|StructuredResponse $prismResponse,
+        Schema $schema,
+        ?Model $contextModel = null,
+    ): mixed
     {
         // If $data is already a valid JSON string, presume it is structured already
-        if ($response = json_decode($data)) {
+        if ($response = json_decode($prismResponse->text)) {
             return $response;
         }
 
-        $structuredResponse = StructuredOutputAgent::for(
+        $agent = StructuredOutputAgent::for(
             schema: $schema,
-            data: $data
-        )->getResponse();
+            data: $prismResponse->text,
+            contextModel: $contextModel,
+        );
+
+        $structuredResponse = $agent->getResponse()->text;
 
         try {
-            return json_decode($structuredResponse->text, flags: JSON_THROW_ON_ERROR);
+            return json_decode($structuredResponse, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
-            Log::channel('slack')->error('getStructuredResponse: JSON decode error', [
-                'error' => $e->getMessage(),
-                'response' => $structuredResponse->text,
-                'trace' => $e->getTraceAsString(),
-            ]);
             Log::error('getStructuredResponse: JSON decode error', [
                 'error' => $e->getMessage(),
-                'response' => $structuredResponse->text,
+                'response' => $structuredResponse,
+                'trace' => $e->getTraceAsString(),
             ]);
 
             throw new UnexpectedValueException('Error processing structured response: ' . $e->getMessage(), 0, $e);

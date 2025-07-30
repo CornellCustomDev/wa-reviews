@@ -7,6 +7,7 @@ use App\Ai\Prism\PrismAction;
 use App\Ai\Prism\PrismSchema;
 use App\Events\IssueChanged;
 use App\Events\ItemChanged;
+use App\Models\ChatHistory;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
@@ -84,8 +85,7 @@ class IssueAnalyzer extends Component
 
         try {
             $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-            $response = $this->getStructuredResponse($schema, $prismResponse->text);
-            // @TODO: Add the structuredResponse to the chat history
+            $response = $this->getStructuredResponse($prismResponse, $schema, $this->issue);
         } catch (UnexpectedValueException $e) {
             $this->feedback = "Error processing response: " . $e->getMessage();
             $this->showFeedback = true;
@@ -98,16 +98,7 @@ class IssueAnalyzer extends Component
         }
 
         if ($response?->guidelines) {
-            // Create an item for each guideline
-            foreach ($response->guidelines as $guideline) {
-                $item = Item::create([
-                    'issue_id' => $this->issue->id,
-                    ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
-                    'chat_history_ulid' => $this->chatHistory->ulid,
-                ]);
-
-                event(new ItemChanged($item, 'created', $item->getAttributes(), $this->chatHistory->agent));
-            }
+            $this->storeGeneratedItems($response->guidelines, $this->getChatHistory());
             unset($this->hasUnreviewedItems);
         }
     }
@@ -145,5 +136,19 @@ class IssueAnalyzer extends Component
 
         unset($this->hasUnreviewedItems);
         $this->dispatch('items-updated');
+    }
+
+    private function storeGeneratedItems(array $guidelines, ?ChatHistory $chatHistory): void
+    {
+        foreach ($guidelines as $guideline) {
+            // Create an item for each guideline
+            $item = Item::create([
+                'issue_id' => $this->issue->id,
+                ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
+                'chat_history_ulid' => $chatHistory?->ulid,
+            ]);
+
+            event(new ItemChanged($item, 'created', $item->getAttributes(), $chatHistory?->agent));
+        }
     }
 }

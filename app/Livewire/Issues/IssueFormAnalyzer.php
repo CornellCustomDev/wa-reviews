@@ -6,6 +6,7 @@ use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\PrismAction;
 use App\Ai\Prism\PrismSchema;
 use App\Livewire\Forms\IssueForm;
+use App\Models\ChatHistory;
 use App\Models\Item;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
@@ -13,7 +14,6 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Text\Response;
 use UnexpectedValueException;
 
@@ -96,7 +96,7 @@ class IssueFormAnalyzer extends Component
 
         try {
             $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-            $response = $this->getStructuredResponse($schema, $prismResponse->text);
+            $response = $this->getStructuredResponse($prismResponse, $schema, $this->scope);
         } catch (UnexpectedValueException $e) {
             $this->feedback = "Error processing response: " . $e->getMessage();
             $this->showFeedback = true;
@@ -109,12 +109,7 @@ class IssueFormAnalyzer extends Component
         }
 
         if ($response?->guidelines) {
-            $this->recommendations = collect();
-            foreach ($response->guidelines as $guideline) {
-                $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
-                $itemVals['chat_history_ulid'] = $this->chatHistory->ulid;
-                $this->recommendations->push($itemVals);
-            }
+            $this->recommendations = $this->collectRecommendations($response->guidelines, $this->getChatHistory());
             unset($this->hasUnreviewedItems);
         }
     }
@@ -148,5 +143,16 @@ class IssueFormAnalyzer extends Component
             $this->showFeedback = false;
         }
         unset($this->hasUnreviewedItems);
+    }
+
+    private function collectRecommendations($guidelines, ?ChatHistory $chatHistory): Collection
+    {
+        $recommendations = collect();
+        foreach ($guidelines as $guideline) {
+            $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
+            $itemVals['chat_history_ulid'] = $chatHistory->ulid;
+            $recommendations->push($itemVals);
+        }
+        return $recommendations;
     }
 }

@@ -69,7 +69,7 @@ trait PrismAction
             $this->userMessage = '';
             $response = $finalResponse?->toResponse();
 
-            $this->storeHistory(
+            $this->storeChatHistory(
                 agent: $actionAgent->getAgent(),
                 contextModel: $this->getContextModel(),
                 response: $response,
