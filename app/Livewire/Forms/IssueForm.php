@@ -18,6 +18,7 @@ use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Form;
+use Symfony\Component\Uid\Ulid;
 
 class IssueForm extends Form
 {
@@ -122,6 +123,7 @@ class IssueForm extends Form
         $attributes['scope_id'] = $attributes['scope_id'] ?: null;
         $attributes['guideline_id'] = $attributes['guideline_id'] ?: null;
         if ($aiData) {
+            $attributes['chat_history_ulid'] = new Ulid($aiData['chat_history_ulid'] ?? null);
             $attributes['ai_reasoning'] = $aiData['ai_reasoning'];
             $attributes['ai_status'] = AIStatus::Accepted;
         }
