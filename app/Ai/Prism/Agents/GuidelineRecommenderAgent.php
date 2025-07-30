@@ -23,7 +23,7 @@ class GuidelineRecommenderAgent extends PendingTextRequest
     public function __construct(
         private readonly Scope $scope
     ) {
-        $this->agent = Agent::firstWhere('name', Agents::GuidelineRecommender->value);
+        $this->agent = Agent::findAgent(Agents::GuidelineRecommender);
 
         $this->using(
             provider: config('cornell_ai.prism_provider'),

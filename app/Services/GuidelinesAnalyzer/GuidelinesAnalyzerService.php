@@ -116,7 +116,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
     public static function getAgent(): Agent
     {
-        return Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+        return Agent::findAgent(Agents::GuidelinesAnalyzer);
     }
 
     public function getTools(): array
