@@ -71,15 +71,7 @@ class StoreIssuesTool extends Tool
                 'project_id' => $scope->project_id,
                 'scope_id' => $scope->id,
                 'target' => $issue['target'],
-                'description' => Str::markdown(htmlentities($issue['observation'])),
-                'guideline_id' => $issue['number'],
-                'assessment' => Assessment::fromName($issue['assessment']),
-                'impact' => Impact::fromName($issue['impact']),
-                'recommendation' => Str::markdown(htmlentities($issue['recommendation'])),
-                'testing' => Str::markdown(htmlentities($issue['testing'])),
-                'ai_reasoning' => Str::markdown(htmlentities($issue['reasoning'])),
-                'ai_status' => AIStatus::Generated,
-//                'agent_id' => $agent->id,
+                ...GuidelinesAnalyzerService::mapResponseToItemArray($issue),
             ]);
 
             event(new IssueChanged($issue, 'created', $issue->getAttributes()));

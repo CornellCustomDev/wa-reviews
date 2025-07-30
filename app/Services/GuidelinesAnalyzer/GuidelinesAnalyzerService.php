@@ -237,11 +237,11 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
         return [
             'guideline_id' => $response['number'],
-            'assessment' => Assessment::fromName($response['assessment']),
             'description' => Str::markdown(htmlentities($response['observation'])),
+            'assessment' => Assessment::fromName($response['assessment']),
+            'impact' => Impact::fromName($response['impact']),
             'recommendation' => Str::markdown(htmlentities($response['recommendation'])),
             'testing' => Str::markdown(htmlentities($response['testing'])),
-            'impact' => Impact::fromName($response['impact']),
             'ai_reasoning' => Str::markdown(htmlentities($response['reasoning'])),
             'ai_status' => AIStatus::Generated,
         ];
