@@ -3,8 +3,8 @@
 namespace App\Livewire\Issues;
 
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
+use App\Ai\Prism\Handlers\GuidelineRecommenderCallback;
 use App\Ai\Prism\PrismAction;
-use App\Ai\Prism\PrismSchema;
 use App\Events\IssueChanged;
 use App\Events\ItemChanged;
 use App\Models\ChatHistory;
@@ -15,13 +15,10 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Prism\Prism\Text\Response;
-use UnexpectedValueException;
 
 class IssueAnalyzer extends Component
 {
     use PrismAction;
-    use PrismSchema;
 
     public Issue $issue;
     public ?Collection $recommendations = null;
@@ -61,46 +58,36 @@ class IssueAnalyzer extends Component
         $this->issue->items()->delete();
         unset($this->hasUnreviewedItems);
 
-        $context = "# Context: Web accessibility issue\n"
-            . GuidelinesAnalyzerService::getIssueContext($this->issue);
-
-        $this->userMessage = $context;
         $this->initiateAction();
     }
 
     protected function getAgent(): GuidelineRecommenderAgent
     {
+        $userMessage = "# Context: Web accessibility issue\n"
+            . GuidelinesAnalyzerService::getIssueContext($this->issue);
+
         return GuidelineRecommenderAgent::for($this->issue->scope)
-            ->withPrompt($this->userMessage);
+            ->withPrompt($userMessage)
+            ->withContextModel($this->issue)
+            ->withResponseHandler(new GuidelineRecommenderCallback(
+                fn ($guidelines, $chatHistory) => $this->storeGeneratedItems($guidelines, $chatHistory)
+            ));
     }
 
-    protected function getContextModel(): Issue
+    private function storeGeneratedItems(array $guidelines, ?ChatHistory $chatHistory): void
     {
-        return $this->issue;
-    }
+        // Create an item for each guideline
+        foreach ($guidelines as $guideline) {
+            $item = Item::create([
+                'issue_id' => $this->issue->id,
+                ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
+                'chat_history_ulid' => $chatHistory?->ulid,
+            ]);
 
-    protected function afterAgentResponse(Response $prismResponse): void
-    {
-        $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
-
-        try {
-            $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-            $response = $this->getStructuredResponse($prismResponse, $schema, $this->issue);
-        } catch (UnexpectedValueException $e) {
-            $this->feedback = "Error processing response: " . $e->getMessage();
-            $this->showFeedback = true;
-            return;
+            event(new ItemChanged($item, 'created', $item->getAttributes(), $chatHistory?->agent));
         }
 
-        if ($response?->feedback) {
-            $this->feedback = $response->feedback;
-            $this->showFeedback = true;
-        }
-
-        if ($response?->guidelines) {
-            $this->storeGeneratedItems($response->guidelines, $this->getChatHistory());
-            unset($this->hasUnreviewedItems);
-        }
+        unset($this->hasUnreviewedItems);
     }
 
     public function confirmAI($guidelineNumber): void
@@ -136,19 +123,5 @@ class IssueAnalyzer extends Component
 
         unset($this->hasUnreviewedItems);
         $this->dispatch('items-updated');
-    }
-
-    private function storeGeneratedItems(array $guidelines, ?ChatHistory $chatHistory): void
-    {
-        foreach ($guidelines as $guideline) {
-            // Create an item for each guideline
-            $item = Item::create([
-                'issue_id' => $this->issue->id,
-                ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
-                'chat_history_ulid' => $chatHistory?->ulid,
-            ]);
-
-            event(new ItemChanged($item, 'created', $item->getAttributes(), $chatHistory?->agent));
-        }
     }
 }

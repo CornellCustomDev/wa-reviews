@@ -3,8 +3,8 @@
 namespace App\Livewire\Issues;
 
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
+use App\Ai\Prism\Handlers\GuidelineRecommenderCallback;
 use App\Ai\Prism\PrismAction;
-use App\Ai\Prism\PrismSchema;
 use App\Livewire\Forms\IssueForm;
 use App\Models\ChatHistory;
 use App\Models\Item;
@@ -14,16 +14,14 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
-use Prism\Prism\Text\Response;
-use UnexpectedValueException;
 
 class IssueFormAnalyzer extends Component
 {
     use PrismAction;
-    use PrismSchema;
 
     public ?Scope $scope = null;
     public IssueForm $form;
+    public string $userMessage = '';
     public ?Collection $recommendations = null;
 
     public function unreviewedItems(): Collection
@@ -67,7 +65,7 @@ class IssueFormAnalyzer extends Component
         $this->recommendations = collect();
         unset($this->hasUnreviewedItems);
 
-        $context = "# Context: Web accessibility issue\n"
+        $this->userMessage = "# Context: Web accessibility issue\n"
             . "- Target element: $target\n"
             . "- Issue description: $description\n"
             . '- Page content: ' . ($this->scope->pageHasBeenRetrieved()
@@ -75,43 +73,27 @@ class IssueFormAnalyzer extends Component
                 : 'Not available.')
             . "\n\n";
 
-        $this->userMessage = $context;
         $this->initiateAction();
     }
 
     public function getAgent(): GuidelineRecommenderAgent
     {
         return GuidelineRecommenderAgent::for($this->scope)
-            ->withPrompt($this->userMessage);
+            ->withPrompt($this->userMessage)
+            ->withResponseHandler(new GuidelineRecommenderCallback(
+                fn ($guidelines, $chatHistory) => $this->collectRecommendations($guidelines, $chatHistory)
+            ));
     }
 
-    protected function getContextModel(): Scope
+    private function collectRecommendations($guidelines, ?ChatHistory $chatHistory): void
     {
-        return $this->scope;
-    }
-
-    protected function afterAgentResponse(Response $prismResponse): void
-    {
-        $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
-
-        try {
-            $schema = $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-            $response = $this->getStructuredResponse($prismResponse, $schema, $this->scope);
-        } catch (UnexpectedValueException $e) {
-            $this->feedback = "Error processing response: " . $e->getMessage();
-            $this->showFeedback = true;
-            return;
+        $this->recommendations = collect();
+        foreach ($guidelines as $guideline) {
+            $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
+            $itemVals['chat_history_ulid'] = $chatHistory->ulid->toString();
+            $this->recommendations->push($itemVals);
         }
-
-        if ($response?->feedback) {
-            $this->feedback = $response->feedback;
-            $this->showFeedback = true;
-        }
-
-        if ($response?->guidelines) {
-            $this->recommendations = $this->collectRecommendations($response->guidelines, $this->getChatHistory());
-            unset($this->hasUnreviewedItems);
-        }
+        unset($this->hasUnreviewedItems);
     }
 
     public function confirmAI($guidelineNumber): void
@@ -143,16 +125,5 @@ class IssueFormAnalyzer extends Component
             $this->showFeedback = false;
         }
         unset($this->hasUnreviewedItems);
-    }
-
-    private function collectRecommendations($guidelines, ?ChatHistory $chatHistory): Collection
-    {
-        $recommendations = collect();
-        foreach ($guidelines as $guideline) {
-            $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
-            $itemVals['chat_history_ulid'] = $chatHistory->ulid;
-            $recommendations->push($itemVals);
-        }
-        return $recommendations;
     }
 }

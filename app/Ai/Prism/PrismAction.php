@@ -19,16 +19,12 @@ use Throwable;
 
 trait PrismAction
 {
-    use PrismHistory;
-
     public string $userMessage = '';
     public bool $streaming = false;
     // Populated via wire:stream
     public string $streamedResponse = '';
-    public bool $needsRefresh = false;
     public string $feedback = '';
     public bool $showFeedback = false;
-    public array $toolsCalled = [];
     private float $streamStart;
 
     public function initiateAction(): void
@@ -36,7 +32,6 @@ trait PrismAction
         // Reset state for a new action
         $this->feedback = '';
         $this->showFeedback = false;
-        $this->toolsCalled = [];
         $this->streaming = true;
 
         // Trigger the streaming response
@@ -69,20 +64,16 @@ trait PrismAction
             $this->userMessage = '';
             $response = $finalResponse?->toResponse();
 
-            $this->storeChatHistory(
-                agent: $actionAgent->getAgent(),
-                contextModel: $this->getContextModel(),
-                response: $response,
-                messages: $response ? $actionAgent->mapMessages($response) : [],
-            );
+            // Preserve the streamed response data
+            $actionAgent->storeResponse($response);
 
             // Handle response results
             if ($response) {
                 if ($response->finishReason === FinishReason::Error) {
                     $this->feedback = "**Error:** $response->text";
-                    $this->showFeedback = true;
                 } else {
-                    $this->afterAgentResponse($response);
+                    $this->sendStreamMessage('Processing response... ({:elapsed}s)');
+                    $this->feedback = $actionAgent->handleResponse($response) ?? '';
                 }
             } else {
                 throw new Exception('No response received from AI.');
@@ -94,11 +85,10 @@ trait PrismAction
                 'streamedResponse' => $finalResponse?->responseMessages,
             ]);
             $this->feedback = "**Error:** {$e->getMessage()}";
-            $this->showFeedback = true;
         }
 
+        $this->showFeedback = true;
         $this->streaming = false;
-        $this->needsRefresh = true;
     }
 
     private function collectStream(Request $request, Generator $stream): Generator

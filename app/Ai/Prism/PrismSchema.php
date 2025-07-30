@@ -114,7 +114,7 @@ trait PrismSchema
                 'trace' => $e->getTraceAsString(),
             ]);
 
-            throw new UnexpectedValueException('Error processing structured response: ' . $e->getMessage(), 0, $e);
+            throw new UnexpectedValueException('Error parsing structured output: ' . $e->getMessage(), 0, $e);
         }
     }
 }
