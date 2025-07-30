@@ -11,7 +11,7 @@ class ItemChanged extends AbstractModelChanged
         private readonly Item $item,
         string $action,
         ?array $delta = null,
-        mixed $actor = null,
+        mixed $actor = null
     ) {
         parent::__construct($item, $action, $delta, $actor);
     }
