@@ -107,30 +107,26 @@ trait PrismAction
             foreach ($stream as $chunk) {
                 switch ($chunk->chunkType) {
                     case ChunkType::ToolCall:
-                        $toolCall = $chunk->toolCalls[0] ?? null;
-                        if (!$toolCall) {
-                            break;
+                        foreach ($chunk->toolCalls as $toolCall) {
+                            $data['toolCalls'][] = $toolCall;
+                            $toolCalled = $toolCall->name;
+                            $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
                         }
-                        $data['toolCalls'][] = $toolCall;
-
                         // Add tool call message
-                        $toolCallsMessage = new AssistantMessage($data['text'], $data['toolCalls']);
+                        $toolCallsMessage = new AssistantMessage($data['text'], $chunk->toolCalls);
                         $data['messages'][] = $toolCallsMessage;
                         $pendingResponse->addResponseMessage($toolCallsMessage);
-
-                        $toolCalled = $toolCallsMessage->toolCalls[0]->name;
-                        $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
                         yield $lastStreamMessage => $pendingResponse;
                         break;
                     case ChunkType::ToolResult:
-                        $data['toolResults'][] = $chunk->toolResults[0];
-
+                        foreach ($chunk->toolResults as $toolResult) {
+                            $data['toolResults'][] = $toolResult;
+                        }
                         if ($data['finish'] === FinishReason::ToolCalls) {
                             // Add tool result message
-                            $toolResultsMessage = new ToolResultMessage($data['toolResults']);
+                            $toolResultsMessage = new ToolResultMessage($chunk->toolResults);
                             $data['messages'][] = $toolResultsMessage;
                             $pendingResponse->addResponseMessage($toolResultsMessage);
-
                             // Add the step and reset the accumulator
                             $this->addStreamedStep($data, $pendingResponse);
                             $data = $this->getStreamAccumulator($request);
@@ -176,6 +172,8 @@ trait PrismAction
         } catch (Throwable $e) {
             Log::error('PrismAction collectStream error', [
                 'message' => $e->getMessage(),
+                'chunkType' => $chunk->chunkType ?? null,
+                'chunk' => $chunk ?? null,
                 'trace' => $e->getTraceAsString(),
             ]);
             $data['text'] = $e->getMessage();
