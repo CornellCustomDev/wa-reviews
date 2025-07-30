@@ -2,6 +2,8 @@
 
 namespace App\AiAgents;
 
+use App\Enums\Agents;
+use App\Models\Agent;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Scope;
@@ -62,6 +64,7 @@ class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
         /** @var \App\Models\ChatHistory $content */
         $this->chats()->updateOrCreate([
             'ulid' => $this->getIdentifier(),
+            'agent_id' => Agent::findAgent(Agents::ModelChatAgent)->id,
             'user_id' => auth()->id(),
             'context_type' => get_class($this->context),
             'context_id' => $this->context->id,
@@ -83,6 +86,7 @@ class ModelChatHistory extends ChatHistory implements ChatHistoryInterface
     public function loadChatsFromMemory(): Collection
     {
         return $this->chats()
+            ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('context_type', get_class($this->context))
             ->where('context_id', $this->context->id)
             ->select(['ulid', 'name', 'updated_at'])

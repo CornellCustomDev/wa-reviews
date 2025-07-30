@@ -16,7 +16,13 @@ return new class extends Migration
             $table->foreignId('agent_id')->nullable()->after('ulid')->constrained();
         });
 
-        // Add Agents::GuidelineRecommender to the agents table if it doesn't exist
+        if (DB::table('agents')->where('name', Agents::ModelChatAgent->name)->doesntExist()) {
+            DB::table('agents')->insert([
+                'name' => Agents::ModelChatAgent->name,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
         if (DB::table('agents')->where('name', Agents::GuidelineRecommender->name)->doesntExist()) {
             DB::table('agents')->insert([
                 'name' => Agents::GuidelineRecommender->name,
@@ -24,6 +30,17 @@ return new class extends Migration
                 'updated_at' => now(),
             ]);
         }
+        if (DB::table('agents')->where('name', Agents::StructuredOutput->name)->doesntExist()) {
+            DB::table('agents')->insert([
+                'name' => Agents::StructuredOutput->name,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        // Set all existing chat histories to use the ModelChatAgent by default
+        $agentId = DB::table('agents')->where('name', Agents::ModelChatAgent->name)->value('id');
+        DB::table('chat_histories')->update(['agent_id' => $agentId]);
     }
 
     /**

@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\Agents;
 use App\Enums\GuidelineTools;
 use Illuminate\Database\Eloquent\Casts\AsEnumCollection;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -58,6 +58,7 @@ class Guideline extends Model
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')
+            ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('user_id', $user->id);
     }
 

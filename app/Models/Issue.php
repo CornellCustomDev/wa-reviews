@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Agents;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
@@ -83,6 +84,7 @@ class Issue extends Model
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')
+            ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('user_id', $user->id);
     }
 
