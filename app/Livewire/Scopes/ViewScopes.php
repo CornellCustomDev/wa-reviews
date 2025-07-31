@@ -15,9 +15,11 @@ class ViewScopes extends Component
     public Project $project;
 
     #[Computed]
-    public function scopes(): mixed
+    public function scopes(): Collection
     {
-        return $this->project->scopes()->get();
+        return $this->project->scopes()
+            ->with(['issues:id,scope_id,guideline_id,assessment', 'issues.guideline:id,number'])
+            ->get();
     }
 
     #[Computed]
