@@ -13,16 +13,28 @@
         @foreach($this->scopes as $scope)
             <tr wire:key="{{ $scope->id }}">
                 <td>
-                    {{ $scope->title }}
+                    <a href="{{ route('scope.show', $scope) }}">{{ $scope->title }}</a>
                 </td>
                 <td>
-                    {{ $scope->url }}
+                    <div class="items-center">
+                        <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
+                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
+                    </div>
                 </td>
                 <td>
                     {!! Str::of($scope->notes)->markdown() !!}
                 </td>
                 <td>
-                    {{ $scope->issues()->count() }}
+                    @foreach($scope->issues->sortBy('guideline_id') as $issue)
+                        <x-forms.button
+                            data-cds-button-assessment
+                            class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
+                            size="xs"
+                            href="{{ route('issue.show', $issue) }}"
+                        >
+                            {{ $issue->guideline->getNumber() }}
+                        </x-forms.button>
+                    @endforeach
                 </td>
                 <td class="text-nowrap">
                     <x-forms.button.view
