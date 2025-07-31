@@ -86,6 +86,7 @@ return array(
     'Laravel\\Telescope\\' => array($vendorDir . '/laravel/telescope/src'),
     'Laravel\\SerializableClosure\\' => array($vendorDir . '/laravel/serializable-closure/src'),
     'Laravel\\Prompts\\' => array($vendorDir . '/laravel/prompts/src'),
+    'Laravel\\Nightwatch\\' => array($vendorDir . '/laravel/nightwatch/src'),
     'Laratrust\\' => array($vendorDir . '/santigarcor/laratrust/src'),
     'LarAgent\\' => array($vendorDir . '/maestroerror/laragent/src'),
     'Illuminate\\Support\\' => array($vendorDir . '/laravel/framework/src/Illuminate/Macroable', $vendorDir . '/laravel/framework/src/Illuminate/Collections', $vendorDir . '/laravel/framework/src/Illuminate/Conditionable'),
