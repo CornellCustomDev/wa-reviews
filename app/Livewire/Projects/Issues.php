@@ -15,8 +15,15 @@ class Issues extends Component
     #[Computed]
     public function issues()
     {
-        return $this->project->issues()->with(['scope:id,title'])->get()
-            ->sortBy(['scope.id', 'issue.id']);
+        return $this->project->issues()
+            ->with([
+                'scope:id,title',
+                'guideline:id,number,name,criterion_id,category_id',
+                'guideline.criterion:id,number,name,level',
+                'guideline.category:id,name',
+            ])
+            ->get()
+            ->sortBy(['guideline_id', 'scope.id']);
     }
 
     public function deleteIssue(Issue $issue): void
