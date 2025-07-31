@@ -23,7 +23,13 @@
                 @endif
             </flux:tooltip.content>
         </flux:tooltip>
-   @endif
+    @endif
+
+    @if($issue->impact)
+        <flux:badge data-cds-impact class="{{ Str::of($issue->impact->value())->lower() }}" size="sm">
+            {{ $issue->impact->value() }}
+        </flux:badge>
+    @endif
 
     @if($issue->content_issue)
         <flux:tooltip toggleable position="right" class="align-middle">
@@ -32,12 +38,6 @@
                 <p>Content entry issue</p>
             </flux:tooltip.content>
         </flux:tooltip>
-    @endif
-
-    @if($issue->impact)
-        <flux:badge data-cds-impact class="{{ Str::of($issue->impact->value())->lower() }}" size="sm">
-            {{ $issue->impact->value() }}
-        </flux:badge>
     @endif
 
     @if($issue->isAiGenerated())
