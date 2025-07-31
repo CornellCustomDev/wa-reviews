@@ -33,7 +33,7 @@ class Report extends Component
             ->sortKeys();
     }
 
-    #[Computed('siteimproveUrl')]
+    #[Computed(persist: true)]
     public function siteimproveUrl(Scope $scope): string
     {
         return SiteimproveService::getPageReportUrlForScope($scope);
@@ -49,5 +49,25 @@ class Report extends Component
     {
         $this->modal('view-image')->close();
         $this->selectedImage = null;
+    }
+
+    public function render()
+    {
+        $this->authorize('view', $this->project);
+
+        return view('livewire.projects.report')
+            ->layout('components.layouts.app', [
+                'breadcrumbs' => $this->getBreadcrumbs(),
+            ]);
+    }
+
+    protected function getBreadcrumbs(): array
+    {
+        return [
+            'Projects' => route('projects'),
+            $this->project->name => route('project.show', $this->project),
+
+            'Report' => 'active',
+        ];
     }
 }

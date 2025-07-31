@@ -8,10 +8,10 @@
     $backgroundDark = 'background-color: #d9d9d9;';
     $border = 'border: 1px solid #000;';
     $cellHeading = "$heading $backgroundDark $border";
-    $wrap = 'word-wrap: normal;';
+    $wrap = 'word-wrap: break-word;';
     $columns = '15';
 @endphp
-<table>
+<table style="font-family: Calibri, Arial, sans-serif; font-size: 11px;">
     <tr>
         <td colspan="{{ $columns }}" style="{{ $textXLarge }} {{ $bold }}">Web Accessibility Assessment Review</td>
     </tr>
@@ -40,42 +40,42 @@
     </tr>
     <tr>
         {{-- Widths are supported in Laravel Excel exports --}}
-        <td style="{{ $cellHeading }}" width="50px">ID</td>
-        <td style="{{ $cellHeading }}" width="200px">Criterion</td>
-        <td style="{{ $cellHeading }}" width="500px">Description</td>
-        <td style="{{ $cellHeading }}">Pass</td>
-        <td style="{{ $cellHeading }}">Warn</td>
-        <td style="{{ $cellHeading }}">Fail</td>
-        <td style="{{ $cellHeading }}">N/A</td>
-        <td style="{{ $cellHeading }}" width="350px">Location</td>
-        <td style="{{ $cellHeading }}" width="500px">Observation</td>
-        <td style="{{ $cellHeading }}" width="500px">Recommendation</td>
-        <td style="{{ $cellHeading }}" width="350px">Testing</td>
-        <td style="{{ $cellHeading }}" width="350px">Images</td>
-        <td style="{{ $cellHeading }}" width="100px">Impact</td>
-        <td style="{{ $cellHeading }}">CE Issue</td>
-        <td style="{{ $cellHeading }}" width="300px">Barrier Mitigation Required</td>
+        <td style="{{ $cellHeading }} width:50px;" width="50px">ID</td>
+        <td style="{{ $cellHeading }} width:200px;" width="200px">Criterion</td>
+        <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Description</td>
+        <td style="{{ $cellHeading }} width:50px;">Pass</td>
+        <td style="{{ $cellHeading }} width:50px;">Warn</td>
+        <td style="{{ $cellHeading }} width:50px;">Fail</td>
+        <td style="{{ $cellHeading }} width:50px;">N/A</td>
+        <td style="{{ $cellHeading }} width:100px;" width="100px">Impact</td>
+        <td style="{{ $cellHeading }} width:350px; {{ $wrap }}" width="350px">Location</td>
+        <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Observation</td>
+        <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Recommendation</td>
+        <td style="{{ $cellHeading }} width:350px;" width="350px">Testing</td>
+        <td style="{{ $cellHeading }} width:350px;" width="350px">Images</td>
+        <td style="{{ $cellHeading }} width:50px;">CE Issue</td>
+        <td style="{{ $cellHeading }} width:300px;" width="300px">Barrier Mitigation Required</td>
     </tr>
-    @foreach($issuesByScope as $scope => $issues)
-        @php($scope = $issues[0]->scope)
-        <tr style="{{ $backgroundLight }}">
-            <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">
-                @if($scope)
-                    {{ $scope->title }} ({{ $scope->url }})
-                @else
-                    Issues
-                @endif
-            </td>
-        </tr>
+{{--    @foreach($issuesByScope as $scope => $issues)--}}
+{{--        @php($scope = $issues[0]->scope)--}}
+{{--        <tr style="{{ $backgroundLight }}">--}}
+{{--            <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">--}}
+{{--                @if($scope)--}}
+{{--                    {{ $scope->title }} ({{ $scope->url }})--}}
+{{--                @else--}}
+{{--                    Issues--}}
+{{--                @endif--}}
+{{--            </td>--}}
+{{--        </tr>--}}
         @foreach($issues as $issue)
             <tr>
                 <td>
-                    <a href="{{ route('guidelines.show', $issue->guideline) }}">{{ $issue->guideline->number }}</a>
+                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->guideline->number }}</a>
                 </td>
                 <td>
                     <p>{{ $issue->guideline->criterion->getLongName() }}</p>
                 </td>
-                <td>
+                <td style="{{ $wrap }}">
                     <p>{{ $issue->guideline->name }}</p>
                 </td>
                 <td style="background-color: #caff37; text-align: center; border: 1px solid #000;">
@@ -91,12 +91,15 @@
                     {{ $issue->assessment == \App\Enums\Assessment::Not_Applicable ? 'X' : ' ' }}
                 </td>
                 <td>
+                    {{ $issue->impact ? $issue->impact->value() : ' ' }}
+                </td>
+                <td style="{{ $wrap }}">
                     {{ $issue->target }}
                 </td>
-                <td>
+                <td style="{{ $wrap }}">
                     {!! $issue->description !!}
                 </td>
-                <td>
+                <td style="{{ $wrap }}">
                     {!! $issue->recommendation !!}
                 </td>
                 <td>
@@ -109,13 +112,14 @@
                 <td>
                     @if($issue->image_links)
                         @foreach($issue->image_links as $imagePath)
-                            @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                            {{ $imageName }}
+                            @if($format != 'xlsx')
+                                <a href="{{ $imagePath }}">{{ pathinfo($imagePath, PATHINFO_BASENAME) }}</a>
+                            @else
+                                {{ $imagePath }}
+                            @endif
+                            @if (!$loop->last)<br>@endif
                         @endforeach
                     @endif
-                </td>
-                <td>
-                    {{ $issue->impact ? $issue->impact->value() : ' ' }}
                 </td>
                 <td>
                     {{ $issue->ce_issue ? 'X' : ' ' }}
@@ -125,5 +129,5 @@
                 </td>
             </tr>
         @endforeach
-    @endforeach
+{{--    @endforeach--}}
 </table>

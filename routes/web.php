@@ -53,6 +53,13 @@ Route::group(['middleware' => [CUAuth::class]], function () {
         Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
         Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
         Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
+        Route::get('/{project}/report/raw', function (Project $project) {
+            return view('exports.project-report', [
+                'project' => $project,
+                'issues' => $project->getReportableIssues(),
+                'format' => 'raw',
+            ]);
+        })->name('report.raw')->can('view', 'project');
     });
 
     Route::prefix('scope/{scope}')->name('scope.')->group(function () {

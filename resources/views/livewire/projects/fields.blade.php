@@ -25,7 +25,7 @@
 </x-forms.input>
 <x-forms.input
     label="Siteimprove ID" wire:model="form.siteimprove_id"
-    placeholder="The Siteimprove ID will be added automatically when the project is created."
+    placeholder="The Siteimprove ID will be added automatically when Siteimprove Report URL is provided."
     disabled
 />
 
