@@ -90,7 +90,7 @@ class IssueFormAnalyzer extends Component
         $this->recommendations = collect();
         foreach ($guidelines as $guideline) {
             $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
-            $itemVals['chat_history_ulid'] = $chatHistory->ulid->toString();
+            $itemVals['chat_history_ulid'] = $chatHistory?->ulid->toString();
             $this->recommendations->push($itemVals);
         }
         unset($this->hasUnreviewedItems);
