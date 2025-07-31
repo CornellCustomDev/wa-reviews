@@ -231,7 +231,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public static function mapResponseToItemArray(mixed $response): array
+    public static function mapResponseToItemArray(array|object $response): array
     {
         $response = (array) $response; // Ensure we are working with an array
 
