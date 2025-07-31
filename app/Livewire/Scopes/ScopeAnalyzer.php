@@ -57,7 +57,7 @@ class ScopeAnalyzer extends Component
                 'scope_id' => $this->scope->id,
                 'target' => $guideline['target'],
                 ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
-                'chat_history_id' => $chatHistory?->ulid,
+                'chat_history_ulid' => $chatHistory?->ulid,
             ]);
 
             event(new IssueChanged($issue, 'created', $issue->getAttributes()), $chatHistory?->agent);
