@@ -73,12 +73,12 @@ class IssueForm extends Form
                 'guidelines.criterion_id',
                 'guidelines.category_id',
             ])
-            ->with(['criterion:id,number,level', 'category:id,name'])
+            ->with(['criterion:id,number,name,level', 'category:id,name'])
             ->get()
             ->map(function (Guideline $guideline) {
                 return [
                     'value' => $guideline->id,
-                    'option' => "{$guideline->getNumber()}: {$guideline->getCriterionInfo()} - $guideline->name",
+                    'option' => "<em>{$guideline->getCriterionInfo()} [{$guideline->category->name}]</em> {$guideline->getNumber()}. $guideline->name",
                 ];
             })
             ->toArray();
