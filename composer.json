@@ -14,6 +14,7 @@
         "ext-dom": "*",
         "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
         "laravel/framework": "v12.14.1",
+        "laravel/nightwatch": "^1.11",
         "laravel/telescope": "^5.10",
         "laravel/tinker": "^2.10",
         "livewire/flux": "^2.2",
