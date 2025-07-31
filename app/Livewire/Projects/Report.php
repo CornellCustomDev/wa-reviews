@@ -67,7 +67,7 @@ class Report extends Component
             'Projects' => route('projects'),
             $this->project->name => route('project.show', $this->project),
 
-            $this->project->name => 'active',
+            'Report' => 'active',
         ];
     }
 }

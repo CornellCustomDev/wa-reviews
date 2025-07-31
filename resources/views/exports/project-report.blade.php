@@ -70,7 +70,7 @@
         @foreach($issues as $issue)
             <tr>
                 <td>
-                    <a href="{{ route('guidelines.show', $issue->guideline) }}">{{ $issue->guideline->number }}</a>
+                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->guideline->number }}</a>
                 </td>
                 <td>
                     <p>{{ $issue->guideline->criterion->getLongName() }}</p>
@@ -112,7 +112,11 @@
                 <td>
                     @if($issue->image_links)
                         @foreach($issue->image_links as $imagePath)
-                            <a href="{{ $imagePath }}">{{ pathinfo($imagePath, PATHINFO_BASENAME) }}</a>
+                            @if($format != 'xlsx')
+                                <a href="{{ $imagePath }}">{{ pathinfo($imagePath, PATHINFO_BASENAME) }}</a>
+                            @else
+                                {{ $imagePath }}
+                            @endif
                             @if (!$loop->last)<br>@endif
                         @endforeach
                     @endif
