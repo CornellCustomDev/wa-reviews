@@ -223,6 +223,15 @@ class Project extends Model
 
     public function updateSiteimprove(): void
     {
+        if (empty($this->siteimprove_url)) {
+            if (!empty($this->siteimprove_id)) {
+                // If we have a siteimprove_id already set but the siteimprove_url is empty, we should remove the siteimprove_id
+                $this->update([
+                    'siteimprove_id' => null,
+                ]);
+            }
+            return;
+        }
         $siteimprove_id = $this->siteimprove_id ?: (SiteimproveService::findSite($this->site_url) ?? '');
         if ($siteimprove_id) {
             if (empty($this->siteimprove_id)) {
