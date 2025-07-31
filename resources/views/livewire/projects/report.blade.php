@@ -5,7 +5,17 @@
 
         <div class="col-span-1 order-first md:order-last print:hidden">
             <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
-            <x-forms.button icon="arrow-down-tray" wire:click="exportReport()">Export</x-forms.button>
+            <flux:dropdown>
+                <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
+                <x-forms.menu>
+                    <x-forms.menu.item icon="document-arrow-down" wire:click="exportReport()">
+                        Excel
+                    </x-forms.menu.item>
+                    <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
+                        Raw (for copy/paste)
+                    </x-forms.menu.item>
+                </x-forms.menu>
+            </flux:dropdown>
         </div>
 
         <div class="col-span-3">
