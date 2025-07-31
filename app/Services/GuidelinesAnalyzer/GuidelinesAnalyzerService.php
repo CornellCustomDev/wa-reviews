@@ -116,7 +116,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
 
     public static function getAgent(): Agent
     {
-        return Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+        return Agent::findAgent(Agents::GuidelinesAnalyzer);
     }
 
     public function getTools(): array
@@ -231,15 +231,17 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
-    public static function mapResponseToItemArray(array $response): array
+    public static function mapResponseToItemArray(array|object $response): array
     {
+        $response = (array) $response; // Ensure we are working with an array
+
         return [
             'guideline_id' => $response['number'],
-            'assessment' => Assessment::fromName($response['assessment']),
             'description' => Str::markdown(htmlentities($response['observation'])),
+            'assessment' => Assessment::fromName($response['assessment']),
+            'impact' => Impact::fromName($response['impact']),
             'recommendation' => Str::markdown(htmlentities($response['recommendation'])),
             'testing' => Str::markdown(htmlentities($response['testing'])),
-            'impact' => Impact::fromName($response['impact']),
             'ai_reasoning' => Str::markdown(htmlentities($response['reasoning'])),
             'ai_status' => AIStatus::Generated,
         ];

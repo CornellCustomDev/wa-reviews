@@ -3,20 +3,18 @@
 namespace App\Livewire\Scopes;
 
 use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
+use App\Ai\Prism\Handlers\GuidelineRecommenderCallback;
 use App\Ai\Prism\PrismAction;
-use App\Ai\Prism\PrismSchema;
-use App\Ai\Prism\Tools\StoreIssuesTool;
+use App\Events\IssueChanged;
+use App\Models\ChatHistory;
+use App\Models\Issue;
 use App\Models\Scope;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use Livewire\Component;
-use Prism\Prism\Contracts\Schema;
-use Prism\Prism\Text\Response;
-use UnexpectedValueException;
 
 class ScopeAnalyzer extends Component
 {
     use PrismAction;
-    use PrismSchema;
 
     public Scope $scope;
 
@@ -25,49 +23,46 @@ class ScopeAnalyzer extends Component
         // Authorize because we add issues
         $this->authorize('update', $this->scope);
 
-        $context = "# Context: Web page scope needing review for accessibility issues\n"
-            . GuidelinesAnalyzerService::getScopeContext($this->scope);
-
-        $this->userMessage = $context;
         $this->initiateAction();
     }
 
     public function getAgent(): GuidelineRecommenderAgent
     {
+        $userMessage = "# Context: Web page scope needing review for accessibility issues\n"
+            . GuidelinesAnalyzerService::getScopeContext($this->scope);
+
         return GuidelineRecommenderAgent::for($this->scope)
-            ->withPrompt($this->userMessage);
+            ->withPrompt($userMessage)
+            ->withResponseHandler(new GuidelineRecommenderCallback(
+                fn ($guidelines, $chatHistory) => $this->storeGeneratedIssues($guidelines, $chatHistory)
+            ));
     }
 
-    protected function getContextModel(): Scope
+    private function storeGeneratedIssues($guidelines, ?ChatHistory $chatHistory): void
     {
-        return $this->scope;
-    }
+        $existingIssues = $this->scope->issues()->pluck('guideline_id')->toArray();
 
-    public function getSchema(): Schema
-    {
-        return $this->convertToPrismSchema(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema());
-    }
+        // Create an issue for each guideline
+        foreach ($guidelines as $guideline) {
+            // Sometimes the guideline is a stdClass object, so convert it to an array
+            $guideline = (array)$guideline;
 
-    protected function afterAgentResponse(Response $prismResponse): void
-    {
-        try {
-            $this->sendStreamMessage('Retrieving response... ({:elapsed}s)');
-            $response = $this->getStructuredResponse($prismResponse->text);
-        } catch (UnexpectedValueException $e) {
-            $this->feedback = "Error processing response: " . $e->getMessage();
-            $this->showFeedback = true;
-            return;
+            // Filter any issues that are already in the issues list
+            if (in_array($guideline['number'], $existingIssues)) {
+                continue;
+            }
+
+            $issue = Issue::create([
+                'project_id' => $this->scope->project_id,
+                'scope_id' => $this->scope->id,
+                'target' => $guideline['target'],
+                ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
+                'chat_history_ulid' => $chatHistory?->ulid,
+            ]);
+
+            event(new IssueChanged($issue, 'created', $issue->getAttributes()), $chatHistory?->agent);
         }
 
-        if ($response?->feedback) {
-            $this->feedback = $response->feedback;
-            $this->showFeedback = true;
-        }
-
-        if ($response?->guidelines) {
-            $storeIssuesTool = new StoreIssuesTool();
-            $storeIssuesTool($this->scope->id, $response->guidelines);
-            $this->dispatch('issues-updated');
-        }
+        $this->dispatch('issues-updated');
     }
 }

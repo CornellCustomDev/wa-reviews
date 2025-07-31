@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Agents;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
@@ -34,6 +35,7 @@ class Issue extends Model
         'testing',
         'image_links',
         'content_issue',
+        'chat_history_ulid',
         'ai_reasoning',
         'ai_status',
         'agent_id',
@@ -82,6 +84,7 @@ class Issue extends Model
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')
+            ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('user_id', $user->id);
     }
 
@@ -137,17 +140,17 @@ class Issue extends Model
         $this->save();
     }
 
-    public function applyRecommendation($item_id): void
+    public function applyRecommendation(Item $item): void
     {
-        $this->items->firstWhere('id', $item_id)->markAiAccepted();
+        $item->markAiAccepted();
 
         // Use the item content to update the issue
-        $item = $this->items->firstWhere('id', $item_id);
         $this->update([
             'guideline_id'   => $item->guideline_id,
             'assessment'     => $item->assessment,
             'impact'         => $item->impact,
             'testing'        => $item->testing,
+            'chat_history_ulid' => $item->chat_history_ulid ?? null,
             'ai_reasoning'   => $item->ai_reasoning,
             'ai_status'      => AIStatus::Accepted,
             'recommendation' => $item->recommendation,

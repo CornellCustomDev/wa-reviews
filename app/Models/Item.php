@@ -30,6 +30,7 @@ class Item extends Model
         'content_issue',
         'impact',
         'ai_reasoning',
+        'chat_history_ulid',
         'ai_status',
         'agent_id',
     ];

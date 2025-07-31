@@ -15,6 +15,7 @@ class ChatHistory extends Model
 
     protected $fillable = [
         'ulid',
+        'agent_id',
         'user_id',
         'context_type',
         'context_id',
@@ -25,6 +26,11 @@ class ChatHistory extends Model
     protected $casts = [
         'messages' => 'array',
     ];
+
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(Agent::class);
+    }
 
     public function user(): BelongsTo
     {

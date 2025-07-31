@@ -41,11 +41,8 @@ class UpdateIssueTool extends BaseTool
             return ['status' => 'forbidden', 'feedback' => 'You do not have permission to update this issue.'];
         }
 
-        $agent = Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+        $agent = Agent::findAgent(Agents::GuidelinesAnalyzer);
         $feedback = [];
-
-        // Sometimes the data is a stdClass object, so convert it to an array
-        $data = (array) $data;
 
         $issue->update(GuidelinesAnalyzerService::mapResponseToItemArray($data));
 

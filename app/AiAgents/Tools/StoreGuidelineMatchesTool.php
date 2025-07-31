@@ -45,7 +45,7 @@ class StoreGuidelineMatchesTool extends BaseTool
             return ['status' => 'forbidden', 'feedback' => 'You do not have permission to update this issue.'];
         }
 
-        $agent = Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+        $agent = Agent::findAgent(Agents::GuidelinesAnalyzer);
         $feedback = [];
         $existingGuidelines = $issue->items()->pluck('guideline_id')->toArray();
 

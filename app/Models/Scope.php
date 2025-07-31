@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Agents;
 use App\Enums\GuidelineStatus;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -73,6 +74,7 @@ class Scope extends Model
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')
+            ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('user_id', $user->id);
     }
 

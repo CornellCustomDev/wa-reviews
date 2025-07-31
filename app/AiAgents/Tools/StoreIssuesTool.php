@@ -53,7 +53,7 @@ class StoreIssuesTool extends Tool
             return ['status' => 'forbidden', 'feedback' => 'You do not have permission to update this issue.'];
         }
 
-        $agent = Agent::firstWhere('name', Agents::GuidelinesAnalyzer->value);
+        $agent = Agent::findAgent(Agents::GuidelinesAnalyzer);
         $feedback = [];
         $existingIssues = $scope->issues()->pluck('guideline_id')->toArray();
 

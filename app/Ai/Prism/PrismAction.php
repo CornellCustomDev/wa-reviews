@@ -19,16 +19,12 @@ use Throwable;
 
 trait PrismAction
 {
-    use PrismHistory;
-
     public string $userMessage = '';
     public bool $streaming = false;
     // Populated via wire:stream
     public string $streamedResponse = '';
-    public bool $needsRefresh = false;
     public string $feedback = '';
     public bool $showFeedback = false;
-    public array $toolsCalled = [];
     private float $streamStart;
 
     public function initiateAction(): void
@@ -36,7 +32,6 @@ trait PrismAction
         // Reset state for a new action
         $this->feedback = '';
         $this->showFeedback = false;
-        $this->toolsCalled = [];
         $this->streaming = true;
 
         // Trigger the streaming response
@@ -57,8 +52,8 @@ trait PrismAction
         try {
             $finalResponse = null;
 
-            $pendingRequest = $this->getAgent();
-            $stream = $this->collectStream($pendingRequest->toRequest(), $pendingRequest->asStream());
+            $actionAgent = $this->getAgent();
+            $stream = $this->collectStream($actionAgent->toRequest(), $actionAgent->asStream());
 
             // Process the stream
             foreach ($stream as $message => $streamedResponse) {
@@ -69,20 +64,16 @@ trait PrismAction
             $this->userMessage = '';
             $response = $finalResponse?->toResponse();
 
-            // Store the chat history
-            $historyUlid = $this->storeHistory(
-                contextModel: $this->getContextModel(),
-                response: $response,
-                messages: $response ? $pendingRequest->mapMessages($response) : [],
-            );
+            // Preserve the streamed response data
+            $actionAgent->storeResponse($response);
 
             // Handle response results
             if ($response) {
                 if ($response->finishReason === FinishReason::Error) {
                     $this->feedback = "**Error:** $response->text";
-                    $this->showFeedback = true;
                 } else {
-                    $this->afterAgentResponse($response);
+                    $this->sendStreamMessage('Processing response... ({:elapsed}s)');
+                    $this->feedback = $actionAgent->handleResponse($response) ?? '';
                 }
             } else {
                 throw new Exception('No response received from AI.');
@@ -94,11 +85,10 @@ trait PrismAction
                 'streamedResponse' => $finalResponse?->responseMessages,
             ]);
             $this->feedback = "**Error:** {$e->getMessage()}";
-            $this->showFeedback = true;
         }
 
+        $this->showFeedback = true;
         $this->streaming = false;
-        $this->needsRefresh = true;
     }
 
     private function collectStream(Request $request, Generator $stream): Generator
@@ -117,26 +107,26 @@ trait PrismAction
             foreach ($stream as $chunk) {
                 switch ($chunk->chunkType) {
                     case ChunkType::ToolCall:
-                        $data['toolCalls'][] = $chunk->toolCalls[0];
-
+                        foreach ($chunk->toolCalls as $toolCall) {
+                            $data['toolCalls'][] = $toolCall;
+                            $toolCalled = $toolCall->name;
+                            $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
+                        }
                         // Add tool call message
-                        $toolCallsMessage = new AssistantMessage($data['text'], $data['toolCalls']);
+                        $toolCallsMessage = new AssistantMessage($data['text'], $chunk->toolCalls);
                         $data['messages'][] = $toolCallsMessage;
                         $pendingResponse->addResponseMessage($toolCallsMessage);
-
-                        $toolCalled = $toolCallsMessage->toolCalls[0]->name;
-                        $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
                         yield $lastStreamMessage => $pendingResponse;
                         break;
                     case ChunkType::ToolResult:
-                        $data['toolResults'][] = $chunk->toolResults[0];
-
+                        foreach ($chunk->toolResults as $toolResult) {
+                            $data['toolResults'][] = $toolResult;
+                        }
                         if ($data['finish'] === FinishReason::ToolCalls) {
                             // Add tool result message
-                            $toolResultsMessage = new ToolResultMessage($data['toolResults']);
+                            $toolResultsMessage = new ToolResultMessage($chunk->toolResults);
                             $data['messages'][] = $toolResultsMessage;
                             $pendingResponse->addResponseMessage($toolResultsMessage);
-
                             // Add the step and reset the accumulator
                             $this->addStreamedStep($data, $pendingResponse);
                             $data = $this->getStreamAccumulator($request);
@@ -182,6 +172,8 @@ trait PrismAction
         } catch (Throwable $e) {
             Log::error('PrismAction collectStream error', [
                 'message' => $e->getMessage(),
+                'chunkType' => $chunk->chunkType ?? null,
+                'chunk' => $chunk ?? null,
                 'trace' => $e->getTraceAsString(),
             ]);
             $data['text'] = $e->getMessage();
