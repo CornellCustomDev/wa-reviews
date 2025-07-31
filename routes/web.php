@@ -54,10 +54,10 @@ Route::group(['middleware' => [CUAuth::class]], function () {
         Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
         Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
         Route::get('/{project}/report/raw', function (Project $project) {
-            // Return a simple view of 'project-report.blade.php' with the project data
             return view('exports.project-report', [
                 'project' => $project,
-                'issuesByScope' => $project->getReportableIssues()->groupBy('scope_id'),
+                'issues' => $project->getReportableIssues(),
+                'format' => 'raw',
             ]);
         })->name('report.raw')->can('view', 'project');
     });

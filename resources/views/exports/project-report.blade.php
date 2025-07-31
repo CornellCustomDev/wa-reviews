@@ -56,17 +56,17 @@
         <td style="{{ $cellHeading }} width:50px;">CE Issue</td>
         <td style="{{ $cellHeading }} width:300px;" width="300px">Barrier Mitigation Required</td>
     </tr>
-    @foreach($issuesByScope as $scope => $issues)
-        @php($scope = $issues[0]->scope)
-        <tr style="{{ $backgroundLight }}">
-            <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">
-                @if($scope)
-                    {{ $scope->title }} ({{ $scope->url }})
-                @else
-                    Issues
-                @endif
-            </td>
-        </tr>
+{{--    @foreach($issuesByScope as $scope => $issues)--}}
+{{--        @php($scope = $issues[0]->scope)--}}
+{{--        <tr style="{{ $backgroundLight }}">--}}
+{{--            <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">--}}
+{{--                @if($scope)--}}
+{{--                    {{ $scope->title }} ({{ $scope->url }})--}}
+{{--                @else--}}
+{{--                    Issues--}}
+{{--                @endif--}}
+{{--            </td>--}}
+{{--        </tr>--}}
         @foreach($issues as $issue)
             <tr>
                 <td>
@@ -125,5 +125,5 @@
                 </td>
             </tr>
         @endforeach
-    @endforeach
+{{--    @endforeach--}}
 </table>
