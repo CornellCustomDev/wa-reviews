@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use InvalidArgumentException;
 
 class Issue extends Model
 {
@@ -92,6 +93,42 @@ class Issue extends Model
     public function guideline(): BelongsTo
     {
         return $this->belongsTo(Guideline::class);
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    public function setGuidelineInstance(?int $guideline_instance = null): void
+    {
+        // If no guideline ID is set, we cannot determine an instance
+        if (empty($this->guideline_id)) {
+            return;
+        }
+
+        // If the guideline instance is already set and matches, do nothing
+        if ($guideline_instance && ($guideline_instance === $this->guideline_instance)) {
+            return;
+        }
+
+        $instances = $this->project->issues()->where('guideline_id', $this->guideline_id)->pluck('guideline_instance');
+
+        // Only allow resetting the sequence if the instance is not already set
+        if ($instances->contains($guideline_instance)) {
+            throw new InvalidArgumentException("Guideline instance $guideline_instance already exists for this guideline.");
+        }
+
+        $lastInstance = $instances->max() ?? 0;
+
+        if ($guideline_instance > $lastInstance) {
+            throw new InvalidArgumentException("Guideline instance must be sequential. Last instance is $lastInstance.");
+        }
+
+        // If no guideline instance is provided, set it to the next available instance
+        if (is_null($guideline_instance)) {
+            $guideline_instance = $lastInstance + 1;
+        }
+
+        $this->guideline_instance = $guideline_instance;
     }
 
     public function isAiGenerated(): bool
