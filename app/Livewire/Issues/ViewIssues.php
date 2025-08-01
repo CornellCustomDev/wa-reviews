@@ -20,7 +20,14 @@ class ViewIssues extends Component
     #[Computed(persist: true)]
     public function getIssues()
     {
-        return $this->scope->issues()->get();
+        return $this->scope->issues()
+            ->with([
+                'guideline:id,number,name,criterion_id,category_id',
+                'guideline.criterion:id,number,name,level',
+                'guideline.category:id,name',
+            ])
+            ->get()
+            ->sortBy(['guideline_id']);
     }
 
     #[Computed(persist: true)]

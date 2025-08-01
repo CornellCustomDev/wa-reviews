@@ -67,7 +67,7 @@ class ItemForm extends Form
             ->map(function (Guideline $guideline) {
                 return [
                     'value' => $guideline->id,
-                    'option' => "{$guideline->getNumber()}: {$guideline->getCriterionInfo()} - $guideline->name",
+                    'option' => "<em>{$guideline->getCriterionInfo()} [{$guideline->category->name}]</em> {$guideline->getNumber()}. $guideline->name",
                 ];
             })
             ->toArray();
