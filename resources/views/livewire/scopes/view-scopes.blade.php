@@ -17,8 +17,10 @@
                 </td>
                 <td>
                     <div class="items-center">
-                        <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
-                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
+                        @if($scope->url)
+                            <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
+                            <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
+                        @endif
                     </div>
                 </td>
                 <td>

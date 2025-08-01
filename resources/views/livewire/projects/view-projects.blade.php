@@ -39,8 +39,10 @@
             <tr wire:key="{{ $project->id }}">
                 <td><a href="{{ route('project.show', $project) }}">{{ $project->name }}</a></td>
                 <td>
-                    <a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</a>
-                    <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
+                    @if($project->site_url)
+                        <a href="{{ $project->site_url }}" target="_blank">{{ Str::limit($project->site_url, 40) }}</a>
+                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
+                    @endif
                 </td>
 
                 <td>
