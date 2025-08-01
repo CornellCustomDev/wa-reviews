@@ -27,6 +27,7 @@ class Issue extends Model
         'target',
         'description',
         'guideline_id',
+        'guideline_instance',
         'sia_rule_id',
         'assessment',
         'impact',

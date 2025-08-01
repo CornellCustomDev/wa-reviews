@@ -27,7 +27,7 @@ class ViewIssues extends Component
                 'guideline.category:id,name',
             ])
             ->get()
-            ->sortBy(['guideline_id']);
+            ->sortBy(['guideline_id', 'guideline_instance']);
     }
 
     #[Computed(persist: true)]

@@ -18,7 +18,7 @@ class ViewScopes extends Component
     public function scopes(): Collection
     {
         return $this->project->scopes()
-            ->with(['issues:id,scope_id,guideline_id,assessment', 'issues.guideline:id,number'])
+            ->with(['issues:id,scope_id,guideline_id,guideline_instance,assessment', 'issues.guideline:id,number'])
             ->get();
     }
 
