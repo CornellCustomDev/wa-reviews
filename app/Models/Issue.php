@@ -63,6 +63,23 @@ class Issue extends Model
         'project:id,name,team_id,status,siteimprove_id',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function (Issue $issue) {
+            $issue->setGuidelineInstance($issue->guideline_instance);
+        });
+
+        static::updating(function (Issue $issue) {
+            if ($issue->isDirty('guideline_id')) {
+                // If the guideline ID is changed, we need to set a new instance
+                $issue->setGuidelineInstance();
+            } elseif ($issue->isDirty('guideline_instance')) {
+                // If the guideline instance is changed, we need to validate it
+                $issue->setGuidelineInstance($issue->guideline_instance);
+            }
+        });
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
@@ -98,15 +115,10 @@ class Issue extends Model
     /**
      * @throws InvalidArgumentException
      */
-    public function setGuidelineInstance(?int $guideline_instance = null): void
+    protected function setGuidelineInstance(?int $guideline_instance = null): void
     {
         // If no guideline ID is set, we cannot determine an instance
         if (empty($this->guideline_id)) {
-            return;
-        }
-
-        // If the guideline instance is already set and matches, do nothing
-        if ($guideline_instance && ($guideline_instance === $this->guideline_instance)) {
             return;
         }
 
@@ -118,14 +130,15 @@ class Issue extends Model
         }
 
         $lastInstance = $instances->max() ?? 0;
+        $nextInstance = $lastInstance + 1;
 
-        if ($guideline_instance > $lastInstance) {
-            throw new InvalidArgumentException("Guideline instance must be sequential. Last instance is $lastInstance.");
+        if ($guideline_instance > $nextInstance) {
+            throw new InvalidArgumentException("Guideline instance must be sequential. Next instance is $nextInstance.");
         }
 
         // If no guideline instance is provided, set it to the next available instance
         if (is_null($guideline_instance)) {
-            $guideline_instance = $lastInstance + 1;
+            $guideline_instance = $nextInstance;
         }
 
         $this->guideline_instance = $guideline_instance;
