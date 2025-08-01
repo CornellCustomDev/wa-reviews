@@ -30,11 +30,16 @@
                     @foreach($scope->issues->sortBy('guideline_id') as $issue)
                         <x-forms.button
                             data-cds-button-assessment
-                            class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
+                            class="{{ Str::of(($issue->assessment ?? App\Enums\Assessment::Not_Applicable)->value())->lower()->replace('/', '') }}"
                             size="xs"
                             href="{{ route('issue.show', $issue) }}"
+                            title="View issue {{ $issue->id }}"
                         >
-                            {{ $issue->guideline->getNumber() }}
+                            @if($issue->guideline)
+                                {{ $issue->guideline->getNumber() }}:{{ $issue->guideline_instance }}
+                            @else
+                                N/A
+                            @endif
                         </x-forms.button>
                     @endforeach
                 </td>

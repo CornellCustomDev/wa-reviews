@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Criterion;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Criterion>
+ * @extends Factory<Criterion>
  */
 class CriterionFactory extends Factory
 {
@@ -17,8 +18,8 @@ class CriterionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->words,
-            'number' => $this->faker->numberBetween(1, 4).'.'.$this->faker->numberBetween(1, 5).'.'.$this->faker->numberBetween(1, 13),
+            'name' => $this->faker->words(3, true),
+            'number' => $this->faker->numberBetween(1, 4) . '.' . $this->faker->numberBetween(1, 5) . '.' . $this->faker->numberBetween(1, 13),
             'level' => $this->faker->randomElement(['A', 'AA', 'AAA']),
         ];
     }

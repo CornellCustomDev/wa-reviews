@@ -23,7 +23,7 @@ class Issues extends Component
                 'guideline.category:id,name',
             ])
             ->get()
-            ->sortBy(['guideline_id', 'scope.id']);
+            ->sortBy(['guideline_id', 'guideline_instance']);
     }
 
     public function deleteIssue(Issue $issue): void

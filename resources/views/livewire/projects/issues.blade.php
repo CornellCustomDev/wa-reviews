@@ -2,6 +2,7 @@
     <table class="table striped bordered">
         <thead>
         <tr>
+            <td></td>
             <th>Scope</th>
             <th>Target</th>
             <th>Issue</th>
@@ -15,9 +16,18 @@
         <tbody>
         @foreach ($this->issues() as $issue)
             <tr wire:key="{{ $issue->id }}">
+                <td class="text-nowrap">
+                    <a href="{{ route('issue.show', $issue) }}" title="View issue {{ $issue->id }}">
+                        @if($issue->guideline)
+                            {{ $issue->guideline->number }}:{{ $issue->guideline_instance }}
+                        @else
+                            N/A
+                        @endif
+                    </a>
+                </td>
                 <td>
                     @if($issue->scope)
-                        <a href="{{ route('scope.show', $issue->scope) }}">
+                        <a href="{{ route('scope.show', $issue->scope) }}" title="View scope {{ $issue->scope->id }}">
                             {{ $issue->scope->title }}
                         </a>
                     @endif

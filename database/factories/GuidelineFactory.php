@@ -4,10 +4,11 @@ namespace Database\Factories;
 
 use App\Models\Category;
 use App\Models\Criterion;
+use App\Models\Guideline;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Guideline>
+ * @extends Factory<Guideline>
  */
 class GuidelineFactory extends Factory
 {
