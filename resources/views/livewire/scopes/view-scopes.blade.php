@@ -34,7 +34,11 @@
                             size="xs"
                             href="{{ route('issue.show', $issue) }}"
                         >
-                            {{ $issue->guideline->getNumber() }}
+                            @if($issue->guideline)
+                                {{ $issue->guideline->getNumber() }}
+                            @else
+                                N/A
+                            @endif
                         </x-forms.button>
                     @endforeach
                 </td>
