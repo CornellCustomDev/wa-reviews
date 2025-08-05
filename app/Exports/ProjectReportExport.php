@@ -19,7 +19,7 @@ class ProjectReportExport implements FromView
         return view('exports.project-report', [
             'project' => $this->project,
             'issues' => $issues,
-            'issuesByScope' => $issues->groupBy('scope_id'),
+//            'issuesByScope' => $issues->groupBy('scope_id'),
             'format' => 'xlsx',
         ]);
     }
