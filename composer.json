@@ -13,6 +13,7 @@
         "php": "^8.3",
         "ext-dom": "*",
         "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
+        "google/apiclient": "^2.18",
         "laravel/framework": "v12.14.1",
         "laravel/nightwatch": "^1.11",
         "laravel/telescope": "^5.10",
@@ -48,6 +49,7 @@
         }
     },
     "scripts": {
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -67,7 +69,11 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        }
+        },
+        "google/apiclient-services": [
+            "Drive",
+            "Sheets"
+        ]
     },
     "config": {
         "optimize-autoloader": true,
