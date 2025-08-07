@@ -9,7 +9,7 @@
                 <th style="width: 100px;">Alfa Id</th>
                 <th>Name</th>
                 <th>WCAG</th>
-                <th>Act Rule</th>
+{{--                <th>Act Rule</th>--}}
                 <th>Criteria</th>
             </tr>
         </thead>
@@ -30,11 +30,11 @@
                         <a href="{{ $criterion->requirements->link }}">{{ $criterion->number }}</a>@if(!$loop->last), @endif
                     @endforeach
                 </td>
-                <td>
-                    @if($rule->act_rule_id)
-                        <a href="{{ route('act-rules.show', $rule->act_rule_id) }}">{{ $rule->act_rule_id }}</a>
-                    @endif
-                </td>
+{{--                <td>--}}
+{{--                    @if($rule->act_rule_id)--}}
+{{--                        <a href="{{ route('act-rules.show', $rule->act_rule_id) }}">{{ $rule->act_rule_id }}</a>--}}
+{{--                    @endif--}}
+{{--                </td>--}}
                 <td>
                     @if($rule->act_rule_id)
                         @foreach($rule->actRule->criteria as $criterion)
