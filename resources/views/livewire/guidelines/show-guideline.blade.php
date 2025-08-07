@@ -32,18 +32,18 @@
                         </a>
                     </td>
                 </tr>
-                <tr class="hidden">
-                    <th>ACT Rules</th>
-                    <td>
-                        @if($guideline->actRules->isNotEmpty())
-                            <ul>
-                                @foreach($guideline->actRules as $rule)
-                                    <li><a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a></li>
-                                @endforeach
-                            </ul>
-                        @endif
-                    </td>
-                </tr>
+{{--                <tr class="hidden">--}}
+{{--                    <th>ACT Rules</th>--}}
+{{--                    <td>--}}
+{{--                        @if($guideline->actRules->isNotEmpty())--}}
+{{--                            <ul>--}}
+{{--                                @foreach($guideline->actRules as $rule)--}}
+{{--                                    <li><a href="{{ route('act-rules.show', $rule) }}">{{ $rule->name }}</a></li>--}}
+{{--                                @endforeach--}}
+{{--                            </ul>--}}
+{{--                        @endif--}}
+{{--                    </td>--}}
+{{--                </tr>--}}
             </table>
 
             {!! Str::markdown($guideline->notes) !!}

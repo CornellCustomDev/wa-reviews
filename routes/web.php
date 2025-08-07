@@ -115,10 +115,10 @@ Route::group(['middleware' => [AppTesters::class]], function () {
         Route::get('/{category}', ShowCategory::class)->name('show');
     });
 
-    Route::prefix('act-rules')->name('act-rules.')->group(function () {
-        Route::get('/', ViewRules::class)->name('index');
-        Route::get('/{rule}', ShowRule::class)->name('show');
-    });
+//    Route::prefix('act-rules')->name('act-rules.')->group(function () {
+//        Route::get('/', ViewRules::class)->name('index');
+//        Route::get('/{rule}', ShowRule::class)->name('show');
+//    });
 
     Route::prefix('siteimprove-rules')->name('siteimprove-rules.')->group(function () {
         Route::get('/', ViewSiteimproveRules::class)->name('index');
