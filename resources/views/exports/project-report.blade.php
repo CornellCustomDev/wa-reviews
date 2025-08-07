@@ -9,7 +9,7 @@
     $border = 'border: 1px solid #000;';
     $cellHeading = "$heading $backgroundDark $border";
     $wrap = 'word-wrap: break-word;';
-    $columns = '15';
+    $columns = '16';
 @endphp
 <table style="font-family: Calibri, Arial, sans-serif; font-size: 11px;">
     <tr>
@@ -48,10 +48,11 @@
         <td style="{{ $cellHeading }} width:50px;">Fail</td>
         <td style="{{ $cellHeading }} width:50px;">N/A</td>
         <td style="{{ $cellHeading }} width:100px;" width="100px">Impact</td>
+        <td style="{{ $cellHeading }}">Scope</td>
         <td style="{{ $cellHeading }} width:350px; {{ $wrap }}" width="350px">Location</td>
         <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Observation</td>
         <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Recommendation</td>
-        <td style="{{ $cellHeading }} width:350px;" width="350px">Testing</td>
+        <td style="{{ $cellHeading }} width:350px; {{ $wrap }}" width="350px">Testing</td>
         <td style="{{ $cellHeading }} width:350px;" width="350px">Images</td>
         <td style="{{ $cellHeading }} width:50px;">CE Issue</td>
         <td style="{{ $cellHeading }} width:300px;" width="300px">Barrier Mitigation Required</td>
@@ -61,7 +62,7 @@
 {{--        <tr style="{{ $backgroundLight }}">--}}
 {{--            <td colspan="{{ $columns }}" style="{{ $bold }} {{ $backgroundLight }} {{ $textMedium }}">--}}
 {{--                @if($scope)--}}
-{{--                    {{ $scope->title }} ({{ $scope->url }})--}}
+{{--                    {{ $scope->title }} (<a href="{{ $scope->url }}">{{ $scope->url }}</a>)--}}
 {{--                @else--}}
 {{--                    Issues--}}
 {{--                @endif--}}
@@ -92,6 +93,15 @@
                 </td>
                 <td>
                     {{ $issue->impact ? $issue->impact->value() : ' ' }}
+                </td>
+                <td>
+                    @if($issue->scope)
+                        <b>{{ $issue->scope->title }}</b>
+                        @if($issue->scope?->url)
+                            <br>
+                            <a href="{{ $issue->scope->url }}">{{ $issue->scope->url }}</a>
+                        @endif
+                    @endif
                 </td>
                 <td style="{{ $wrap }}">
                     {{ $issue->target }}
