@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'eb15395dc20bc920b44cc4e65a39f18033d4b3ca',
+        'reference' => 'd217c074924c4a23f036afc08d2cca8dade24457',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -64,7 +64,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'eb15395dc20bc920b44cc4e65a39f18033d4b3ca',
+            'reference' => 'd217c074924c4a23f036afc08d2cca8dade24457',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

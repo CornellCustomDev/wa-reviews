@@ -14,6 +14,9 @@
                     <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
                         Raw (for copy/paste)
                     </x-forms.menu.item>
+                    <x-forms.menu.item icon="arrow-top-right-on-square" wire:click="exportGoogleSheet()">
+                        Google Sheet
+                    </x-forms.menu.item>
                 </x-forms.menu>
             </flux:dropdown>
         </div>
