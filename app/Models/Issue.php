@@ -22,6 +22,8 @@ class Issue extends Model
 {
     use HasFactory, SoftDeletes;
 
+    const string INSTANCE_DIVIDER = '.';
+
     protected $fillable = [
         'project_id',
         'scope_id',

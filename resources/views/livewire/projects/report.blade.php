@@ -100,7 +100,7 @@
                         data-cds-button-assessment
                         class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
                         size="xs"
-                    >{{ $issue->guideline->number }}</x-forms.button>
+                    >{{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}</x-forms.button>
 
                     <span>{{ $issue->guideline->name }}</span>
                 </h4>

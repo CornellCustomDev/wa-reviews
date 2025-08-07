@@ -47,7 +47,7 @@ class ShowIssue extends Component
     protected function getBreadcrumbs(): array
     {
         $issueIdentifier = $this->issue->guideline_id
-            ? $this->issue->guideline->getNumber() . ':' . $this->issue->guideline_instance
+            ? $this->issue->guideline->getNumber().Issue::INSTANCE_DIVIDER.$this->issue->guideline_instance
             : $this->issue->id;
 
         return [

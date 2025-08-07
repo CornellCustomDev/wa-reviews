@@ -22,7 +22,7 @@
                 <td class="text-nowrap">
                     <a href="{{ route('issue.show', $issue) }}" title="View issue {{ $issue->id }}">
                         @if($issue->guideline)
-                            {{ $issue->guideline->number }}:{{ $issue->guideline_instance }}
+                            {{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
                         @else
                             N/A
                         @endif
