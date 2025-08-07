@@ -33,6 +33,7 @@ use App\Livewire\Teams\Manage;
 use App\Livewire\Teams\ShowTeam;
 use App\Models\Project;
 use App\Models\Team;
+use App\Services\GoogleApi\GoogleService;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\AppTesters;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +64,17 @@ Route::group(['middleware' => [AppTesters::class]], function () {
                     'format' => 'raw',
                 ]);
             })->name('report.raw')->can('view', 'project');
+            Route::get('/{project}/report/google-export', function (Project $project, GoogleService $googleService) {
+                $spreadsheetId = $googleService->createTestSheet();
+
+                if (!$spreadsheetId) {
+                    return redirect()->route('google.oauth', [
+                        'target' => route('project.report.google-export', $project),
+                    ]);
+                }
+
+                return redirect()->away('https://docs.google.com/spreadsheets/d/' . $spreadsheetId);
+            })->name('report.google-export')->can('view', 'project');
         });
 
         Route::prefix('scope/{scope}')->name('scope.')->group(function () {

@@ -10,13 +10,15 @@ class GoogleController extends BaseController
 {
     public function redirect(Request $request, GoogleService $googleService)
     {
-        return redirect()->away($googleService->getAuthUrl($request->fullUrl()));
+        $target = $request->get('target');
+
+        return redirect()->away($googleService->getAuthUrl($target));
     }
 
     public function callback(Request $request, GoogleService $googleService)
     {
         $code = $request->get('code');
-        $target = $request->get('target', route('projects'));
+        $target = $request->get('state', route('projects'));
 
         if ($code) {
             $googleService->setAuthCode($code);

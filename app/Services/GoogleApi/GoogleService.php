@@ -31,16 +31,11 @@ class GoogleService
 
     public function getAuthUrl(?string $target = null): string
     {
-        $queryParams = [];
         if ($target) {
-            // If a target URL is provided, use it for the redirect after authorization
-            $queryParams['redirect_uri'] = route(
-                name: 'google.oauth.callback',
-                parameters: ['target' => urlencode($target)]
-            );
+            $this->client->setState($target);
         }
 
-        return $this->client->createAuthUrl(queryParams: $queryParams);
+        return $this->client->createAuthUrl();
     }
 
     public function setAuthCode(string $code): void
