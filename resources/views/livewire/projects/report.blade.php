@@ -86,12 +86,7 @@
     @foreach($this->issues() as $issues)
         @php($scope = $issues[0]->scope)
         <div class="mb-4">
-            @if($scope)
-                <h3 class="mb-0">{{ $scope->title }}</h3>
-                <flux:subheading class="mb-2"><a href="{{ $scope->url }}">{{ $scope->url }}</a></flux:subheading>
-            @else
-                <h3 class="mb-0">Issues</h3>
-            @endif
+            <h3>{{ $scope?->title ?? 'Issues' }}</h3>
             @foreach($issues as $issue)
                 <h4 class="font-semibold mb-0.5">
                     <x-forms.button
@@ -100,7 +95,7 @@
                         data-cds-button-assessment
                         class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
                         size="xs"
-                    >{{ $issue->guideline->number }}</x-forms.button>
+                    >{{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}</x-forms.button>
 
                     <span>{{ $issue->guideline->name }}</span>
                 </h4>
@@ -118,6 +113,12 @@
                 @if($issue->impact)
                     <x-forms.field-display label="Impact" variation="inline">
                         {{ $issue->impact->value() }}
+                    </x-forms.field-display>
+                @endif
+
+                @if($issue->scope)
+                    <x-forms.field-display label="Page URL">
+                        <a href="{{ $issue->scope->url }}">{{ $issue->scope->url }}</a>
                     </x-forms.field-display>
                 @endif
 

@@ -16,10 +16,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use InvalidArgumentException;
 
 class Issue extends Model
 {
     use HasFactory, SoftDeletes;
+
+    const string INSTANCE_DIVIDER = '.';
 
     protected $fillable = [
         'project_id',
@@ -27,6 +30,7 @@ class Issue extends Model
         'target',
         'description',
         'guideline_id',
+        'guideline_instance',
         'sia_rule_id',
         'assessment',
         'impact',
@@ -61,6 +65,23 @@ class Issue extends Model
         'project:id,name,team_id,status,siteimprove_id',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function (Issue $issue) {
+            $issue->setGuidelineInstance($issue->guideline_instance);
+        });
+
+        static::updating(function (Issue $issue) {
+            if ($issue->isDirty('guideline_id')) {
+                // If the guideline ID is changed, we need to set a new instance
+                $issue->setGuidelineInstance();
+            } elseif ($issue->isDirty('guideline_instance')) {
+                // If the guideline instance is changed, we need to validate it
+                $issue->setGuidelineInstance($issue->guideline_instance);
+            }
+        });
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
@@ -91,6 +112,38 @@ class Issue extends Model
     public function guideline(): BelongsTo
     {
         return $this->belongsTo(Guideline::class);
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    protected function setGuidelineInstance(?int $guideline_instance = null): void
+    {
+        // If no guideline ID is set, we cannot determine an instance
+        if (empty($this->guideline_id)) {
+            return;
+        }
+
+        $instances = $this->project->issues()->where('guideline_id', $this->guideline_id)->pluck('guideline_instance');
+
+        // Only allow resetting the sequence if the instance is not already set
+        if ($instances->contains($guideline_instance)) {
+            throw new InvalidArgumentException("Guideline instance $guideline_instance already exists for this guideline.");
+        }
+
+        $lastInstance = $instances->max() ?? 0;
+        $nextInstance = $lastInstance + 1;
+
+        if ($guideline_instance > $nextInstance) {
+            throw new InvalidArgumentException("Guideline instance must be sequential. Next instance is $nextInstance.");
+        }
+
+        // If no guideline instance is provided, set it to the next available instance
+        if (is_null($guideline_instance)) {
+            $guideline_instance = $nextInstance;
+        }
+
+        $this->guideline_instance = $guideline_instance;
     }
 
     public function isAiGenerated(): bool

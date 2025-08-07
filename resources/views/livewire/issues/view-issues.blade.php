@@ -9,6 +9,7 @@
     <table class="table striped bordered">
         <thead>
         <tr>
+            <td></td>
             <th>Target</th>
             <th>Issue</th>
             <th>Assessment</th>
@@ -18,6 +19,15 @@
         <tbody>
         @foreach($this->getIssues() as $issue)
             <tr wire:key="{{ $issue->id }}">
+                <td class="text-nowrap">
+                    <a href="{{ route('issue.show', $issue) }}" title="View issue {{ $issue->id }}">
+                        @if($issue->guideline)
+                            {{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
+                        @else
+                            N/A
+                        @endif
+                    </a>
+                </td>
                 <td>
                     {{ $issue->target }}
                 </td>

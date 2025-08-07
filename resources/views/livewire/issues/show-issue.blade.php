@@ -7,7 +7,11 @@
         @endif
     </div>
 
-    <h1>{{ $issue->project->name }}: Issue</h1>
+    <h1>{{ $issue->project->name }}: Issue
+        @if($issue->guideline_id)
+            {{ $issue->guideline->getNumber().\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
+        @endif
+    </h1>
 
     <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4 mb-8 min-h-16" x-data="{ edit: $wire.entangle('showEdit').live }">
         <div class="float-right">
@@ -22,10 +26,13 @@
         </div>
 
         <div x-show="!edit">
-            @if($issue->scope?->url)
-                <x-forms.field-display variation="inline" label="Page URL">
-                    <a href="{{ $issue->scope->url }}" target="_blank">{{ $issue->scope->url }}</a>
-                    <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
+            @if($issue->scope)
+                <x-forms.field-display variation="inline" label="Scope">
+                    <a href="{{ route('scope.show', $issue->scope) }}">{{ $issue->scope->title }}</a>
+                    @if($issue->scope->url)
+                        (<a href="{{ $issue->scope->url }}" target="_blank">{{ $issue->scope->url }}</a>
+                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />)
+                    @endif
                 </x-forms.field-display>
             @endif
             @if($issue->siaRule)

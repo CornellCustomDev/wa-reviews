@@ -20,6 +20,17 @@ return new class extends Migration
         ]);
         $id = DB::table('criteria')->where('number', 'UX')->value('id');
 
+        // If category_id 11 does not exist, create it
+        if (!DB::table('categories')->where('id', 11)->exists()) {
+            DB::table('categories')->insert([
+                'id' => 11,
+                'name' => 'Best Practice',
+                'description' => 'Best practices which assure quality for accessible user experience.',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
         DB::table('guidelines')->insert([
             'id' => 102,
             'number' => 102,

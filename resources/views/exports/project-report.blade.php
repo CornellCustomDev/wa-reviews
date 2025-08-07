@@ -40,7 +40,7 @@
     </tr>
     <tr>
         {{-- Widths are supported in Laravel Excel exports --}}
-        <td style="{{ $cellHeading }} width:50px;" width="50px">ID</td>
+        <td style="{{ $cellHeading }} width:75px;" width="75px">ID</td>
         <td style="{{ $cellHeading }} width:200px;" width="200px">Criterion</td>
         <td style="{{ $cellHeading }} width:500px; {{ $wrap }}" width="500px">Description</td>
         <td style="{{ $cellHeading }} width:50px;">Pass</td>
@@ -71,7 +71,7 @@
         @foreach($issues as $issue)
             <tr>
                 <td>
-                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->guideline->number }}</a>
+                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}</a>
                 </td>
                 <td>
                     <p>{{ $issue->guideline->criterion->getLongName() }}</p>
