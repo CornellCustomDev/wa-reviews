@@ -13,4 +13,9 @@ class GoogleToken extends Model
         'expires_in',
         'created_at_token',
     ];
+
+    protected $casts = [
+        'expires_in' => 'integer',
+        'created_at_token' => 'datetime',
+    ];
 }

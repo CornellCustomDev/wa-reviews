@@ -3,16 +3,16 @@
 namespace App\Services\GoogleApi;
 
 use App\Models\GoogleToken;
+use Exception;
 use Google\Client;
 use Google\Service\Sheets;
-use Google\Service\Sheets\Spreadsheet;
-use Google\Service\Sheets\ValueRange;
 use Illuminate\Support\Facades\Auth;
 use function route;
 
 class GoogleService
 {
     private Client $client;
+    private bool $tokenLoaded = false;
 
     public function __construct()
     {
@@ -21,12 +21,11 @@ class GoogleService
         $this->client->setClientId(config('googleapi.client_id'));
         $this->client->setClientSecret(config('googleapi.client_secret'));
         $this->client->setScopes(config('googleapi.scopes'));
-
         $this->client->setRedirectUri(route('google.oauth.callback'));
 
-//        $client->setApplicationName(config('app.name'));
-//        $client->setAccessType('offline');
-//        $client->setPrompt('consent');
+        $this->client->setApplicationName(config('app.name'));
+        $this->client->setAccessType('offline');
+        $this->client->setPrompt('consent');
     }
 
     public function getAuthUrl(?string $target = null): string
@@ -42,64 +41,124 @@ class GoogleService
     {
         $token = $this->client->fetchAccessTokenWithAuthCode($code);
 
+        if (isset($token['error'])) {
+            throw new Exception('Google OAuth exchange failed: ' . $token['error']);
+        }
+
+        $userId = Auth::id();
+        $existing = GoogleToken::firstWhere('user_id', $userId);
+
+        $refreshToken = $token['refresh_token'] ?? $existing?->refresh_token;
+
         GoogleToken::updateOrCreate(
-            ['user_id' => Auth::id()],
+            ['user_id' => $userId],
             [
-                'access_token' => $token['access_token'],
-                'refresh_token' => $token['refresh_token'] ?? null,
-                'expires_in' => $token['expires_in'] ?? null,
+                'access_token' => $token['access_token'] ?? null,
+                'refresh_token' => $refreshToken,
+                'expires_in' => isset($token['expires_in']) ? (int)$token['expires_in'] : null,
                 'created_at_token' => now(),
             ]
         );
+
+        $this->tokenLoaded = false;
     }
 
-    private function refreshUserToken(): void
+    public function ensureAuthorized(): bool
     {
-        // If we have a stored token for this user
+        // If the app session expired, we can't load a per-user token.
+        if (!Auth::id()) {
+            return false;
+        }
+
+        $this->loadUserToken();
+
+        $token = $this->client->getAccessToken();
+        if (empty($token) || empty($token['access_token'])) {
+            return false;
+        }
+
+        // If expiry meta is missing, be conservative and try to refresh.
+        if (empty($token['expires_in']) || empty($token['created'])) {
+            return $this->refreshAccessTokenIfPossible();
+        }
+
+        if ($this->client->isAccessTokenExpired()) {
+            return $this->refreshAccessTokenIfPossible();
+        }
+
+        return true;
+    }
+
+    /**
+     * Lazily load the token from storage into the client.
+     */
+    private function loadUserToken(): void
+    {
+        if ($this->tokenLoaded) {
+            return;
+        }
+
         $tokenRecord = GoogleToken::firstWhere('user_id', Auth::id());
 
         if ($tokenRecord) {
             $this->client->setAccessToken([
                 'access_token' => $tokenRecord->access_token,
                 'refresh_token' => $tokenRecord->refresh_token,
-                'expires_in' => $tokenRecord->expires_in,
+                'expires_in' => $tokenRecord->expires_in ? (int)$tokenRecord->expires_in : null,
                 'created' => $tokenRecord->created_at_token?->timestamp ?? time(),
             ]);
-
-            if ($this->client->isAccessTokenExpired()) {
-                $newToken = $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
-                $tokenRecord->update([
-                    'access_token' => $newToken['access_token'],
-                    'expires_in' => $newToken['expires_in'] ?? null,
-                    'created_at_token' => now(),
-                ]);
-                $this->client->setAccessToken($newToken);
-            }
         }
+
+        $this->tokenLoaded = true;
     }
 
-    public function createTestSheet(): ?string
+    private function refreshAccessTokenIfPossible(): bool
     {
-        self::refreshUserToken();
-
-        if (!$this->client->getAccessToken() || $this->client->isAccessTokenExpired()) {
-            // Should we trigger google oauth flow here?
-            return null;
+        $refreshToken = $this->client->getRefreshToken();
+        if (!$refreshToken) {
+            return false;
         }
 
-        $service = new Sheets($this->client);
+        $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
 
-        $spreadsheet = new Spreadsheet([
-            'properties' => ['title' => 'Test Export'],
+        if (isset($newToken['error'])) {
+            // Clear stored tokens so the next call redirects to OAuth
+            GoogleToken::where('user_id', Auth::id())->update([
+                'access_token' => null,
+                'expires_in' => null,
+                'refresh_token' => null,
+                'created_at_token' => null,
+            ]);
+
+            // Leave client in a clean state (empty array avoids invalid json token)
+            $this->client->setAccessToken([]);
+
+            return false;
+        }
+
+        GoogleToken::where('user_id', Auth::id())->update([
+            'access_token' => $newToken['access_token'] ?? null,
+            'expires_in' => isset($newToken['expires_in']) ? (int)$newToken['expires_in'] : null,
+            'refresh_token' => $refreshToken,
+            'created_at_token' => now(),
         ]);
-        $spreadsheet = $service->spreadsheets->create($spreadsheet);
 
-        // Write data
-        $range = 'Sheet1!A1';
-        $values = [['Hello World']];
-        $body = new ValueRange(['values' => $values]);
-        $service->spreadsheets_values->update($spreadsheet->spreadsheetId, $range, $body, ['valueInputOption' => 'RAW']);
+        $newToken['refresh_token'] = $refreshToken;
+        $newToken['created'] = time();
+        $this->client->setAccessToken($newToken);
 
-        return $spreadsheet->spreadsheetId;
+        return !$this->client->isAccessTokenExpired();
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function getSheetsService(): Sheets
+    {
+        if (!$this->ensureAuthorized()) {
+            throw new Exception('Google API client is not authorized.');
+        }
+
+        return new Sheets($this->client);
     }
 }
