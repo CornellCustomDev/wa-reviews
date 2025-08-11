@@ -97,7 +97,7 @@
                 <td>
                     @if($issue->scope)
                         <b>{{ $issue->scope->title }}</b>
-                        @if($issue->scope?->url)
+                        @if($issue->scope->url)
                             <br>
                             <a href="{{ $issue->scope->url }}">{{ $issue->scope->url }}</a>
                         @endif

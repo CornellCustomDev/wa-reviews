@@ -14,13 +14,11 @@
                     <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
                         Raw (for copy/paste)
                     </x-forms.menu.item>
-                    <x-forms.menu.item icon="arrow-top-right-on-square" wire:click="google">
+                    <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
                         Google Sheet
                     </x-forms.menu.item>
                 </x-forms.menu>
             </flux:dropdown>
-            {{--                Add a livewire loading here for exportGoogleSheet --}}
-            <div wire:loading wire:target="google" class="absolute right-2 top-2">Generating</div>
         </div>
 
         <div class="col-span-3">

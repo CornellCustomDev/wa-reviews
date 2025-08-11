@@ -27,20 +27,6 @@ class Report extends Component
         );
     }
 
-    public function google(GoogleService $googleService): RedirectResponse
-    {
-        $spreadsheetId = $googleService->createTestSheet();
-
-        if (!$spreadsheetId) {
-            return redirect()->route('google.oauth', [
-                'target' => route('project.report.google-export', $this->project),
-            ]);
-        }
-
-        // Go to the sheet now
-        return redirect()->away('https://docs.google.com/spreadsheets/d/' . $spreadsheetId);
-    }
-
     #[Computed]
     public function issues()
     {

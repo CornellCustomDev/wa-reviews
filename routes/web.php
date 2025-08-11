@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\ReportGoogleController;
+use App\Http\Controllers\ReportRawController;
 use App\Livewire\Ai\AnalyzePage;
 use App\Livewire\Categories\ShowCategory;
 use App\Livewire\Categories\ViewCategories;
@@ -56,25 +58,11 @@ Route::group(['middleware' => [AppTesters::class]], function () {
             Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
             Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
             Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
-            Route::get('/{project}/report', Report::class)->name('report')->can('view', 'project');
-            Route::get('/{project}/report/raw', function (Project $project) {
-                return view('exports.project-report', [
-                    'project' => $project,
-                    'issues' => $project->getReportableIssues(),
-                    'format' => 'raw',
-                ]);
-            })->name('report.raw')->can('view', 'project');
-            Route::get('/{project}/report/google-export', function (Project $project, GoogleService $googleService) {
-                $spreadsheetId = $googleService->createTestSheet();
-
-                if (!$spreadsheetId) {
-                    return redirect()->route('google.oauth', [
-                        'target' => route('project.report.google-export', $project),
-                    ]);
-                }
-
-                return redirect()->away('https://docs.google.com/spreadsheets/d/' . $spreadsheetId);
-            })->name('report.google-export')->can('view', 'project');
+            Route::group(['middleware' => 'can:view,project'], function () {
+                Route::get('/{project}/report', Report::class)->name('report');
+                Route::get('/{project}/report/raw', ReportRawController::class)->name('report.raw');
+                Route::get('/{project}/report/google', ReportGoogleController::class)->name('report.google');
+            });
         });
 
         Route::prefix('scope/{scope}')->name('scope.')->group(function () {
