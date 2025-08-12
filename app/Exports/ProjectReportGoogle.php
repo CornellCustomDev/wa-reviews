@@ -149,10 +149,17 @@ class ProjectReportGoogle
             $issueIdentifier = $issue->guideline->number.Issue::INSTANCE_DIVIDER.$issue->guideline_instance;
 
             $scope = '';
+            $scopeFormats = [];
             if ($issue->scope) {
                 $scope = $issue->scope->title;
+                $scopeFormats[] = Sheet::textFormatRun(0, Sheet::textFormat(bold: true));
+                // If the scope has a URL, add it to the scope text and formats
                 if ($issue->scope->url) {
                     $scope .= "\n" . $issue->scope->url;
+                    $scopeFormats[] = Sheet::textFormatRun(
+                        Str::length($issue->scope->title),
+                        Sheet::textFormat(link: $issue->scope->url)
+                    );
                 }
             }
 
@@ -207,16 +214,11 @@ class ProjectReportGoogle
                     Sheet::cellFormat(backgroundColor: '#9fc5e8', horizontalAlignment: 'CENTER')
                 ),
                 Sheet::value($issue->impact ? $issue->impact->value() : ''),
-                $issue->scope ? Sheet::applyFormats(
+                Sheet::applyFormats(
                     Sheet::value($scope),
-                    Sheet::textFormatRun(0, Sheet::textFormat(bold: true)),
-                    $issue->scope->url ?
-                        Sheet::textFormatRun(
-                            Str::length($issue->scope->title),
-                            Sheet::textFormat(link: $issue->scope->url)
-                        ) : Sheet::textFormat(),
-                    Sheet::cellFormat(wrapStrategy: 'WRAP')
-                ) : Sheet::value(''),
+                    Sheet::cellFormat(wrapStrategy: 'WRAP'),
+                    ...$scopeFormats,
+                ),
                 Sheet::richTextCell($issue->target),
                 Sheet::richTextCell($issue->description),
                 Sheet::richTextCell($issue->recommendation),

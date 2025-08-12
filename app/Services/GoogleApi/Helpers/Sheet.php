@@ -25,6 +25,7 @@ use Google\Service\Sheets\TextRotation;
 use Google\Service\Sheets\UpdateCellsRequest;
 use Google\Service\Sheets\UpdateDimensionPropertiesRequest;
 use Google\Service\Sheets\UpdateSheetPropertiesRequest;
+use InvalidArgumentException;
 
 class Sheet
 {
@@ -266,22 +267,19 @@ class Sheet
      * Notes:
      *  - End indexes in GridRange are exclusive; we compute them accordingly when both bounds exist.
      *  - If the A1 string contains a sheet prefix (e.g., "Overview!A1:P1"), it is ignored; caller provides $sheetId.
-     * @param string $a1
-     * @param string $sheetId
-     * @return GridRange
      */
-    public static function a1ToGridRange(string $a1, ?string $sheetId = null): GridRange
+    public static function a1ToGridRange(string $a1, ?GoogleSheet $sheet = null): GridRange
     {
         // Strip optional sheet prefix like "Sheet Name!A1:P1"
-        if (strpos($a1, '!') !== false) {
+        if (str_contains($a1, '!')) {
             $parts = explode('!', $a1, 2);
             $a1 = $parts[1];
         }
         $a1 = strtoupper(trim($a1));
 
         $range = new GridRange();
-        if ($sheetId) {
-            $range->setSheetId($sheetId);
+        if ($sheet) {
+            $range->setSheetId($sheet->getProperties()->getSheetId());
         }
 
         // Helper lambdas
@@ -383,7 +381,7 @@ class Sheet
             return $range;
         }
 
-        throw new \InvalidArgumentException("Unsupported A1 range: {$a1}");
+        throw new InvalidArgumentException("Unsupported A1 range: {$a1}");
     }
 
     /**
@@ -393,13 +391,13 @@ class Sheet
     {
         $letters = strtoupper(trim($letters));
         if ($letters === '') {
-            throw new \InvalidArgumentException('Empty column letters');
+            throw new InvalidArgumentException('Empty column letters');
         }
         $n = 0;
         for ($i = 0, $len = strlen($letters); $i < $len; $i++) {
             $c = ord($letters[$i]);
             if ($c < 65 || $c > 90) { // not A-Z
-                throw new \InvalidArgumentException("Invalid column letters: {$letters}");
+                throw new InvalidArgumentException("Invalid column letters: {$letters}");
             }
             $n = $n * 26 + ($c - 64); // A=1 ... Z=26
         }
@@ -437,7 +435,7 @@ class Sheet
                 $text = $value->getUserEnteredValue()->getStringValue();
                 foreach ($existingRuns as $run) {
                     if ($run->getStartIndex() >= strlen($text)) {
-                        throw new \InvalidArgumentException('Text format run start index exceeds text length');
+                        throw new InvalidArgumentException('Text format run start index exceeds text length');
                     }
                 }
 

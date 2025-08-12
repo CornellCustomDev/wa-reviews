@@ -104,7 +104,7 @@ class GoogleService
             $this->client->setAccessToken([
                 'access_token' => $tokenRecord->access_token,
                 'refresh_token' => $tokenRecord->refresh_token,
-                'expires_in' => $tokenRecord->expires_in ? (int)$tokenRecord->expires_in : null,
+                'expires_in' => $tokenRecord->expires_in,
                 'created' => $tokenRecord->created_at_token?->timestamp ?? time(),
             ]);
         }
