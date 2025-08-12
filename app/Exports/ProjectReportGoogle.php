@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Project;
 use App\Services\GoogleApi\Helpers\Sheet;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
+use App\Services\GoogleApi\ServiceWrappers\SheetUpdates;
 use Google\Service\Exception;
 use Google\Service\Sheets as GoogleSheets;
 use Illuminate\Support\Str;
@@ -18,19 +19,19 @@ class ProjectReportGoogle
      */
     public static function export(Project $project, GoogleSheets $service): string
     {
-        // Get the report data
+        // Get the report data first, in case there are issues.
         $updates = [...static::getIntroFieldUpdates($project)];
         $updates = [...$updates, ...static::getIssuesHeader()];
         $updates = [...$updates, ...static::getIssueValues($project)];
 
         // Store in Google Sheets
         $googleSpreadsheet = Spreadsheet::make("WA Report - $project->name");
-        $spreadsheet = Spreadsheet::create($service, $googleSpreadsheet);
+        $spreadsheet = SheetUpdates::create($service, $googleSpreadsheet);
 
         $sheet = Spreadsheet::getDefaultSheet($spreadsheet);
         $updates[] = Sheet::setTitle('Final Checklist', $sheet);
 
-        Spreadsheet::batchUpdate($service, $spreadsheet, $updates);
+        SheetUpdates::batchUpdate($service, $spreadsheet, $updates);
 
         return $spreadsheet->spreadsheetId;
     }
@@ -206,12 +207,16 @@ class ProjectReportGoogle
                     Sheet::cellFormat(backgroundColor: '#9fc5e8', horizontalAlignment: 'CENTER')
                 ),
                 Sheet::value($issue->impact ? $issue->impact->value() : ''),
-                Sheet::applyFormats(
+                $issue->scope ? Sheet::applyFormats(
                     Sheet::value($scope),
                     Sheet::textFormatRun(0, Sheet::textFormat(bold: true)),
-                    Sheet::textFormatRun(Str::length($issue->scope->title), Sheet::textFormat(link: $issue->scope->url)),
+                    $issue->scope->url ?
+                        Sheet::textFormatRun(
+                            Str::length($issue->scope->title),
+                            Sheet::textFormat(link: $issue->scope->url)
+                        ) : Sheet::textFormat(),
                     Sheet::cellFormat(wrapStrategy: 'WRAP')
-                ),
+                ) : Sheet::value(''),
                 Sheet::richTextCell($issue->target),
                 Sheet::richTextCell($issue->description),
                 Sheet::richTextCell($issue->recommendation),

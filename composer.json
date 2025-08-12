@@ -12,6 +12,7 @@
     "require": {
         "php": "^8.3",
         "ext-dom": "*",
+        "ext-libxml": "*",
         "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
         "google/apiclient": "^2.18",
         "laravel/framework": "v12.14.1",

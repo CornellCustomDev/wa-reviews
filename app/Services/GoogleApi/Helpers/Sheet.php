@@ -137,7 +137,7 @@ class Sheet
         ?string       $textDirection = null,
         ?TextFormat   $textFormat = null,
         ?string       $hyperlinkDisplayType = null,
-        ?TextRotation $textRotation = null,  // not supported yet
+        ?TextRotation $textRotation = null,
     ): CellData
     {
         $cellFormat = new CellFormat();
@@ -432,14 +432,36 @@ class Sheet
                 // Add text format runs to any that already exist on $value
                 $existingRuns = $value->getTextFormatRuns() ?? [];
                 array_push($existingRuns, ...$textFormatRuns);
+
+                // textFormatRuns are fragile, so confirm that the runs are valid
+                $text = $value->getUserEnteredValue()->getStringValue();
+                foreach ($existingRuns as $run) {
+                    if ($run->getStartIndex() >= strlen($text)) {
+                        throw new \InvalidArgumentException('Text format run start index exceeds text length');
+                    }
+                }
+
                 $value->setTextFormatRuns($existingRuns);
             }
         }
+
         return $value;
     }
 
     public static function richTextCell(string $richText): CellData
     {
+        // If the content looks like HTML, convert it to text + runs
+        if (str_contains($richText, '<')) {
+            [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($richText);
+
+            return Sheet::applyFormats(
+                Sheet::value($text),
+                Sheet::cellFormat(wrapStrategy: 'WRAP'),
+                ...$runs,
+            );
+        }
+
+        // Fallback: treat as plain text
         return Sheet::applyFormats(
             Sheet::value($richText),
             Sheet::cellFormat(wrapStrategy: 'WRAP'),
