@@ -122,6 +122,12 @@ class GoogleService
         $newToken = $this->client->fetchAccessTokenWithRefreshToken($refreshToken);
 
         if (isset($newToken['error'])) {
+            // Log the refresh failure for security monitoring
+            Log::warning('Google token refresh failed', [
+                'user_id' => Auth::id(),
+                'error' => $newToken['error'],
+                'error_description' => $newToken['error_description'] ?? null,
+            ]);
             // Clear stored tokens so the next call redirects to OAuth
             GoogleToken::where('user_id', Auth::id())->update([
                 'access_token' => null,
