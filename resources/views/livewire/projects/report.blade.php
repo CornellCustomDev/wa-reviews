@@ -8,8 +8,8 @@
             <flux:dropdown>
                 <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
                 <x-forms.menu>
-                    <x-forms.menu.item icon="document-arrow-down" wire:click="exportReport()">
-                        Excel
+                    <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
+                        Google Sheet (requires login)
                     </x-forms.menu.item>
                     <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
                         Raw (for copy/paste)

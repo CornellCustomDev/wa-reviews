@@ -215,7 +215,7 @@ class Project extends Model
     {
         return $this->issues()
             ->whereNotNull('guideline_id')
-            ->with(['scope', 'guideline', 'guideline.criterion'])
+            ->with(['scope', 'guideline:id,number,name,criterion_id', 'guideline.criterion:id,number,name,level'])
             ->get()
             ->filter(fn ($issue) => $issue->isAiAccepted() || ! $issue->isAiGenerated())
             ->sort(fn ($a, $b) => $a->guideline_id <=> $b->guideline_id);
