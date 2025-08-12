@@ -481,4 +481,67 @@ class Sheet
 
         return $request;
     }
+
+    /**
+     * Recursively extract [startIndex, format] info from whatever structure the CellData encodes.
+     * @param array $runs
+     * @return array
+     */
+    public static function extractFormatRuns(array $runs): array
+    {
+        $out = [];
+        foreach ($runs as $run) {
+            // Normalize the Google model objects into arrays
+            $arr = json_decode(json_encode($run), true);
+            Sheet::collectRunsRecursive($arr, $out);
+        }
+        // Ensure unique by (startIndex,link,bold,italic,underline,fontFamily,fontSize)
+        $uniq = [];
+        foreach ($out as $r) {
+            $key = implode('|', [
+                $r['startIndex'] ?? '',
+                ($r['link'] ?? ''),
+                ($r['bold'] ?? 'n'),
+                ($r['italic'] ?? 'n'),
+                ($r['underline'] ?? 'n'),
+                ($r['fontFamily'] ?? ''),
+                ($r['fontSize'] ?? '')
+            ]);
+            $uniq[$key] = array_filter($r);
+        }
+        // sort by startIndex to make reasoning predictable
+        usort($uniq, function ($a, $b) {
+            return ($a['startIndex'] ?? 0) <=> ($b['startIndex'] ?? 0);
+        });
+        $runs = array_filter($uniq);
+
+        return array_combine(array_map(fn($a) => $a['startIndex'], $runs), $runs);
+    }
+
+    public static function collectRunsRecursive(array $node, array &$out): void
+    {
+        // If this node looks like a TextFormatRun, capture it.
+        if (isset($node['startIndex'])) {
+            $fmt = $node['format'] ?? [];
+            // Link can be either a string or ['uri' => '...'] depending on helper
+            $link = null;
+            if (isset($fmt['link'])) {
+                $link = is_array($fmt['link']) ? ($fmt['link']['uri'] ?? null) : $fmt['link'];
+            }
+            $out[] = [
+                'startIndex' => (int)$node['startIndex'],
+                'bold' => $fmt['bold'] ?? null,
+                'italic' => $fmt['italic'] ?? null,
+                'underline' => $fmt['underline'] ?? null,
+                'fontFamily' => $fmt['fontFamily'] ?? null,
+                'fontSize' => $fmt['fontSize'] ?? null,
+                'link' => $link,
+            ];
+        }
+        foreach ($node as $k => $v) {
+            if (is_array($v)) {
+                Sheet::collectRunsRecursive($v, $out);
+            }
+        }
+    }
 }

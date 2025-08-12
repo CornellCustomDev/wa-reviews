@@ -3,6 +3,7 @@
 namespace Tests\Unit\GoogleApi;
 
 use App\Services\GoogleApi\Helpers\HtmlToSheetsTextRuns;
+use App\Services\GoogleApi\Helpers\Sheet;
 use Google\Service\Sheets\CellData;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -31,17 +32,8 @@ class HtmlToSheetsTest extends TestCase
         }
 
         // 3) Formatting presence checks
-        $formatRuns = $this->extractFormatRuns($runs);
-
-        // Helper to count runs with a specific format
-        $getFormat = function ($format, $value = null) use ($formatRuns) {
-            $formatRuns = array_filter($formatRuns, fn($r) => $r[$format] ?? false);
-            if ($value !== null) {
-                $formatRuns = array_filter($formatRuns, fn($r) => $r[$format] === $value);
-            }
-            return $formatRuns;
-        };
-
+        $formatRuns = Sheet::extractFormatRuns($runs);
+        $getFormat = $this->filterFormats($formatRuns);
 
         // Find the run that sets italic:true for the blockquote.
         $ixBlockquote = mb_strpos($text, 'Blockquote', 0, 'UTF-8');
@@ -65,67 +57,6 @@ class HtmlToSheetsTest extends TestCase
         $this->assertEquals(1, count($getFormat('link', 'https://example.com')), 'Expected 1 link run to include the href URI (for the hyperlink).');
     }
 
-    /**
-     * Recursively extract [startIndex, format] info from whatever structure the CellData encodes.
-     */
-    private function extractFormatRuns(array $runs): array
-    {
-        $out = [];
-        foreach ($runs as $run) {
-            // Normalize the Google model objects into arrays
-            $arr = json_decode(json_encode($run), true);
-            $this->collectRunsRecursive($arr, $out);
-        }
-        // Ensure unique by (startIndex,link,bold,italic,underline,fontFamily,fontSize)
-        $uniq = [];
-        foreach ($out as $r) {
-            $key = implode('|', [
-                $r['startIndex'] ?? '',
-                ($r['link'] ?? ''),
-                ($r['bold'] ?? 'n'),
-                ($r['italic'] ?? 'n'),
-                ($r['underline'] ?? 'n'),
-                ($r['fontFamily'] ?? ''),
-                ($r['fontSize'] ?? '')
-            ]);
-            $uniq[$key] = array_filter($r);
-        }
-        // sort by startIndex to make reasoning predictable
-        usort($uniq, function ($a, $b) {
-            return ($a['startIndex'] ?? 0) <=> ($b['startIndex'] ?? 0);
-        });
-        $runs = array_filter($uniq);
-
-        return array_combine(array_map(fn ($a) => $a['startIndex'], $runs), $runs);
-    }
-
-    private function collectRunsRecursive(array $node, array &$out): void
-    {
-        // If this node looks like a TextFormatRun, capture it.
-        if (isset($node['startIndex'])) {
-            $fmt = $node['format'] ?? [];
-            // Link can be either a string or ['uri' => '...'] depending on helper
-            $link = null;
-            if (isset($fmt['link'])) {
-                $link = is_array($fmt['link']) ? ($fmt['link']['uri'] ?? null) : $fmt['link'];
-            }
-            $out[] = [
-                'startIndex'  => (int) $node['startIndex'],
-                'bold'        => $fmt['bold'] ?? null,
-                'italic'      => $fmt['italic'] ?? null,
-                'underline'   => $fmt['underline'] ?? null,
-                'fontFamily'  => $fmt['fontFamily'] ?? null,
-                'fontSize'    => $fmt['fontSize'] ?? null,
-                'link'        => $link,
-            ];
-        }
-        foreach ($node as $k => $v) {
-            if (is_array($v)) {
-                $this->collectRunsRecursive($v, $out);
-            }
-        }
-    }
-
     #[Test] public function returns_empty_sheet_value_for_empty_html(): void
     {
         $html = '<p></p>'; // Empty paragraph
@@ -138,5 +69,35 @@ class HtmlToSheetsTest extends TestCase
         $this->assertEmpty($runs);
     }
 
+    #[Test] public function only_one_format_for_nested_link(): void
+    {
+        $html = '<p>The headers attribute must be applied to each cell, referencing all table headers that are relevant to this cell.  <a target="_blank" rel="noopener noreferrer nofollow" href="https://www.w3.org/WAI/tutorials/tables/multi-level/">https://www.w3.org/WAI/tutorials/tables/multi-level/</a></p>';
+
+        [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($html);
+
+        $this->assertStringContainsString('https://www.w3.org/WAI/tutorials/tables/multi-level/', $text);
+
+        $formatRuns = Sheet::extractFormatRuns($runs);
+        $getFormat = $this->filterFormats($formatRuns);
+
+        $this->assertEquals(1, count($getFormat('link', 'https://www.w3.org/WAI/tutorials/tables/multi-level/')), 'Expected 1 link run to include the href URI.');
+        $this->assertEquals(1, count($formatRuns), 'Expected only one format run to be present.');
+    }
+
+    /**
+     * Returns a closure that can be used to filter format runs by a specific format and optional value.
+     */
+    private function filterFormats(array $formatRuns): \Closure
+    {
+        $getFormat = function ($format, $value = null) use ($formatRuns) {
+            $formatRuns = array_filter($formatRuns, fn($r) => $r[$format] ?? false);
+            if ($value !== null) {
+                $formatRuns = array_filter($formatRuns, fn($r) => $r[$format] === $value);
+            }
+            return $formatRuns;
+        };
+
+        return $getFormat;
+    }
 
 }

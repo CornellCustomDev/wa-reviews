@@ -83,16 +83,6 @@ class HtmlToSheetsTextRuns
         $walk = function (\DOMNode $node, array $style) use (&$walk, &$appendText, &$numberStack) {
             $name = strtolower($node->nodeName);
 
-//            // Block-level handling
-//            $isBlock = in_array($name, ['p', 'h1', 'h2', 'h3', 'blockquote', 'ul', 'ol', 'li']);
-//
-//            if ($isBlock) {
-//                // Ensure separation between blocks (except at very beginning)
-//                // Avoid leading newlines
-//                // We insert newline before a new block when current text isn't empty and doesn't already end with one
-//                // The actual text buffer is in use() closure; we can't read it here, so we rely on appendText("\n", style)
-//            }
-
             switch ($name) {
                 case 'h1':
                     $style['bold'] = true;
