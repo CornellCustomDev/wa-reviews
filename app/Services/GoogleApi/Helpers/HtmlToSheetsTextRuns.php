@@ -2,6 +2,8 @@
 
 namespace App\Services\GoogleApi\Helpers;
 
+use Google\Service\Sheets\CellData;
+
 class HtmlToSheetsTextRuns
 {
     /**
@@ -14,6 +16,7 @@ class HtmlToSheetsTextRuns
     {
         // Normalize whitespace and ensure UTF-8
         $html = trim($html);
+
         if ($html === '') {
             return ['', []];
         }
@@ -174,10 +177,17 @@ class HtmlToSheetsTextRuns
         // Collapse multiple trailing newlines to a single one and trim
         $out = preg_replace("/\n{3,}/", "\n\n", $out);
         $out = rtrim($out, "\n");
+
         if (empty($out)) {
-            $runs = [];
+            return ['', []];
         }
 
-        return [$out, $runs];
+        // Remove any textFormatRuns that are at the end of the text (e.g. from trailing newlines)
+        $end = mb_strlen($out, 'UTF-8');
+        $filteredRuns = array_filter($runs, function (CellData $cell) use ($end) {
+            return $cell->getTextFormatRuns()[0]->getStartIndex() < $end;
+        });
+
+        return [$out, $filteredRuns];
     }
 }
