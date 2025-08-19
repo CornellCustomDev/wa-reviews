@@ -43,7 +43,7 @@ class IssueForm extends Form
     public ?string $testing;
     public ?array $image_links = [];
     public array $imagesToRemove = [];
-    #[Validate(['images.*' => 'nullable|mimes:jpg,png,gif,webp,mp4,pdf,eml'])]
+    #[Validate(['images.*' => 'nullable|mimes:jpg,png,gif,webp,mp4,pdf,eml|max:51200'])]
     public array $images = [];
     #[Validate('boolean|nullable')]
     public ?bool $content_issue = false;
