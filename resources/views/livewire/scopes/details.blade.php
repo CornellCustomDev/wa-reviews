@@ -8,7 +8,7 @@
 
         <div x-show="!edit">
             @if ($scope->url)
-                <flux:subheading class="items-center">
+                <flux:subheading class="items-center break-words">
                     <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
                     <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
                 </flux:subheading>

@@ -11,7 +11,7 @@
                 @endcan
 
                 <div x-show="!edit">
-                    <flux:subheading class="items-center">
+                    <flux:subheading class="items-center break-words">
                         <a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a>
                         <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
                     </flux:subheading>
