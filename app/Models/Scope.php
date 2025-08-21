@@ -132,4 +132,22 @@ class Scope extends Model
         $this->guidelines()->createMany($guidelinesList);
     }
 
+    public function shortUrl(): ?string
+    {
+        if (blank($this->url)) {
+            return null;
+        }
+
+        // Return the path and anything after that
+        $parts = parse_url($this->url);
+        if ($parts === false) {
+            return null;
+        }
+
+        $path = $parts['path'] ?? '/';
+        $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+
+        return $path . $query . $fragment;
+    }
 }

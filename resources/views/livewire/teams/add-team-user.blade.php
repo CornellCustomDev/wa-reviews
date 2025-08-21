@@ -5,8 +5,7 @@
         <flux:select
             label="Person"
             wire:model="addUserEmail"
-            variant="listbox"
-            searchable
+            variant="combobox"
             :filter="false"
             placeholder="Select person..."
         >

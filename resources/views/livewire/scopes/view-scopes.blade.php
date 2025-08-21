@@ -1,5 +1,6 @@
 <div>
-    <table class="table striped bordered">
+    <div class="mb-8 w-full max-[992px]:overflow-x-auto">
+    <table class="table striped bordered min-w-[900px]">
         <thead>
         <tr>
             <th>Title</th>
@@ -15,10 +16,10 @@
                 <td>
                     <a href="{{ route('scope.show', $scope) }}">{{ $scope->title }}</a>
                 </td>
-                <td>
-                    <div class="items-center">
+                <td class="max-w-md">
+                    <div class="items-center break-words">
                         @if($scope->url)
-                            <a href="{{ $scope->url }}" target="_blank">{{ $scope->url }}</a>
+                            <a href="{{ $scope->url }}" target="_blank">{{ $scope->shortUrl() }}</a>
                             <flux:icon.arrow-top-right-on-square class="inline-block -mt-1 text-zinc-500" variant="micro" />
                         @endif
                     </div>
@@ -62,6 +63,7 @@
         @endforeach
         </tbody>
     </table>
+    </div>
 
     @can('create', [\App\Models\Scope::class, $project])
         <flux:modal.trigger name="add-scope">
