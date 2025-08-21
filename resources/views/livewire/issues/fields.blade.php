@@ -16,8 +16,7 @@
 
 <x-forms.select
     label="Guideline"
-    variant="listbox"
-    searchable
+    variant="combobox"
     :options="$this->getGuidelinesOptions"
     placeholder="Select a guideline..."
     wire:model="form.guideline_id"
@@ -87,7 +86,7 @@
 
 <x-forms.select
     label="Testing method"
-    variant="listbox"
+    variant="combobox"
     :options="\App\Enums\TestingMethod::toSelectArray()"
     placeholder="Select a testing method..."
     wire:model="form.testing_method"

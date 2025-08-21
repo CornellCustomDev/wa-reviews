@@ -2,7 +2,7 @@
     <form wire:submit="save">
         <h3>Assign a Reviewer</h3>
 
-        <flux:select label="Reviewer" wire:model="user" placeholder="Select a team member..." variant="listbox">
+        <flux:select label="Reviewer" wire:model="user" placeholder="Select a team member..." variant="combobox">
             @foreach($this->nonAssignedMembers as $user)
                 <flux:select.option value="{{ $user->id }}">
                     {{ $user->name }} ({{ $user->email }})
