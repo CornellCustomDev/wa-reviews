@@ -39,14 +39,14 @@ class ProjectReportGoogle
         // Store in Google Sheets
         $googleSpreadsheet = Spreadsheet::make("WA Report - $project->name");
         $spreadsheet = SheetUpdates::create($sheetsService, $googleSpreadsheet);
-        
+
         try {
             SheetUpdates::batchUpdate($sheetsService, $spreadsheet, $updates);
         } catch (GoogleException $e) {
             SheetUpdates::delete($driveService, $spreadsheet);
             throw new Exception('Failed to update Google Sheets: ' . $e->getMessage(), 0, $e);
         }
-        
+
         return $spreadsheet->spreadsheetId;
     }
 
@@ -149,7 +149,7 @@ class ProjectReportGoogle
         $updates[] = Sheet::updateColumnWidths('P', 300); // Barrier Mitigation Required
 
         $updates[] = Sheet::freezeRows(9);
-            
+
         return $updates;
     }
 
@@ -162,7 +162,7 @@ class ProjectReportGoogle
         /** @var Issue $issue */
         foreach ($issues as $issue) {
             $issueUrl = route('issue.show', $issue);
-            $issueIdentifier = $issue->guideline->number.Issue::INSTANCE_DIVIDER.$issue->guideline_instance;
+            $issueIdentifier = $issue->getGuidelineInstanceNumber();
 
             $scope = '';
             $scopeFormats = [];
@@ -282,7 +282,7 @@ class ProjectReportGoogle
             Sheet::textFormatRun(0, Sheet::textFormat(bold: true)),
             Sheet::textFormatRun(Str::length($siteImproveText), $format),
         ];
-        
+
         $updates[] = Sheet::updateCells(Sheet::makeGridRange('A2', $sheet),
             Sheet::applyFormats(
                 Sheet::value($siteImproveText . $report),
@@ -290,7 +290,7 @@ class ProjectReportGoogle
             )
         );
         $updates[] = Sheet::mergeCells(Sheet::makeGridRange('A2:C2', $sheet));
-        
+
         return $updates;
     }
 
@@ -310,21 +310,21 @@ class ProjectReportGoogle
             );
         }
         $updates[] = Sheet::updateCells(Sheet::makeGridRange('A4:C4', $sheet), ...$values);
-        
+
         // Column widths (in pixels)
         $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('A', $sheet), 500); // Scope
         $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('B', $sheet), 350); // Notes on specific screens/pages
         $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('C', $sheet), 300); // Reviewer Comments
 
         $updates[] = Sheet::freezeRows(4, $sheet);
-        
+
         return $updates;
     }
 
     private static function getScopeValues(Project $project, GoogleSheet $sheet): array
     {
         $updates = [];
-        
+
         $scopes = $project->scopes()->get();
         $index = 0;
         /** @var Scope $scope */
@@ -334,7 +334,7 @@ class ProjectReportGoogle
             if ($scope->url) {
                 $scopeText .= "\n";
                 $scopeFormats[] = Sheet::textFormatRun(
-                    Str::length($scopeText), 
+                    Str::length($scopeText),
                     Sheet::textFormat(link: $scope->url)
                 );
                 $scopeText .= $scope->url;
@@ -354,7 +354,7 @@ class ProjectReportGoogle
             );
             $index++;
         }
-            
+
         return $updates;
     }
 
