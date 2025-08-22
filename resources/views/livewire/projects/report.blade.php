@@ -18,7 +18,7 @@
             </flux:dropdown>
         </div>
 
-        <div class="col-span-3">
+        <div class="col-span-3 max-w-[675px]">
             <table class="table bordered">
                 <tr>
                     <th style="width: 200px">Prepared by</th>
@@ -30,7 +30,11 @@
                 </tr>
                 <tr>
                     <th>Site</th>
-                    <td>{{ $project->name }} ({{ $project->site_url }})</td>
+                    <td>
+                        <div class="break-words max-w-[500px]">
+                            {{ $project->name }} ({{ $project->site_url }})
+                        </div>
+                    </td>
                 </tr>
                 <tr>
                     <th>Responsible unit at Cornell</th>
