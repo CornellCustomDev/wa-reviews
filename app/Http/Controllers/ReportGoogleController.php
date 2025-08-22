@@ -20,7 +20,8 @@ class ReportGoogleController extends Controller
         }
 
         $sheetsService = $googleService->getSheetsService();
-        $spreadsheetId = ProjectReportGoogle::export($project, $sheetsService);
+        $driveService = $googleService->getDriveService();
+        $spreadsheetId = ProjectReportGoogle::export($project, $sheetsService, $driveService);
 
         return redirect()->away('https://docs.google.com/spreadsheets/d/' . $spreadsheetId);
     }

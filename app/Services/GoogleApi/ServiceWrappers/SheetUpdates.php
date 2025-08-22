@@ -2,6 +2,7 @@
 
 namespace App\Services\GoogleApi\ServiceWrappers;
 
+use Google\Service\Drive as GoogleDrive;
 use Google\Service\Exception;
 use Google\Service\Sheets as GoogleSheets;
 use Google\Service\Sheets\BatchUpdateSpreadsheetRequest;
@@ -36,6 +37,14 @@ class SheetUpdates
     public static function create(GoogleSheets $service, GoogleSpreadsheet $spreadsheet): GoogleSpreadsheet
     {
         return $service->spreadsheets->create($spreadsheet);
+    }
+    
+    /**
+     * @throws Exception
+     */
+    public static function delete(GoogleDrive $service, GoogleSpreadsheet $spreadsheet): void
+    {
+        $service->files->delete($spreadsheet->getSpreadsheetId());
     }
 
 }

@@ -5,6 +5,7 @@ namespace App\Services\GoogleApi;
 use App\Models\GoogleToken;
 use Exception;
 use Google\Client;
+use Google\Service\Drive;
 use Google\Service\Sheets;
 use Illuminate\Support\Facades\Auth;
 use function route;
@@ -166,5 +167,17 @@ class GoogleService
         }
 
         return new Sheets($this->client);
+    }
+    
+    /**
+     * @throws Exception
+     */
+    public function getDriveService(): Drive
+    {
+        if (!$this->ensureAuthorized()) {
+            throw new Exception('Google Drive API client is not authorized.');
+        }
+
+        return new Drive($this->client);
     }
 }
