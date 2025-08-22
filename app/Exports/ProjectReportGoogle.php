@@ -9,8 +9,9 @@ use App\Models\Scope;
 use App\Services\GoogleApi\Helpers\Sheet;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
 use App\Services\GoogleApi\ServiceWrappers\SheetUpdates;
+use Exception;
 use Google\Service\Drive as GoogleDrive;
-use Google\Service\Exception;
+use Google\Service\Exception as GoogleException;
 use Google\Service\Sheets as GoogleSheets;
 use Google\Service\Sheets\Sheet as GoogleSheet;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ class ProjectReportGoogle
     const string SCOPE_SHEET = 'Scope';
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public static function export(Project $project, GoogleSheets $sheetsService, GoogleDrive $driveService): string
     {
@@ -43,9 +44,9 @@ class ProjectReportGoogle
         
         try {
             SheetUpdates::batchUpdate($sheetsService, $spreadsheet, $updates);
-        } catch (Exception $e) {
+        } catch (GoogleException $e) {
             SheetUpdates::delete($driveService, $spreadsheet);
-            throw new \Exception('Failed to update Google Sheets: ' . $e->getMessage(), 0, $e);
+            throw new Exception('Failed to update Google Sheets: ' . $e->getMessage(), 0, $e);
         }
         
         return $spreadsheet->spreadsheetId;
