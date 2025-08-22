@@ -5,9 +5,10 @@ namespace App\Services\GoogleApi;
 use App\Models\GoogleToken;
 use Exception;
 use Google\Client;
+use Google\Service\Drive;
 use Google\Service\Sheets;
 use Illuminate\Support\Facades\Auth;
-use function route;
+use Illuminate\Support\Facades\Log;
 
 class GoogleService
 {
@@ -37,6 +38,9 @@ class GoogleService
         return $this->client->createAuthUrl();
     }
 
+    /**
+     * @throws Exception
+     */
     public function setAuthCode(string $code): void
     {
         $token = $this->client->fetchAccessTokenWithAuthCode($code);
@@ -166,5 +170,17 @@ class GoogleService
         }
 
         return new Sheets($this->client);
+    }
+    
+    /**
+     * @throws Exception
+     */
+    public function getDriveService(): Drive
+    {
+        if (!$this->ensureAuthorized()) {
+            throw new Exception('Google Drive API client is not authorized.');
+        }
+
+        return new Drive($this->client);
     }
 }

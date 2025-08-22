@@ -5,11 +5,15 @@ namespace App\Exports;
 use App\Enums\Assessment;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\Scope;
 use App\Services\GoogleApi\Helpers\Sheet;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
 use App\Services\GoogleApi\ServiceWrappers\SheetUpdates;
-use Google\Service\Exception;
+use Exception;
+use Google\Service\Drive as GoogleDrive;
+use Google\Service\Exception as GoogleException;
 use Google\Service\Sheets as GoogleSheets;
+use Google\Service\Sheets\Sheet as GoogleSheet;
 use Illuminate\Support\Str;
 
 class ProjectReportGoogle
@@ -17,22 +21,32 @@ class ProjectReportGoogle
     /**
      * @throws Exception
      */
-    public static function export(Project $project, GoogleSheets $service): string
+    public static function export(Project $project, GoogleSheets $sheetsService, GoogleDrive $driveService): string
     {
         // Get the report data first, in case there are issues.
-        $updates = [...static::getIntroFieldUpdates($project)];
+        $updates = [Sheet::setTitle('Final Checklist')];
+        $updates = [...$updates, ...static::getIntroFieldUpdates($project)];
         $updates = [...$updates, ...static::getIssuesHeader()];
         $updates = [...$updates, ...static::getIssueValues($project)];
 
+        // Get the scope data
+        $scopeSheet = Sheet::make('Scope');
+        $updates = [...$updates, Sheet::addSheet($scopeSheet)];
+        $updates = [...$updates, ...static::getScopeIntroFields($project, $scopeSheet)];
+        $updates = [...$updates, ...static::getScopesHeader($scopeSheet)];
+        $updates = [...$updates, ...static::getScopeValues($project, $scopeSheet)];
+
         // Store in Google Sheets
         $googleSpreadsheet = Spreadsheet::make("WA Report - $project->name");
-        $spreadsheet = SheetUpdates::create($service, $googleSpreadsheet);
-
-        $sheet = Spreadsheet::getDefaultSheet($spreadsheet);
-        $updates[] = Sheet::setTitle('Final Checklist', $sheet);
-
-        SheetUpdates::batchUpdate($service, $spreadsheet, $updates);
-
+        $spreadsheet = SheetUpdates::create($sheetsService, $googleSpreadsheet);
+        
+        try {
+            SheetUpdates::batchUpdate($sheetsService, $spreadsheet, $updates);
+        } catch (GoogleException $e) {
+            SheetUpdates::delete($driveService, $spreadsheet);
+            throw new Exception('Failed to update Google Sheets: ' . $e->getMessage(), 0, $e);
+        }
+        
         return $spreadsheet->spreadsheetId;
     }
 
@@ -239,6 +253,104 @@ class ProjectReportGoogle
             $index++;
         }
 
+        return $updates;
+    }
+
+    private static function getScopeIntroFields(Project $project, GoogleSheet $sheet): array
+    {
+        $updates = [];
+
+        $updates[] = Sheet::updateCells(Sheet::makeGridRange('A1', $sheet),
+            Sheet::applyFormats(
+                Sheet::value('Scope: ' . $project->name),
+                Sheet::textFormatRun(0, Sheet::textFormat(fontSize: 14))
+            )
+        );
+        $updates[] = Sheet::mergeCells(Sheet::makeGridRange('A1:C1', $sheet));
+
+        $siteImproveText = 'Siteimprove a11y Report: ';
+        if ($project->siteimprove_url) {
+            $format = Sheet::textFormat(link: $project->siteimprove_url);
+            $report = $project->siteimprove_url;
+        } else {
+            $format = Sheet::textFormat();
+            $report = 'Not provided';
+        }
+        $siteimproveFormat = [
+            Sheet::textFormatRun(0, Sheet::textFormat(bold: true)),
+            Sheet::textFormatRun(Str::length($siteImproveText), $format),
+        ];
+        
+        $updates[] = Sheet::updateCells(Sheet::makeGridRange('A2', $sheet),
+            Sheet::applyFormats(
+                Sheet::value($siteImproveText . $report),
+                ...$siteimproveFormat,
+            )
+        );
+        $updates[] = Sheet::mergeCells(Sheet::makeGridRange('A2:C2', $sheet));
+        
+        return $updates;
+    }
+
+    private static function getScopesHeader(GoogleSheet $sheet): array
+    {
+        // Screen Title, Type, URL if applicable, Notes on specific screens/pages, Reviewer Comments
+        $updates = [];
+        $headers = [
+            'Scope', 'Notes on specific screens/pages', 'Reviewer Comments'
+        ];
+        $values = [];
+        foreach ($headers as $field) {
+            $values[] = Sheet::applyFormats(
+                Sheet::value($field),
+                Sheet::cellFormat(backgroundColor: '#d9d9d9'),
+                Sheet::textFormat(bold: true)
+            );
+        }
+        $updates[] = Sheet::updateCells(Sheet::makeGridRange('A4:C4', $sheet), ...$values);
+        
+        // Column widths (in pixels)
+        $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('A', $sheet), 500); // Scope
+        $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('B', $sheet), 350); // Notes on specific screens/pages
+        $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('C', $sheet), 300); // Reviewer Comments
+
+        return $updates;
+    }
+
+    private static function getScopeValues(Project $project, GoogleSheet $sheet): array
+    {
+        $updates = [];
+        
+        $scopes = $project->scopes()->get();
+        $index = 0;
+        /** @var Scope $scope */
+        foreach ($scopes as $scope) {
+            $scopeText = $scope->title;
+            $scopeFormats = [Sheet::textFormatRun(0, Sheet::textFormat(bold: true))];
+            if ($scope->url) {
+                $scopeText .= "\n";
+                $scopeFormats[] = Sheet::textFormatRun(
+                    Str::length($scopeText), 
+                    Sheet::textFormat(link: $scope->url)
+                );
+                $scopeText .= $scope->url;
+            }
+            $values = [
+                Sheet::applyFormats(
+                    Sheet::value($scopeText),
+                    Sheet::cellFormat(wrapStrategy: 'WRAP'),
+                    ...$scopeFormats,
+                ),
+                Sheet::richTextCell($scope->notes),
+                Sheet::richTextCell($scope->comments),
+            ];
+            $updates[] = Sheet::updateCells(
+                Sheet::makeGridRange('A' . (5 + $index) . ':C' . (5 + $index), $sheet),
+                ...$values
+            );
+            $index++;
+        }
+            
         return $updates;
     }
 
