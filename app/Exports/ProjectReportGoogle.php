@@ -18,8 +18,6 @@ use Illuminate\Support\Str;
 
 class ProjectReportGoogle
 {
-    const string SCOPE_SHEET = 'Scope';
-
     /**
      * @throws Exception
      */
@@ -32,7 +30,7 @@ class ProjectReportGoogle
         $updates = [...$updates, ...static::getIssueValues($project)];
 
         // Get the scope data
-        $scopeSheet = Sheet::make(self::SCOPE_SHEET);
+        $scopeSheet = Sheet::make('Scope');
         $updates = [...$updates, Sheet::addSheet($scopeSheet)];
         $updates = [...$updates, ...static::getScopeIntroFields($project, $scopeSheet)];
         $updates = [...$updates, ...static::getScopesHeader($scopeSheet)];
