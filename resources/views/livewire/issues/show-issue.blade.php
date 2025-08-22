@@ -9,7 +9,7 @@
 
     <h1>{{ $issue->project->name }}: Issue
         @if($issue->guideline_id)
-            {{ $issue->guideline->getNumber().\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
+            {{ $issue->getGuidelineInstanceNumber() }}
         @endif
     </h1>
 

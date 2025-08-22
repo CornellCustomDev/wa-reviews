@@ -34,10 +34,10 @@
                             class="{{ Str::of(($issue->assessment ?? App\Enums\Assessment::Not_Applicable)->value())->lower()->replace('/', '') }}"
                             size="xs"
                             href="{{ route('issue.show', $issue) }}"
-                            title="View issue {{ $issue->guideline ? $issue->guideline->getNumber().\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance : $issue->id }}"
+                            title="View issue {{ $issue->guideline ? $issue->getGuidelineInstanceNumber() : $issue->id }}"
                         >
                             @if($issue->guideline)
-                                {{ $issue->guideline->getNumber().\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
+                                {{ $issue->getGuidelineInstanceNumber() }}
                             @else
                                 N/A
                             @endif

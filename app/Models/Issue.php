@@ -146,6 +146,11 @@ class Issue extends Model
         $this->guideline_instance = $guideline_instance;
     }
 
+    public function getGuidelineInstanceNumber(): string
+    {
+        return $this->guideline->getNumber() . self::INSTANCE_DIVIDER . $this->guideline_instance;
+    }
+
     public function isAiGenerated(): bool
     {
         return in_array($this->ai_status, [
