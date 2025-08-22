@@ -3,6 +3,7 @@
 namespace App\Services\GoogleApi\Helpers;
 
 use Google\Service\Sheets\AddSheetRequest;
+use Google\Service\Sheets\AddTableRequest;
 use Google\Service\Sheets\Borders;
 use Google\Service\Sheets\CellData;
 use Google\Service\Sheets\CellFormat;
@@ -11,6 +12,7 @@ use Google\Service\Sheets\ColorStyle;
 use Google\Service\Sheets\DimensionProperties;
 use Google\Service\Sheets\DimensionRange;
 use Google\Service\Sheets\ExtendedValue;
+use Google\Service\Sheets\GridProperties;
 use Google\Service\Sheets\GridRange;
 use Google\Service\Sheets\Link;
 use Google\Service\Sheets\MergeCellsRequest;
@@ -20,6 +22,8 @@ use Google\Service\Sheets\Request as SheetsRequest;
 use Google\Service\Sheets\RowData;
 use Google\Service\Sheets\Sheet as GoogleSheet;
 use Google\Service\Sheets\SheetProperties;
+use Google\Service\Sheets\Table;
+use Google\Service\Sheets\TableRowsProperties;
 use Google\Service\Sheets\TextFormat;
 use Google\Service\Sheets\TextFormatRun;
 use Google\Service\Sheets\TextRotation;
@@ -27,6 +31,10 @@ use Google\Service\Sheets\UpdateCellsRequest;
 use Google\Service\Sheets\UpdateDimensionPropertiesRequest;
 use Google\Service\Sheets\UpdateSheetPropertiesRequest;
 use InvalidArgumentException;
+use function hexdec;
+use function ltrim;
+use function strlen;
+use function substr;
 
 class Sheet
 {
@@ -34,7 +42,7 @@ class Sheet
     {
         // Set a sheet ID based on the microtime
         $id =  (int) substr(microtime(true) * 10000, 7, 7);
-        
+
         $properties = new SheetProperties();
         if ($title) {
             $properties->setTitle($title);
@@ -46,7 +54,7 @@ class Sheet
 
         return $sheet;
     }
-    
+
     public static function addSheet(GoogleSheet $sheet): SheetsRequest
     {
         $addSheetRequest = new AddSheetRequest();
@@ -54,6 +62,29 @@ class Sheet
 
         $request = new SheetsRequest();
         $request->setAddSheet($addSheetRequest);
+
+        return $request;
+    }
+
+    public static function addTable(string|GridRange $a1range, ?string $name = null, ?TableRowsProperties $rowsProperties = null): SheetsRequest
+    {
+        $gridRange = $a1range instanceof GridRange ? $a1range
+            : static::makeGridRange($a1range);
+
+        $table = new Table();
+        $table->setRange($gridRange);
+        if ($name) {
+            $table->setName($name);
+        }
+        if ($rowsProperties) {
+            $table->setRowsProperties($rowsProperties);
+        }
+
+        $addTableRequest = new AddTableRequest();
+        $addTableRequest->setTable($table);
+
+        $request = new SheetsRequest();
+        $request->setAddTable($addTableRequest);
 
         return $request;
     }
@@ -66,6 +97,23 @@ class Sheet
         $updatePropertiesRequest = new UpdateSheetPropertiesRequest();
         $updatePropertiesRequest->setProperties($properties);
         $updatePropertiesRequest->setFields('title');
+
+        $request = new SheetsRequest();
+        $request->setUpdateSheetProperties($updatePropertiesRequest);
+
+        return $request;
+    }
+
+    public static function freezeRows(int $rowCount, ?GoogleSheet $sheet = null): SheetsRequest
+    {
+        $properties = $sheet ? $sheet->getProperties() : new SheetProperties();
+        $gridProperties = $properties->getGridProperties() ?? new GridProperties();
+        $gridProperties->setFrozenRowCount($rowCount);
+        $properties->setGridProperties($gridProperties);
+
+        $updatePropertiesRequest = new UpdateSheetPropertiesRequest();
+        $updatePropertiesRequest->setProperties($properties);
+        $updatePropertiesRequest->setFields('gridProperties.frozenRowCount');
 
         $request = new SheetsRequest();
         $request->setUpdateSheetProperties($updatePropertiesRequest);
@@ -102,9 +150,7 @@ class Sheet
         $textFormat = new TextFormat();
 
         if ($foregroundColor) {
-            $colorStyle = new ColorStyle();
-            $colorStyle->setRgbColor(self::hexToColor($foregroundColor));
-            $textFormat->setForegroundColorStyle($colorStyle);
+            $textFormat->setForegroundColorStyle(self::hexToColorStyle($foregroundColor));
         }
         if ($fontFamily) {
             $textFormat->setFontFamily($fontFamily);
@@ -164,9 +210,7 @@ class Sheet
         }
 
         if ($backgroundColor) {
-            $colorStyle = new ColorStyle();
-            $colorStyle->setRgbColor(self::hexToColor($backgroundColor));
-            $cellFormat->setBackgroundColorStyle($colorStyle);
+            $cellFormat->setBackgroundColorStyle(self::hexToColorStyle($backgroundColor));
         }
 
         if ($borders) {
@@ -216,9 +260,34 @@ class Sheet
         return $cell;
     }
 
+    public static function tableRowsProperties(
+        ?string $headerColor = null,
+        ?string $firstBandColor = null,
+        ?string $secondBandColor = null,
+        ?string $footerColor = null
+    ): TableRowsProperties
+    {
+        $props = new TableRowsProperties();
+
+        if ($headerColor) {
+            $props->setHeaderColorStyle(self::hexToColorStyle($headerColor));
+        }
+        if ($firstBandColor) {
+            $props->setFirstBandColorStyle(self::hexToColorStyle($firstBandColor));
+        }
+        if ($secondBandColor) {
+            $props->setSecondBandColorStyle(self::hexToColorStyle($secondBandColor));
+        }
+        if ($footerColor) {
+            $props->setFooterColorStyle(self::hexToColorStyle($footerColor));
+        }
+
+        return $props;
+    }
+
     public static function updateCells(string|GridRange $a1range, CellData ...$cells): SheetsRequest
     {
-        $gridRange = $a1range instanceof GridRange ? $a1range 
+        $gridRange = $a1range instanceof GridRange ? $a1range
             : static::makeGridRange($a1range);
 
         $rowData = new RowData();
@@ -273,21 +342,6 @@ class Sheet
         $request->setMergeCells($mergeCells);
 
         return $request;
-    }
-
-    private static function hexToColor(string $hex): Color
-    {
-        $color = new Color();
-
-        $hex = ltrim($hex, '#');
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-        }
-        $color->setRed(hexdec(substr($hex, 0, 2)) / 255);
-        $color->setGreen(hexdec(substr($hex, 2, 2)) / 255);
-        $color->setBlue(hexdec(substr($hex, 4, 2)) / 255);
-
-        return $color;
     }
 
     /**
@@ -484,7 +538,7 @@ class Sheet
         if (blank($richText)) {
             return Sheet::value('');
         }
-        
+
         // If the content looks like HTML, convert it to text + runs
         if (str_contains($richText, '<')) {
             [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($richText);
@@ -564,5 +618,22 @@ class Sheet
                 Sheet::collectRunsRecursive($v, $out);
             }
         }
+    }
+
+    private static function hexToColorStyle(string $hexColor): ColorStyle
+    {
+        $colorStyle = new ColorStyle();
+
+        $color = new Color();
+        $hex = ltrim($hexColor, '#');
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+        $color->setRed(hexdec(substr($hex, 0, 2)) / 255);
+        $color->setGreen(hexdec(substr($hex, 2, 2)) / 255);
+        $color->setBlue(hexdec(substr($hex, 4, 2)) / 255);
+
+        $colorStyle->setRgbColor($color);
+        return $colorStyle;
     }
 }

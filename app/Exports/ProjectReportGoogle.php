@@ -148,6 +148,8 @@ class ProjectReportGoogle
         $updates[] = Sheet::updateColumnWidths('O', 50); // CE Issue
         $updates[] = Sheet::updateColumnWidths('P', 300); // Barrier Mitigation Required
 
+        $updates[] = Sheet::freezeRows(9);
+            
         return $updates;
     }
 
@@ -314,6 +316,8 @@ class ProjectReportGoogle
         $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('B', $sheet), 350); // Notes on specific screens/pages
         $updates[] = Sheet::updateColumnWidths(Sheet::makeGridRange('C', $sheet), 300); // Reviewer Comments
 
+        $updates[] = Sheet::freezeRows(4, $sheet);
+        
         return $updates;
     }
 
