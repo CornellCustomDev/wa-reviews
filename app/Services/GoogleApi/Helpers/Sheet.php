@@ -2,6 +2,7 @@
 
 namespace App\Services\GoogleApi\Helpers;
 
+use Google\Service\Sheets\AddSheetRequest;
 use Google\Service\Sheets\Borders;
 use Google\Service\Sheets\CellData;
 use Google\Service\Sheets\CellFormat;
@@ -31,20 +32,35 @@ class Sheet
 {
     public static function make(?string $title = null): GoogleSheet
     {
-        $sheet = new GoogleSheet();
-
+        // Set a sheet ID based on the microtime
+        $id =  (int) substr(microtime(true) * 10000, 7, 7);
+        
+        $properties = new SheetProperties();
         if ($title) {
-            $properties = new SheetProperties();
             $properties->setTitle($title);
-            $sheet->setProperties($properties);
         }
+        $properties->setSheetId($id);
+
+        $sheet = new GoogleSheet();
+        $sheet->setProperties($properties);
 
         return $sheet;
     }
-
-    public static function setTitle(string $title, GoogleSheet $sheet): SheetsRequest
+    
+    public static function addSheet(GoogleSheet $sheet): SheetsRequest
     {
-        $properties = $sheet->getProperties() ?? new SheetProperties();
+        $addSheetRequest = new AddSheetRequest();
+        $addSheetRequest->setProperties($sheet->getProperties());
+
+        $request = new SheetsRequest();
+        $request->setAddSheet($addSheetRequest);
+
+        return $request;
+    }
+
+    public static function setTitle(string $title): SheetsRequest
+    {
+        $properties = new SheetProperties();
         $properties->setTitle($title);
 
         $updatePropertiesRequest = new UpdateSheetPropertiesRequest();
@@ -200,15 +216,18 @@ class Sheet
         return $cell;
     }
 
-    public static function updateCells(string $a1range, CellData ...$cells): SheetsRequest
+    public static function updateCells(string|GridRange $a1range, CellData ...$cells): SheetsRequest
     {
+        $gridRange = $a1range instanceof GridRange ? $a1range 
+            : static::makeGridRange($a1range);
+
         $rowData = new RowData();
         $rowData->setValues($cells);
 
         $updateRequest = new UpdateCellsRequest();
         $updateRequest->setRows([$rowData]);
         $updateRequest->setFields('*');
-        $updateRequest->setRange(static::a1ToGridRange($a1range));
+        $updateRequest->setRange($gridRange);
 
         $sheetsRequest = new SheetsRequest();
         $sheetsRequest->setUpdateCells($updateRequest);
@@ -216,13 +235,16 @@ class Sheet
         return $sheetsRequest;
     }
 
-    public static function updateColumnWidths($a1range, int $width): SheetsRequest
+    public static function updateColumnWidths(string|GridRange $a1range, int $width): SheetsRequest
     {
-        $gridRange = static::a1ToGridRange($a1range);
-        $range = new DimensionRange();
-        $range->setDimension('COLUMNS');
-        $range->setStartIndex($gridRange->getStartColumnIndex());
-        $range->setEndIndex($gridRange->getEndColumnIndex());
+        $gridRange = $a1range instanceof GridRange ? $a1range
+            : static::makeGridRange($a1range);
+
+        $dimensionRange = new DimensionRange();
+        $dimensionRange->setSheetId($gridRange->getSheetId());
+        $dimensionRange->setDimension('COLUMNS');
+        $dimensionRange->setStartIndex($gridRange->getStartColumnIndex());
+        $dimensionRange->setEndIndex($gridRange->getEndColumnIndex());
 
         $properties = new DimensionProperties();
         $properties->setPixelSize($width);
@@ -230,12 +252,27 @@ class Sheet
         $updateRequest = new UpdateDimensionPropertiesRequest();
         $updateRequest->setProperties($properties);
         $updateRequest->setFields('*');
-        $updateRequest->setRange($range);
+        $updateRequest->setRange($dimensionRange);
 
         $sheetsRequest = new SheetsRequest();
         $sheetsRequest->setUpdateDimensionProperties($updateRequest);
 
         return $sheetsRequest;
+    }
+
+    public static function mergeCells(string|GridRange $a1range, ?GoogleSheet $sheet = null): SheetsRequest
+    {
+        $gridRange = $a1range instanceof GridRange ? $a1range
+            : static::makeGridRange($a1range);
+
+        $mergeCells = new MergeCellsRequest();
+        $mergeCells->setRange($gridRange);
+        $mergeCells->setMergeType('MERGE_ALL');
+
+        $request = new SheetsRequest();
+        $request->setMergeCells($mergeCells);
+
+        return $request;
     }
 
     private static function hexToColor(string $hex): Color
@@ -263,12 +300,8 @@ class Sheet
      *  - Open-ended to the edge: A1:P (no end row), A1:10 (no end column), A1: (no end row/col)
      *  - Column-only/row-only single side: A:P, 1: (from row 1 to end)
      *  - Whole single column/row shorthands: A (entire column), 1 (entire row)
-     *
-     * Notes:
-     *  - End indexes in GridRange are exclusive; we compute them accordingly when both bounds exist.
-     *  - If the A1 string contains a sheet prefix (e.g., "Overview!A1:P1"), it is ignored; caller provides $sheetId.
      */
-    public static function a1ToGridRange(string $a1, ?GoogleSheet $sheet = null): GridRange
+    public static function makeGridRange(string $a1, ?GoogleSheet $sheet = null): GridRange
     {
         // Strip optional sheet prefix like "Sheet Name!A1:P1"
         if (str_contains($a1, '!')) {
@@ -446,8 +479,12 @@ class Sheet
         return $value;
     }
 
-    public static function richTextCell(string $richText): CellData
+    public static function richTextCell(?string $richText): CellData
     {
+        if (blank($richText)) {
+            return Sheet::value('');
+        }
+        
         // If the content looks like HTML, convert it to text + runs
         if (str_contains($richText, '<')) {
             [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($richText);
@@ -464,20 +501,6 @@ class Sheet
             Sheet::value($richText),
             Sheet::cellFormat(wrapStrategy: 'WRAP'),
         );
-    }
-
-    public static function mergeCells(string $a1Range, ?GoogleSheet $sheet = null): SheetsRequest
-    {
-        $range = static::a1ToGridRange($a1Range, $sheet);
-
-        $mergeCells = new MergeCellsRequest();
-        $mergeCells->setRange($range);
-        $mergeCells->setMergeType('MERGE_ALL');
-
-        $request = new SheetsRequest();
-        $request->setMergeCells($mergeCells);
-
-        return $request;
     }
 
     /**
@@ -516,7 +539,7 @@ class Sheet
         return array_combine(array_map(fn($a) => $a['startIndex'], $runs), $runs);
     }
 
-    public static function collectRunsRecursive(array $node, array &$out): void
+    private static function collectRunsRecursive(array $node, array &$out): void
     {
         // If this node looks like a TextFormatRun, capture it.
         if (isset($node['startIndex'])) {

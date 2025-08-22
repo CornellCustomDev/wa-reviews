@@ -26,5 +26,4 @@ class Spreadsheet
 
         return $sheets[0] ?? null;
     }
-
 }
