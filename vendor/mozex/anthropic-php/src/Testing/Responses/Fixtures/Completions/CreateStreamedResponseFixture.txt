@@ -1,0 +1,27 @@
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":" Hello","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"      }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":"!","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"  }
+
+event: ping
+data: {"type": "ping"}
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":" My","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"     }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":" name","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"        }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":" is","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"   }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":" Claude","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"          }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":".","stop_reason":null,"model":"claude-2.1","stop":null,"log_id":"compl_01U8ZMthep4UrANhFshPMUFK"           }
+
+event: completion
+data: {"type":"completion","id":"compl_01U8ZMthep4UrANhFshPMUFK","completion":"","stop_reason":"stop_sequence","model":"claude-2.1","stop":"\n\nHuman:","log_id":"compl_01U8ZMthep4UrANhFshPMUFK"               }
+

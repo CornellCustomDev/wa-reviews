@@ -1,6 +1,9 @@
+@props([
+    'kbd' => '⌘K',
+])
 
 <flux:dropdown position="bottom center" data-editor="link" class="contents">
-    <flux:tooltip content="{{ __('Insert link') }}" kbd="⌘K" class="contents">
+    <flux:tooltip content="{{ __('Insert link') }}" :$kbd class="contents">
         <flux:editor.button data-match-target>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"> <path d="M7.49999 14.1673H5.83332C4.72825 14.1673 3.66845 13.7283 2.88704 12.9469C2.10564 12.1655 1.66666 11.1057 1.66666 10.0007C1.66666 8.89558 2.10564 7.83577 2.88704 7.05437C3.66845 6.27297 4.72825 5.83398 5.83332 5.83398H7.49999" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M12.5 5.83398H14.1667C15.2717 5.83398 16.3315 6.27297 17.1129 7.05437C17.8943 7.83577 18.3333 8.89558 18.3333 10.0007C18.3333 11.1057 17.8943 12.1655 17.1129 12.9469C16.3315 13.7283 15.2717 14.1673 14.1667 14.1673H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M6.66666 10H13.3333" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> </svg>
         </flux:editor.button>

@@ -1492,6 +1492,33 @@ function throttle(func, limit) {
     }
   };
 }
+function timeout(callback, delay) {
+  let timerId;
+  let start;
+  let remaining = delay;
+  let active = false;
+  let timeout2 = {
+    pause: () => {
+      if (!active) return;
+      clearTimeout(timerId);
+      remaining -= Date.now() - start;
+      active = false;
+    },
+    resume: () => {
+      if (active) return;
+      start = Date.now();
+      timerId = setTimeout(callback, remaining);
+      active = true;
+    },
+    cancel: () => {
+      clearTimeout(timerId);
+      active = false;
+      remaining = delay;
+    }
+  };
+  timeout2.resume();
+  return timeout2;
+}
 var using = "pointer";
 document.addEventListener("keydown", () => using = "keyboard", { capture: true });
 document.addEventListener("pointerdown", (e) => {
@@ -1538,7 +1565,7 @@ function detangle() {
 }
 function interest(trigger, panel, { gain, lose, focusable, useSafeArea }) {
   let engaged = false;
-  focusable && document.addEventListener("focusin", (e) => {
+  let focusInHander = (e) => {
     if (!isUsingKeyboard()) return;
     if (trigger.contains(e.target) || panel.contains(e.target)) {
       engaged = true;
@@ -1547,7 +1574,11 @@ function interest(trigger, panel, { gain, lose, focusable, useSafeArea }) {
       engaged = false;
       lose();
     }
-  });
+  };
+  focusable && document.addEventListener("focusin", focusInHander);
+  let removeFocusInHandler = () => {
+    document.removeEventListener("focusin", focusInHander);
+  };
   let removeSafeArea = () => {
   };
   let removePointerMoveHandler = () => {
@@ -1563,14 +1594,14 @@ function interest(trigger, panel, { gain, lose, focusable, useSafeArea }) {
     removeSafeArea();
     removePointerMoveHandler();
   };
-  trigger.addEventListener("pointerenter", (e) => {
+  let pointerEnterHandler = (e) => {
     if (isUsingTouch()) return;
     if (engaged) return;
     engaged = true;
     gain();
     setTimeout(() => {
-      let { safeArea, redraw: redrawSafeArea, remove } = useSafeArea ? createSafeArea(trigger, panel, e.clientX, e.clientY) : nullSafeArea();
-      removeSafeArea = remove;
+      let { safeArea, redraw: redrawSafeArea, remove: remove2 } = useSafeArea ? createSafeArea(trigger, panel, e.clientX, e.clientY) : nullSafeArea();
+      removeSafeArea = remove2;
       let pointerStoppedOverSafeAreaTimeout;
       let pointerMoveHandler = throttle((e2) => {
         let panelRect = panel.getBoundingClientRect();
@@ -1606,8 +1637,17 @@ function interest(trigger, panel, { gain, lose, focusable, useSafeArea }) {
       document.addEventListener("pointermove", pointerMoveHandler);
       removePointerMoveHandler = () => document.removeEventListener("pointermove", pointerMoveHandler);
     });
-  });
-  return { clear };
+  };
+  trigger.addEventListener("pointerenter", pointerEnterHandler);
+  let removePointerEnterHandler = () => {
+    trigger.removeEventListener("pointerenter", pointerEnterHandler);
+  };
+  let remove = () => {
+    clear();
+    removePointerEnterHandler();
+    removeFocusInHandler();
+  };
+  return { clear, remove };
 }
 function createSafeArea(trigger, panel, x, y) {
   let safeArea = document.createElement("div");
@@ -1768,10 +1808,10 @@ function nullSafeArea() {
   };
 }
 function debounce(callback, delay) {
-  let timeout;
+  let timeout2;
   return (...args) => {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
+    clearTimeout(timeout2);
+    timeout2 = setTimeout(() => {
       callback(...args);
     }, delay);
   };
@@ -1779,7 +1819,7 @@ function debounce(callback, delay) {
 var lockCount = 0;
 var pointerEventsLocked = false;
 inject(({ css }) => css`[data-flux-allow-scroll] { pointer-events: auto; }`);
-function lockScroll(el = null, allowScroll = false) {
+function lockScroll(el = null, allowScroll = false, except = []) {
   if (allowScroll) return { lock: () => {
   }, unlock: () => {
   } };
@@ -1792,6 +1832,9 @@ function lockScroll(el = null, allowScroll = false) {
     });
     if (disablePointerEvents) {
       setAttribute2(el, "data-flux-allow-scroll", "");
+      except.forEach((el2) => {
+        setAttribute2(el2, "data-flux-allow-scroll", "");
+      });
       pointerEventsLocked = true;
     }
   };
@@ -1799,6 +1842,9 @@ function lockScroll(el = null, allowScroll = false) {
     undoLockStyles(document.documentElement);
     if (enablePointerEvents) {
       removeAndReleaseAttribute(el, "data-flux-allow-scroll");
+      except.forEach((el2) => {
+        removeAttribute(el2, "data-flux-allow-scroll");
+      });
       pointerEventsLocked = false;
     }
   };
@@ -2124,6 +2170,7 @@ var Dialogable = class extends Mixin {
     this.onChanges.push(callback);
   }
   show() {
+    if (!this.el.isConnected) return;
     this.el.showModal();
   }
   hide() {
@@ -2174,6 +2221,19 @@ function clickHappenedOutside(el, event) {
   return !isInside;
 }
 
+// js/mixins/closeable.js
+var Closeable = class extends Mixin {
+  boot() {
+    this.onCloses = [];
+  }
+  onClose(callback) {
+    this.onCloses.push(callback);
+  }
+  close() {
+    this.onCloses.forEach((callback) => callback());
+  }
+};
+
 // js/modal.js
 var UIModal = class extends UIElement {
   boot() {
@@ -2185,6 +2245,8 @@ var UIModal = class extends UIElement {
     dialog._dialogable = new Dialogable(dialog, {
       clickOutside: !this.hasAttribute("disable-click-outside")
     });
+    dialog._closeable = new Closeable(dialog);
+    dialog._closeable.onClose(() => dialog._dialogable.hide());
     this._controllable.initial((initial) => initial && dialog._dialogable.show());
     this._controllable.getter(() => dialog._dialogable.getState());
     let detangled = detangle();
@@ -2236,18 +2298,8 @@ var UIModal = class extends UIElement {
     dialog.showModal();
   }
 };
-var UIClose = class extends UIElement {
-  mount() {
-    let button = this.querySelector("button");
-    on(button, "click", () => {
-      let dialogable = closest(this, (el) => !!el._dialogable)?._dialogable;
-      dialogable?.hide();
-    });
-  }
-};
 inject(({ css }) => css`dialog, ::backdrop { margin: auto; }`);
 element("modal", UIModal);
-element("close", UIClose);
 
 // js/mixins/disclosable.js
 var Disclosable = class extends Mixin {
@@ -2480,7 +2532,8 @@ var SelectableGroup = class extends MixinGroup {
     this.walker().filter((el) => el.use(Selectable).isSelected()).map((el) => el.use(Selectable).deselect());
   }
   allAreSelected() {
-    return this.walker().filter((el) => el.use(Selectable).isSelected()).length === this.walker().filter((el) => true).length;
+    let selectableElements = this.walker().filter((el) => true);
+    return selectableElements.length > 0 && this.walker().filter((el) => el.use(Selectable).isSelected()).length === selectableElements.length;
   }
   noneAreSelected() {
     return this.state === null || this.state?.size === 0;
@@ -2969,7 +3022,7 @@ var UICheckbox = class extends UIControl {
 };
 element("checkbox-group", UICheckboxGroup);
 element("checkbox", UICheckbox);
-inject(({ css }) => css`ui-checkbox-group { display: block; user-select: none; }`);
+inject(({ css }) => css`ui-checkbox-group { display: block; }`);
 inject(({ css }) => css`ui-checkbox { display: inline-block; user-select: none; }`);
 function respondToLabelClick(el) {
   el.closest("label")?.addEventListener("click", (e) => {
@@ -4604,12 +4657,10 @@ var UIDropdown = class extends UIElement {
     overlay._popoverable.onChange(() => {
       overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
     });
-    if (["ui-menu", "ui-context"].includes(overlay.localName)) {
-      let { lock, unlock } = lockScroll(overlay._popoverable.el);
-      overlay._popoverable.onChange(() => {
-        overlay._popoverable.getState() ? lock() : unlock();
-      });
-    }
+    let { lock, unlock } = lockScroll(overlay._popoverable.el);
+    overlay._popoverable.onChange(() => {
+      overlay._popoverable.getState() ? lock() : unlock();
+    });
     this._controllable.initial((initial) => overlay._popoverable.setState(initial));
     this._controllable.getter(() => overlay._popoverable.getState());
     let detangled = detangle();
@@ -4903,7 +4954,7 @@ function renderDates(template, config, viewState, metadata) {
             let dayNumber = weekDate.getDay();
             return hydrate2({
               slots: { default: dayNumber },
-              attrs: { "data-outside": "" }
+              attrs: { "data-date": actualWeekDates[dayIdx], "data-outside": "" }
             });
           }
           let date = DateValue.fromIsoDateString(actualWeekDates[dayIdx]);
@@ -4940,16 +4991,6 @@ function updateMonth(el, disabled, config, viewState, selectable, validator) {
     });
   };
   let tabbable = getFirstDateToMakeTabbable(viewState.month, viewState.year);
-  el.querySelectorAll("[data-outside]").forEach((cell) => {
-    setAttribute2(cell, "disabled", "");
-    setAttribute2(cell, "role", "gridcell");
-    setAttribute2(cell, "aria-hidden", "true");
-    setAttribute2(cell, "aria-disabled", "true");
-    let button = cell.querySelector("button");
-    button && setAttribute2(button, "tabindex", "-1");
-    button && setAttribute2(button, "disabled", "");
-    button && setAttribute2(button, "aria-disabled", "true");
-  });
   el.querySelectorAll("[data-date]").forEach((cell) => {
     setAttribute2(cell, "role", "gridcell");
     let button = cell.querySelector("button");
@@ -5499,7 +5540,7 @@ var PresetRangeSelection = class _PresetRangeSelection extends Selection {
     }
   }
 };
-function value(i) {
+function value(i = null) {
   return typeof i === "function" ? i() : i;
 }
 var presets = {
@@ -5778,7 +5819,7 @@ var UICalendar = class extends UIElement {
       maxRange: elDrivingConfig.hasAttribute("max-range") ? parseInt(elDrivingConfig.getAttribute("max-range")) : null,
       minRange: elDrivingConfig.hasAttribute("min-range") ? parseInt(elDrivingConfig.getAttribute("min-range")) : null,
       startDay: elDrivingConfig.hasAttribute("start-day") ? parseInt(elDrivingConfig.getAttribute("start-day")) : (new Intl.Locale(locale).weekInfo?.firstDay || 7) % 7,
-      unavailable: elDrivingConfig.hasAttribute("unavailable") ? elDrivingConfig.getAttribute("unavailable").split(",").map((i) => DateValue.fromIsoDateString(i.trim())) : [],
+      unavailable: this.getUnavailableDates(elDrivingConfig),
       locale,
       fixedWeeks: elDrivingConfig.hasAttribute("fixed-weeks") ? 6 : null
     };
@@ -5789,7 +5830,7 @@ var UICalendar = class extends UIElement {
     this.selectable = Selectable2.createFromValueStringAttribute(elDrivingConfig.getAttribute("value"), this.config, this.observable);
     this.metadata = new DateMetadata(this.observable);
     this.validator = new Validator(this.selectable, this.metadata, this.config);
-    let openToDate = this.selectable.getValue() === null && elDrivingConfig.hasAttribute("open-to") ? elDrivingConfig.getAttribute("open-to") === "today" ? DateValue.today() : DateValue.fromIsoDateString(elDrivingConfig.getAttribute("open-to")) : this.selectable.lowerBound(() => DateValue.today());
+    let openToDate = this.selectable.lowerBound() === null && elDrivingConfig.hasAttribute("open-to") ? this.getOpenTo(elDrivingConfig) : this.selectable.lowerBound(() => DateValue.today());
     this.viewState = new CalendarViewState(openToDate.getMonth(), openToDate.getYear(), this.config, this.observable);
     this._disableable = new Disableable(this, {
       disableWithParent: false
@@ -5814,8 +5855,10 @@ var UICalendar = class extends UIElement {
     this.observable.subscribe(ObservableTrigger.SELECTION, detangled(() => {
       this.dispatchEvent(new Event("select", { bubbles: false, cancelable: true }));
       this._controllable.dispatch();
-      this._submittable.update(this.selectable.getValue());
     }));
+    this.observable.subscribe(ObservableTrigger.SELECTION, () => {
+      this._submittable.update(this.selectable.getValue());
+    });
     this.observable.subscribe(ObservableTrigger.SELECTION, () => {
       this.anchorSelection();
     });
@@ -5825,6 +5868,24 @@ var UICalendar = class extends UIElement {
     queueMicrotask(() => {
       this.closest("ui-date-picker")?.bootWithCalendar(this);
     });
+    let observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName !== "unavailable") return;
+        this.config.unavailable = this.getUnavailableDates(elDrivingConfig);
+        this.validator.unavailable = this.config.unavailable;
+        this.observable.notify(ObservableTrigger.VIEW_CHANGE);
+      });
+    });
+    observer.observe(elDrivingConfig, { attributes: true });
+  }
+  getOpenTo(el) {
+    if (!el.hasAttribute("open-to")) return;
+    let openTo = el.getAttribute("open-to");
+    openTo = openTo === "today" ? DateValue.today() : DateValue.fromIsoDateString(openTo);
+    if (!this.validator.isBetweenMinMax(openTo)) {
+      return this.config.min;
+    }
+    return openTo;
   }
   navigateNext() {
     this.viewState.nextMonth();
@@ -5851,6 +5912,9 @@ var UICalendar = class extends UIElement {
       DateValue.fromParts(this.viewState.year, this.viewState.month, 1).toIsoDateString(),
       DateValue.fromParts(this.viewState.year, this.viewState.month + 1, 0).toIsoDateString()
     ];
+  }
+  getUnavailableDates(el) {
+    return el.hasAttribute("unavailable") ? el.getAttribute("unavailable").split(",").map((i) => DateValue.fromIsoDateString(i.trim())) : [];
   }
 };
 var UICalendarPrevious = class extends UIElement {
@@ -5940,6 +6004,13 @@ var UICalendarMonth = class extends UIElement {
       };
     }).filter(Boolean);
     renderTemplate(select.querySelector("template"), (hydrate) => {
+      if (renderableMonths.length === 0) {
+        let month = this.viewState.month;
+        let label = new Intl.DateTimeFormat(this.config.locale, { month: display, timeZone: "UTC" }).format(new DateValue(2024, month).getDate());
+        let option = hydrate({ slots: { default: label } });
+        option.setAttribute("value", month);
+        return option;
+      }
       return renderableMonths.map((month) => {
         let option = hydrate({ slots: { default: month.label } });
         option.setAttribute("value", month.month);
@@ -6020,6 +6091,10 @@ var UICalendarYear = class extends UIElement {
       return year;
     }).filter(Boolean);
     renderTemplate(select.querySelector("template"), (hydrate) => {
+      if (renderableYears.length === 0) {
+        let year = this.viewState.year;
+        return hydrate({ slots: { default: year } });
+      }
       return renderableYears.map((year) => hydrate({ slots: { default: year } }));
     });
   }
@@ -6397,20 +6472,20 @@ var UIDatePicker = class extends UIControl {
     let buttonEl = this.querySelector("button");
     buttonEl = popoverEl?.contains(buttonEl) ? null : buttonEl;
     let calendarId = assignId(this.calendar, "calendar");
-    let triggerEl = inputEl || buttonEl;
-    if (!triggerEl) return;
-    setAttribute2(triggerEl, "role", "combobox");
-    setAttribute2(triggerEl, "aria-controls", calendarId);
+    this.triggerEl = inputEl || buttonEl;
+    if (!this.triggerEl) return;
+    setAttribute2(this.triggerEl, "role", "combobox");
+    setAttribute2(this.triggerEl, "aria-controls", calendarId);
     this._disableable.onInitAndChange((disabled) => {
-      if (disabled) setAttribute2(triggerEl, "disabled", "");
-      else removeAttribute(triggerEl, "disabled");
+      if (disabled) setAttribute2(this.triggerEl, "disabled", "");
+      else removeAttribute(this.triggerEl, "disabled");
     });
     this._dialogable = new Dialogable(popoverEl, {
       clickOutside: !this.hasAttribute("disable-click-outside"),
       triggers: [buttonEl, inputEl, secondInputEl].filter(Boolean)
     });
     this._anchorable = new Anchorable(popoverEl, {
-      reference: triggerEl,
+      reference: this.triggerEl,
       position: this.hasAttribute("position") ? this.getAttribute("position") : void 0,
       gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
       offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
@@ -6420,17 +6495,17 @@ var UIDatePicker = class extends UIControl {
       secondInputEl && this.showIOSOverlay(secondInputEl);
     }
     this.querySelectorAll("button").forEach((button) => {
-      if (button === triggerEl) return;
+      if (button === this.triggerEl) return;
       if (popoverEl.contains(button)) return;
       setAttribute2(button, "aria-controls", calendarId);
       setAttribute2(button, "aria-haspopup", "combobox");
       linkExpandedStateToPopover(button, this._dialogable);
       on(button, "click", () => this._dialogable.toggle());
     });
-    initPopover(this, triggerEl, popoverEl, this._dialogable, this._anchorable);
-    linkExpandedStateToPopover(triggerEl, this._dialogable);
+    initPopover(this, this.triggerEl, popoverEl, this._dialogable, this._anchorable);
+    linkExpandedStateToPopover(this.triggerEl, this._dialogable);
     preventScrollWhenPopoverIsOpen(this, this._dialogable);
-    controlPopoverWithKeyboard(triggerEl, this._dialogable);
+    controlPopoverWithKeyboard(this.triggerEl, this._dialogable);
     handlePopoverClosing(this, this.calendar.config.mode, this.observable, this.selectable, this._dialogable);
     if (isRange && popoverEl && inputEl && secondInputEl) {
       highlightInputContentsWhenFocused(inputEl);
@@ -6458,8 +6533,10 @@ var UIDatePicker = class extends UIControl {
     this.observable.subscribe(ObservableTrigger.SELECTION, detangled(() => {
       this.dispatchEvent(new Event("select", { bubbles: false, cancelable: true }));
       this._controllable.dispatch();
-      this._submittable.update(this.selectable.getValue());
     }));
+    this.observable.subscribe(ObservableTrigger.SELECTION, () => {
+      this._submittable.update(this.selectable.getValue());
+    });
     this.observable.subscribe(ObservableTrigger.VIEW_CHANGE, () => {
       this.dispatchEvent(new Event("navigate", { bubbles: false, cancelable: true }));
     });
@@ -6482,6 +6559,9 @@ var UIDatePicker = class extends UIControl {
   }
   close() {
     this._dialogable.setState(false);
+  }
+  trigger() {
+    return this.triggerEl;
   }
 };
 var UISelectedDate = class extends UIElement {
@@ -7365,7 +7445,7 @@ var UISelect = class extends UIControl {
       });
       handleInputClearing(this, input2, this._selectable, this._popoverable);
       initPopover2(this, input2, popover, this._popoverable, this._anchorable);
-      preventScrollWhenPopoverIsOpen2(this, this._popoverable);
+      preventScrollWhenPopoverIsOpen2(this, this._popoverable, [input2]);
       linkExpandedStateToPopover2(input2, this._popoverable);
       preventInputEventsFromBubblingToSelectRoot2(input2);
       highlightInputContentsWhenFocused2(input2);
@@ -7410,7 +7490,7 @@ var UISelect = class extends UIControl {
       this._filterable && filterResultsByInput(input2, this._filterable);
       focusInputWhenPopoverOpens(input2, this._popoverable);
       initPopover2(this, button2, popover, this._popoverable, this._anchorable);
-      preventScrollWhenPopoverIsOpen2(this, this._popoverable);
+      preventScrollWhenPopoverIsOpen2(this, this._popoverable, [input2]);
       linkExpandedStateToPopover2(button2, this._popoverable);
       handleInputClearing(this, input2, this._selectable, this._popoverable);
       controlPopoverWithKeyboard2(button2, this._popoverable, this._activatable, this._selectable);
@@ -7471,6 +7551,9 @@ var UISelect = class extends UIControl {
       });
     });
     observer.observe(list, { childList: true });
+  }
+  trigger() {
+    return this.button() || this.input();
   }
   button() {
     return Array.from(this.querySelectorAll("button")).find(
@@ -7818,8 +7901,8 @@ function handleAutocomplete(autocomplete, isStrict, root, input, selectable, pop
     });
   }
 }
-function preventScrollWhenPopoverIsOpen2(root, popoverable) {
-  let { lock, unlock } = lockScroll(popoverable.el);
+function preventScrollWhenPopoverIsOpen2(root, popoverable, except = []) {
+  let { lock, unlock } = lockScroll(popoverable.el, false, except);
   popoverable.onChange(() => {
     popoverable.getState() ? lock() : unlock();
   });
@@ -8191,7 +8274,6 @@ var UITooltip = class extends UIElement {
     } else if (!overlay) {
       return;
     }
-    this._disabled = this.hasAttribute("disabled");
     overlay._popoverable = new Popoverable(overlay, { scope: "tooltip" });
     overlay._anchorable = new Anchorable(overlay, {
       reference: button,
@@ -8202,18 +8284,27 @@ var UITooltip = class extends UIElement {
     overlay._popoverable.onChange(() => {
       overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
     });
-    if (!this._disabled) {
-      interest(button, overlay, {
-        gain() {
-          overlay._popoverable.setState(true);
-        },
-        lose() {
-          overlay._popoverable.setState(false);
-        },
-        focusable: true,
-        useSafeArea: false
-      });
-    }
+    this._disableable = new Disableable(this);
+    let removeInterest;
+    this._disableable.onInitAndChange((disabled) => {
+      if (removeInterest) {
+        removeInterest();
+        removeInterest = null;
+      }
+      if (!disabled) {
+        let result = interest(button, overlay, {
+          gain() {
+            overlay._popoverable.setState(true);
+          },
+          lose() {
+            overlay._popoverable.setState(false);
+          },
+          focusable: true,
+          useSafeArea: false
+        });
+        removeInterest = result.remove;
+      }
+    });
     let id = assignId(overlay, "tooltip");
     let interactive = this.hasAttribute("interactive");
     let wantsLabel = this.hasAttribute("label") || button.textContent.trim() === "";
@@ -8375,8 +8466,8 @@ var UIField = class _UIField extends UIElement {
       control.focus();
     } else if (control.localName === "input" && ["file"].includes(control.type)) {
       control.click();
-    } else if (["ui-select"].includes(control.localName)) {
-      control.trigger().focus();
+    } else if (["ui-select", "ui-date-picker"].includes(control.localName)) {
+      control.trigger()?.focus();
     } else if (["ui-editor"].includes(control.localName)) {
       control.focus();
     } else {
@@ -9686,23 +9777,232 @@ function getSvgOverflow(svg) {
   };
 }
 
-// js/toast.js
-var UIToast = class extends UIElement {
+// js/close.js
+var UIClose = class extends UIElement {
   mount() {
+    let button = this.querySelector("button");
+    on(button, "click", () => {
+      let closeable = closest(this, (el) => !!el._closeable)?._closeable;
+      closeable?.close();
+    });
+  }
+};
+element("close", UIClose);
+
+// js/toast.js
+var UIToastGroup = class extends UIElement {
+  toasts = /* @__PURE__ */ new Set();
+  timeouts = /* @__PURE__ */ new Set();
+  initiallyExpanded = false;
+  expanded = false;
+  mount() {
+    this.initiallyExpanded = this.hasAttribute("expanded");
+    let position = this.getAttribute("position") || "bottom right";
+    this.verticalPosition = position.match(/\b(top|bottom)\b/)?.[0] || "bottom";
+    this.horizontalPosition = position.match(/\b(left|start|center|right|end)\b/)?.[0] || "right";
+    if (this.horizontalPosition === "left") {
+      this.horizontalPosition = "start";
+    } else if (this.horizontalPosition === "right") {
+      this.horizontalPosition = "end";
+    }
     setAttribute2(this, "role", "status");
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        this.hideToast();
+  }
+  showToast(options = {}) {
+    let toastContainer = this.querySelector("ui-toast");
+    if (!toastContainer) {
+      return console.warn("ui-toast-group: no ui-toast element found", this);
+    }
+    if (!this.matches(":popover-open")) {
+      this.showPopover();
+    }
+    let duration = Number(options.duration === void 0 ? 5e3 : options.duration);
+    let template = toastContainer.prepareToastTemplate(options);
+    let toastEl = template.firstElementChild;
+    let show = () => {
+      this.animateIn(template, toastEl);
+      this.updateList();
+    };
+    let hide2 = () => {
+      this.animateOut(template, toastEl);
+      this.updateList();
+    };
+    this.toasts.add(template);
+    this.appendChild(template);
+    show();
+    template.hideToast = hide2;
+    let toastTimeout = duration !== 0 && timeout(() => {
+      this.timeouts.delete(toastTimeout);
+      hide2();
+    }, duration);
+    this.timeouts.add(toastTimeout);
+    template.destroyToast = () => {
+      if (toastTimeout) {
+        this.timeouts.delete(toastTimeout);
+        toastTimeout.cancel();
+      }
+      this.toasts.delete(template);
+      template.remove();
+      this.updateList();
+    };
+    template.addEventListener("mouseenter", () => {
+      this.pauseTimeouts();
+      if (!this.initiallyExpanded) {
+        this.expanded = true;
+        this.updateList();
       }
     });
+    template.addEventListener("mouseleave", () => {
+      this.resumeTimeouts();
+      if (!this.initiallyExpanded) {
+        this.expanded = false;
+        this.updateList();
+      }
+    });
+    template._closeable = new Closeable(template);
+    template._closeable.onClose(() => template.destroyToast());
+  }
+  pauseTimeouts() {
+    for (let timeout2 of this.timeouts) {
+      timeout2.pause();
+    }
+  }
+  resumeTimeouts() {
+    for (let timeout2 of this.timeouts) {
+      timeout2.resume();
+    }
+  }
+  animateIn(template, toastEl) {
+    let reverseVerticalPosition = this.verticalPosition === "top" ? "bottom" : "top";
+    let verticalPositionInt = reverseVerticalPosition === "top" ? 1 : -1;
+    let translateY = 1.5 * verticalPositionInt;
+    toastEl.style.opacity = 0;
+    toastEl.style.transform = `translateY(${translateY}rem)`;
+    toastEl.offsetHeight;
+    toastEl.style.opacity = 100;
+    toastEl.style.transform = `translateY(0)`;
+  }
+  animateOut(template, toastEl) {
+    let verticalPositionInt = this.verticalPosition === "top" ? 1 : -1;
+    let translateY = 0.5 * verticalPositionInt;
+    toastEl.style.transform = `translateY(${translateY}rem)`;
+    toastEl.style.opacity = 0;
+    this.toasts.delete(template);
+    let cleanup = () => {
+      template.remove();
+      if (this.toasts.size === 0) {
+        this.expanded = false;
+      }
+    };
+    if (toastEl.getAnimations().length) {
+      toastEl.addEventListener("transitionend", () => {
+        cleanup();
+      }, { once: true });
+    } else {
+      cleanup();
+    }
+  }
+  updateList() {
+    this.initiallyExpanded || this.expanded ? this.expand() : this.collapse();
+  }
+  expand() {
+    let i = 0;
+    for (let toast of Array.from(this.toasts).reverse()) {
+      let verticalPositionInt = this.verticalPosition === "top" ? 1 : -1;
+      toast.style.transform = `translateY(calc(100% * ${verticalPositionInt * i}))`;
+      toast.style.opacity = 100;
+      i++;
+    }
+  }
+  collapse() {
+    let i = 0;
+    for (let toast of Array.from(this.toasts).reverse()) {
+      let numberOfToastsToShow = 3;
+      let scale = 0;
+      let verticalPositionInt = this.verticalPosition === "top" ? 1 : -1;
+      let translateY = 10 * verticalPositionInt * i;
+      toast.style.zIndex = 5e3 - i;
+      if (i >= numberOfToastsToShow) {
+        scale = 1 - 0.05 * (numberOfToastsToShow - 1);
+        toast.style.opacity = 0;
+      } else {
+        scale = 1 - 0.05 * i;
+        toast.style.opacity = 100;
+      }
+      toast.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+      i++;
+    }
+  }
+};
+var UIToast = class extends UIElement {
+  mount() {
+    if (!this.closest("ui-toast-group")) {
+      setAttribute2(this, "role", "status");
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          this.hideToast();
+        }
+      });
+      this.defaultPosition = this.getAttribute("position") || "bottom end";
+    }
   }
   showToast(options = {}) {
     let existingToast = this.template().nextElementSibling;
     if (existingToast) existingToast.destroyToast();
     let duration = Number(options.duration === void 0 ? 5e3 : options.duration);
+    let position = options.dataset?.position ?? this.defaultPosition;
+    if (options.dataset?.position !== void 0) {
+      delete options.dataset.position;
+    }
+    this.setAttribute("position", position);
+    let template = this.prepareToastTemplate(options);
+    let show = () => {
+      this.showPopover();
+      template.classList.add("showing");
+    };
+    let hide2 = () => {
+      template._hiding = true;
+      template.classList.remove("showing");
+      if (template.getAnimations().length) {
+        template.addEventListener("transitionend", () => {
+          template.remove();
+          this.hidePopover();
+        }, { once: true });
+      } else {
+        template.remove();
+        this.hidePopover();
+      }
+    };
+    this.appendChild(template);
+    show();
+    template.hideToast = hide2;
+    let toastTimeout = duration !== 0 && timeout(() => {
+      hide2();
+    }, duration);
+    template.destroyToast = () => {
+      toastTimeout && toastTimeout.cancel();
+      template.remove();
+      this.hidePopover();
+    };
+    template.addEventListener("mouseenter", () => {
+      toastTimeout && toastTimeout.pause();
+    });
+    template.addEventListener("mouseleave", () => {
+      toastTimeout && toastTimeout.resume();
+    });
+    template._closeable = new Closeable(template);
+    template._closeable.onClose(() => template.destroyToast());
+  }
+  hideToast() {
+    let toast = this.template().nextElementSibling;
+    toast && toast.destroyToast();
+  }
+  template() {
+    return this.querySelector("template");
+  }
+  prepareToastTemplate(options) {
     let slots = options.slots || {};
     let dataset = options.dataset || {};
-    let templateEl = this.querySelector("template");
+    let templateEl = this.template();
     if (!templateEl) {
       return console.warn("ui-toast: no template element found", this);
     }
@@ -9718,39 +10018,10 @@ var UIToast = class extends UIElement {
       template.dataset[key] = value2;
     });
     template.querySelectorAll("slot").forEach((slot) => slot.remove());
-    let show = () => {
-      template.showPopover();
-    };
-    let hide2 = () => {
-      template._hiding = true;
-      template.hidePopover();
-      if (template.getAnimations().length) {
-        template.addEventListener("transitionend", () => {
-          template.remove();
-        }, { once: true });
-      } else {
-        template.remove();
-      }
-    };
-    this.appendChild(template);
-    show();
-    template.hideToast = hide2;
-    let hideTimeout = duration !== 0 && setTimeout(() => {
-      hide2();
-    }, duration);
-    template.destroyToast = () => {
-      hideTimeout && clearTimeout(hideTimeout);
-      template.remove();
-    };
-  }
-  hideToast() {
-    let toast = this.template().nextElementSibling;
-    toast && toast.destroyToast();
-  }
-  template() {
-    return this.querySelector("template");
+    return template;
   }
 };
+element("toast-group", UIToastGroup);
 element("toast", UIToast);
 
 // js/radio.js

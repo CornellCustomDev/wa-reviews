@@ -20359,13 +20359,19 @@ var UIEditor = class extends UIControl {
     let onBeforeCreateCallbacks = [];
     let editorHooks = {
       registerExtension(extension) {
-        let name = extension.name;
-        let index = enabledExtensions.findIndex((ext) => ext.name === name);
-        if (index !== -1) {
-          enabledExtensions[index] = extension;
-        } else {
-          enabledExtensions.push(extension);
-        }
+        this.registerExtensions(extension);
+      },
+      registerExtensions(extensions) {
+        extensions = Array.isArray(extensions) ? extensions : [extensions];
+        extensions.forEach((extension) => {
+          let name = extension.name;
+          let index = enabledExtensions.findIndex((ext) => ext.name === name);
+          if (index !== -1) {
+            enabledExtensions[index] = extension;
+          } else {
+            enabledExtensions.push(extension);
+          }
+        });
       },
       enableExtension(name) {
         let index = disabledExtensions.findIndex((ext) => ext.name === name);
