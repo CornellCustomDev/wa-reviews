@@ -14,7 +14,6 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class ViewProjects extends Component
 {
-    #[Computed]
     public function projects(): array
     {
         $teamProjects = Project::getTeamProjects(auth()->user());
@@ -24,6 +23,18 @@ class ViewProjects extends Component
             ->merge($viewerProjects)
             ->sortByDesc('updated_at')
             ->all();
+    }
+
+    #[Computed]
+    public function activeProjects(): array
+    {
+        return array_filter($this->projects(), fn(Project $project) => !$project->isCompleted());
+    }
+
+    #[Computed]
+    public function completedProjects(): array
+    {
+        return array_filter($this->projects(), fn(Project $project) => $project->isCompleted());
     }
 
     #[Computed]
