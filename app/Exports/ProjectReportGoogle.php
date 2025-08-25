@@ -235,7 +235,10 @@ class ProjectReportGoogle
                     Sheet::cellFormat(wrapStrategy: 'WRAP'),
                     ...$scopeFormats,
                 ),
-                Sheet::richTextCell($issue->target),
+                Sheet::applyFormats(
+                    Sheet::value($issue->target),
+                    Sheet::cellFormat(wrapStrategy: 'WRAP'),
+                ),
                 Sheet::richTextCell($issue->description),
                 Sheet::richTextCell($issue->recommendation),
                 Sheet::richTextCell($testing),
