@@ -819,7 +819,6 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'App\\Events\\ProjectChanged' => __DIR__ . '/../..' . '/app/Events/ProjectChanged.php',
         'App\\Events\\TeamChanged' => __DIR__ . '/../..' . '/app/Events/TeamChanged.php',
         'App\\Events\\UserChanged' => __DIR__ . '/../..' . '/app/Events/UserChanged.php',
-        'App\\Exports\\ProjectReportExport' => __DIR__ . '/../..' . '/app/Exports/ProjectReportExport.php',
         'App\\Exports\\ProjectReportGoogle' => __DIR__ . '/../..' . '/app/Exports/ProjectReportGoogle.php',
         'App\\Http\\Controllers\\Controller' => __DIR__ . '/../..' . '/app/Http/Controllers/Controller.php',
         'App\\Http\\Controllers\\ReportGoogleController' => __DIR__ . '/../..' . '/app/Http/Controllers/ReportGoogleController.php',

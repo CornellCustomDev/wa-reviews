@@ -75,7 +75,6 @@ return array(
     'App\\Events\\ProjectChanged' => $baseDir . '/app/Events/ProjectChanged.php',
     'App\\Events\\TeamChanged' => $baseDir . '/app/Events/TeamChanged.php',
     'App\\Events\\UserChanged' => $baseDir . '/app/Events/UserChanged.php',
-    'App\\Exports\\ProjectReportExport' => $baseDir . '/app/Exports/ProjectReportExport.php',
     'App\\Exports\\ProjectReportGoogle' => $baseDir . '/app/Exports/ProjectReportGoogle.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
     'App\\Http\\Controllers\\ReportGoogleController' => $baseDir . '/app/Http/Controllers/ReportGoogleController.php',
