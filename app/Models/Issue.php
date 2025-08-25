@@ -71,6 +71,11 @@ class Issue extends Model
             $issue->setGuidelineInstance($issue->guideline_instance);
         });
 
+        static::replicating(function (Issue $issue) {
+            // When replicating an issue, we need to set a new instance
+            $issue->setGuidelineInstance();
+        });
+
         static::updating(function (Issue $issue) {
             if ($issue->isDirty('guideline_id')) {
                 // If the guideline ID is changed, we need to set a new instance

@@ -30,6 +30,19 @@ class ShowIssue extends Component
         return SiteimproveService::getPageReportUrlForScope($this->issue->scope);
     }
 
+    public function clone(): void
+    {
+        $this->authorize('update', $this->issue->project);
+
+        $clonedIssue = $this->issue->replicate(
+            except: ['guideline_instance', 'image_links', 'chat_history_ulid']
+        );
+        $clonedIssue->save();
+
+        // Go to the cloned issue page
+        redirect()->route('issue.show', $clonedIssue);
+    }
+
     public function render()
     {
         $this->authorize('view', $this->issue);
