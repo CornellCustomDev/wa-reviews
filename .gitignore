@@ -28,3 +28,5 @@ bun.lock
 /vendor/_laravel_ide
 *.sql
 *.gz
+# Ignoring because this can be dependent on local environment
+/.junie/mcp/mcp.json
