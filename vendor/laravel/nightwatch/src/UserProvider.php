@@ -85,6 +85,25 @@ final class UserProvider
         });
     }
 
+    public function resolvedUserId(): string
+    {
+        return $this->withAuth(function ($auth) {
+            if (! $auth->hasResolvedGuards()) {
+                return '';
+            }
+
+            if ($auth->hasUser()) {
+                return $this->currentUserId();
+            }
+
+            if ($this->rememberedUser) {
+                return $this->rememberedUserId();
+            }
+
+            return '';
+        });
+    }
+
     private function currentUserId(): string
     {
         try {

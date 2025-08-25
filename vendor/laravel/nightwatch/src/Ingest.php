@@ -60,6 +60,15 @@ final class Ingest implements IngestContract
         }
     }
 
+    public function writeNow(array $record): void
+    {
+        if (! $this->shouldDigest) {
+            return;
+        }
+
+        $this->transmit(Payload::json([$record], $this->tokenHash));
+    }
+
     public function flush(): void
     {
         $this->buffer->flush();

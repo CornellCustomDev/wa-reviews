@@ -8,6 +8,7 @@ use Illuminate\Auth\Access\Events\GateEvaluated;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -325,7 +326,7 @@ class Gate implements GateContract
      * Determine if all of the given abilities should be granted for the current user.
      *
      * @param  iterable|\UnitEnum|string  $ability
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return bool
      */
     public function allows($ability, $arguments = [])
@@ -337,7 +338,7 @@ class Gate implements GateContract
      * Determine if any of the given abilities should be denied for the current user.
      *
      * @param  iterable|\UnitEnum|string  $ability
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return bool
      */
     public function denies($ability, $arguments = [])
@@ -349,7 +350,7 @@ class Gate implements GateContract
      * Determine if all of the given abilities should be granted for the current user.
      *
      * @param  iterable|\UnitEnum|string  $abilities
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return bool
      */
     public function check($abilities, $arguments = [])
@@ -363,7 +364,7 @@ class Gate implements GateContract
      * Determine if any one of the given abilities should be granted for the current user.
      *
      * @param  iterable|\UnitEnum|string  $abilities
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return bool
      */
     public function any($abilities, $arguments = [])
@@ -375,7 +376,7 @@ class Gate implements GateContract
      * Determine if all of the given abilities should be denied for the current user.
      *
      * @param  iterable|\UnitEnum|string  $abilities
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return bool
      */
     public function none($abilities, $arguments = [])
@@ -387,7 +388,7 @@ class Gate implements GateContract
      * Determine if the given ability should be granted for the current user.
      *
      * @param  \UnitEnum|string  $ability
-     * @param  array|mixed  $arguments
+     * @param  mixed  $arguments
      * @return \Illuminate\Auth\Access\Response
      *
      * @throws \Illuminate\Auth\Access\AuthorizationException
@@ -669,6 +670,12 @@ class Gate implements GateContract
             return $this->resolvePolicy($this->policies[$class]);
         }
 
+        $policy = $this->getPolicyFromAttribute($class);
+
+        if (! is_null($policy)) {
+            return $this->resolvePolicy($policy);
+        }
+
         foreach ($this->guessPolicyName($class) as $guessedPolicy) {
             if (class_exists($guessedPolicy)) {
                 return $this->resolvePolicy($guessedPolicy);
@@ -680,6 +687,25 @@ class Gate implements GateContract
                 return $this->resolvePolicy($policy);
             }
         }
+    }
+
+    /**
+     * Get the policy class from the class attribute.
+     *
+     * @param  class-string<*>  $class
+     * @return class-string<*>|null
+     */
+    protected function getPolicyFromAttribute(string $class): ?string
+    {
+        if (! class_exists($class)) {
+            return null;
+        }
+
+        $attributes = (new ReflectionClass($class))->getAttributes(UsePolicy::class);
+
+        return $attributes !== []
+            ? $attributes[0]->newInstance()->class
+            : null;
     }
 
     /**

@@ -4,6 +4,7 @@
     'weekNumbers' => null,
     'placeholder' => null,
     'withPresets' => null,
+    'unavailable' => null,
     'withInputs' => null,
     'clearable' => null,
     'withToday' => null,
@@ -75,9 +76,13 @@ if (is_array($value)) {
         default => collect($value)->join(','),
     };
 }
+
+if (isset($unavailable)) {
+    $unavailable = collect($unavailable)->implode(',');
+}
 @endphp
 
-<flux:with-field :$attributes>
+<flux:with-field :$attributes :$name>
     <ui-date-picker
         {{ $attributes->class($class) }}
         data-flux-control
@@ -85,6 +90,7 @@ if (is_array($value)) {
         @if ($mode) mode="{{ $mode }}" @endif
         months="1"
         sm:months="{{ $months }}"
+        @if ($unavailable) unavailable="{{ $unavailable }}" @endif
         @if ($showName) name="{{ $name }}" @endif
         @if (isset($value)) value="{{ $value }}" @endif
     >
@@ -115,8 +121,8 @@ if (is_array($value)) {
                     <ui-calendar-inputs class="flex items-center p-2 border-b border-zinc-200 dark:border-white/10">
                         <?php if ($range): ?>
                             <div class="sm:px-2 flex items-center gap-4">
-                                <div class="flex items-center gap-2"><span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">Start</span> <flux:input type="date" class="w-[full] sm:w-[11.25rem]" /></div>
-                                <div class="flex items-center gap-2"><span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">End</span> <flux:input type="date" class="w-[full] sm:w-[11.25rem]" /></div>
+                                <div class="flex items-center gap-2"><span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">{{ __('Start') }}</span> <flux:input type="date" class="w-[full] sm:w-[11.25rem]" /></div>
+                                <div class="flex items-center gap-2"><span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">{{ __('End') }}</span> <flux:input type="date" class="w-[full] sm:w-[11.25rem]" /></div>
                             </div>
                         <?php else: ?>
                             <flux:input type="date" class="w-full sm:w-[11.25rem]" />
@@ -221,7 +227,7 @@ if (is_array($value)) {
                                                         </div>
                                                     </td>
                                                 <?php else: ?>
-                                                    <td class="_max-sm:data-outside:opacity-0 p-0 data-unavailable:line-through data-in-range:bg-zinc-100 dark:data-in-range:bg-white/10 data-start:rounded-s-lg data-end:rounded-e-lg data-end-preview:rounded-e-lg first-of-type:rounded-s-lg last-of-type:rounded-e-lg [&[data-selected]+[data-selected]]:rounded-s-none [[data-in-range]:not([data-selected]):not([data-end-preview])+&[data-outside]]:bg-linear-to-r [&[data-outside]:has(+[data-in-range])]:bg-linear-to-l from-zinc-100 dark:from-white/10 from-1% [&[data-outside]:has(+[data-in-range][data-selected])]:bg-none!">
+                                                    <td class="_max-sm:data-outside:opacity-0 p-0 data-unavailable:line-through data-in-range:bg-zinc-100 dark:data-in-range:bg-white/10 data-start:rounded-s-lg data-end:rounded-e-lg data-end-preview:rounded-e-lg first-of-type:rounded-s-lg last-of-type:rounded-e-lg [&[data-selected]+[data-selected]]:rounded-s-none [[data-in-range]:not([data-selected]):not([data-end-preview])+&[data-outside]]:bg-linear-to-r [&[data-outside]:has(+[data-in-range])]:bg-linear-to-l data-outside:opacity-50 from-zinc-100 dark:from-white/10 from-1% [&[data-outside]:has(+[data-in-range][data-selected])]:bg-none!">
                                                         <ui-tooltip position="top">
                                                             <button type="button" class="{{ $sizeClasses }} text-sm font-medium text-zinc-800 dark:text-white flex flex-col items-center justify-center rounded-lg hover:bg-zinc-800/5 dark:hover:bg-white/5 [td[data-selected]:has(+td[data-selected])_&]:rounded-e-none [td[data-selected]+td[data-selected]_&]:rounded-s-none [td[data-selected]_&]:bg-[var(--color-accent)] [td[data-selected]_&]:text-[var(--color-accent-foreground)] [td[data-selected]_&[disabled]]:opacity-50 disabled:text-zinc-400 disabled:pointer-events-none disabled:cursor-default [[readonly]_&]:pointer-events-none [[readonly]_&]:cursor-default [[readonly]_&]:bg-transparent">
                                                                 <div class="relative">

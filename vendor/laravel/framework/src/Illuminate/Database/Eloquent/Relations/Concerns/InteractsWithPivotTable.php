@@ -66,7 +66,7 @@ trait InteractsWithPivotTable
     /**
      * Sync the intermediate tables with a list of IDs without detaching.
      *
-     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array  $ids
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array|int|string  $ids
      * @return array{attached: array, detached: array, updated: array}
      */
     public function syncWithoutDetaching($ids)
@@ -77,7 +77,7 @@ trait InteractsWithPivotTable
     /**
      * Sync the intermediate tables with a list of IDs or collection of models.
      *
-     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array  $ids
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array|int|string  $ids
      * @param  bool  $detaching
      * @return array{attached: array, detached: array, updated: array}
      */
@@ -87,13 +87,17 @@ trait InteractsWithPivotTable
             'attached' => [], 'detached' => [], 'updated' => [],
         ];
 
+        $records = $this->formatRecordsList($this->parseIds($ids));
+
+        if (empty($records) && ! $detaching) {
+            return $changes;
+        }
+
         // First we need to attach any of the associated models that are not currently
         // in this joining table. We'll spin through the given IDs, checking to see
         // if they exist in the array of current ones, and if not we will insert.
         $current = $this->getCurrentlyAttachedPivots()
             ->pluck($this->relatedPivotKey)->all();
-
-        $records = $this->formatRecordsList($this->parseIds($ids));
 
         // Next, we will take the differences of the currents and given IDs and detach
         // all of the entities that exist in the "current" array but are not in the
@@ -130,7 +134,7 @@ trait InteractsWithPivotTable
     /**
      * Sync the intermediate tables with a list of IDs or collection of models with the given pivot values.
      *
-     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array  $ids
+     * @param  \Illuminate\Support\Collection|\Illuminate\Database\Eloquent\Model|array|int|string  $ids
      * @param  array  $values
      * @param  bool  $detaching
      * @return array{attached: array, detached: array, updated: array}

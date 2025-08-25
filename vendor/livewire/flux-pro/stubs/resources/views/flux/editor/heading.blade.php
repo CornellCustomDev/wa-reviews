@@ -1,6 +1,9 @@
+@props([
+    'kbd' => null,
+])
 
 <ui-select data-editor="heading" class="relative">
-    <flux:tooltip content="{{ __('Styles') }}" class="contents">
+    <flux:tooltip content="{{ __('Styles') }}" :$kbd class="contents">
         <flux:editor.button>
             <ui-selected>
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="size-5 shrink-0" aria-hidden="true"> <path d="M3.33331 5.83398V3.33398H16.6666V5.83398" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M7.5 16.666H12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M10 3.33398V16.6673" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /> </svg>
