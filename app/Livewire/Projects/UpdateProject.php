@@ -11,17 +11,13 @@ use Livewire\Component;
 class UpdateProject extends Component
 {
     public ProjectForm $form;
-    public $teams;
+    public array $teams;
 
     public function mount(Project $project)
     {
         $this->form->setModel($project);
 
-        $this->teams = auth()->user()->getManagedTeams()
-            ->mapWithKeys(fn ($team) => [$team->name => [
-                'value' => $team->id,
-                'option' => $team->name,
-            ]]);
+        $this->teams = $this->form->getTeamSelectArray();
     }
 
     public function save()
