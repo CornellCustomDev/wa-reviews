@@ -33,9 +33,15 @@ class UpdateIssue extends Component
     }
 
     #[Computed(persist: true)]
-    public function getGuidelinesOptions()
+    public function getGuidelinesOptions(): array
     {
         return $this->form->getGuidelineSelectArray();
+    }
+
+    #[Computed(persist: true)]
+    public function getIssueInstanceOptions(): array
+    {
+        return $this->form->getIssueInstanceSelectArray();
     }
 
     public function save()

@@ -156,6 +156,29 @@ class Issue extends Model
         return $this->guideline->getNumber() . self::INSTANCE_DIVIDER . $this->guideline_instance;
     }
 
+    public function getGuidelineInstanceOptions(): array
+    {
+        // Don't provide options if there is no guideline set
+        if (!$this->guideline) {
+            return [];
+        }
+
+        // Get all issues in the project with the same guideline
+        $instances = $this->project->issues()->where('guideline_id', $this->guideline_id)->pluck('guideline_instance');
+        $lastInstance = $instances->max() ?? 0;
+
+        // Find any gaps in the instance numbers and put them in the list first
+        $options = [];
+        for ($i = 1; $i <= $lastInstance; $i++) {
+            if ($instances->contains($i) && $i !== $this->guideline_instance) {
+                continue;
+            }
+            $options[] = $i;
+        }
+
+        return $options;
+    }
+
     public function isAiGenerated(): bool
     {
         return in_array($this->ai_status, [

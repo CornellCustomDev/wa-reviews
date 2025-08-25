@@ -26,6 +26,19 @@
     </x-slot>
 </x-forms.select>
 
+@if(count($this->getIssueInstanceOptions) > 1)
+    <x-forms.select
+        label="Issue instance"
+        :options="$this->getIssueInstanceOptions"
+        wire:model="form.guideline_instance"
+        class="w-[200px]"
+    >
+        <x-slot name="description">
+            This issue instance can be renumbered to one of the options.
+        </x-slot>
+    </x-forms.select>
+@endif
+
 <div x-data="{ guideline_id: $wire.entangle('form.guideline_id') }">
     <flux:radio.group
         label="Assessment"
