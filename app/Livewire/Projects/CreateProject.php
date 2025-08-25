@@ -12,6 +12,16 @@ class CreateProject extends Component
 {
     public ProjectForm $form;
     public Team $team;
+    public array $teams;
+
+    public function mount(?Team $team): void
+    {
+        if ($team) {
+            $this->form->team_id = $team->id;
+        }
+
+        $this->teams = $this->form->getTeamSelectArray();
+    }
 
     public function save()
     {

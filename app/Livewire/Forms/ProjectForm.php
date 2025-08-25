@@ -54,6 +54,18 @@ class ProjectForm extends Form
         $this->site_purpose = $project->site_purpose ?? '';
     }
 
+    public function getTeamSelectArray(): array
+    {
+        // Get the teams that the user is on and can create projects in
+        return auth()->user()->getTeams()
+            ->filter(fn (Team $team) => auth()->user()->can('create-projects', $team))
+            ->map(fn ($team) => [
+                'value' => $team->id,
+                'option' => $team->name,
+            ])
+            ->toArray();
+    }
+
     public function store(Team $team): Project
     {
         $this->validate();
