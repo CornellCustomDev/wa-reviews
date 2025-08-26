@@ -17,7 +17,7 @@
                 <flux:table.cell>
                     <a href="{{ route('project.show', $project) }}">{{ $project->name }}</a>
                 </flux:table.cell>
-                <flux:table.cell>
+                <flux:table.cell class="break-words">
                     @if($project->site_url)
                         <a href="{{ $project->site_url }}"
                            target="_blank">{{ Str::limit($project->site_url, 40) }}</a>

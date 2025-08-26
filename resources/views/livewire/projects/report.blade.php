@@ -3,7 +3,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
-        <div class="col-span-1 order-first md:order-last print:hidden">
+        <div class="col-span-1 order-first md:order-last print:visually-hidden">
             <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
             <flux:dropdown>
                 <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
@@ -152,23 +152,23 @@
                             @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
                             @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                             @if(in_array($fileType, ['pdf', 'eml']))
-                                <div class="max-w-60 bg-black/60 text-white text-center p-2 print:hidden">
+                                <div class="max-w-60 bg-black/60 text-white text-center p-2 print:visually-hidden">
                                     <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
                                         <i class="fa fa-file"></i> {{ $imageName }}
                                     </a>
                                 </div>
-                                <div class="not-print:hidden">
+                                <div class="not-print:visually-hidden">
                                     {{ $imagePath }}
                                 </div>
                             @else
                                 @if(in_array($fileType, ['mp4', 'webm']))
-                                    <div class="relative print:hidden">
+                                    <div class="relative print:visually-hidden">
                                         <video src="{{ $imagePath }}" class="max-w-60" controls></video>
                                         <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
                                             {{ $imageName }}
                                         </div>
                                     </div>
-                                    <div class="not-print:hidden">
+                                    <div class="not-print:visually-hidden">
                                         {{ $imagePath }}
                                     </div>
                                 @else
@@ -186,7 +186,7 @@
                                             View image {{ $imageName }}
                                         </flux:tooltip.content>
                                     </flux:tooltip>
-                                    <div class="not-print:hidden">
+                                    <div class="not-print:visually-hidden">
                                         {{ $imagePath }}
                                     </div>
                                 @endif

@@ -423,9 +423,9 @@ div.expander {
     }
 }
 
-[data-flux-icon] {
-    @apply inline-block;
-}
+/*[data-flux-icon] {*/
+/*    @apply inline-block;*/
+/*}*/
 
 [data-cds-chat] {
     ul > li {
@@ -449,5 +449,11 @@ table.table[data-flux-table] {
         @apply border-cds-gray-200;
         @apply text-[13px] text-black;
         @apply px-2.5 py-1.5;
+    }
+}
+
+[data-flux-pagination] {
+    button {
+        @apply cursor-pointer;
     }
 }

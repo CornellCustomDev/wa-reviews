@@ -198,7 +198,7 @@ template {
   -moz-box-sizing: border-box;
   box-sizing: border-box; }
 
-.sr-only, .visually-hidden, .hidden,
+.sr-only, .visually-hidden,
 fieldset.semantic legend.sr-only, #main fieldset.semantic legend.sr-only {
   position: absolute;
   width: 1px;

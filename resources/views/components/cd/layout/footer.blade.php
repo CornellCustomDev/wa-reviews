@@ -7,11 +7,11 @@
                         <div>
                             <ul class="custom inline no-bullet">
                                 <li><a href="https://www.cornell.edu">Cornell University</a> ©{{ now()->year }}</li>
-                                <li class="print:hidden"><a href="https://privacy.cornell.edu/">University Privacy</a></li>
+                                <li class="print:visually-hidden"><a href="https://privacy.cornell.edu/">University Privacy</a></li>
                             </ul>
                         </div>
                         <div>
-                            <ul class="custom inline no-bullet print:hidden">
+                            <ul class="custom inline no-bullet print:visually-hidden">
                                 <li><a href="https://accessibility.cornell.edu/information-technology/web-accessibility/web-accessibility-assistance/">Web Accessibility Assistance</a></li>
                             </ul>
                         </div>
