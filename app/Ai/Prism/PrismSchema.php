@@ -19,7 +19,7 @@ use UnexpectedValueException;
 
 trait PrismSchema
 {
-    private function convertToPrismSchema(array $schema): Schema
+    public static function convertToPrismSchema(array $schema): Schema
     {
         $type = $schema['type'] ?? null;
 
@@ -27,7 +27,7 @@ trait PrismSchema
             $properties = [];
 
             foreach ($schema['properties'] as $propName => $propSchema) {
-                $properties[] = $this->convertToPrismSchema(array_merge($propSchema, ['name' => $propName]));
+                $properties[] = static::convertToPrismSchema(array_merge($propSchema, ['name' => $propName]));
             }
 
             return new ObjectSchema(
@@ -43,7 +43,7 @@ trait PrismSchema
             return new ArraySchema(
                 name: $schema['name'] ?? 'array',
                 description: $schema['description'] ?? '',
-                items: $this->convertToPrismSchema($schema['items'])
+                items: static::convertToPrismSchema($schema['items'])
             );
         }
 
