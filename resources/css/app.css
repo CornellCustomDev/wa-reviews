@@ -435,3 +435,19 @@ div.expander {
         @apply list-decimal ml-6;
     }
 }
+
+table.table[data-flux-table] {
+    @apply whitespace-normal;
+
+    [data-flux-column] {
+        @apply bg-[#efefef];
+        @apply border-cds-gray-200;
+        @apply text-[13px] font-bold text-black;
+        @apply px-2.5 py-1.5;
+    }
+    [data-flux-cell] {
+        @apply border-cds-gray-200;
+        @apply text-[13px] text-black;
+        @apply px-2.5 py-1.5;
+    }
+}

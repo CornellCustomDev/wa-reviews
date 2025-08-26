@@ -9,11 +9,15 @@ use App\Models\Team;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class ViewProjects extends Component
 {
+    #[Url]
+    public string $tab = 'active';
+
     public function projects(): array
     {
         $teamProjects = Project::getTeamProjects(auth()->user());
