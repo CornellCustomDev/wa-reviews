@@ -126,6 +126,7 @@ class Issue extends Model
     {
         // If no guideline ID is set, we cannot determine an instance
         if (empty($this->guideline_id)) {
+            unset($this->guideline_instance);
             return;
         }
 
