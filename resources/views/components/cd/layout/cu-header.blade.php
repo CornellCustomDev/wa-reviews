@@ -22,8 +22,8 @@
     </div>
     <div class="cu45-helper"></div>
     <div class="container-fluid cu-brand">
-        <div class="cu-logo print:visually-hidden"><a href="https://www.cornell.edu"><img class="sr-only" src="{{ asset('cwd-framework/images/cornell/bold_cornell_logo_simple_b31b1b.svg') }}" alt="Cornell University" width="245" height="62"></a></div>
-        <img src="/cwd-framework/images/cornell/bold_cornell_seal_simple_b31b1b.svg" alt="Cornell University" class="not-print:visually-hidden" width="62" height="62">
+        <div class="cu-logo print:hidden"><a href="https://www.cornell.edu"><img class="sr-only" src="{{ asset('cwd-framework/images/cornell/bold_cornell_logo_simple_b31b1b.svg') }}" alt="Cornell University" width="245" height="62"></a></div>
+        <img src="/cwd-framework/images/cornell/bold_cornell_seal_simple_b31b1b.svg" alt="Cornell University" class="not-print:hidden" width="62" height="62">
         <div class="cu-unit print:m-0 print:ml-4">
             <div class="h1 font-medium mt-1.5 mb-0"><a href="{{ route('welcome') }}">{{ $title }}</a></div>
             @if($subtitle)

@@ -100,6 +100,10 @@
     @apply focus:default-focus-ring focus:shadow-none;
 }
 
+.visually-hidden {
+    display: none;
+}
+
 [data-flux-button] {
     @apply cursor-pointer;
     @apply focus-ring;

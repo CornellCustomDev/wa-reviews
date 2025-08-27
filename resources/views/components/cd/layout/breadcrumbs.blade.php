@@ -1,5 +1,5 @@
 @props(['breadcrumbs' => []])
-<div id="breadcrumb-navigation" class="print:visually-hidden" {{ $attributes }}>
+<div id="breadcrumb-navigation" class="print:hidden" {{ $attributes }}>
     <nav class="breadcrumb" aria-label="Breadcrumb">
         <flux:breadcrumbs class="mb-4">
             <flux:breadcrumbs.item :href="route('welcome')" class="text-xs" icon="home" />
