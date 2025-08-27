@@ -444,6 +444,10 @@ table.table[data-flux-table] {
         @apply border-cds-gray-200;
         @apply text-[13px] font-bold text-black;
         @apply px-2.5 py-1.5;
+
+        [data-flux-table-sortable] {
+            @apply cursor-pointer;
+        }
     }
     [data-flux-cell] {
         @apply border-cds-gray-200;
