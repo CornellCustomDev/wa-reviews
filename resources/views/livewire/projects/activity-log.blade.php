@@ -1,5 +1,5 @@
 <div>
-    <flux:table :paginate="$this->activities">
+    <flux:table class="table striped bordered" :paginate="$this->activities">
         <flux:table.columns>
             <flux:table.column class="w-48">
                 Date

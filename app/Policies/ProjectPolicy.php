@@ -16,7 +16,7 @@ class ProjectPolicy
         }
 
         // If the user is a report viewer, they can view projects
-        return Project::getReportViewerProjects($user)->isNotEmpty();
+        return Project::reportViewerProjects($user)->exists();
     }
 
     public function view(User $user, Project $project): bool

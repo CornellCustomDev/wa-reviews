@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProjectStatus;
 use App\Events\ProjectChanged;
 use App\Services\SiteImprove\SiteimproveService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -97,15 +98,6 @@ class Project extends Model
             parentKey: 'id',
             relatedKey: 'id'
         );
-    }
-
-    public static function getTeamProjects(User $user): Collection
-    {
-        if ($user->isAdministrator()) {
-            return Project::all();
-        }
-
-        return Project::query()->whereIn('team_id', $user->teams->pluck('id'))->get();
     }
 
     public function assignToUser(User $user): void
@@ -204,11 +196,61 @@ class Project extends Model
         return $this->reportViewers()->where('user_id', $user->id)->exists();
     }
 
-    public static function getReportViewerProjects(User $user): Collection
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function reportViewerProjects(Builder $query, User $user): void
     {
-        return Project::query()
-            ->whereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id))
-            ->get();
+        $query->whereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
+    }
+
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function visibleTo(Builder $query, User $user): void
+    {
+        if ($user->isAdministrator()) {
+            return; // Admins can see all projects
+        }
+
+        $query->where(function (Builder $query) use ($user) {
+            // Projects in the user's teams
+            $query->whereIn('team_id', $user->teams->pluck('id'));
+            // Projects where the user is a report viewer
+            $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
+        });
+    }
+
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function withReviewer(Builder $query): void
+    {
+        $query
+            ->leftJoin('project_assignments', 'projects.assignment_id', '=', 'project_assignments.id')
+            ->leftJoin('users as reviewer', 'project_assignments.user_id', '=', 'reviewer.id')
+        ;
+    }
+
+    public static function activeProjects(User $user): Builder
+    {
+        return static::query()->visibleTo($user)
+            ->whereIn('status', ProjectStatus::activeCases())
+            ->withReviewer()
+            ->select('projects.*');
+    }
+
+    public static function myProjects(User $user): Builder
+    {
+        return static::query()
+            ->where(function (Builder $query) use ($user) {
+                $query->whereHas('assignment', fn ($q) => $q->where('user_id', $user->id));
+                $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
+            })
+            ->withReviewer()
+            ->select('projects.*');
+    }
+
+    public static function completedProjects(User $user): Builder
+    {
+        return static::query()->visibleTo($user)
+            ->whereIn('status', ProjectStatus::completedCases())
+            ->withReviewer()
+            ->select('projects.*');
     }
 
     public function getReportableIssues(): Collection

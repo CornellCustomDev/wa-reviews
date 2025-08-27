@@ -4,26 +4,58 @@ namespace App\Livewire\Projects;
 
 use App\Events\ProjectChanged;
 use App\Events\TeamChanged;
+use App\Livewire\Support\WithSortedPagination;
 use App\Models\Project;
 use App\Models\Team;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 #[Layout('components.layouts.app')]
 class ViewProjects extends Component
 {
-    #[Computed]
-    public function projects(): array
-    {
-        $teamProjects = Project::getTeamProjects(auth()->user());
-        $viewerProjects = Project::getReportViewerProjects(auth()->user());
+    use WithSortedPagination;
 
-        return $teamProjects
-            ->merge($viewerProjects)
-            ->sortByDesc('updated_at')
-            ->all();
+    #[Url]
+    public string $tab = 'active';
+
+    #[Computed]
+    public function activeProjects(): LengthAwarePaginator
+    {
+        $pageName = 'active-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::activeProjects(auth()->user())
+            ->with(['reviewer']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
+    }
+
+    #[Computed]
+    public function myProjects(): LengthAwarePaginator
+    {
+        $pageName = 'my-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::myProjects(auth()->user())
+            ->with(['reviewer']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
+    }
+
+    #[Computed]
+    public function completedProjects(): LengthAwarePaginator
+    {
+        $pageName = 'completed-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::completedProjects(auth()->user())
+            ->with(['reviewer']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
     }
 
     #[Computed]

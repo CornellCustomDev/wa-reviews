@@ -1024,6 +1024,7 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'App\\Livewire\\SiaRules\\ShowSiaRule' => __DIR__ . '/../..' . '/app/Livewire/SiaRules/ShowSiaRule.php',
         'App\\Livewire\\SiaRules\\ViewSiaRules' => __DIR__ . '/../..' . '/app/Livewire/SiaRules/ViewSiaRules.php',
         'App\\Livewire\\SiteimproveRules\\ViewSiteimproveRules' => __DIR__ . '/../..' . '/app/Livewire/SiteimproveRules/ViewSiteimproveRules.php',
+        'App\\Livewire\\Support\\WithSortedPagination' => __DIR__ . '/../..' . '/app/Livewire/Support/WithSortedPagination.php',
         'App\\Livewire\\Teams\\ActivityLog' => __DIR__ . '/../..' . '/app/Livewire/Teams/ActivityLog.php',
         'App\\Livewire\\Teams\\AddTeamUser' => __DIR__ . '/../..' . '/app/Livewire/Teams/AddTeamUser.php',
         'App\\Livewire\\Teams\\CreateTeam' => __DIR__ . '/../..' . '/app/Livewire/Teams/CreateTeam.php',
