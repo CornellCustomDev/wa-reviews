@@ -33,6 +33,8 @@ class IssueForm extends Form
 
     #[Validate('nullable')]
     public $guideline_id = null;
+    #[Validate('nullable|integer')]
+    public ?int $guideline_instance = null;
     #[Validate('nullable')]
     public ?Assessment $assessment;
     #[Validate('nullable')]
@@ -84,6 +86,20 @@ class IssueForm extends Form
             ->toArray();
     }
 
+    public function getIssueInstanceSelectArray(): array
+    {
+        if (!$this->issue) {
+            return [];
+        }
+
+        return collect($this->issue->getGuidelineInstanceOptions())
+            ->map(fn ($instance) => [
+                'value' => $instance,
+                'option' => $instance,
+            ])
+            ->toArray();
+    }
+
     public function setModel(Issue $issue): void
     {
         $this->issue = $issue;
@@ -91,6 +107,7 @@ class IssueForm extends Form
         $this->target = $issue->target;
         $this->description = $issue->description;
         $this->guideline_id = $issue->guideline_id;
+        $this->guideline_instance = $issue->guideline_instance;
         $this->assessment = $issue->assessment;
         $this->testing_method = $issue->testing_method;
         $this->recommendation = $issue->recommendation;

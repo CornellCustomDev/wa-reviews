@@ -9,7 +9,7 @@
 
     <h1>{{ $issue->project->name }}: Issue
         @if($issue->guideline_id)
-            {{ $issue->guideline->getNumber().\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}
+            {{ $issue->getGuidelineInstanceNumber() }}
         @endif
     </h1>
 
@@ -19,8 +19,10 @@
                 <livewire:issues.update-status :issue="$issue"/>
             @else
                 @can('update', $issue)
-                    <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit issue" />
-                    <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing issue" />
+                    <x-forms.button icon="pencil-square" x-show="!edit" x-on:click="edit = !edit" title="Edit issue" />
+                    <x-forms.button icon="x-mark" x-cloak class="secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing issue" />
+
+                    <x-forms.button icon="document-duplicate" x-show="!edit" wire:click="clone" wire:confirm="Do you want to create a new issue based on this one?" title="Duplicate issue" />
                 @endcan
             @endif
         </div>

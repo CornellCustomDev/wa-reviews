@@ -36,6 +36,12 @@ class CreateProjectIssue extends Component
         return $this->form->getGuidelineSelectArray();
     }
 
+    #[Computed(persist: true)]
+    public function getIssueInstanceOptions(): array
+    {
+        return [];
+    }
+
     #[On('analyze-issue')]
     public function analyzeIssue()
     {

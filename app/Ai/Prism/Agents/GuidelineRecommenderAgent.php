@@ -116,6 +116,6 @@ class GuidelineRecommenderAgent extends PendingTextRequest
             $this->responseHandler->handle($response->guidelines, $this->getChatHistory());
         }
 
-        return $response->feedback;
+        return $response->feedback ?? '';
     }
 }

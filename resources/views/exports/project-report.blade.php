@@ -71,7 +71,7 @@
         @foreach($issues as $issue)
             <tr>
                 <td>
-                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->guideline->number.\App\Models\Issue::INSTANCE_DIVIDER.$issue->guideline_instance }}</a>
+                    <a href="{{ route('issue.show', $issue) }}">{{ $issue->getGuidelineInstanceNumber() }}</a>
                 </td>
                 <td>
                     <p>{{ $issue->guideline->criterion->getLongName() }}</p>
