@@ -30,6 +30,19 @@ class ShowIssue extends Component
         return SiteimproveService::getPageReportUrlForScope($this->issue->scope);
     }
 
+    public function clone(): void
+    {
+        $this->authorize('update', $this->issue->project);
+
+        $clonedIssue = $this->issue->replicate(
+            except: ['guideline_instance', 'image_links', 'chat_history_ulid']
+        );
+        $clonedIssue->save();
+
+        // Go to the cloned issue page
+        redirect()->route('issue.show', $clonedIssue);
+    }
+
     public function render()
     {
         $this->authorize('view', $this->issue);
@@ -47,7 +60,7 @@ class ShowIssue extends Component
     protected function getBreadcrumbs(): array
     {
         $issueIdentifier = $this->issue->guideline_id
-            ? $this->issue->guideline->getNumber().Issue::INSTANCE_DIVIDER.$this->issue->guideline_instance
+            ? $this->issue->getGuidelineInstanceNumber()
             : $this->issue->id;
 
         return [
