@@ -1,12 +1,28 @@
 @props([
-    'projects'
+    'projects',
+    'pageName',
 ])
-<flux:table class="table striped bordered">
+<flux:table class="table striped bordered min-w-[860px]" :paginate="$projects">
     <flux:table.columns>
         <flux:table.column>Project</flux:table.column>
         <flux:table.column>Site</flux:table.column>
-        <flux:table.column>Reviewer</flux:table.column>
-        <flux:table.column class="w-[150px]">Created</flux:table.column>
+        <flux:table.column
+            sortable
+            :sorted="$this->isSorted('reviewer.name', $pageName)"
+            :direction="$this->sortDirection($pageName)"
+            wire:click="sortBy('reviewer.name', '{{ $pageName }}', 'asc')"
+        >
+            Reviewer
+        </flux:table.column>
+        <flux:table.column
+            class="w-[150px]"
+            sortable
+            :sorted="$this->isSorted('created_at', $pageName)"
+            :direction="$this->sortDirection($pageName)"
+            wire:click="sortBy('created_at', '{{ $pageName }}', 'desc')"
+        >
+            Created
+        </flux:table.column>
         <flux:table.column class="w-[100px]">Status</flux:table.column>
         <flux:table.column class="w-[100px]">Actions</flux:table.column>
     </flux:table.columns>

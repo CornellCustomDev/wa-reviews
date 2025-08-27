@@ -212,15 +212,26 @@ class Project extends Model
         $query->where(function (Builder $query) use ($user) {
             // Projects in the user's teams
             $query->whereIn('team_id', $user->teams->pluck('id'));
-            // Projects where the user is the reviewer
+            // Projects where the user is a report viewer
             $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
         });
+    }
+
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function withReviewer(Builder $query): void
+    {
+        $query
+            ->leftJoin('project_assignments', 'projects.assignment_id', '=', 'project_assignments.id')
+            ->leftJoin('users as reviewer', 'project_assignments.user_id', '=', 'reviewer.id')
+        ;
     }
 
     public static function activeProjects(User $user): Builder
     {
         return static::query()->visibleTo($user)
-            ->whereIn('status', ProjectStatus::activeCases());
+            ->whereIn('status', ProjectStatus::activeCases())
+            ->withReviewer()
+            ->select('projects.*');
     }
 
     public static function myProjects(User $user): Builder
@@ -229,13 +240,17 @@ class Project extends Model
             ->where(function (Builder $query) use ($user) {
                 $query->whereHas('assignment', fn ($q) => $q->where('user_id', $user->id));
                 $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
-            });
+            })
+            ->withReviewer()
+            ->select('projects.*');
     }
 
     public static function completedProjects(User $user): Builder
     {
         return static::query()->visibleTo($user)
-            ->whereIn('status', ProjectStatus::completedCases());
+            ->whereIn('status', ProjectStatus::completedCases())
+            ->withReviewer()
+            ->select('projects.*');
     }
 
     public function getReportableIssues(): Collection
