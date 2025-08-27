@@ -45,4 +45,19 @@ enum ProjectStatus: string
     {
         return $this === self::Completed;
     }
+
+    public static function activeCases(): array
+    {
+        return [
+            self::NotStarted,
+            self::InProgress,
+        ];
+    }
+
+    public static function completedCases(): array
+    {
+        return [
+            self::Completed,
+        ];
+    }
 }

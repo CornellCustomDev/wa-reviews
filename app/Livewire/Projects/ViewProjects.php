@@ -4,8 +4,10 @@ namespace App\Livewire\Projects;
 
 use App\Events\ProjectChanged;
 use App\Events\TeamChanged;
+use App\Livewire\Support\WithSortedPagination;
 use App\Models\Project;
 use App\Models\Team;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -15,30 +17,45 @@ use Livewire\Component;
 #[Layout('components.layouts.app')]
 class ViewProjects extends Component
 {
+    use WithSortedPagination;
+
     #[Url]
     public string $tab = 'active';
 
-    public function projects(): array
+    #[Computed]
+    public function activeProjects(): LengthAwarePaginator
     {
-        $teamProjects = Project::getTeamProjects(auth()->user());
-        $viewerProjects = Project::getReportViewerProjects(auth()->user());
+        $pageName = 'active-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::activeProjects(auth()->user())
+            ->with(['reviewer']);
 
-        return $teamProjects
-            ->merge($viewerProjects)
-            ->sortByDesc('updated_at')
-            ->all();
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
     }
 
     #[Computed]
-    public function activeProjects(): array
+    public function myProjects(): LengthAwarePaginator
     {
-        return array_filter($this->projects(), fn(Project $project) => !$project->isCompleted());
+        $pageName = 'my-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::myProjects(auth()->user())
+            ->with(['reviewer']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
     }
 
     #[Computed]
-    public function completedProjects(): array
+    public function completedProjects(): LengthAwarePaginator
     {
-        return array_filter($this->projects(), fn(Project $project) => $project->isCompleted());
+        $pageName = 'completed-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::completedProjects(auth()->user())
+            ->with(['reviewer']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
     }
 
     #[Computed]
