@@ -222,6 +222,7 @@ return array(
     'App\\Livewire\\SiaRules\\ShowSiaRule' => $baseDir . '/app/Livewire/SiaRules/ShowSiaRule.php',
     'App\\Livewire\\SiaRules\\ViewSiaRules' => $baseDir . '/app/Livewire/SiaRules/ViewSiaRules.php',
     'App\\Livewire\\SiteimproveRules\\ViewSiteimproveRules' => $baseDir . '/app/Livewire/SiteimproveRules/ViewSiteimproveRules.php',
+    'App\\Livewire\\Support\\WithSortedPagination' => $baseDir . '/app/Livewire/Support/WithSortedPagination.php',
     'App\\Livewire\\Teams\\ActivityLog' => $baseDir . '/app/Livewire/Teams/ActivityLog.php',
     'App\\Livewire\\Teams\\AddTeamUser' => $baseDir . '/app/Livewire/Teams/AddTeamUser.php',
     'App\\Livewire\\Teams\\CreateTeam' => $baseDir . '/app/Livewire/Teams/CreateTeam.php',
