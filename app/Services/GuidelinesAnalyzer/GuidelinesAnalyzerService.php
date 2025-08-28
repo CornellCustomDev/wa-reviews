@@ -219,7 +219,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
                 'guidelines' => [
                     'type' => 'array',
                     'description' => 'Array of applicable guideline objects when accessibility barriers are found. Null if none are applicable.',
-                    'items' => self::getItemsSchema(),
+                    'items' => self::getIssueSchema(),
                 ],
                 'feedback' => [
                     'type' => 'string',
