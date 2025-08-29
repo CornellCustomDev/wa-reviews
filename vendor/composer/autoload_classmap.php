@@ -65,7 +65,6 @@ return array(
     'App\\AiAgents\\ChatAgent' => $baseDir . '/app/AiAgents/ChatAgent.php',
     'App\\AiAgents\\ChatHistoryNameAgent' => $baseDir . '/app/AiAgents/ChatHistoryNameAgent.php',
     'App\\AiAgents\\GuidelineChatAgent' => $baseDir . '/app/AiAgents/GuidelineChatAgent.php',
-    'App\\AiAgents\\GuidelineRecommenderAgent' => $baseDir . '/app/AiAgents/GuidelineRecommenderAgent.php',
     'App\\AiAgents\\IssueAnalyzerAgent' => $baseDir . '/app/AiAgents/IssueAnalyzerAgent.php',
     'App\\AiAgents\\IssueChatAgent' => $baseDir . '/app/AiAgents/IssueChatAgent.php',
     'App\\AiAgents\\ItemChatAgent' => $baseDir . '/app/AiAgents/ItemChatAgent.php',

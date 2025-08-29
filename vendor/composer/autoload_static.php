@@ -867,7 +867,6 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'App\\AiAgents\\ChatAgent' => __DIR__ . '/../..' . '/app/AiAgents/ChatAgent.php',
         'App\\AiAgents\\ChatHistoryNameAgent' => __DIR__ . '/../..' . '/app/AiAgents/ChatHistoryNameAgent.php',
         'App\\AiAgents\\GuidelineChatAgent' => __DIR__ . '/../..' . '/app/AiAgents/GuidelineChatAgent.php',
-        'App\\AiAgents\\GuidelineRecommenderAgent' => __DIR__ . '/../..' . '/app/AiAgents/GuidelineRecommenderAgent.php',
         'App\\AiAgents\\IssueAnalyzerAgent' => __DIR__ . '/../..' . '/app/AiAgents/IssueAnalyzerAgent.php',
         'App\\AiAgents\\IssueChatAgent' => __DIR__ . '/../..' . '/app/AiAgents/IssueChatAgent.php',
         'App\\AiAgents\\ItemChatAgent' => __DIR__ . '/../..' . '/app/AiAgents/ItemChatAgent.php',
