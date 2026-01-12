@@ -8,7 +8,9 @@
         {{ $view }}
     </div>
 
+    @can('update', $model)
     <div x-show="showEdit" x-cloak>
         {{ $edit }}
     </div>
+    @endcan
 </div>
