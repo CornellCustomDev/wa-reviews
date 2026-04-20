@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Laravel\Boost\Mcp\Prompts\LaravelCodeSimplifier;
 
-use Laravel\Boost\Mcp\Prompts\Concerns\RendersBladeGuidelines;
+use Laravel\Boost\Concerns\RendersBladeGuidelines;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Prompt;
 
@@ -20,7 +20,7 @@ class LaravelCodeSimplifier extends Prompt
 
     public function handle(): Response
     {
-        $content = $this->renderGuidelineFile(__DIR__.'/laravel-code-simplifier.blade.php');
+        $content = $this->renderBladeFile(__DIR__.'/laravel-code-simplifier.blade.php');
 
         return Response::text($content);
     }

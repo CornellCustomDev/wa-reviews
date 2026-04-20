@@ -1,7 +1,7 @@
 @php
 /** @var \Laravel\Boost\Install\GuidelineAssist $assist */
 @endphp
-## Laravel Pint Code Formatter
+# Laravel Pint Code Formatter
 
 @if($assist->supportsPintAgentFormatter())
 - You must run `{{ $assist->binCommand('pint') }} --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.

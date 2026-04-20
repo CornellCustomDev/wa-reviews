@@ -36,6 +36,7 @@ class SQLiteSchemaDriver extends DatabaseSchemaDriver
     {
         try {
             $sql = "SELECT name, sql FROM sqlite_master WHERE type = 'trigger'";
+
             if ($this->hasTable($table)) {
                 $sql .= ' AND tbl_name = ?';
 
@@ -56,5 +57,20 @@ class SQLiteSchemaDriver extends DatabaseSchemaDriver
     public function getSequences(): array
     {
         return [];
+    }
+
+    public function getTables(): array
+    {
+        try {
+            return DB::connection($this->connection)->select("
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                AND name NOT LIKE 'sqlite_%'
+                ORDER BY name
+            ");
+        } catch (Exception) {
+            return [];
+        }
     }
 }

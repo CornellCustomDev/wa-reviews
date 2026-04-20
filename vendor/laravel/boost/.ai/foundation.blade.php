@@ -3,7 +3,7 @@
 @endphp
 # Laravel Boost Guidelines
 
-The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to enhance the user's satisfaction building Laravel applications.
+The Laravel Boost guidelines are specifically curated by Laravel maintainers for this application. These guidelines should be followed closely to ensure the best experience when building Laravel applications.
 
 ## Foundational Context
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
@@ -17,13 +17,24 @@ This application is a Laravel application and its main Laravel ecosystems packag
 Application purpose: {!! config('boost.purpose') !!}
 
 @endif
+
+@if($assist->hasSkillsEnabled() && $assist->skills()->isNotEmpty())
+## Skills Activation
+
+This project has domain-specific skills available. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
+
+@foreach($assist->skills() as $skill)
+- `{{ $skill->name }}` — {{ $skill->description }}
+@endforeach
+@endif
+
 ## Conventions
 - You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
 ## Verification Scripts
-- Do not create verification scripts or tinker when tests cover that functionality and prove it works. Unit and feature tests are more important.
+- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
 
 ## Application Structure & Architecture
 - Stick to existing directory structure; don't create new base folders without approval.
@@ -32,8 +43,8 @@ Application purpose: {!! config('boost.purpose') !!}
 ## Frontend Bundling
 - If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `{{ $assist->nodePackageManagerCommand('run build') }}`, `{{ $assist->nodePackageManagerCommand('run dev') }}`, or `{{ $assist->composerCommand('run dev') }}`. Ask them.
 
-## Replies
-- Be concise in your explanations - focus on what's important rather than explaining obvious details.
-
 ## Documentation Files
 - You must only create documentation files if explicitly requested by the user.
+
+## Replies
+- Be concise in your explanations - focus on what's important rather than explaining obvious details.

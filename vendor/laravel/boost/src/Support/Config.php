@@ -10,25 +10,61 @@ class Config
 {
     protected const FILE = 'boost.json';
 
+    public function getGuidelines(): bool
+    {
+        return (bool) $this->get('guidelines', false);
+    }
+
+    public function setGuidelines(bool $enabled): void
+    {
+        $this->set('guidelines', $enabled);
+    }
+
     /**
      * @return array<int, string>
      */
-    public function getGuidelines(): array
+    public function getSkills(): array
     {
-        return $this->get('guidelines', []);
+        return $this->get('skills', []);
     }
 
     /**
-     * @param  array<int, string>  $guidelines
+     * @param  array<int, string>  $skills
      */
-    public function setGuidelines(array $guidelines): void
+    public function setSkills(array $skills): void
     {
-        $this->set('guidelines', $guidelines);
+        $this->set('skills', $skills);
     }
 
-    public function setEditors(array $editors): void
+    public function hasSkills(): bool
     {
-        $this->set('editors', $editors);
+        return $this->getSkills() !== [];
+    }
+
+    public function getMcp(): bool
+    {
+        return $this->get('mcp', false);
+    }
+
+    public function setMcp(bool $enabled): void
+    {
+        $this->set('mcp', $enabled);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function getPackages(): array
+    {
+        return $this->get('packages', []);
+    }
+
+    /**
+     * @param  array<int, string>  $packages
+     */
+    public function setPackages(array $packages): void
+    {
+        $this->set('packages', $packages);
     }
 
     /**
@@ -45,11 +81,6 @@ class Config
     public function getAgents(): array
     {
         return $this->get('agents', []);
-    }
-
-    public function getEditors(): array
-    {
-        return $this->get('editors', []);
     }
 
     public function setHerdMcp(bool $installed): void
@@ -72,6 +103,19 @@ class Config
         return $this->get('sail', false);
     }
 
+    public function isValid(): bool
+    {
+        $path = base_path(self::FILE);
+
+        if (! file_exists($path)) {
+            return false;
+        }
+
+        json_decode(file_get_contents($path), true);
+
+        return json_last_error() === JSON_ERROR_NONE;
+    }
+
     public function flush(): void
     {
         $path = base_path(self::FILE);
@@ -90,7 +134,7 @@ class Config
 
     protected function set(string $key, mixed $value): void
     {
-        $config = array_filter($this->all());
+        $config = array_filter($this->all(), fn ($value): bool => $value !== null && $value !== []);
 
         data_set($config, $key, $value);
 

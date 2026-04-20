@@ -24,7 +24,7 @@ class DatabaseSchema extends Tool
     /**
      * The tool's description.
      */
-    protected string $description = 'Read the database schema for this application, including table names, columns, data types, indexes, foreign keys, and more.';
+    protected string $description = 'Read the database schema for this application. Returns table names, tables, columns (type only), indexes, foreign keys. Params: "database" - connection name; "filter" - substring match on table names; "include_column_details" (default false) - adds nullable, default, auto_increment, comments; "include_views" (default false); "include_routines" (default false) - stored procedures, functions, sequences.';
 
     /**
      * Get the tool's input schema.
@@ -37,7 +37,13 @@ class DatabaseSchema extends Tool
             'database' => $schema->string()
                 ->description("Name of the database connection to dump (defaults to app's default connection, often not needed)"),
             'filter' => $schema->string()
-                ->description('Filter the tables by name'),
+                ->description('Filter tables by name (substring match).'),
+            'include_views' => $schema->boolean()
+                ->description('Include database views. Defaults to false.'),
+            'include_routines' => $schema->boolean()
+                ->description('Include stored procedures, functions, and sequences. Defaults to false.'),
+            'include_column_details' => $schema->boolean()
+                ->description('Include full column metadata (nullable, default, auto_increment, comments, generation). Defaults to false.'),
         ];
     }
 
@@ -48,50 +54,100 @@ class DatabaseSchema extends Tool
     {
         $connection = $request->get('database') ?? config('database.default');
         $filter = $request->get('filter') ?? '';
-        $cacheKey = "boost:mcp:database-schema:{$connection}:{$filter}";
+        $includeViews = $request->get('include_views', false);
+        $includeRoutines = $request->get('include_routines', false);
+        $includeColumnDetails = $request->get('include_column_details', false);
 
-        $schema = Cache::remember($cacheKey, 20, fn (): array => $this->getDatabaseStructure($connection, $filter));
+        $cacheKey = sprintf(
+            'boost:mcp:database-schema:%s:%s:%d:%d:%d',
+            $connection,
+            $filter,
+            (int) $includeViews,
+            (int) $includeRoutines,
+            (int) $includeColumnDetails
+        );
+
+        $schema = rescue(
+            fn () => Cache::remember($cacheKey, 20, fn (): array => $this->getDatabaseStructure(
+                $connection,
+                $filter,
+                $includeViews,
+                $includeRoutines,
+                $includeColumnDetails
+            )),
+            fn (): array => $this->getDatabaseStructure($connection, $filter, $includeViews, $includeRoutines, $includeColumnDetails),
+            report: false
+        );
 
         return Response::json($schema);
     }
 
-    protected function getDatabaseStructure(?string $connection, string $filter = ''): array
-    {
-        return [
+    /**
+     * @return array{engine: string, tables: array<string, mixed>, views?: array<mixed>, routines?: array{stored_procedures: array<mixed>, functions: array<mixed>, sequences: array<mixed>}}
+     */
+    protected function getDatabaseStructure(
+        ?string $connection,
+        string $filter = '',
+        bool $includeViews = false,
+        bool $includeRoutines = false,
+        bool $includeColumnDetails = false
+    ): array {
+        $driver = SchemaDriverFactory::make($connection);
+
+        $result = [
             'engine' => DB::connection($connection)->getDriverName(),
-            'tables' => $this->getAllTablesStructure($connection, $filter),
-            'global' => $this->getGlobalStructure($connection),
+            'tables' => $this->getAllTablesStructure($connection, $filter, $includeColumnDetails),
         ];
+
+        if ($includeViews) {
+            $result['views'] = $driver->getViews();
+        }
+
+        if ($includeRoutines) {
+            $result['routines'] = [
+                'stored_procedures' => $driver->getStoredProcedures(),
+                'functions' => $driver->getFunctions(),
+                'sequences' => $driver->getSequences(),
+            ];
+        }
+
+        return $result;
     }
 
-    protected function getAllTablesStructure(?string $connection, string $filter = ''): array
+    /**
+     * @return array<string, array<string, mixed>>
+     */
+    protected function getAllTablesStructure(?string $connection, string $filter = '', bool $includeColumnDetails = false): array
     {
         $structures = [];
 
         foreach ($this->getAllTables($connection) as $table) {
-            $tableName = $table['name'];
+            $tableName = is_object($table) ? $table->name : ($table['name'] ?? '');
 
-            if ($filter && ! str_contains(strtolower((string) $tableName), strtolower($filter))) {
+            if ($filter !== '' && ! str_contains(strtolower($tableName), strtolower($filter))) {
                 continue;
             }
 
-            $structures[$tableName] = $this->getTableStructure($connection, $tableName);
+            $structures[$tableName] = $this->getTableStructure($connection, $tableName, $includeColumnDetails);
         }
 
         return $structures;
     }
 
+    /**
+     * @return array<int, object|array<string, mixed>>
+     */
     protected function getAllTables(?string $connection): array
     {
-        return Schema::connection($connection)->getTables();
+        return SchemaDriverFactory::make($connection)->getTables();
     }
 
-    protected function getTableStructure(?string $connection, string $tableName): array
+    protected function getTableStructure(?string $connection, string $tableName, bool $includeColumnDetails = false): array
     {
         $driver = SchemaDriverFactory::make($connection);
 
         try {
-            $columns = $this->getTableColumns($connection, $tableName);
+            $columns = $this->getTableColumns($connection, $tableName, $includeColumnDetails);
             $indexes = $this->getTableIndexes($connection, $tableName);
             $foreignKeys = $this->getTableForeignKeys($connection, $tableName);
             $triggers = $driver->getTriggers($tableName);
@@ -116,27 +172,46 @@ class DatabaseSchema extends Tool
         }
     }
 
-    protected function getTableColumns(?string $connection, string $tableName): array
+    /**
+     * @return array<string, array{type: string, nullable?: bool, default?: mixed, auto_increment?: bool, comment?: string, generation?: array<string, mixed>}>
+     */
+    protected function getTableColumns(?string $connection, string $tableName, bool $includeColumnDetails = false): array
     {
-        $columns = Schema::connection($connection)->getColumnListing($tableName);
+        $schema = Schema::connection($connection);
         $columnDetails = [];
 
-        foreach ($columns as $column) {
-            $columnDetails[$column] = [
-                'type' => Schema::connection($connection)->getColumnType($tableName, $column),
-            ];
+        foreach ($schema->getColumns($tableName) as $column) {
+            $detail = ['type' => $column['type']];
+
+            if ($includeColumnDetails) {
+                $detail['nullable'] = $column['nullable'];
+                $detail['default'] = $column['default'];
+                $detail['auto_increment'] = $column['auto_increment'];
+
+                if ($column['comment'] !== null && $column['comment'] !== '') {
+                    $detail['comment'] = $column['comment'];
+                }
+
+                if ($column['generation'] !== null) {
+                    $detail['generation'] = $column['generation'];
+                }
+            }
+
+            $columnDetails[$column['name']] = $detail;
         }
 
         return $columnDetails;
     }
 
+    /**
+     * @return array<string, array{columns: mixed, type: mixed, is_unique: bool, is_primary: bool}>
+     */
     protected function getTableIndexes(?string $connection, string $tableName): array
     {
         try {
-            $indexes = Schema::connection($connection)->getIndexes($tableName);
             $indexDetails = [];
 
-            foreach ($indexes as $index) {
+            foreach (Schema::connection($connection)->getIndexes($tableName) as $index) {
                 $indexDetails[$index['name']] = [
                     'columns' => Arr::get($index, 'columns'),
                     'type' => Arr::get($index, 'type'),
@@ -158,17 +233,5 @@ class DatabaseSchema extends Tool
         } catch (Exception) {
             return [];
         }
-    }
-
-    protected function getGlobalStructure(?string $connection): array
-    {
-        $driver = SchemaDriverFactory::make($connection);
-
-        return [
-            'views' => $driver->getViews(),
-            'stored_procedures' => $driver->getStoredProcedures(),
-            'functions' => $driver->getFunctions(),
-            'sequences' => $driver->getSequences(),
-        ];
     }
 }

@@ -16,7 +16,6 @@ use Laravel\Boost\Install\GuidelineAssist;
 use Laravel\Boost\Install\GuidelineConfig;
 use Laravel\Boost\Mcp\Boost;
 use Laravel\Boost\Middleware\InjectBoost;
-use Laravel\Boost\Services\BrowserLogger;
 use Laravel\Mcp\Facades\Mcp;
 use Laravel\Roster\Roster;
 
@@ -48,16 +47,18 @@ class BoostServiceProvider extends ServiceProvider
             $cacheKey = 'boost.roster.scan';
             $lastModified = max(array_map(fn (string $path): int|false => file_exists($path) ? filemtime($path) : 0, $lockFiles));
 
-            $cached = cache()->get($cacheKey);
+            $cached = rescue(fn () => cache()->get($cacheKey), report: false);
+
             if ($cached && isset($cached['timestamp']) && $cached['timestamp'] >= $lastModified) {
                 return $cached['roster'];
             }
 
             $roster = Roster::scan(base_path());
-            cache()->put($cacheKey, [
+
+            rescue(fn () => cache()->put($cacheKey, [
                 'roster' => $roster,
                 'timestamp' => time(),
-            ], now()->addHours(24));
+            ], now()->addHours(24)), report: false);
 
             return $roster;
         });
@@ -106,6 +107,7 @@ class BoostServiceProvider extends ServiceProvider
                 Console\InstallCommand::class,
                 Console\UpdateCommand::class,
                 Console\ExecuteToolCommand::class,
+                Console\AddSkillCommand::class,
             ]);
         }
     }
@@ -114,6 +116,7 @@ class BoostServiceProvider extends ServiceProvider
     {
         Route::post('/_boost/browser-logs', function (Request $request) {
             $logs = $request->input('logs', []);
+
             /** @var Logger $logger */
             $logger = Log::channel('browser');
 
@@ -172,14 +175,10 @@ class BoostServiceProvider extends ServiceProvider
 
     protected function registerBrowserLogger(): void
     {
-        if (config('logging.channels.browser') !== null) {
-            return;
-        }
-
         config([
             'logging.channels.browser' => [
                 'driver' => 'single',
-                'path' => storage_path('logs/browser.log'),
+                'path' => storage_path('logs'.DIRECTORY_SEPARATOR.'browser.log'),
                 'level' => env('LOG_LEVEL', 'debug'),
                 'days' => 14,
             ],
@@ -188,7 +187,7 @@ class BoostServiceProvider extends ServiceProvider
 
     protected function registerBladeDirectives(BladeCompiler $bladeCompiler): void
     {
-        $bladeCompiler->directive('boostJs', fn (): string => '<?php echo '.BrowserLogger::class.'::getScript(); ?>');
+        $bladeCompiler->directive('boostJs', fn (): string => '<?php echo '.\Laravel\Boost\Services\BrowserLogger::class.'::getScript(); ?>');
     }
 
     protected function hookIntoResponses(Router $router): void
