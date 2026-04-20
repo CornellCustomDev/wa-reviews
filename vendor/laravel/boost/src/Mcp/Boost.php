@@ -4,112 +4,185 @@ declare(strict_types=1);
 
 namespace Laravel\Boost\Mcp;
 
+use InvalidArgumentException;
 use Laravel\Boost\Mcp\Methods\CallToolWithExecutor;
-use Laravel\Boost\Mcp\Resources\ApplicationInfo;
+use Laravel\Boost\Mcp\Prompts\LaravelCodeSimplifier\LaravelCodeSimplifier;
+use Laravel\Boost\Mcp\Prompts\PackageGuidelinePrompt;
+use Laravel\Boost\Mcp\Prompts\UpgradeLivewirev4\UpgradeLivewireV4;
+use Laravel\Boost\Mcp\Resources\PackageGuidelineResource;
+use Laravel\Boost\Mcp\Tools\ApplicationInfo;
+use Laravel\Boost\Mcp\Tools\BrowserLogs;
+use Laravel\Boost\Mcp\Tools\DatabaseConnections;
+use Laravel\Boost\Mcp\Tools\DatabaseQuery;
+use Laravel\Boost\Mcp\Tools\DatabaseSchema;
+use Laravel\Boost\Mcp\Tools\GetAbsoluteUrl;
+use Laravel\Boost\Mcp\Tools\GetConfig;
+use Laravel\Boost\Mcp\Tools\LastError;
+use Laravel\Boost\Mcp\Tools\ListArtisanCommands;
+use Laravel\Boost\Mcp\Tools\ListAvailableConfigKeys;
+use Laravel\Boost\Mcp\Tools\ListAvailableEnvVars;
+use Laravel\Boost\Mcp\Tools\ListRoutes;
+use Laravel\Boost\Mcp\Tools\ReadLogEntries;
+use Laravel\Boost\Mcp\Tools\SearchDocs;
+use Laravel\Boost\Mcp\Tools\Tinker;
+use Laravel\Boost\Support\Composer;
 use Laravel\Mcp\Server;
+use Laravel\Mcp\Server\Prompt;
+use Laravel\Mcp\Server\Resource;
+use Laravel\Mcp\Server\Tool;
 
 class Boost extends Server
 {
-    public string $serverName = 'Laravel Boost';
+    /**
+     * The MCP server's name.
+     */
+    protected string $name = 'Laravel Boost';
 
-    public string $serverVersion = '0.0.1';
+    /**
+     * The MCP server's version.
+     */
+    protected string $version = '0.0.1';
 
-    public string $instructions = 'Laravel ecosystem MCP server offering database schema access, Artisan commands, error logs, Tinker execution, semantic documentation search and more. Boost helps with code generation.';
+    /**
+     * The MCP server's instructions for the LLM.
+     */
+    protected string $instructions = 'Laravel ecosystem MCP server offering database schema access, Artisan commands, error logs, Tinker execution, semantic documentation search and more. Boost helps with code generation.';
 
+    /**
+     * The default pagination length for resources that support pagination.
+     */
     public int $defaultPaginationLength = 50;
 
     /**
-     * @var string[]
+     * The tools registered with this MCP server.
+     *
+     * @var array<int, class-string<Tool>>
      */
-    public array $resources = [
-        ApplicationInfo::class,
-    ];
+    protected array $tools = [];
 
-    public function boot(): void
+    /**
+     * The resources registered with this MCP server.
+     *
+     * @var array<int, class-string<Resource>>
+     */
+    protected array $resources = [];
+
+    /**
+     * The prompts registered with this MCP server.
+     *
+     * @var array<int, class-string<Prompt>>
+     */
+    protected array $prompts = [];
+
+    protected function boot(): void
     {
-        $this->discoverTools();
-        $this->discoverResources();
-        $this->discoverPrompts();
+        $this->tools = $this->discoverTools();
+        $this->resources = $this->discoverResources();
+        $this->prompts = $this->discoverPrompts();
 
         // Override the tools/call method to use our ToolExecutor
         $this->methods['tools/call'] = CallToolWithExecutor::class;
     }
 
     /**
-     * @return array<string>
+     * @return array<int, class-string<Tool>>
      */
     protected function discoverTools(): array
     {
-        $excludedTools = config('boost.mcp.tools.exclude', []);
-        $toolDir = new \DirectoryIterator(__DIR__.DIRECTORY_SEPARATOR.'Tools');
-        foreach ($toolDir as $toolFile) {
-            if ($toolFile->isFile() && $toolFile->getExtension() === 'php') {
-                $fqdn = 'Laravel\\Boost\\Mcp\\Tools\\'.$toolFile->getBasename('.php');
-                if (class_exists($fqdn) && ! in_array($fqdn, $excludedTools, true)) {
-                    $this->addTool($fqdn);
-                }
-            }
-        }
-
-        $extraTools = config('boost.mcp.tools.include', []);
-        foreach ($extraTools as $toolClass) {
-            if (class_exists($toolClass)) {
-                $this->addTool($toolClass);
-            }
-        }
-
-        return $this->registeredTools;
+        return $this->filterPrimitives([
+            ApplicationInfo::class,
+            BrowserLogs::class,
+            DatabaseConnections::class,
+            DatabaseQuery::class,
+            DatabaseSchema::class,
+            GetAbsoluteUrl::class,
+            GetConfig::class,
+            LastError::class,
+            ListArtisanCommands::class,
+            ListAvailableConfigKeys::class,
+            ListAvailableEnvVars::class,
+            ListRoutes::class,
+            ReadLogEntries::class,
+            SearchDocs::class,
+            Tinker::class,
+        ], 'tools');
     }
 
     /**
-     * @return array<string>
+     * @return array<int, class-string<Resource>>
      */
     protected function discoverResources(): array
     {
-        $excludedResources = config('boost.mcp.resources.exclude', []);
-        $resourceDir = new \DirectoryIterator(__DIR__.DIRECTORY_SEPARATOR.'Resources');
-        foreach ($resourceDir as $resourceFile) {
-            if ($resourceFile->isFile() && $resourceFile->getExtension() === 'php') {
-                $fqdn = 'Laravel\\Boost\\Mcp\\Resources\\'.$resourceFile;
-                if (class_exists($fqdn) && ! in_array($fqdn, $excludedResources, true)) {
-                    $this->addResource($fqdn);
-                }
-            }
-        }
+        $availableResources = [
+            Resources\ApplicationInfo::class,
+            ...$this->discoverThirdPartyPrimitives(Resource::class),
+        ];
 
-        $extraResources = config('boost.mcp.resources.include', []);
-        foreach ($extraResources as $resourceClass) {
-            if (class_exists($resourceClass)) {
-                $this->addResource($resourceClass);
-            }
-        }
-
-        return $this->registeredResources;
+        return $this->filterPrimitives($availableResources, 'resources');
     }
 
     /**
-     * @return array<string>
+     * @return array<int, class-string<Prompt>>
      */
     protected function discoverPrompts(): array
     {
-        $excludedPrompts = config('boost.mcp.prompts.exclude', []);
-        $promptDir = new \DirectoryIterator(__DIR__.DIRECTORY_SEPARATOR.'Prompts');
-        foreach ($promptDir as $promptFile) {
-            if ($promptFile->isFile() && $promptFile->getExtension() === 'php') {
-                $fqdn = 'Laravel\\Boost\\Mcp\\Prompts\\'.$promptFile;
-                if (class_exists($fqdn) && ! in_array($fqdn, $excludedPrompts, true)) {
-                    $this->addPrompt($fqdn);
-                }
+        $availablePrompts = [
+            LaravelCodeSimplifier::class,
+            UpgradeLivewireV4::class,
+            ...$this->discoverThirdPartyPrimitives(Prompt::class),
+        ];
+
+        return $this->filterPrimitives($availablePrompts, 'prompts');
+    }
+
+    /**
+     * @template T of Prompt|Resource
+     *
+     * @param  class-string<T>  $primitiveType
+     * @return array<int, T>
+     */
+    private function discoverThirdPartyPrimitives(string $primitiveType): array
+    {
+        $primitiveClass = match ($primitiveType) {
+            Prompt::class => PackageGuidelinePrompt::class,
+            Resource::class => PackageGuidelineResource::class,
+            default => throw new InvalidArgumentException('Invalid Primitive Type'),
+        };
+
+        $primitives = [];
+
+        foreach (Composer::packagesDirectoriesWithBoostGuidelines() as $package => $path) {
+            $corePath = $path.DIRECTORY_SEPARATOR.'core.blade.php';
+
+            if (file_exists($corePath)) {
+                $primitives[] = new $primitiveClass($package, $corePath);
             }
         }
 
-        $extraPrompts = config('boost.mcp.prompts.include', []);
-        foreach ($extraPrompts as $promptClass) {
-            if (class_exists($promptClass)) {
-                $this->addResource($promptClass);
-            }
-        }
+        return $primitives;
+    }
 
-        return $this->registeredPrompts;
+    /**
+     * @param  array<int, Tool|Resource|Prompt|class-string>  $availablePrimitives
+     * @return array<int, Tool|Resource|Prompt|class-string>
+     */
+    private function filterPrimitives(array $availablePrimitives, string $type): array
+    {
+        $excludeList = config("boost.mcp.{$type}.exclude", []);
+        $includeList = config("boost.mcp.{$type}.include", []);
+
+        $filtered = collect($availablePrimitives)->reject(function (string|object $item) use ($excludeList): bool {
+            $className = is_string($item) ? $item : $item::class;
+
+            return in_array($className, $excludeList, true);
+        });
+
+        $explicitlyIncluded = collect($includeList)
+            ->filter(fn (string $class): bool => class_exists($class));
+
+        return $filtered
+            ->merge($explicitlyIncluded)
+            ->values()
+            ->all();
     }
 }

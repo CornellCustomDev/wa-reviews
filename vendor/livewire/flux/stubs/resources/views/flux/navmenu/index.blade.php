@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @php
 $classes = Flux::classes()
     ->add('[:where(&)]:min-w-48 p-[.3125rem]')

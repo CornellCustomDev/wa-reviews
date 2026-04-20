@@ -16,7 +16,7 @@ Laravel Roster detects which Laravel ecosystem packages are in use within a proj
 To get started, install Roster via Composer:
 
 ```bash
-composer require laravel/roster
+composer require laravel/roster --dev
 ```
 
 ## Usage
@@ -33,6 +33,8 @@ $roster = Roster::scan($directory);
 
 **Query the roster**
 ```php
+use Laravel\Roster\Packages;
+
 // Get all packages
 $roster->packages();
 
@@ -47,6 +49,9 @@ $roster->uses(Packages::INERTIA);
 
 // Check if a particular version of a package is in use
 $roster->usesVersion(Packages::INERTIA, '2.0.0', '>=');
+
+// Detect which JavaScript package manager is in use
+$packageManager = $roster->nodePackageManager();
 ```
 
 ## Contributing

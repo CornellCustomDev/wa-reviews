@@ -8,10 +8,11 @@ use Laravel\Nightwatch\State\RequestState;
 use Laravel\Octane\Events\RequestReceived;
 use Throwable;
 
-class OctaneListener
+/**
+ * @internal
+ */
+final class OctaneListener
 {
-    private bool $firstRequest = true;
-
     /**
      * @param  Core<RequestState|CommandState>  $nightwatch
      */
@@ -22,12 +23,6 @@ class OctaneListener
 
     public function __invoke(RequestReceived $event): void // @phpstan-ignore class.notFound
     {
-        if ($this->firstRequest) {
-            $this->firstRequest = false;
-
-            return;
-        }
-
         try {
             $this->nightwatch->prepareForNextRequest();
         } catch (Throwable $e) {

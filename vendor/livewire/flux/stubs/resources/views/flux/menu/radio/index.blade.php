@@ -1,5 +1,7 @@
-@php $iconTrailing = $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
-@php $iconVariant = $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
+@blaze(fold: true, unsafe: ['icon:trailing', 'icon:variant'])
+
+@php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'iconVariant' => 'mini',
@@ -44,7 +46,7 @@ $classes = Flux::classes()
         </div>
     </div>
 
-    {{ $label ?? $slot }}
+    {{ $slot->isNotEmpty() ? $slot : $label }}
 
     <?php if ($suffix): ?>
         <div class="ms-auto opacity-50 text-xs">

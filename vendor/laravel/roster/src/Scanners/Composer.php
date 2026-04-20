@@ -20,26 +20,43 @@ class Composer
         'filament/filament' => Packages::FILAMENT,
         'inertiajs/inertia-laravel' => [Packages::INERTIA, Packages::INERTIA_LARAVEL],
         'larastan/larastan' => Packages::LARASTAN,
+        'laravel/breeze' => Packages::BREEZE,
+        'laravel/cashier' => Packages::CASHIER,
+        'laravel/dusk' => Packages::DUSK,
+        'laravel/envoy' => Packages::ENVOY,
         'laravel/folio' => Packages::FOLIO,
+        'laravel/fortify' => Packages::FORTIFY,
         'laravel/framework' => Packages::LARAVEL,
+        'laravel/horizon' => Packages::HORIZON,
+        'laravel/mcp' => Packages::MCP,
         'laravel/nightwatch' => Packages::NIGHTWATCH,
         'laravel/nova' => Packages::NOVA,
         'laravel/octane' => Packages::OCTANE,
+        'laravel/passport' => Packages::PASSPORT,
         'laravel/pennant' => Packages::PENNANT,
         'laravel/pint' => Packages::PINT,
         'laravel/prompts' => Packages::PROMPTS,
+        'laravel/pulse' => Packages::PULSE,
         'laravel/reverb' => Packages::REVERB,
+        'laravel/sail' => Packages::SAIL,
+        'laravel/sanctum' => Packages::SANCTUM,
         'laravel/scout' => Packages::SCOUT,
+        'laravel/socialite' => Packages::SOCIALITE,
+        'laravel/telescope' => Packages::TELESCOPE,
+        'laravel/wayfinder' => [Packages::WAYFINDER, Packages::WAYFINDER_LARAVEL],
         'livewire/flux' => Packages::FLUXUI_FREE,
         'livewire/flux-pro' => Packages::FLUXUI_PRO,
         'livewire/livewire' => Packages::LIVEWIRE,
+        'livewire/volt' => Packages::VOLT,
         'pestphp/pest' => Packages::PEST,
+        'phpunit/phpunit' => Packages::PHPUNIT,
         'rector/rector' => Packages::RECTOR,
         'statamic/cms' => Packages::STATAMIC,
-        'livewire/volt' => Packages::VOLT,
-        'laravel/wayfinder' => [Packages::WAYFINDER, Packages::WAYFINDER_LARAVEL],
         'tightenco/ziggy' => Packages::ZIGGY,
     ];
+
+    /** @var array<string, array{constraint: string, isDev: bool}> */
+    protected array $directPackages = [];
 
     /**
      * @param  string  $path  - composer.lock
@@ -85,6 +102,7 @@ class Composer
             return $mappedItems;
         }
 
+        $this->directPackages = $this->direct();
         $packages = $json['packages'] ?? [];
         $devPackages = $json['packages-dev'] ?? [];
 
@@ -95,17 +113,60 @@ class Composer
     }
 
     /**
+     * Returns direct dependencies as defined in composer.json
+     *
+     * @return array<string, array{constraint: string, isDev: bool}>
+     * */
+    protected function direct(): array
+    {
+        $packages = [];
+        $filename = realpath(dirname($this->path)).DIRECTORY_SEPARATOR.'composer.json';
+        if (file_exists($filename) === false || is_readable($filename) === false) {
+            return $packages;
+        }
+
+        $json = file_get_contents($filename);
+        if ($json === false) {
+            return $packages;
+        }
+
+        $json = json_decode($json, true);
+        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($json)) {
+            return $packages;
+        }
+
+        foreach (($json['require'] ?? []) as $name => $constraint) {
+            $packages[$name] = [
+                'constraint' => $constraint,
+                'isDev' => false,
+            ];
+        }
+
+        foreach (($json['require-dev'] ?? []) as $name => $constraint) {
+            $packages[$name] = [
+                'constraint' => $constraint,
+                'isDev' => true,
+            ];
+        }
+
+        return $packages;
+    }
+
+    /**
      * Process packages and add them to the mapped items collection
      *
      * @param  array<int, array<string, string>>  $packages
      * @param  Collection<int, Package|Approach>  $mappedItems
+     * @return Collection<int, Package|Approach>
      */
-    private function processPackages(array $packages, Collection $mappedItems, bool $isDev): void
+    private function processPackages(array $packages, Collection $mappedItems, bool $isDev): Collection
     {
         foreach ($packages as $package) {
             $packageName = $package['name'] ?? '';
             $version = $package['version'] ?? '';
             $mappedPackage = $this->map[$packageName] ?? null;
+            $direct = false;
+            $constraint = $version;
 
             if (is_null($mappedPackage)) {
                 continue;
@@ -115,14 +176,21 @@ class Composer
                 $mappedPackage = [$mappedPackage];
             }
 
+            if (array_key_exists($packageName, $this->directPackages) === true) {
+                $direct = true;
+                $constraint = $this->directPackages[$packageName]['constraint'];
+            }
+
             foreach ($mappedPackage as $mapped) {
                 $niceVersion = preg_replace('/[^0-9.]/', '', $version) ?? '';
                 $mappedItems->push(match (get_class($mapped)) {
-                    Packages::class => new Package($mapped, $packageName, $niceVersion, $isDev),
+                    Packages::class => (new Package($mapped, $packageName, $niceVersion, $isDev))->setDirect($direct)->setConstraint($constraint),
                     Approaches::class => new Approach($mapped),
                     default => throw new \InvalidArgumentException('Unsupported mapping')
                 });
             }
         }
+
+        return $mappedItems;
     }
 }

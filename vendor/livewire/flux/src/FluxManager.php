@@ -15,10 +15,13 @@ class FluxManager
 
     public $hasRenderedAssets = false;
 
+    protected $nonce = null;
+
     public function boot()
     {
         on('flush-state', function () {
             $this->hasRenderedAssets = false;
+            $this->nonce = null;
         });
 
         $this->bootComponents();
@@ -26,7 +29,7 @@ class FluxManager
 
     public function ensurePro()
     {
-        if (! InstalledVersions::isInstalled('livewire/flux-pro')) {
+        if (! $this->pro()) {
             throw new \Exception('Your install of Flux is not activated. Visit https://fluxui.dev/pricing to purchase a license key.');
         }
     }
@@ -41,9 +44,18 @@ class FluxManager
         $this->hasRenderedAssets = true;
     }
 
+    public function nonce()
+    {
+        return $this->nonce ?? \Illuminate\Support\Facades\Vite::cspNonce();
+    }
+
     public function scripts($options = [])
     {
         $this->markAssetsRendered();
+
+        if (isset($options['nonce'])) {
+            $this->nonce = $options['nonce'];
+        }
 
         return AssetManager::scripts($options);
     }
@@ -52,17 +64,21 @@ class FluxManager
     {
         $this->markAssetsRendered();
 
+        if (isset($options['nonce'])) {
+            $this->nonce = $options['nonce'];
+        }
+
         return AssetManager::fluxAppearance($options);
     }
 
     public function editorStyles()
     {
-        return AssetManager::editorStyles();
+        return AssetManager::editorStyles($this->nonce());
     }
 
     public function editorScripts()
     {
-        return AssetManager::editorScripts();
+        return AssetManager::editorScripts($this->nonce());
     }
 
     public function classes($styles = null)
@@ -123,11 +139,18 @@ class FluxManager
     public function attributesAfter($prefix, $attributes, $default = [])
     {
         $newAttributes = new \Illuminate\View\ComponentAttributeBag($default);
+        $keysToRemove = [];
 
         foreach ($attributes->getAttributes() as $key => $value) {
             if (str_starts_with($key, $prefix)) {
                 $newAttributes[substr($key, strlen($prefix))] = $value;
+                $keysToRemove[] = $key;
             }
+        }
+
+        // Remove the transferred attributes from the original bag
+        foreach ($keysToRemove as $key) {
+            unset($attributes[$key]);
         }
 
         return $newAttributes;

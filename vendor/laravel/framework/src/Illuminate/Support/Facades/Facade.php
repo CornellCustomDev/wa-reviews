@@ -247,12 +247,12 @@ abstract class Facade
     /**
      * Clear a resolved facade instance.
      *
-     * @param  string  $name
+     * @param  ?string  $name
      * @return void
      */
-    public static function clearResolvedInstance($name)
+    public static function clearResolvedInstance($name = null)
     {
-        unset(static::$resolvedInstance[$name]);
+        unset(static::$resolvedInstance[$name ?? static::getFacadeAccessor()]);
     }
 
     /**
@@ -314,8 +314,8 @@ abstract class Facade
             'Session' => Session::class,
             'Storage' => Storage::class,
             'Str' => Str::class,
-            'URL' => URL::class,
             'Uri' => Uri::class,
+            'URL' => URL::class,
             'Validator' => Validator::class,
             'View' => View::class,
             'Vite' => Vite::class,

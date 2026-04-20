@@ -1,3 +1,11 @@
+@blaze(fold: true, unsafe: [
+    // flux:with-field props
+    'name', 'label', 'badge',
+    'description', 'description:trailing',
+    'label:badge', 'label:aside', 'label:trailing',
+    'error:name', 'error:bag', 'error:message', 'error:icon', 'error:nested', 'error:deep',
+])
+
 @props([
     'name' => $attributes->whereStartsWith('wire:model')->first(),
     'resize' => 'vertical',
@@ -6,15 +14,14 @@
 ])
 
 @php
-$invalid ??= ($name && $errors->has($name));
-
 $classes = Flux::classes()
     ->add('block p-3 w-full')
     ->add('shadow-xs disabled:shadow-none border rounded-lg')
     ->add('bg-white dark:bg-white/10 dark:disabled:bg-white/[7%]')
     ->add($resize ? 'resize-y' : 'resize-none')
     ->add('text-base sm:text-sm text-zinc-700 disabled:text-zinc-500 placeholder-zinc-400 disabled:placeholder-zinc-400/70 dark:text-zinc-300 dark:disabled:text-zinc-400 dark:placeholder-zinc-400 dark:disabled:placeholder-zinc-500')
-    ->add($invalid ? 'border-red-500' : 'border-zinc-200 border-b-zinc-300/80 dark:border-white/10')
+    ->add('border-zinc-200 border-b-zinc-300/80 dark:border-white/10')
+    ->add('data-invalid:shadow-none data-invalid:border-red-500 dark:data-invalid:border-red-500')
     ;
 
 $resizeStyle = match ($resize) {
@@ -31,7 +38,11 @@ $resizeStyle = match ($resize) {
         rows="{{ $rows }}"
         style="{{ $resizeStyle }}; {{ $rows === 'auto' ? 'field-sizing: content' : '' }}"
         @isset ($name) name="{{ $name }}" @endisset
-        @if ($invalid) aria-invalid="true" data-invalid @endif
+        @unblaze(scope: ['name' => $name ?? null, 'invalid' => $invalid ?? false])
+        <?php if ($scope['invalid'] || ($scope['name'] && $errors->has($scope['name']))): ?>
+        aria-invalid="true" data-invalid
+        <?php endif; ?>
+        @endunblaze
         data-flux-control
         data-flux-textarea
     >{{ $slot }}</textarea>

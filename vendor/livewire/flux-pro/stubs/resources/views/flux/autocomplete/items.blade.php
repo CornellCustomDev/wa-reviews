@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @php
 $classes = Flux::classes()
     ->add('[:where(&)]:max-h-[20rem]') // "[:where(&)]:" means it can be overriden without "!"...
@@ -13,4 +15,3 @@ $classes = Flux::classes()
 
     <ui-empty class="contents"></ui-empty>
 </ui-options>
-

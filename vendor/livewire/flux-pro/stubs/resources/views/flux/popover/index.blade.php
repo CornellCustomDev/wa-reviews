@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @php
 $classes = Flux::classes()
     ->add('[:where(&)]:min-w-48 [:where(&)]:p-4')
@@ -15,6 +17,7 @@ $classes = Flux::classes()
     {{ $attributes->class($classes) }}
     popover="manual"
     data-flux-popover
+    tabindex="-1"
 >
     {{ $slot }}
 </div>

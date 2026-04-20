@@ -1,7 +1,11 @@
+@blaze(fold: true)
+
 @props([
     'label' => null,
     'field' => null,
     'format' => null,
+    'prefix' => null,
+    'suffix' => null,
 ])
 
 @php
@@ -20,6 +24,6 @@ $format = is_array($format) ? \Illuminate\Support\Js::encode($format) : $format;
     @if ($field)
         <div class="flex-1"></div>
 
-        <slot field="{{ $field }}" @if ($format) format="{{ $format }}" @endif></slot>
+        <div>{{ $prefix ?? '' }}<slot field="{{ $field }}" @if ($format) format="{{ $format }}" @endif></slot>{{ $suffix ?? '' }}</div>
     @endif
 </div>

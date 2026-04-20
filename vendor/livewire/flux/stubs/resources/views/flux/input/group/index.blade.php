@@ -1,3 +1,11 @@
+@blaze(fold: true, unsafe: [
+    // flux:with-field props
+    'name', 'label', 'badge',
+    'description', 'description:trailing',
+    'label:badge', 'label:aside', 'label:trailing',
+    'error:name', 'error:bag', 'error:message', 'error:icon', 'error:nested', 'error:deep',
+])
+
 @props([
     'name' => $attributes->whereStartsWith('wire:model')->first(),
 ])
@@ -41,6 +49,15 @@ $classes = Flux::classes()
         '[&>*:not(:first-child):not(:last-child):not(:only-child)>[data-flux-input]>[data-flux-group-target]]:rounded-none',
         '[&>*:first-child:not(:last-child)>[data-flux-input]>[data-flux-group-target]]:rounded-e-none',
         '[&>*:last-child:not(:first-child)>[data-flux-input]>[data-flux-group-target]]:rounded-s-none',
+
+        // "Weld" borders for sub-children wrapped in tooltips (button inside tooltip inside modal trigger, etc.)...
+        '[&>*:not(:first-child):not(:last-child):not(:only-child)>[data-flux-tooltip]>[data-flux-group-target]]:rounded-none',
+        '[&>*:first-child:not(:last-child)>[data-flux-tooltip]>[data-flux-group-target]]:rounded-e-none',
+        '[&>*:last-child:not(:first-child)>[data-flux-tooltip]>[data-flux-group-target]]:rounded-s-none',
+
+        // Borders for sub-children wrapped in tooltips...
+        '[&>*:last-child:not(:first-child)>[data-flux-tooltip]>[data-flux-group-target]:not([data-invalid])]:border-s-0',
+        '[&>*:not(:first-child):not(:last-child)>[data-flux-tooltip]>[data-flux-group-target]:not([data-invalid])]:border-s-0',
     ])
     ;
 @endphp

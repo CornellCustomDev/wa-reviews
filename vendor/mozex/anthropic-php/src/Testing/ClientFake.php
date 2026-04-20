@@ -8,8 +8,11 @@ use Anthropic\Contracts\ResponseStreamContract;
 use Anthropic\Responses\Completions\StreamResponse as CompletionsStreamResponse;
 use Anthropic\Responses\Messages\StreamResponse as MessagesStreamResponse;
 use Anthropic\Testing\Requests\TestRequest;
+use Anthropic\Testing\Resources\BatchesTestResource;
 use Anthropic\Testing\Resources\CompletionsTestResource;
+use Anthropic\Testing\Resources\FilesTestResource;
 use Anthropic\Testing\Resources\MessagesTestResource;
+use Anthropic\Testing\Resources\ModelsTestResource;
 use PHPUnit\Framework\Assert as PHPUnit;
 use Throwable;
 
@@ -21,12 +24,12 @@ class ClientFake implements ClientContract
     private array $requests = [];
 
     /**
-     * @param  array<array-key, ResponseContract|CompletionsStreamResponse|MessagesStreamResponse|string>  $responses
+     * @param  array<array-key, ResponseContract|ResponseStreamContract|CompletionsStreamResponse|MessagesStreamResponse|Throwable|string>  $responses
      */
     public function __construct(protected array $responses = []) {}
 
     /**
-     * @param  array<array-key, Response>  $responses
+     * @param  array<array-key, ResponseContract|ResponseStreamContract|CompletionsStreamResponse|MessagesStreamResponse|Throwable|string>  $responses
      */
     public function addResponses(array $responses): void
     {
@@ -127,5 +130,20 @@ class ClientFake implements ClientContract
     public function messages(): MessagesTestResource
     {
         return new MessagesTestResource($this);
+    }
+
+    public function models(): ModelsTestResource
+    {
+        return new ModelsTestResource($this);
+    }
+
+    public function batches(): BatchesTestResource
+    {
+        return new BatchesTestResource($this);
+    }
+
+    public function files(): FilesTestResource
+    {
+        return new FilesTestResource($this);
     }
 }

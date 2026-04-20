@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @props([
     'orientation' => null,
     'vertical' => false,

@@ -4,54 +4,43 @@ declare(strict_types=1);
 
 namespace Laravel\Mcp\Server;
 
-use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Str;
 use Laravel\Mcp\Server\Prompts\Argument;
 use Laravel\Mcp\Server\Prompts\Arguments;
-use Laravel\Mcp\Server\Prompts\PromptResult;
 
-abstract class Prompt implements Arrayable
+abstract class Prompt extends Primitive
 {
-    protected string $description;
-
-    abstract public function handle(array $arguments): PromptResult;
-
-    public function arguments(): Arguments
+    /**
+     * @return array<int, Argument>
+     */
+    public function arguments(): array
     {
-        return (new Arguments)->add(
-            new Argument(
-                name: 'best_cheese',
-                description: 'The best cheese',
-                required: false,
-            ),
-        );
-    }
-
-    public function description(): string
-    {
-        return $this->description;
-    }
-
-    public function name(): string
-    {
-        return Str::kebab(class_basename($this));
-    }
-
-    public function title(): string
-    {
-        return Str::headline(class_basename($this));
+        return [
+            //
+        ];
     }
 
     /**
-     * Returned in ListPrompts
+     * @return array<string, mixed>
+     */
+    public function toMethodCall(): array
+    {
+        return ['name' => $this->name()];
+    }
+
+    /**
+     * @return array{name: string, title: string, description: string, arguments: array<int, array{name: string, description: string, required: bool, _meta?: array<string, mixed>}>}
      */
     public function toArray(): array
     {
-        return [
+        // @phpstan-ignore return.type
+        return $this->mergeMeta([
             'name' => $this->name(),
             'title' => $this->title(),
             'description' => $this->description(),
-            'arguments' => $this->arguments()->toArray(),
-        ];
+            'arguments' => array_map(
+                fn (Argument $argument): array => $argument->toArray(),
+                $this->arguments(),
+            ),
+        ]);
     }
 }

@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware([ 'transition' ])
 
 @props([
@@ -17,6 +19,9 @@ if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wir
     $attributes = $attributes->merge([$wireModel->directive => $wireModel->value]);
 }
 
+// Support binding the state to a Livewire property
+$state = $wireModel?->value ? '$wire.' . $wireModel->value : ($expanded ? 'true' : 'false');
+
 $classes = Flux::classes()
     ->add('block pt-4 first:pt-0 pb-4 last:pb-0')
     ->add('border-b last:border-b-0 border-zinc-800/10 dark:border-white/10')
@@ -25,8 +30,9 @@ $classes = Flux::classes()
 
 <ui-disclosure
     {{ $attributes->class($classes) }}
-    x-data="{ open: @json($expanded) }"
+    x-data="{ open: {{ $state }} }"
     x-model.self="open"
+    @if ($disabled) disabled @endif
     data-flux-accordion-item
 >
     <?php if ($heading): ?>

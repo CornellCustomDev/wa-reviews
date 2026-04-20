@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Anthropic\Resources;
 
 use Anthropic\Contracts\Resources\MessagesContract;
+use Anthropic\Responses\Messages\CountTokensResponse;
 use Anthropic\Responses\Messages\CreateResponse;
 use Anthropic\Responses\Messages\CreateStreamedResponse;
 use Anthropic\Responses\Messages\StreamResponse;
@@ -19,7 +20,7 @@ final class Messages implements MessagesContract
     /**
      * Creates a completion for structured list of input messages
      *
-     * @see https://docs.anthropic.com/claude/reference/messages_post
+     * @see https://platform.claude.com/docs/en/api/messages/create
      *
      * @param  array<string, mixed>  $parameters
      */
@@ -38,7 +39,7 @@ final class Messages implements MessagesContract
     /**
      * Creates a streamed completion for structured list of input messages
      *
-     * @see https://docs.anthropic.com/claude/reference/messages-streaming
+     * @see https://platform.claude.com/docs/en/build-with-claude/streaming
      *
      * @param  array<string, mixed>  $parameters
      * @return StreamResponse<CreateStreamedResponse>
@@ -52,5 +53,22 @@ final class Messages implements MessagesContract
         $response = $this->transporter->requestStream($payload);
 
         return new StreamResponse(CreateStreamedResponse::class, $response);
+    }
+
+    /**
+     * Counts the number of tokens in a message
+     *
+     * @see https://platform.claude.com/docs/en/api/messages/count_tokens
+     *
+     * @param  array<string, mixed>  $parameters
+     */
+    public function countTokens(array $parameters): CountTokensResponse
+    {
+        $payload = Payload::create('messages/count_tokens', $parameters);
+
+        /** @var Response<array{input_tokens: int}> $response */
+        $response = $this->transporter->requestObject($payload);
+
+        return CountTokensResponse::from($response->data(), $response->meta());
     }
 }

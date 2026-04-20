@@ -40,6 +40,7 @@ class PhpStorm extends CodeEnvironment implements Agent, McpClient
                 'paths' => [
                     '%ProgramFiles%\\JetBrains\\PhpStorm*',
                     '%LOCALAPPDATA%\\JetBrains\\Toolbox\\apps\\PhpStorm\\ch-*',
+                    '%LOCALAPPDATA%\\Programs\\PhpStorm',
                 ],
             ],
         };
@@ -64,6 +65,6 @@ class PhpStorm extends CodeEnvironment implements Agent, McpClient
 
     public function guidelinesPath(): string
     {
-        return '.junie/guidelines.md';
+        return config('boost.code_environments.phpstorm.guidelines_path', '.junie/guidelines.md');
     }
 }

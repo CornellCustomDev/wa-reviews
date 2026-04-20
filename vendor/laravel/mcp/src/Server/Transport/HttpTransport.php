@@ -7,64 +7,33 @@ namespace Laravel\Mcp\Server\Transport;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Laravel\Mcp\Server\Contracts\Transport\Transport;
+use Laravel\Mcp\Server\Contracts\Transport;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class HttpTransport implements Transport
 {
     /**
-     * The server handler responsible for handling the request.
+     * @param  (Closure(string): void)|null  $handler
      */
-    private $handler;
-
-    /**
-     * The reply to the request (for non-streaming responses).
-     */
-    private ?string $reply = null;
-
-    /**
-     * The request object.
-     */
-    private Request $request;
-
-    /**
-     * The session ID of the request.
-     */
-    private ?string $sessionId = null;
-
-    /**
-     * The session ID of the reply (if provided by the client).
-     */
-    private ?string $replySessionId = null;
-
-    /**
-     * The stream callback for yielding stream messages.
-     */
-    private ?Closure $stream = null;
-
-    /**
-     * Create a new HTTP transport.
-     */
-    public function __construct(Request $request)
-    {
-        $this->request = $request;
-        $this->sessionId = $request->header('Mcp-Session-Id');
+    public function __construct(
+        protected Request $request,
+        protected string $sessionId,
+        protected ?Closure $handler = null,
+        protected ?string $reply = null,
+        protected ?string $replySessionId = null,
+        protected ?Closure $stream = null,
+    ) {
+        //
     }
 
-    /**
-     * Set the server handler to handle incoming messages.
-     */
-    public function onReceive(callable $handler): void
+    public function onReceive(Closure $handler): void
     {
         $this->handler = $handler;
     }
 
-    /**
-     * Send a message to the client.
-     */
     public function send(string $message, ?string $sessionId = null): void
     {
-        if ($this->stream) {
+        if ($this->stream instanceof Closure) {
             $this->sendStreamMessage($message);
         }
 
@@ -72,44 +41,63 @@ class HttpTransport implements Transport
         $this->replySessionId = $sessionId;
     }
 
-    /**
-     * Run the transport and process the request.
-     */
     public function run(): Response|StreamedResponse
     {
-        ($this->handler)($this->request->getContent());
-
-        if ($this->stream) {
-            return response()->stream($this->stream, 200, $this->getHeaders());
+        if (is_callable($this->handler)) {
+            ($this->handler)($this->request->getContent());
         }
 
-        return response($this->reply, 200, $this->getHeaders());
+        if ($this->stream instanceof Closure) {
+            $stream = $this->stream;
+
+            return response()->stream(function () use ($stream): void {
+                $result = $stream();
+
+                if (! is_iterable($result)) {
+                    return;
+                }
+
+                foreach ($result as $message) {
+                    if (connection_aborted() !== 0) {
+                        return;
+                    }
+
+                    $this->sendStreamMessage((string) $message);
+                }
+            }, 200, $this->getHeaders());
+        }
+
+        // Must be 202 - https://modelcontextprotocol.io/specification/2025-06-18/basic/transports#sending-messages-to-the-server
+        $statusCode = $this->reply === null ? 202 : 200;
+        $response = response($this->reply, $statusCode, $this->getHeaders());
+
+        assert($response instanceof Response);
+
+        return $response;
     }
 
-    /**
-     * Get the session ID of the request.
-     */
     public function sessionId(): ?string
     {
         return $this->sessionId;
     }
 
     /**
-     * Stream the yielded values from the callback.
+     * Register a streaming callback.
+     *
+     * The callback may echo SSE-formatted output directly or return an iterable of message payloads.
+     *
+     * @param  Closure(): (iterable<string>|void)  $stream
      */
     public function stream(Closure $stream): void
     {
         $this->stream = $stream;
     }
 
-    /**
-     * Stream a message to the client.
-     */
-    private function sendStreamMessage(string $message): void
+    protected function sendStreamMessage(string $message): void
     {
         echo 'data: '.$message."\n\n";
 
-        if (ob_get_level()) {
+        if (ob_get_level() !== 0) {
             ob_flush();
         }
 
@@ -117,19 +105,19 @@ class HttpTransport implements Transport
     }
 
     /**
-     * Get the headers for the response.
+     * @return array<string, string>
      */
-    private function getHeaders(): array
+    protected function getHeaders(): array
     {
         $headers = [
-            'Content-Type' => $this->stream ? 'text/event-stream' : 'application/json',
+            'Content-Type' => $this->stream instanceof Closure ? 'text/event-stream' : 'application/json',
         ];
 
-        if ($this->replySessionId) {
-            $headers['Mcp-Session-Id'] = $this->replySessionId;
+        if ($this->replySessionId !== null) {
+            $headers['MCP-Session-Id'] = $this->replySessionId;
         }
 
-        if ($this->stream) {
+        if ($this->stream instanceof Closure) {
             $headers['X-Accel-Buffering'] = 'no';
         }
 

@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware(['axis' => 'x'])
 
 @if ($axis === 'x')

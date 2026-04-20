@@ -1,4 +1,6 @@
-@php $iconVariant = $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
+@blaze(fold: true, memo: true, unsafe: ['icon:variant'])
+
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'iconVariant' => 'micro',

@@ -18,11 +18,13 @@ abstract class BasePackageScanner
      */
     protected array $map = [
         'alpinejs' => Packages::ALPINEJS,
+        'eslint' => Packages::ESLINT,
         '@inertiajs/react' => [Packages::INERTIA, Packages::INERTIA_REACT],
         '@inertiajs/svelte' => [Packages::INERTIA, Packages::INERTIA_SVELTE],
         '@inertiajs/vue3' => [Packages::INERTIA, Packages::INERTIA_VUE],
         'laravel-echo' => Packages::ECHO,
         '@laravel/vite-plugin-wayfinder' => [Packages::WAYFINDER, Packages::WAYFINDER_VITE],
+        'prettier' => Packages::PRETTIER,
         'react' => Packages::REACT,
         'tailwindcss' => [Packages::TAILWINDCSS],
         'vue' => Packages::VUE,
@@ -45,8 +47,9 @@ abstract class BasePackageScanner
      *
      * @param  array<string, string>  $dependencies
      * @param  Collection<int, Package|Approach>  $mappedItems
+     * @param  ?callable  $versionCb  - callback to override version
      */
-    protected function processDependencies(array $dependencies, Collection $mappedItems, bool $isDev): void
+    protected function processDependencies(array $dependencies, Collection $mappedItems, bool $isDev, ?callable $versionCb = null): void
     {
         foreach ($dependencies as $packageName => $version) {
             $mappedPackage = $this->map[$packageName] ?? null;
@@ -56,6 +59,10 @@ abstract class BasePackageScanner
 
             if (! is_array($mappedPackage)) {
                 $mappedPackage = [$mappedPackage];
+            }
+
+            if (! is_null($versionCb)) {
+                $version = $versionCb($packageName, $version);
             }
 
             foreach ($mappedPackage as $mapped) {

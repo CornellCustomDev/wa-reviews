@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @props([
     'axis' => 'x',
     'format' => null,

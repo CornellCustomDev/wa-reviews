@@ -1,3 +1,4 @@
+@blaze(fold: true, safe: ['field'])
 
 @props([
     'field' => 'value',

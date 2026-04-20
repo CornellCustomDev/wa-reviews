@@ -7,9 +7,12 @@ namespace Laravel\Mcp\Server\Tools\Annotations;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-class IsOpenWorld implements Annotation
+class IsOpenWorld extends ToolAnnotation
 {
-    public function __construct(public bool $value = true) {}
+    public function __construct(public bool $value = true)
+    {
+        //
+    }
 
     public function key(): string
     {

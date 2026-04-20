@@ -1,7 +1,9 @@
+@blaze(fold: true)
+
 @props([
     'placeholder' => null,
     'suffix' => null,
-    'max' => null,
+    'max' => 1,
 ])
 
 @php
@@ -17,7 +19,7 @@
         </span>
     </template>
 
-    <template name="overflow" max="{{ $max ?? 1 }}" >
+    <template name="overflow" max="{{ $max }}" >
         <div><slot name="count"></slot> {{ $suffix ?? __('selected') }}</div>
     </template>
 </ui-selected>

@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace Laravel\Boost\Install;
 
 use Illuminate\Database\Eloquent\Model;
+use Laravel\Boost\Install\Assists\Inertia;
+use Laravel\Roster\Enums\NodePackageManager;
+use Laravel\Roster\Enums\Packages;
+use Laravel\Roster\Roster;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
+use Throwable;
 
 class GuidelineAssist
 {
@@ -19,10 +24,10 @@ class GuidelineAssist
 
     protected static array $classes = [];
 
-    public function __construct()
+    public function __construct(public Roster $roster, public GuidelineConfig $config)
     {
-        $this->modelPaths = $this->discover(fn ($reflection) => ($reflection->isSubclassOf(Model::class) && ! $reflection->isAbstract()));
-        $this->controllerPaths = $this->discover(fn (ReflectionClass $reflection) => (stripos($reflection->getName(), 'controller') !== false || stripos($reflection->getNamespaceName(), 'controller') !== false));
+        $this->modelPaths = $this->discover(fn ($reflection): bool => ($reflection->isSubclassOf(Model::class) && ! $reflection->isAbstract()));
+        $this->controllerPaths = $this->discover(fn (ReflectionClass $reflection): bool => (stripos($reflection->getName(), 'controller') !== false || stripos($reflection->getNamespaceName(), 'controller') !== false));
         $this->enumPaths = $this->discover(fn ($reflection) => $reflection->isEnum());
     }
 
@@ -55,7 +60,7 @@ class GuidelineAssist
      *
      * @return array<string, string>
      */
-    private function discover(callable $cb): array
+    protected function discover(callable $cb): array
     {
         $classes = [];
         $appPath = app_path();
@@ -64,7 +69,7 @@ class GuidelineAssist
             return ['app-path-isnt-a-directory' => $appPath];
         }
 
-        if (empty(self::$classes)) {
+        if (self::$classes === []) {
             $finder = Finder::create()
                 ->in($appPath)
                 ->files()
@@ -86,10 +91,10 @@ class GuidelineAssist
                         continue;
                     }
 
-                    if (class_exists($className)) {
+                    if (class_exists($className, false)) {
                         self::$classes[$className] = $path;
                     }
-                } catch (\Throwable) {
+                } catch (Throwable) {
                     // Ignore exceptions and errors from class loading/reflection
                 }
             }
@@ -126,10 +131,8 @@ class GuidelineAssist
 
         $tokens = token_get_all($code);
         foreach ($tokens as $token) {
-            if (is_array($token)) {
-                if (in_array($token[0], [T_CLASS, T_INTERFACE, T_TRAIT, T_ENUM], true)) {
-                    return $cache[$path] = true;
-                }
+            if (is_array($token) && in_array($token[0], [T_CLASS, T_INTERFACE, T_TRAIT, T_ENUM], true)) {
+                return $cache[$path] = true;
             }
         }
 
@@ -138,7 +141,7 @@ class GuidelineAssist
 
     public function shouldEnforceStrictTypes(): bool
     {
-        if (empty($this->modelPaths)) {
+        if ($this->modelPaths === []) {
             return false;
         }
 
@@ -150,10 +153,100 @@ class GuidelineAssist
 
     public function enumContents(): string
     {
-        if (empty($this->enumPaths)) {
+        if ($this->enumPaths === []) {
             return '';
         }
 
         return file_get_contents(current($this->enumPaths));
+    }
+
+    public function inertia(): Inertia
+    {
+        return new Inertia($this->roster);
+    }
+
+    public function supportsPintAgentFormatter(): bool
+    {
+        return $this->roster->usesVersion(Packages::PINT, '1.27.0', '>=');
+    }
+
+    protected function detectedNodePackageManager(): string
+    {
+        return ($this->roster->nodePackageManager() ?? NodePackageManager::NPM)->value;
+    }
+
+    public function nodePackageManagerCommand(string $command): string
+    {
+        $npmExecutable = config('boost.executable_paths.npm');
+
+        if ($npmExecutable !== null) {
+            return "{$npmExecutable} {$command}";
+        }
+
+        if ($this->config->usesSail) {
+            return Sail::nodePackageManagerCommand($this->detectedNodePackageManager())." {$command}";
+        }
+
+        return "{$this->detectedNodePackageManager()} {$command}";
+    }
+
+    public function artisanCommand(string $command): string
+    {
+        return "{$this->artisan()} {$command}";
+    }
+
+    public function composerCommand(string $command): string
+    {
+        $composerExecutable = config('boost.executable_paths.composer');
+
+        if ($composerExecutable !== null) {
+            return "{$composerExecutable} {$command}";
+        }
+
+        if ($this->config->usesSail) {
+            return Sail::composerCommand()." {$command}";
+        }
+
+        return "composer {$command}";
+    }
+
+    public function binCommand(string $command): string
+    {
+        $vendorBinPrefix = config('boost.executable_paths.vendor_bin');
+
+        if ($vendorBinPrefix !== null) {
+            return "{$vendorBinPrefix}{$command}";
+        }
+
+        if ($this->config->usesSail) {
+            return Sail::binCommand().$command;
+        }
+
+        return "vendor/bin/{$command}";
+    }
+
+    public function artisan(): string
+    {
+        $phpExecutable = config('boost.executable_paths.php');
+
+        if ($phpExecutable !== null) {
+            return "{$phpExecutable} artisan";
+        }
+
+        return $this->config->usesSail
+            ? Sail::artisanCommand()
+            : 'php artisan';
+    }
+
+    public function sailBinaryPath(): string
+    {
+        return Sail::BINARY_PATH;
+    }
+
+    public function hasPackage(Packages $package): bool
+    {
+        return $this->roster->packages()->contains(
+            fn ($pkg): bool => $pkg->package() === $package
+        );
     }
 }

@@ -1,3 +1,5 @@
+@blaze(fold: true, safe: ['field'])
+
 @props([
     'field' => 'date',
     'format' => null,

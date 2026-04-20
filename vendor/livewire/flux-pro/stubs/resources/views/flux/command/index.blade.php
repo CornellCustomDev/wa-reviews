@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @props([
     'placeholder' => null,
 ])
@@ -12,4 +14,3 @@ $classes = Flux::classes()
 <ui-select clear="action" {{ $attributes->class($classes)->merge(['filter' => true]) }} data-flux-command>
     {{ $slot }}
 </ui-select>
-

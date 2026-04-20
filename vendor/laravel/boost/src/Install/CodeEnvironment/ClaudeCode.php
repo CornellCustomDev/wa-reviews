@@ -13,7 +13,7 @@ class ClaudeCode extends CodeEnvironment implements Agent, McpClient
 {
     public function name(): string
     {
-        return 'claudecode';
+        return 'claude_code';
     }
 
     public function displayName(): string
@@ -25,10 +25,10 @@ class ClaudeCode extends CodeEnvironment implements Agent, McpClient
     {
         return match ($platform) {
             Platform::Darwin, Platform::Linux => [
-                'command' => 'which claude',
+                'command' => 'command -v claude',
             ],
             Platform::Windows => [
-                'command' => 'where claude 2>null',
+                'command' => 'where claude 2>nul',
             ],
         };
     }
@@ -53,6 +53,6 @@ class ClaudeCode extends CodeEnvironment implements Agent, McpClient
 
     public function guidelinesPath(): string
     {
-        return 'CLAUDE.md';
+        return config('boost.code_environments.claude_code.guidelines_path', 'CLAUDE.md');
     }
 }

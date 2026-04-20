@@ -1,6 +1,11 @@
+@blaze(fold: true, unsafe: ['logo:dark'])
+
+@php $logoDark ??= $attributes->pluck('logo:dark'); @endphp
+
 @props([
     'name' => null,
     'logo' => null,
+    'logoDark' => null,
     'alt' => null,
     'href' => '/',
 ])
@@ -23,7 +28,10 @@ $textClasses = Flux::classes()
             </div>
         <?php else: ?>
             <div class="flex items-center justify-center h-6 rounded-sm overflow-hidden shrink-0">
-                <?php if ($logo): ?>
+                <?php if ($logoDark): ?>
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6 dark:hidden" />
+                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-6 hidden dark:block" />
+                <?php elseif ($logo): ?>
                     <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6" />
                 <?php else: ?>
                     {{ $slot }}
@@ -41,7 +49,10 @@ $textClasses = Flux::classes()
             </div>
         <?php else: ?>
             <div class="flex items-center justify-center h-6 rounded-sm overflow-hidden shrink-0">
-                <?php if ($logo): ?>
+                <?php if ($logoDark): ?>
+                    <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6 dark:hidden" />
+                    <img src="{{ $logoDark }}" alt="{{ $alt }}" class="h-6 hidden dark:block" />
+                <?php elseif ($logo): ?>
                     <img src="{{ $logo }}" alt="{{ $alt }}" class="h-6" />
                 <?php else: ?>
                     {{ $slot }}

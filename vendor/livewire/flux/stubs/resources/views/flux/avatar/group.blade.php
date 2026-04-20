@@ -1,3 +1,4 @@
+@blaze(fold: true)
 
 @php
 $classes = Flux::classes()

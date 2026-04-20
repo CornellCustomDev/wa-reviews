@@ -4,42 +4,61 @@ namespace Laravel\Nightwatch\Concerns;
 
 use Laravel\Nightwatch\Records\CacheEvent;
 use Laravel\Nightwatch\Records\Command;
+use Laravel\Nightwatch\Records\Exception;
 use Laravel\Nightwatch\Records\Mail;
 use Laravel\Nightwatch\Records\OutgoingRequest;
 use Laravel\Nightwatch\Records\Query;
 use Laravel\Nightwatch\Records\Request;
 
+/**
+ * @internal
+ */
 trait RedactsRecords
 {
     /**
-     * @var ?callable(CacheEvent): bool
+     * @var list<callable(Exception): bool>
      */
-    private $redactCacheEventCallback = null;
+    private array $redactExceptionCallbacks = [];
 
     /**
-     * @var ?callable(Command): bool
+     * @var list<callable(CacheEvent): bool>
      */
-    private $redactCommandCallback = null;
+    private array $redactCacheEventCallbacks = [];
 
     /**
-     * @var ?callable(Mail): bool
+     * @var list<callable(Command): bool>
      */
-    private $redactMailCallback = null;
+    private array $redactCommandCallbacks = [];
 
     /**
-     * @var ?callable(OutgoingRequest): bool
+     * @var list<callable(Mail): bool>
      */
-    private $redactOutgoingRequestCallback = null;
+    private array $redactMailCallbacks = [];
 
     /**
-     * @var ?callable(Query): bool
+     * @var list<callable(OutgoingRequest): bool>
      */
-    private $redactQueryCallback = null;
+    private array $redactOutgoingRequestCallbacks = [];
 
     /**
-     * @var ?callable(Request): bool
+     * @var list<callable(Query): bool>
      */
-    private $redactRequestCallback = null;
+    private array $redactQueryCallbacks = [];
+
+    /**
+     * @var list<callable(Request): bool>
+     */
+    private array $redactRequestCallbacks = [];
+
+    /**
+     * @api
+     *
+     * @param  callable(Exception): bool  $callback
+     */
+    public function redactExceptions(callable $callback): void
+    {
+        $this->redactExceptionCallbacks[] = $callback;
+    }
 
     /**
      * @api
@@ -48,7 +67,7 @@ trait RedactsRecords
      */
     public function redactCacheEvents(callable $callback): void
     {
-        $this->redactCacheEventCallback = $callback;
+        $this->redactCacheEventCallbacks[] = $callback;
     }
 
     /**
@@ -58,7 +77,7 @@ trait RedactsRecords
      */
     public function redactCommands(callable $callback): void
     {
-        $this->redactCommandCallback = $callback;
+        $this->redactCommandCallbacks[] = $callback;
     }
 
     /**
@@ -68,7 +87,7 @@ trait RedactsRecords
      */
     public function redactMail(callable $callback): void
     {
-        $this->redactMailCallback = $callback;
+        $this->redactMailCallbacks[] = $callback;
     }
 
     /**
@@ -78,7 +97,7 @@ trait RedactsRecords
      */
     public function redactOutgoingRequests(callable $callback): void
     {
-        $this->redactOutgoingRequestCallback = $callback;
+        $this->redactOutgoingRequestCallbacks[] = $callback;
     }
 
     /**
@@ -88,7 +107,7 @@ trait RedactsRecords
      */
     public function redactQueries(callable $callback): void
     {
-        $this->redactQueryCallback = $callback;
+        $this->redactQueryCallbacks[] = $callback;
     }
 
     /**
@@ -98,6 +117,6 @@ trait RedactsRecords
      */
     public function redactRequests(callable $callback): void
     {
-        $this->redactRequestCallback = $callback;
+        $this->redactRequestCallbacks[] = $callback;
     }
 }

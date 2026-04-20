@@ -1,5 +1,10 @@
+@blaze(fold: true, unsafe: [
+    // flux:with-inline-field props
+    'name', 'label', 'description',
+])
+
 @php
-extract(flux::forwardedattributes($attributes, [
+extract(Flux::forwardedattributes($attributes, [
     'name',
     'description',
     'label',

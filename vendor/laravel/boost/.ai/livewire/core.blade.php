@@ -1,8 +1,12 @@
-## Livewire Core
-- Use the `search-docs` tool to find exact version specific documentation for how to write Livewire & Livewire tests.
-- Use the `php artisan make:livewire [Posts\\CreatePost]` artisan command to create new components
+@php
+/** @var \Laravel\Boost\Install\GuidelineAssist $assist */
+@endphp
+## Livewire
+
+- Use the `search-docs` tool to find exact version-specific documentation for how to write Livewire and Livewire tests.
+- Use the `{{ $assist->artisanCommand('make:livewire [Posts\\CreatePost]') }}` Artisan command to create new components.
 - State should live on the server, with the UI reflecting it.
-- All Livewire requests hit the Laravel backend, they're like regular HTTP requests. Always validate form data, and run authorization checks in Livewire actions.
+- All Livewire requests hit the Laravel backend; they're like regular HTTP requests. Always validate form data and run authorization checks in Livewire actions.
 
 ## Livewire Best Practices
 - Livewire components require a single root element.
@@ -17,9 +21,9 @@
     @endforeach
     ```
 @endverbatim
-- Prefer lifecycle hooks like `mount()`, `updatedFoo()`) for initialization and reactive side effects:
+- Prefer lifecycle hooks like `mount()`, `updatedFoo()` for initialization and reactive side effects:
 @verbatim
-<code-snippet name="Lifecycle hook examples" lang="php">
+<code-snippet name="Lifecycle Hook Examples" lang="php">
     public function mount(User $user) { $this->user = $user; }
     public function updatedSearch() { $this->resetPage(); }
 </code-snippet>
@@ -27,7 +31,7 @@
 
 ## Testing Livewire
 @verbatim
-<code-snippet name="Example Livewire component test" lang="php">
+<code-snippet name="Example Livewire Component Test" lang="php">
     Livewire::test(Counter::class)
         ->assertSet('count', 0)
         ->call('increment')
@@ -37,8 +41,8 @@
 </code-snippet>
 @endverbatim
 @verbatim
-    <code-snippet name="Testing a Livewire component exists within a page" lang="php">
-        $this->get('/posts/create')
-        ->assertSeeLivewire(CreatePost::class);
-    </code-snippet>
+<code-snippet name="Testing Livewire Component Exists on Page" lang="php">
+    $this->get('/posts/create')
+    ->assertSeeLivewire(CreatePost::class);
+</code-snippet>
 @endverbatim

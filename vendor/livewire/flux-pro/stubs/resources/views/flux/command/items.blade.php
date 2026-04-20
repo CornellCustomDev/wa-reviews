@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @php
 $classes = Flux::classes()
     ->add('p-[.3125rem]')

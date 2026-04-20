@@ -14,29 +14,29 @@
         "ext-dom": "*",
         "ext-libxml": "*",
         "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
-        "google/apiclient": "^2.18",
-        "laravel/framework": "^12.25",
-        "laravel/nightwatch": "^1.13",
-        "laravel/telescope": "^5.11",
-        "laravel/tinker": "^2.10",
-        "livewire/flux": "^2.2",
-        "livewire/flux-pro": "^2.2",
-        "livewire/livewire": "^3.6",
+        "google/apiclient": "^2.19",
+        "laravel/framework": "^12.56",
+        "laravel/nightwatch": "^1.26",
+        "laravel/telescope": "^5.20",
+        "laravel/tinker": "^2.11",
+        "livewire/flux": "^2.13",
+        "livewire/flux-pro": "^2.13",
+        "livewire/livewire": "^3.7",
         "maatwebsite/excel": "^3.1",
         "maestroerror/laragent": "dev-main#45781ec",
-        "openai-php/client": "^0.14",
+        "openai-php/client": "^0.19",
         "prism-php/prism": "^0.80",
         "santigarcor/laratrust": "^8.5",
-        "symfony/dom-crawler": "^7.3"
+        "symfony/dom-crawler": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
-        "laravel/boost": "^1.0",
-        "laravel/pint": "^1.24",
+        "laravel/boost": "^1.8",
+        "laravel/pint": "^1.29",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.8",
         "phpunit/phpunit": "^11.5",
-        "spatie/laravel-ignition": "^2.9"
+        "spatie/laravel-ignition": "^2.12"
     },
     "autoload": {
         "psr-4": {

@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @props([
     'scrollable' => false,
     'variant' => null,

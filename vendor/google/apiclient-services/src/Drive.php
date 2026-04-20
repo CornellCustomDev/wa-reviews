@@ -67,6 +67,7 @@ class Drive extends \Google\Service
 
   public $about;
   public $accessproposals;
+  public $approvals;
   public $apps;
   public $changes;
   public $channels;
@@ -163,6 +164,49 @@ class Drive extends \Google\Service
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
+                ],
+              ],
+            ],
+          ]
+        ]
+    );
+    $this->approvals = new Drive\Resource\Approvals(
+        $this,
+        $this->serviceName,
+        'approvals',
+        [
+          'methods' => [
+            'get' => [
+              'path' => 'files/{fileId}/approvals/{approvalId}',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'approvalId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+              ],
+            ],'list' => [
+              'path' => 'files/{fileId}/approvals',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'path',
+                  'type' => 'string',
+                  'required' => true,
+                ],
+                'pageSize' => [
+                  'location' => 'query',
+                  'type' => 'integer',
+                ],
+                'pageToken' => [
+                  'location' => 'query',
+                  'type' => 'string',
                 ],
               ],
             ],
@@ -734,6 +778,19 @@ class Drive extends \Google\Service
                   'required' => true,
                 ],
               ],
+            ],'generateCseToken' => [
+              'path' => 'files/generateCseToken',
+              'httpMethod' => 'GET',
+              'parameters' => [
+                'fileId' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+                'parent' => [
+                  'location' => 'query',
+                  'type' => 'string',
+                ],
+              ],
             ],'generateIds' => [
               'path' => 'files/generateIds',
               'httpMethod' => 'GET',
@@ -964,27 +1021,7 @@ class Drive extends \Google\Service
         'operations',
         [
           'methods' => [
-            'cancel' => [
-              'path' => 'operations/{name}:cancel',
-              'httpMethod' => 'POST',
-              'parameters' => [
-                'name' => [
-                  'location' => 'path',
-                  'type' => 'string',
-                  'required' => true,
-                ],
-              ],
-            ],'delete' => [
-              'path' => 'operations/{name}',
-              'httpMethod' => 'DELETE',
-              'parameters' => [
-                'name' => [
-                  'location' => 'path',
-                  'type' => 'string',
-                  'required' => true,
-                ],
-              ],
-            ],'get' => [
+            'get' => [
               'path' => 'operations/{name}',
               'httpMethod' => 'GET',
               'parameters' => [
@@ -992,27 +1029,6 @@ class Drive extends \Google\Service
                   'location' => 'path',
                   'type' => 'string',
                   'required' => true,
-                ],
-              ],
-            ],'list' => [
-              'path' => 'operations',
-              'httpMethod' => 'GET',
-              'parameters' => [
-                'filter' => [
-                  'location' => 'query',
-                  'type' => 'string',
-                ],
-                'name' => [
-                  'location' => 'query',
-                  'type' => 'string',
-                ],
-                'pageSize' => [
-                  'location' => 'query',
-                  'type' => 'integer',
-                ],
-                'pageToken' => [
-                  'location' => 'query',
-                  'type' => 'string',
                 ],
               ],
             ],

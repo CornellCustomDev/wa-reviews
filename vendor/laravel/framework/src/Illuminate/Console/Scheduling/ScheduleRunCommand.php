@@ -162,7 +162,7 @@ class ScheduleRunCommand extends Command
             $this->runEvent($event);
         } else {
             $this->components->info(sprintf(
-                'Skipping [%s], as command already run on another server.', $event->getSummaryForDisplay()
+                'Skipping [%s] because the command already ran on another server.', $event->getSummaryForDisplay()
             ));
         }
     }
@@ -263,7 +263,7 @@ class ScheduleRunCommand extends Command
                 $this->eventsRan = true;
             }
 
-            Sleep::usleep(100000);
+            Sleep::usleep(100_000);
         }
     }
 

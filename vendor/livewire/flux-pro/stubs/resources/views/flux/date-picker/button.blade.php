@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware([ 'placeholder' ])
 
 @props([
@@ -30,7 +32,7 @@ $classes = Flux::classes()
 @endphp
 
 <button type="button" {{ $attributes->class($classes) }} @if ($invalid) data-invalid @endif data-flux-group-target data-flux-date-picker-button>
-    <flux:icon.calendar variant="mini" class="me-2 text-zinc-300 [[data-flux-date-picker-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-date-picker-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40! [[data-flux-date-picker-button][data-open]_&]:text-zinc-800 dark:[[data-flux-date-picker-button][data-open]_&]:text-white" />
+    <flux:icon.calendar variant="mini" class="me-2 text-zinc-400/75 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[disabled]_&]:text-white/40!" />
 
     <?php if ($slot->isNotEmpty()): ?>
         {{ $slot }}
@@ -40,15 +42,17 @@ $classes = Flux::classes()
 
     <?php if ($clearable): ?>
         <flux:button as="div"
-            class="cursor-pointer ms-2 {{ $size === 'sm' || $size === 'xs' ? '-me-1' : '-me-2' }} [[data-flux-date-picker-button]:has([data-flux-date-picker-placeholder])_&]:hidden [[data-flux-select]:has([disabled])_&]:hidden"
+            class="cursor-pointer ms-2 {{ $size === 'sm' || $size === 'xs' ? '-me-1' : '-me-2' }} [[data-flux-date-picker-button]:has([data-flux-date-picker-placeholder])_&]:hidden [[data-flux-date-picker][disabled]_&]:hidden"
             variant="subtle"
             :size="$size === 'sm' || $size === 'xs' ? 'xs' : 'sm'"
             square
             tabindex="-1"
             aria-label="Clear date"
-            x-on:click.prevent.stop="let datePicker = $el.closest('ui-date-picker'); datePicker.clear();"
+            x-on:click.prevent.stop="$el.closest('ui-date-picker').clear()"
         >
             <flux:icon.x-mark variant="micro" />
         </flux:button>
     <?php endif; ?>
+
+    <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 text-zinc-400/75 [[data-flux-date-picker-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-date-picker-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
 </button>

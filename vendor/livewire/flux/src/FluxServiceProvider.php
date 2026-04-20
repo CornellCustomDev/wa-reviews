@@ -22,6 +22,7 @@ class FluxServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->bootComponentPath();
+        $this->bootFallbackBlazeDirectivesIfBlazeIsNotInstalled();
         $this->bootTagCompiler();
         $this->bootMacros();
 
@@ -41,6 +42,26 @@ class FluxServiceProvider extends ServiceProvider
         }
 
         Blade::anonymousComponentPath(__DIR__.'/../stubs/resources/views/flux', 'flux');
+    }
+
+    public function bootFallbackBlazeDirectivesIfBlazeIsNotInstalled()
+    {
+        Blade::directive('blaze', fn () => '');
+
+        // `@pure` directive has been replaced with `@blaze` in Blaze v1.0, but we need to keep it here for
+        // backwards compatibility as people could have published components or custom icons using it...
+        Blade::directive('pure', fn () => '');
+
+        Blade::directive('unblaze', function ($expression) {
+            return ''
+                . '<'.'?php $__getScope = fn($scope = []) => $scope; ?>'
+                . '<'.'?php if (isset($scope)) $__scope = $scope; ?>'
+                . '<'.'?php $scope = $__getScope('.$expression.'); ?>';
+        });
+
+        Blade::directive('endunblaze', function () {
+            return '<'.'?php if (isset($__scope)) { $scope = $__scope; unset($__scope); } ?>';
+        });
     }
 
     public function bootTagCompiler()

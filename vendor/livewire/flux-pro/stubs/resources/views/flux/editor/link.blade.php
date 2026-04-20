@@ -1,3 +1,5 @@
+@blaze(fold: true, safe: ['kbd'])
+
 @props([
     'kbd' => '⌘K',
 ])
@@ -9,7 +11,8 @@
         </flux:editor.button>
     </flux:tooltip>
 
-    <div popover="manual" class="min-w-[360px] p-[5px] rounded-lg border border-zinc-200 dark:border-zinc-600 shadow-xs bg-white dark:bg-zinc-700">
+    {{-- We need tabindex="-1" here to make the popover focusable because Safari doesn't focus buttons when clicked. Instead, it focuses the nearest focusable parent, which closes the popover before click handlers fire if the parent is outside of the popover. --}}
+    <div popover="manual" tabindex="-1" class="min-w-[360px] p-[5px] rounded-lg border border-zinc-200 dark:border-zinc-600 shadow-xs bg-white dark:bg-zinc-700">
         <div class="h-8 flex justify-between gap-2 ps-2 pe-1" data-flux-editor-link>
             <input data-editor="link:url" type="text" form="" placeholder="https://..." class="flex-1 text-base sm:text-sm outline-hidden bg-transparent" autofocus>
 
