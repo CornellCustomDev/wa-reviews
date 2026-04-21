@@ -19,6 +19,7 @@ class ViewScopes extends Component
     {
         return $this->project->scopes()
             ->with(['issues:id,scope_id,guideline_id,guideline_instance,assessment', 'issues.guideline:id,number'])
+            ->withCount('comments')
             ->get();
     }
 
