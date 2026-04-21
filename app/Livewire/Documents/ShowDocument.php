@@ -4,17 +4,18 @@ namespace App\Livewire\Documents;
 
 use App\Livewire\Forms\DocumentForm;
 use App\Models\Document;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowDocument extends Component
 {
+    #[Locked]
     public string $slug;
     public Document $document;
     public DocumentForm $form;
-    public bool $showTitle = false;
 
-    public function mount()
+    public function mount(): void
     {
         $this->getDocument();
     }
@@ -27,7 +28,7 @@ class ShowDocument extends Component
         $this->form->setModel($this->document);
     }
 
-    public function save()
+    public function save(): void
     {
         $this->authorize('update', $this->form->document);
 
