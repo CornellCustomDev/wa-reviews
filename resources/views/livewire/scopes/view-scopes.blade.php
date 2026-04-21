@@ -28,9 +28,11 @@
                     <div class="flex justify-between items-start gap-2">
                         <div class="grow">{!! Str::of($scope->notes)->markdown() !!}</div>
                         @if($scope->comments_count > 0)
-                            <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left" class="flex-shrink-0">
-                                {{ $scope->comments_count }}
-                            </flux:badge>
+                            <a href="{{ route('scope.show', $scope) }}?comments=1" class="flex-shrink-0">
+                                <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
+                                    {{ $scope->comments_count }}
+                                </flux:badge>
+                            </a>
                         @endif
                     </div>
                 </td>
