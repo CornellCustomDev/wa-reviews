@@ -20,7 +20,7 @@ class ScopeFactory extends Factory
             'title' => $this->faker->words(asText: true),
             'url' => $this->faker->url(),
             'notes' => $this->faker->paragraph,
-//            'comments' => $this->faker->randomElements(['comment1', 'comment2', 'comment3'], 2),
+//            'checklist_comments' => $this->faker->randomElements(['comment1', 'comment2', 'comment3'], 2),
         ];
     }
 }
