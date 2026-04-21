@@ -22,7 +22,7 @@ class Scope extends Model
         'url',
         'current_page_id',
         'notes',
-        'comments'
+        'checklist_comments',
     ];
 
     protected $with = [
@@ -30,7 +30,7 @@ class Scope extends Model
     ];
 
     protected $casts = [
-        'comments' => 'array',
+        'checklist_comments' => 'array',
     ];
 
     public function project(): BelongsTo

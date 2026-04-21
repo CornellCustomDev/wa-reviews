@@ -180,7 +180,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
                 ? "Available via 'fetch_scope_page_content($scope->id)' tool."
                 : 'No page content available.',
             'notes' => $scope->notes,
-            'comments' => $scope->comments,
+            'comments' => $scope->checklist_comments,
         ];
 
         return "Here is the current web page scope in JSON format:\n"

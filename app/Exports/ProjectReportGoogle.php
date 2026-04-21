@@ -349,7 +349,7 @@ class ProjectReportGoogle
                     ...$scopeFormats,
                 ),
                 Sheet::richTextCell($scope->notes),
-                Sheet::richTextCell($scope->comments),
+                Sheet::richTextCell($scope->checklist_comments),
             ];
             $updates[] = Sheet::updateCells(
                 Sheet::makeGridRange('A' . (5 + $index) . ':C' . (5 + $index), $sheet),
