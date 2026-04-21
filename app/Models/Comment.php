@@ -26,7 +26,7 @@ class Comment extends Model
     public function isEditableBy(User $user): bool
     {
         return $this->user_id === $user->id
-            && now()->diffInMinutes($this->created_at) <= 10;
+            && $this->created_at->diffInMinutes(now()) <= 10;
     }
 
     public function isDeletableBy(User $user): bool
