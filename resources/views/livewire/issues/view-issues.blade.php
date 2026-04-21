@@ -32,7 +32,14 @@
                     {{ $issue->target }}
                 </td>
                 <td>
-                    {!! $issue->description !!}
+                    <div class="flex justify-between items-start gap-2">
+                        <div class="grow">{!! $issue->description !!}</div>
+                        @if($issue->comments_count > 0)
+                            <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left" class="flex-shrink-0">
+                                {{ $issue->comments_count }}
+                            </flux:badge>
+                        @endif
+                    </div>
                 </td>
                 <td>
                     @include('livewire.issues.assessment', ['issue' => $issue])
