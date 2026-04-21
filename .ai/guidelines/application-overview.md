@@ -40,7 +40,8 @@ The primary purpose of this application is to streamline the process of conducti
 - **Database**: MySQL/MariaDB
 - **AI Integration**: Cornell AI API Gateway with Prism, LarAgent, and OpenAI
 - **Permissions**: Laratrust library for role-based access control
-- **Data Import/Export**: Google Drive and Google Sheets APIs for spreadsheet handling
+- **Data Import**: [Laravel Excel](https://docs.laravel-excel.com/3.1/imports/) for Excel imports
+- **Data Export**: Google Drive and Google Sheets APIs for spreadsheet handling
 
 ### Project Structure
 The application follows a standard Laravel project structure with:

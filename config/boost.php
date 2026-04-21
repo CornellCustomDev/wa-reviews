@@ -45,8 +45,7 @@ return [
         'php' => env('BOOST_PHP_EXECUTABLE_PATH', 'lando php'),
         'composer' => env('BOOST_COMPOSER_EXECUTABLE_PATH', 'lando composer'),
         'npm' => env('BOOST_NPM_EXECUTABLE_PATH', 'lando npm'),
-        'vendor_bin' => env('BOOST_VENDOR_BIN_EXECUTABLE_PATH'),
-        'current_directory' => env('BOOST_CURRENT_DIRECTORY_EXECUTABLE_PATH', base_path()),
+        'vendor_bin' => env('BOOST_VENDOR_BIN_EXECUTABLE_PATH', 'lando exec appserver -- /app/vendor/bin/'),
     ],
 
 ];
