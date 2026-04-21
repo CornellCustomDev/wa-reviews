@@ -50,6 +50,13 @@
                                 Required
                             </div>
                         @endif
+                        @if($issue->comments_count > 0)
+                            <div>
+                                <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
+                                    {{ $issue->comments_count }}
+                                </flux:badge>
+                            </div>
+                        @endif
                     </td>
                 @endif
                 <td class="text-nowrap">
