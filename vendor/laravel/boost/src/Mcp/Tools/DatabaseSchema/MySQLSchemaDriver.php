@@ -43,7 +43,7 @@ class MySQLSchemaDriver extends DatabaseSchemaDriver
     public function getTriggers(?string $table = null): array
     {
         try {
-            if ($table) {
+            if ($this->hasTable($table)) {
                 return DB::connection($this->connection)->select('SHOW TRIGGERS WHERE `Table` = ?', [$table]);
             }
 
@@ -70,5 +70,20 @@ class MySQLSchemaDriver extends DatabaseSchemaDriver
     public function getSequences(): array
     {
         return [];
+    }
+
+    public function getTables(): array
+    {
+        try {
+            return DB::connection($this->connection)->select('
+                SELECT TABLE_NAME as name
+                FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_TYPE = "BASE TABLE"
+                ORDER BY TABLE_NAME
+            ');
+        } catch (Exception) {
+            return [];
+        }
     }
 }

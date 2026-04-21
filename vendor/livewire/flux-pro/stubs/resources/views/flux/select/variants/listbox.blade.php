@@ -1,3 +1,5 @@
+@blaze
+
 @props([
     'selectedSuffix' => null,
     'placeholder' => null,
@@ -25,7 +27,7 @@ if (! isset($name)) {
 
 $invalid ??= ($name && $errors->has($name));
 
-$class= Flux::classes()
+$class = Flux::classes()
     ->add('w-full')
     // The below reverts styles added by Tailwind Forms plugin
     ->add('border-0 p-0 bg-transparent')

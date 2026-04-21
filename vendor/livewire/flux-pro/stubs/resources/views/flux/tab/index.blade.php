@@ -1,11 +1,14 @@
-@php $iconTrailing = $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
-@php $iconVariant = $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
+@blaze
+
+@php $iconTrailing ??= $attributes->pluck('icon:trailing'); @endphp
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @aware([ 'variant', 'size' ])
 
 @props([
     'iconTrailing' => null,
     'iconVariant' => null, // This is null as the default is set below depending on the tab variant...
+    'selected' => false,
     'variant' => null,
     'accent' => true,
     'name' => null,
@@ -71,7 +74,7 @@ if ($name) {
 }
 @endphp
 
-<flux:button-or-link :attributes="$attributes->class($classes)" data-flux-tab>
+<flux:button-or-link :attributes="$attributes->class($classes)->merge(['data-selected' => $selected, 'selected' => $selected])" data-flux-tab>
     <?php if (is_string($icon) && $icon !== ''): ?>
         <flux:icon :$icon :variant="$iconVariant" class="{!! $iconClasses !!}" />
     <?php elseif ($icon): ?>

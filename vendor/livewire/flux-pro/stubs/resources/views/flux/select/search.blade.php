@@ -1,7 +1,8 @@
+@blaze
+
 @props([
     'clearable' => true,
     'closable' => null,
-    'loading' => null,
     'icon' => null,
 ])
 
@@ -19,9 +20,14 @@ $classes = Flux::classes()
     ->add('bg-white dark:bg-zinc-700')
     // The below reverts styles added by Tailwind Forms plugin
     ->add('border-t-0 border-s-0 border-e-0 focus:ring-0 focus:border-zinc-200 dark:focus:border-zinc-600')
+    ->add('data-invalid:text-red-500 dark:data-invalid:text-red-400')
     ;
 
-$loading ??= $loading ?? $attributes->whereStartsWith('wire:model.live')->isNotEmpty();
+$name = $attributes->whereStartsWith('wire:model')->first();
+
+$invalid ??= ($name && $errors->has($name));
+
+$loading = ($wireModel = $attributes->wire('model')) && $wireModel->directive && $wireModel->hasModifier('live');
 
 if ($loading) {
     $attributes = $attributes->merge(['wire:loading.attr' => 'data-flux-loading']);
@@ -39,7 +45,11 @@ if ($loading) {
         <?php endif; ?>
     </div>
 
-    <input type="text" {{ $attributes->class($classes)->merge(['placeholder' => __('Search...')]) }} autofocus />
+    <input
+        type="text"
+        @if ($invalid) aria-invalid="true" data-invalid @endif
+        {{ $attributes->class($classes)->merge(['placeholder' => __('Search...')]) }}
+    />
 
     <?php if ($loading): ?>
         <div class="opacity-0 [[data-flux-select-search]:has([data-flux-loading])_&]:opacity-100 transition-opacity absolute top-0 bottom-0 flex items-center justify-center pe-2.5 end-0">
@@ -58,7 +68,8 @@ if ($loading) {
     <?php elseif ($clearable): ?>
         <div class="[[data-flux-select-search]:has([data-flux-loading])_&]:opacity-0 transition-opacity absolute top-0 bottom-0 flex items-center justify-center pe-1 end-0 [[data-flux-select-search]:has(input:placeholder-shown)_&]:hidden">
             <flux:button square variant="subtle" size="sm" tabindex="-1" aria-label="Clear command input"
-                x-on:click="$el.closest('[data-flux-select-search]').querySelector('input').value = ''; $el.closest('[data-flux-select-search]').querySelector('input').dispatchEvent(new Event('input', { bubbles: false })); $el.closest('[data-flux-select-search]').querySelector('input').focus()"
+                x-data="fluxSelectSearchClearable"
+                x-on:click="clear()"
             >
                 <flux:icon.x-mark variant="micro" />
             </flux:button>

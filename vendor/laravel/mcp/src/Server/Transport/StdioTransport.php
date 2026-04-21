@@ -5,50 +5,30 @@ declare(strict_types=1);
 namespace Laravel\Mcp\Server\Transport;
 
 use Closure;
-use Illuminate\Support\Str;
-use Laravel\Mcp\Server\Contracts\Transport\Transport;
+use Laravel\Mcp\Server\Contracts\Transport;
 
 class StdioTransport implements Transport
 {
     /**
-     * The server handler responsible for handling the request.
-     *
-     * @var callable
+     * @param  (Closure(string): void)|null  $handler
      */
-    private $handler;
-
-    /**
-     * The session ID of the request.
-     */
-    private string $sessionId;
-
-    /**
-     * Create a new STDIO transport.
-     */
-    public function __construct()
-    {
-        $this->sessionId = Str::uuid()->toString();
+    public function __construct(
+        protected string $sessionId,
+        protected ?Closure $handler = null,
+    ) {
+        //
     }
 
-    /**
-     * Register the server handler to handle incoming messages.
-     */
-    public function onReceive(callable $handler): void
+    public function onReceive(Closure $handler): void
     {
         $this->handler = $handler;
     }
 
-    /**
-     * Send a message to the client.
-     */
     public function send(string $message, ?string $sessionId = null): void
     {
         fwrite(STDOUT, $message.PHP_EOL);
     }
 
-    /**
-     * Run the transport and process the request.
-     */
     public function run(): void
     {
         stream_set_blocking(STDIN, false);
@@ -60,21 +40,17 @@ class StdioTransport implements Transport
                 continue;
             }
 
-            ($this->handler)($line);
+            if (is_callable($this->handler)) {
+                ($this->handler)($line);
+            }
         }
     }
 
-    /**
-     * Get the session ID of the request.
-     */
     public function sessionId(): string
     {
         return $this->sessionId;
     }
 
-    /**
-     * Stream the yielded values from the callback.
-     */
     public function stream(Closure $stream): void
     {
         $stream();

@@ -1,10 +1,13 @@
+@blaze(fold: true)
+
 @props([
+    'selected' => false,
     'name' => null,
 ])
 
 @php
 $classes = Flux::classes()
-    ->add('[&:not([data-selected])]:hidden pt-8')
+    ->add('[&:not([data-selected])]:hidden [:where(&)]:pt-8')
 ;
 
 if ($name) {
@@ -15,6 +18,6 @@ if ($name) {
 }
 @endphp
 
-<div {{ $attributes->class($classes) }} data-flux-tab-panel>
+<div {{ $attributes->class($classes)->merge(['data-selected' => $selected]) }} data-flux-tab-panel>
     {{ $slot }}
 </div>

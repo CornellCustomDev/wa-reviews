@@ -53,6 +53,7 @@ final class CommandStartingListener
             match ($event->command) {
                 'queue:work', 'queue:listen', 'horizon:work', 'vapor:work' => $this->registerJobHooks($event),
                 'schedule:run', 'schedule:work' => $this->registerScheduledTaskHooks(),
+                'help', 'inspire', 'schedule:finish' => null,
                 default => $this->registerCommandHooks($event),
             };
         } catch (Throwable $e) {
@@ -65,7 +66,7 @@ final class CommandStartingListener
         $this->nightwatch->configureForJobs();
 
         /**
-         * @see \Laravel\Nightwatch\Core::digest()
+         * @see \Laravel\Nightwatch\Core::finishExecution()
          * @see \Laravel\Nightwatch\State\CommandState::flush()
          * @see \Laravel\Nightwatch\State\CommandState::$timestamp
          * @see \Laravel\Nightwatch\State\CommandState::$id
@@ -75,11 +76,12 @@ final class CommandStartingListener
             JobPopping::class,
             JobProcessing::class,
             WorkerStopping::class,
-        ], (new WorkerEventListener($this->nightwatch))(...));
+            CommandFinished::class,
+        ], (new WorkerLifecycleListener($this->nightwatch))(...));
 
         /**
          * @see \Laravel\Nightwatch\Records\JobAttempt
-         * @see \Laravel\Nightwatch\Core::digest()
+         * @see \Laravel\Nightwatch\Core::finishExecution()
          */
         $this->events->listen([
             JobProcessed::class,
@@ -99,7 +101,7 @@ final class CommandStartingListener
         $this->events->listen(ScheduledTaskStarting::class, (new ScheduledTaskStartingListener($this->nightwatch))(...));
 
         /**
-         * @see \Laravel\Nightwatch\Core::digest()
+         * @see \Laravel\Nightwatch\Core::finishExecution()
          */
         $this->events->listen([
             ScheduledTaskFinished::class,
@@ -114,7 +116,7 @@ final class CommandStartingListener
             return;
         }
 
-        $this->nightwatch->configureGlobalCommandSampling();
+        $this->nightwatch->configureCommandSampling($event->command);
 
         $this->nightwatch->prepareForCommand($event->command);
 
@@ -126,7 +128,7 @@ final class CommandStartingListener
         /**
          * @see \Laravel\Nightwatch\ExecutionStage::End
          * @see \Laravel\Nightwatch\Records\Command
-         * @see \Laravel\Nightwatch\Core::digest()
+         * @see \Laravel\Nightwatch\Core::finishExecution()
          */
         $this->kernel->whenCommandLifecycleIsLongerThan(-1, new CommandLifecycleIsLongerThanHandler($this->nightwatch));
     }

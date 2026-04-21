@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware([ 'transition', 'expanded' ])
 
 @props([

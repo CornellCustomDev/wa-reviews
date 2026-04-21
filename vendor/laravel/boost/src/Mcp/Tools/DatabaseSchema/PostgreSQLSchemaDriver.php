@@ -60,7 +60,8 @@ class PostgreSQLSchemaDriver extends DatabaseSchemaDriver
                 FROM information_schema.triggers
                 WHERE trigger_schema = current_schema()
             ';
-            if ($table) {
+
+            if ($this->hasTable($table)) {
                 $sql .= ' AND event_object_table = ?';
 
                 return DB::connection($this->connection)->select($sql, [$table]);
@@ -93,6 +94,20 @@ class PostgreSQLSchemaDriver extends DatabaseSchemaDriver
                 SELECT sequence_name, start_value, minimum_value, maximum_value, increment
                 FROM information_schema.sequences
                 WHERE sequence_schema = current_schema()
+            ');
+        } catch (Exception) {
+            return [];
+        }
+    }
+
+    public function getTables(): array
+    {
+        try {
+            return DB::connection($this->connection)->select('
+                SELECT tablename as name
+                FROM pg_tables
+                WHERE schemaname = current_schema()
+                ORDER BY tablename
             ');
         } catch (Exception) {
             return [];

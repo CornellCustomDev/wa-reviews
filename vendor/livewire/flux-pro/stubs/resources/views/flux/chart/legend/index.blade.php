@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @props([
     'label' => null,
     'field' => null,

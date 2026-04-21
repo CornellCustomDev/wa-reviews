@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @php
 $classes = Flux::classes()
     ->add('mx-auto w-full [:where(&)]:max-w-7xl px-6 lg:px-8')

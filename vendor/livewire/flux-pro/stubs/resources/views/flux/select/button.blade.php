@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware([ 'placeholder' ])
 
 @props([
@@ -6,7 +8,7 @@
     'invalid' => false,
     'suffix' => null,
     'size' => null,
-    'max' => null,
+    'max' => 1,
 ])
 
 @php
@@ -48,11 +50,11 @@ $classes = Flux::classes()
             square
             tabindex="-1"
             aria-label="Clear selected"
-            x-on:click.prevent.stop="let select = $el.closest('ui-select'); select.value = select.hasAttribute('multiple') ? [] : null; select.dispatchEvent(new Event('change', { bubbles: false })); select.dispatchEvent(new Event('input', { bubbles: false }))"
+            x-on:click.prevent.stop="$el.closest('ui-select').clear()"
         >
             <flux:icon.x-mark variant="micro" />
         </flux:button>
     <?php endif; ?>
 
-    <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 text-zinc-300 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
+    <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 text-zinc-400/75 [[data-flux-select-button]:hover_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[data-flux-select-button]:hover_&]:text-white dark:[[disabled]_&]:text-white/40!" />
 </button>

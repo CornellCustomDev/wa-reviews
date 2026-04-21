@@ -141,6 +141,10 @@ class UserDefaultChecker extends UserChecker
     {
         Cache::forget('laratrust_roles_for_'.$this->userModelCacheKey().'_'.$this->user->getKey());
         Cache::forget('laratrust_permissions_for_'.$this->userModelCacheKey().'_'.$this->user->getKey());
+        $this->user->unsetRelation('roles');
+        $this->user->unsetRelation('permissions');
+        $this->user->unsetRelation('permissionsTeams');
+        $this->user->unsetRelation('rolesTeams');
     }
 
     /**

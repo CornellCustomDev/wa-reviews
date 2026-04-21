@@ -4,80 +4,94 @@ declare(strict_types=1);
 
 namespace Laravel\Mcp\Server;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Str;
-use Laravel\Mcp\Server\Contracts\Resources\Content;
-use Laravel\Mcp\Server\Resources\ResourceResult;
+use Laravel\Mcp\Server\Annotations\Annotation;
+use Laravel\Mcp\Server\Attributes\MimeType;
+use Laravel\Mcp\Server\Attributes\Uri;
+use Laravel\Mcp\Server\Concerns\HasAnnotations;
+use Laravel\Mcp\Server\Contracts\HasUriTemplate;
 
-abstract class Resource implements Arrayable
+abstract class Resource extends Primitive
 {
-    protected string $description = '';
+    use HasAnnotations;
 
-    protected $content;
+    protected string $uri = '';
 
-    abstract public function read(): string|Content;
-
-    public function description(): string
-    {
-        return $this->description;
-    }
-
-    public function handle(): ResourceResult
-    {
-        $this->content = $this->content();
-        $result = new ResourceResult($this);
-
-        if ($this->content instanceof Content) {
-            return $result->content($this->content);
-        }
-
-        return $this->isBinary($this->content)
-            ? $result->blob($this->content)
-            : $result->text($this->content);
-    }
-
-    private function isBinary(string $content): bool
-    {
-        return strpos($content, "\0") !== false;
-    }
-
-    private function content(): string|Content
-    {
-        if (! isset($this->content)) {
-            $this->content = $this->read();
-        }
-
-        return $this->content;
-    }
-
-    public function name(): string
-    {
-        return Str::kebab(class_basename($this));
-    }
-
-    public function title(): string
-    {
-        return Str::headline(class_basename($this));
-    }
+    protected string $mimeType = '';
 
     public function uri(): string
     {
-        return 'file://resources/'.Str::kebab(class_basename($this));
+        if ($this instanceof HasUriTemplate) {
+            return (string) $this->uriTemplate();
+        }
+
+        $attribute = $this->resolveAttribute(Uri::class);
+
+        return $attribute !== null
+            ? $attribute->value
+            : ($this->uri !== '' ? $this->uri : 'file://resources/'.Str::kebab(class_basename($this)));
     }
 
     public function mimeType(): string
     {
-        return 'text/plain';
+        $attribute = $this->resolveAttribute(MimeType::class);
+
+        return $attribute !== null
+            ? $attribute->value
+            : ($this->mimeType !== '' ? $this->mimeType : 'text/plain');
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public function toMethodCall(): array
+    {
+        return ['uri' => $this->uri()];
+    }
+
+    /**
+     * @return array{
+     *     name: string,
+     *     title: string,
+     *     description: string,
+     *     uri?: string,
+     *     uriTemplate?: string,
+     *     mimeType: string,
+     *     _meta?: array<string, mixed>
+     * }
+     */
     public function toArray(): array
     {
-        return [
+        $annotations = $this->annotations();
+
+        $data = [
             'name' => $this->name(),
             'title' => $this->title(),
             'description' => $this->description(),
-            'uri' => $this->uri(),
             'mimeType' => $this->mimeType(),
+        ];
+
+        if ($annotations !== []) {
+            $data['annotations'] = $annotations;
+        }
+
+        if ($this instanceof HasUriTemplate) {
+            $data['uriTemplate'] = (string) $this->uriTemplate();
+        } else {
+            $data['uri'] = $this->uri();
+        }
+
+        // @phpstan-ignore return.type
+        return $this->mergeMeta($data);
+    }
+
+    /**
+     * @return array<int, class-string>
+     */
+    protected function allowedAnnotations(): array
+    {
+        return [
+            Annotation::class,
         ];
     }
 }

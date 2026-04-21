@@ -1,5 +1,6 @@
 (() => {
   // js/utils.js
+  var styleSheet;
   function inject(callback) {
     let styles = callback({
       css: (strings, ...values) => `@layer base { ${strings.raw[0] + values.join("")} }`
@@ -10,9 +11,11 @@
       document.head.appendChild(styleElement);
       return;
     }
-    let sheet = new CSSStyleSheet();
-    sheet.replaceSync(styles);
-    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+    if (styleSheet === void 0) {
+      styleSheet = new CSSStyleSheet();
+      document.adoptedStyleSheets = [...document.adoptedStyleSheets, styleSheet];
+    }
+    styleSheet.insertRule(styles);
   }
   function closest(el, condition) {
     let current = el;
@@ -37,6 +40,9 @@
   var using = "pointer";
   document.addEventListener("keydown", () => using = "keyboard", { capture: true });
   document.addEventListener("pointerdown", (e) => {
+    using = e.pointerType === "mouse" ? "mouse" : "touch";
+  }, { capture: true });
+  document.addEventListener("pointermove", (e) => {
     using = e.pointerType === "mouse" ? "mouse" : "touch";
   }, { capture: true });
   function dispenseId(el, prefix) {
@@ -117,6 +123,7 @@
   // js/element.js
   var UIElement = class extends HTMLElement {
     wasDisconnected = false;
+    onUnmounts = [];
     constructor() {
       super();
       this.boot?.();
@@ -135,9 +142,14 @@
       queueMicrotask(() => {
         if (this.wasDisconnected) {
           this.unmount?.();
+          this.onUnmounts.forEach((i) => i());
+          this.onUnmounts = [];
         }
         this.wasDisconnected = false;
       });
+    }
+    onUnmount(callback) {
+      this.onUnmounts.push(callback);
     }
     mixin(func, options = {}) {
       return new func(this, options);
@@ -16535,7 +16547,7 @@ img.ProseMirror-separator {
       });
       if (this.el.hasAttribute("disabled")) {
         this.el.disabled = true;
-      } else if (this.options().disableWithParent && this.el.closest("[disabled]")) {
+      } else if (this.options().disableWithParent && this.el.parentElement?.closest("[disabled]")) {
         this.el.disabled = true;
       }
       let observer = new MutationObserver((mutations) => {
@@ -16639,6 +16651,19 @@ img.ProseMirror-separator {
     }
     isObjectOrArray(value) {
       return typeof value === "object" && value !== null;
+    }
+    submitEnclosingForm() {
+      let form = this.getAssociatedForm();
+      if (form) {
+        form.requestSubmit();
+      }
+    }
+    getAssociatedForm() {
+      let formId = this.el.getAttribute("form");
+      if (formId) {
+        return document.getElementById(formId) || null;
+      }
+      return this.el.closest("form");
     }
   };
 
@@ -20325,8 +20350,10 @@ img.ProseMirror-separator {
       let toolbar = this.querySelector("ui-toolbar");
       this.querySelector("ui-editor-content").innerHTML = "";
       this._controllable = new Controllable(this, { bubbles: true });
-      toolbar.addEventListener("input", (e) => e.stopPropagation());
-      toolbar.addEventListener("change", (e) => e.stopPropagation());
+      if (toolbar) {
+        toolbar.addEventListener("input", (e) => e.stopPropagation());
+        toolbar.addEventListener("change", (e) => e.stopPropagation());
+      }
       this._disableable = new Disableable(this);
       this._submittable = new Submittable(this, {
         name: this.getAttribute("name"),
@@ -20353,7 +20380,8 @@ img.ProseMirror-separator {
         Subscript,
         Superscript,
         Placeholder.configure({
-          placeholder: this.getAttribute("placeholder")
+          placeholder: this.getAttribute("placeholder"),
+          showOnlyWhenEditable: false
         })
       ];
       let disabledExtensions = [];
@@ -20404,6 +20432,10 @@ img.ProseMirror-separator {
             }
           });
           toolbar && initializeToolbar(editor2, toolbar);
+          this.dispatchEvent(new CustomEvent("flux:editor:ready", {
+            bubbles: true,
+            detail: { editor: editor2 }
+          }));
         });
         editor.on("update", () => {
           this._controllable.dispatch();
@@ -20467,66 +20499,68 @@ img.ProseMirror-separator {
     }
   };
   function initializeToolbar(editor, toolbar) {
-    if (!editor) throw `ui-editor-toolbar: no parent ui-editor element found`;
-    toolbar.addEventListener("click", (e) => {
-      let button = e.target.closest("button");
-      if (!button) return;
-      let command2 = button.dataset.editor;
-      let commands2 = {
-        "bold": "toggleBold",
-        "italic": "toggleItalic",
-        "strike": "toggleStrike",
-        "underline": "toggleUnderline",
-        "blockquote": "toggleBlockquote",
-        "bullet": "toggleBulletList",
-        "ordered": "toggleOrderedList",
-        "code": "toggleCode",
-        "highlight": "toggleHighlight",
-        "hr": "setHorizontalRule",
-        "undo": "undo",
-        "redo": "redo",
-        "subscript": "toggleSubscript",
-        "superscript": "toggleSuperscript",
-        "code-block": "toggleCodeBlock"
-      };
-      commands2[command2] && editor.chain().focus()[commands2[command2]]().run();
-    });
-    toolbar.querySelector('[data-editor="align"]')?.addEventListener("change", (e) => {
-      let align = e.target.value;
-      setTimeout(() => editor.chain().focus().setTextAlign(align).run());
-    });
-    toolbar.querySelector('[data-editor="heading"]')?.addEventListener("change", (e) => {
-      let formats = {
-        "paragraph": () => editor.chain().focus().setParagraph().run(),
-        "heading1": () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
-        "heading2": () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
-        "heading3": () => editor.chain().focus().toggleHeading({ level: 3 }).run()
-      };
-      setTimeout(() => formats[e.target.value]());
-    });
-    if (toolbar.querySelector('[data-editor="link"]')) {
-      toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("keydown", (e) => {
-        if (["ArrowLeft", "ArrowRight"].includes(e.key) || /^[a-zA-Z0-9]$/.test(e.key)) {
-          e.stopPropagation();
-        }
+    if (toolbar) {
+      toolbar.addEventListener("click", (e) => {
+        let button = e.target.closest("button,ui-button");
+        if (!button) return;
+        let command2 = button.dataset.editor;
+        let commands2 = {
+          "bold": "toggleBold",
+          "italic": "toggleItalic",
+          "strike": "toggleStrike",
+          "underline": "toggleUnderline",
+          "blockquote": "toggleBlockquote",
+          "bullet": "toggleBulletList",
+          "ordered": "toggleOrderedList",
+          "code": "toggleCode",
+          "highlight": "toggleHighlight",
+          "hr": "setHorizontalRule",
+          "undo": "undo",
+          "redo": "redo",
+          "subscript": "toggleSubscript",
+          "superscript": "toggleSuperscript",
+          "code-block": "toggleCodeBlock"
+        };
+        commands2[command2] && editor.chain().focus()[commands2[command2]]().run();
       });
-      toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("input", (e) => e.stopPropagation());
-      toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("change", (e) => e.stopPropagation());
-      let insertLink = () => {
-        let url = toolbar.querySelector('[data-editor="link:url"]')?.value?.trim();
-        if (url) {
-          editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
-        } else {
+      toolbar.querySelector('[data-editor="align"]')?.addEventListener("change", (e) => {
+        let align = e.target.value;
+        setTimeout(() => editor.chain().focus().setTextAlign(align).run());
+      });
+      toolbar.querySelector('[data-editor="heading"]')?.addEventListener("change", (e) => {
+        let formats = {
+          "paragraph": () => editor.chain().focus().setParagraph().run(),
+          "heading1": () => editor.chain().focus().toggleHeading({ level: 1 }).run(),
+          "heading2": () => editor.chain().focus().toggleHeading({ level: 2 }).run(),
+          "heading3": () => editor.chain().focus().toggleHeading({ level: 3 }).run()
+        };
+        setTimeout(() => formats[e.target.value]());
+      });
+      if (toolbar.querySelector('[data-editor="link"]')) {
+        toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("keydown", (e) => {
+          if (["ArrowLeft", "ArrowRight"].includes(e.key) || /^[a-zA-Z0-9]$/.test(e.key)) {
+            e.stopPropagation();
+          }
+        });
+        toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("input", (e) => e.stopPropagation());
+        toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("change", (e) => e.stopPropagation());
+        let insertLink = () => {
+          let url = toolbar.querySelector('[data-editor="link:url"]')?.value?.trim();
+          if (url) {
+            editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+          } else {
+            editor.chain().focus().unsetLink().run();
+          }
+        };
+        toolbar.querySelector('[data-editor="link:insert"]')?.addEventListener("click", insertLink);
+        toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("keydown", (e) => ["Enter"].includes(e.key) && insertLink());
+        toolbar.querySelector('[data-editor="link:unlink"]')?.addEventListener("click", () => {
           editor.chain().focus().unsetLink().run();
-        }
-      };
-      toolbar.querySelector('[data-editor="link:insert"]')?.addEventListener("click", insertLink);
-      toolbar.querySelector('[data-editor="link:url"]')?.addEventListener("keydown", (e) => ["Enter"].includes(e.key) && insertLink());
-      toolbar.querySelector('[data-editor="link:unlink"]')?.addEventListener("click", () => {
-        editor.chain().focus().unsetLink().run();
-      });
+        });
+      }
     }
     let updateToolbar = () => {
+      if (!toolbar) return;
       let linkInput = toolbar.querySelector('[data-editor="link:url"]');
       if (linkInput) {
         let linkButton = toolbar.querySelector('[data-editor="link"] [data-match-target]');
@@ -20549,7 +20583,7 @@ img.ProseMirror-separator {
         let currentFormat = editor.isActive("paragraph") ? "paragraph" : editor.isActive("heading", { level: 1 }) ? "heading1" : editor.isActive("heading", { level: 2 }) ? "heading2" : editor.isActive("heading", { level: 3 }) ? "heading3" : null;
         headingEl.value = currentFormat;
       }
-      toolbar.querySelectorAll("button[data-editor]").forEach((button) => {
+      toolbar.querySelectorAll("button[data-editor],ui-button[data-editor]").forEach((button) => {
         let commands2 = {
           "bold": "bold",
           "italic": "italic",
@@ -20573,7 +20607,9 @@ img.ProseMirror-separator {
     editor.on("transaction", updateToolbar);
     editor.on("selectionUpdate", updateToolbar);
     assignId(editor.view.dom, "editor-input");
-    setAttribute2(toolbar, "aria-controls", editor.view.dom.getAttribute("id"));
+    if (toolbar) {
+      setAttribute2(toolbar, "aria-controls", editor.view.dom.getAttribute("id"));
+    }
   }
   var UIEditorContent = class extends UIElement {
     boot() {
@@ -20581,8 +20617,10 @@ img.ProseMirror-separator {
       if (!this.editor) throw `ui-editor-content: no parent ui-editor element found`;
     }
   };
-  inject(({ css }) => css`ui-editor { display: block; }`);
-  inject(({ css }) => css`ui-editor-content { display: block; }`);
-  element("editor", UIEditor);
-  element("editor-content", UIEditorContent);
+  if (!customElements.get("ui-editor")) {
+    element("editor", UIEditor);
+  }
+  if (!customElements.get("ui-editor-content")) {
+    element("editor-content", UIEditorContent);
+  }
 })();

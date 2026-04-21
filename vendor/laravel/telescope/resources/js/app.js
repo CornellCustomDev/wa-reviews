@@ -15,6 +15,8 @@ import copyClipboard from './components/CopyClipboard.vue';
 
 import 'bootstrap';
 
+const LOCALSTORAGE_AUTOLOAD_KEY = 'telescopeAutoLoadsNewEntries';
+
 let token = document.head.querySelector('meta[name="csrf-token"]');
 
 if (token) {
@@ -66,7 +68,7 @@ new Vue({
                 confirmationCancel: null,
             },
 
-            autoLoadsNewEntries: localStorage.autoLoadsNewEntries === '1',
+            autoLoadsNewEntries: localStorage[LOCALSTORAGE_AUTOLOAD_KEY] === '1',
 
             recording: Telescope.recording,
         };
@@ -82,13 +84,8 @@ new Vue({
 
     methods: {
         autoLoadNewEntries() {
-            if (!this.autoLoadsNewEntries) {
-                this.autoLoadsNewEntries = true;
-                localStorage.autoLoadsNewEntries = 1;
-            } else {
-                this.autoLoadsNewEntries = false;
-                localStorage.autoLoadsNewEntries = 0;
-            }
+            this.autoLoadsNewEntries = !this.autoLoadsNewEntries;
+            localStorage[LOCALSTORAGE_AUTOLOAD_KEY] = Number(this.autoLoadsNewEntries);
         },
 
         toggleRecording() {

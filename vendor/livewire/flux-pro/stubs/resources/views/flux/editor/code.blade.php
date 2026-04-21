@@ -1,3 +1,5 @@
+@blaze(fold: true, safe: ['kbd'])
+
 @props([
     'kbd' => '⌘E',
 ])

@@ -27,6 +27,7 @@ class DirectoryDetectionStrategy implements DetectionStrategy
 
             if (str_contains($expandedPath, '*')) {
                 $matches = glob($expandedPath, GLOB_ONLYDIR);
+
                 if (! empty($matches)) {
                     return true;
                 }
@@ -38,16 +39,15 @@ class DirectoryDetectionStrategy implements DetectionStrategy
         return false;
     }
 
-    private function expandPath(string $path, ?Platform $platform = null): string
+    protected function expandPath(string $path, ?Platform $platform = null): string
     {
         if ($platform === Platform::Windows) {
-            return preg_replace_callback('/%([^%]+)%/', function ($matches) {
-                return getenv($matches[1]) ?: $matches[0];
-            }, $path);
+            return preg_replace_callback('/%([^%]+)%/', fn (array $matches) => getenv($matches[1]) ?: $matches[0], $path);
         }
 
         if (str_starts_with($path, '~')) {
             $home = getenv('HOME');
+
             if ($home) {
                 return str_replace('~', $home, $path);
             }
@@ -56,7 +56,7 @@ class DirectoryDetectionStrategy implements DetectionStrategy
         return $path;
     }
 
-    private function isAbsolutePath(string $path): bool
+    protected function isAbsolutePath(string $path): bool
     {
         return str_starts_with($path, '/') ||
                str_starts_with($path, '\\') ||

@@ -3,8 +3,12 @@
 namespace Laravel\Nightwatch\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Contracts\Foundation\Application;
+use Laravel\Nightwatch\GracefulCliOutputExceptionHandler;
 use SensitiveParameter;
 use Symfony\Component\Console\Attribute\AsCommand;
+use Throwable;
 
 /**
  * @internal
@@ -21,7 +25,8 @@ final class AgentCommand extends Command
         {--auth-timeout=}
         {--ingest-connection-timeout=}
         {--ingest-timeout=}
-        {--server=}';
+        {--server=}
+        {--silent : Do not output any message}';
 
     /**
      * @var string
@@ -36,8 +41,17 @@ final class AgentCommand extends Command
         parent::__construct();
     }
 
-    public function handle(): void
+    public function handle(Application $app): void
     {
+        try {
+            $handler = $app->instance(
+                ExceptionHandler::class,
+                new GracefulCliOutputExceptionHandler($app->make(ExceptionHandler::class))
+            );
+        } catch (Throwable) {
+            //
+        }
+
         $refreshToken = $this->token;
 
         $listenOn = $this->option('listen-on') ?? $this->ingestUri;
@@ -52,6 +66,16 @@ final class AgentCommand extends Command
 
         $server = $this->option('server') ?? $this->server;
 
+        $silent = $this->option('silent') ?: null;
+
+        $quiet = $this->option('quiet') ?: null;
+
+        $verbose = $this->option('verbose') ?: null;
+
         require __DIR__.'/../../agent/build/agent.phar';
+
+        if (isset($handler)) {
+            $handler->shuttingDown();
+        }
     }
 }

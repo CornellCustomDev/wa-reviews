@@ -233,7 +233,10 @@ class Backtrace
             $currentFile,
             $currentLine,
             [],
-            '[top]'
+            '[top]',
+            null,
+            null,
+            $this->isApplicationFrame($currentFile),
         );
 
         $frames = $this->removeBacktracePackageFrames($frames);
@@ -259,7 +262,7 @@ class Backtrace
         }
 
         // Edge case for vendor files that typically live in the app code (e.g. Laravel's `artisan` or Statamic's `please`)
-        if (preg_match('/\/(artisan|please)$/', $relativeFile)) {
+        if (preg_match('/[\\/\\\\](artisan|please)$/', $relativeFile)) {
             return false;
         }
 

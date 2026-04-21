@@ -1,3 +1,5 @@
+@blaze(fold: true)
+
 @aware(['axis' => 'x', 'position' => null ])
 
 @props([

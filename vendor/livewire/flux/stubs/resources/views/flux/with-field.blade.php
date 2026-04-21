@@ -1,3 +1,10 @@
+@blaze(fold: true, unsafe: [
+    'name', 'label', 'badge',
+    'description', 'description:trailing',
+    'label:badge', 'label:aside', 'label:trailing',
+    'error:name', 'error:bag', 'error:message', 'error:icon', 'error:nested', 'error:deep',
+])
+
 @php
 extract(Flux::forwardedAttributes($attributes, [
     'name',
@@ -19,21 +26,31 @@ extract(Flux::forwardedAttributes($attributes, [
 ])
 
 <?php if (isset($label) || isset($description)): ?>
-    <flux:field :attributes="Flux::attributesAfter('field:', $attributes, [])">
+    <?php
+
+        $fieldAttributes = Flux::attributesAfter('field:', $attributes, []);
+        $labelAttributes = Flux::attributesAfter('label:', $attributes, ['badge' => $badge]);
+        $descriptionAttributes = Flux::attributesAfter('description:', $attributes, []);
+        $errorAttributes = Flux::attributesAfter('error:', $attributes, ['name' => $name]);
+    ?>
+    <flux:field :attributes="$fieldAttributes">
         <?php if (isset($label)): ?>
-            <flux:label :attributes="Flux::attributesAfter('label:', $attributes, ['badge' => $badge])">{{ $label }}</flux:label>
+            <flux:label :attributes="$labelAttributes">{{ $label }}</flux:label>
         <?php endif; ?>
 
         <?php if (isset($description)): ?>
-            <flux:description :attributes="Flux::attributesAfter('description:', $attributes, [])">{{ $description }}</flux:description>
+            <flux:description :attributes="$descriptionAttributes">{{ $description }}</flux:description>
         <?php endif; ?>
 
         {{ $slot }}
 
-        <flux:error :attributes="Flux::attributesAfter('error:', $attributes, ['name' => $name])" />
+        {{-- We're using ->getAttributes() here because ->all() is only available since Laravel 11... --}}
+        @unblaze(scope: ['attributes' => $errorAttributes->getAttributes()])
+        <flux:error :attributes="new \Illuminate\View\ComponentAttributeBag($scope['attributes'])" />
+        @endunblaze
 
         <?php if (isset($descriptionTrailing)): ?>
-            <flux:description :attributes="Flux::attributesAfter('description:', $attributes, [])">{{ $descriptionTrailing }}</flux:description>
+            <flux:description :attributes="$descriptionAttributes">{{ $descriptionTrailing }}</flux:description>
         <?php endif; ?>
     </flux:field>
 <?php else: ?>

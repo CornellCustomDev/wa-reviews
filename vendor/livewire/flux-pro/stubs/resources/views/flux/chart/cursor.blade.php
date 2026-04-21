@@ -1,10 +1,12 @@
+@blaze(fold: true)
 
 <template name="cursor">
-    <line {{ $attributes->merge([
+    <path {{ $attributes->merge([
         'class' => 'text-zinc-500 dark:text-zinc-300',
-        'type' => 'vertical',
+        'type' => 'line',
+        'fill' => 'none',
         'stroke' => 'currentColor',
         'stroke-width' => '1',
         'stroke-dasharray' => '4,4',
-    ]) }}></line>
+    ]) }}></path>
 </template>

@@ -9,24 +9,16 @@ use Throwable;
 
 class CursorPaginator
 {
-    private Collection $items;
-
-    private int $perPage;
-
-    private ?string $cursor;
-
     /**
-     * Create a new cursor paginator.
+     * @param  Collection<int, mixed>  $items
      */
-    public function __construct(Collection $items, int $perPage = 10, ?string $cursor = null)
+    public function __construct(protected Collection $items, protected int $perPage = 10, protected ?string $cursor = null)
     {
         $this->items = $items->values();
-        $this->perPage = $perPage;
-        $this->cursor = $cursor;
     }
 
     /**
-     * Paginate the items using a cursor.
+     * @return array<string, mixed>
      */
     public function paginate(string $key = 'items'): array
     {
@@ -45,12 +37,9 @@ class CursorPaginator
         return $result;
     }
 
-    /**
-     * Get the start offset from the cursor.
-     */
-    private function getStartOffsetFromCursor(): int
+    protected function getStartOffsetFromCursor(): int
     {
-        if (! $this->cursor) {
+        if (! is_string($this->cursor)) {
             return 0;
         }
 
@@ -68,18 +57,17 @@ class CursorPaginator
             }
 
             return (int) ($cursorData['offset'] ?? 0);
-        } catch (Throwable $e) {
-            return 0;
+        } catch (Throwable) {
+            //
         }
+
+        return 0;
     }
 
-    /**
-     * Create a cursor from the offset.
-     */
-    private function createCursor(int $offset): string
+    protected function createCursor(int $offset): string
     {
         $cursorData = ['offset' => $offset];
 
-        return base64_encode(json_encode($cursorData));
+        return base64_encode((string) json_encode($cursorData));
     }
 }

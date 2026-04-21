@@ -36,6 +36,7 @@ final class Core
      *         requests: float,
      *         commands: float,
      *         exceptions: float,
+     *         scheduled_tasks: float,
      *     },
      *     filtering: array{
      *         ignore_cache_events: bool,
@@ -47,14 +48,21 @@ final class Core
      * }  $config
      */
     public function __construct(
+        /** @internal */
         public Ingest $ingest,
+        /** @internal */
         public SensorManager $sensor,
+        /** @internal */
         public RequestState|CommandState $executionState,
+        /** @internal */
         public Clock $clock,
+        /** @internal */
         public Uuid $uuid,
+        /** @internal */
         public array $config,
     ) {
         $this->routesWithMiddlewareRegistered = new WeakMap;
+        $this->scheduledTasksSampleRates = new WeakMap;
     }
 
     /**
@@ -74,18 +82,26 @@ final class Core
     }
 
     /**
+     * @api
+     */
+    public function digest(): void
+    {
+        $this->finishExecution();
+    }
+
+    /**
      * @internal
      *
      * @return $this
      */
-    public function digest(): self
+    public function finishExecution(): self
     {
-        if ($this->waitingForJob) {
-            return $this;
-        }
-
         try {
-            $this->ingest->digest();
+            if ($this->sampling) {
+                $this->ingest->digest();
+            } else {
+                $this->ingest->flush();
+            }
         } catch (Throwable $e) {
             Nightwatch::unrecoverableExceptionOccurred($e);
         }

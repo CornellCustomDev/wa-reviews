@@ -1,2 +1,3 @@
+@blaze
 
 {!! app('flux')->editorStyles() !!}

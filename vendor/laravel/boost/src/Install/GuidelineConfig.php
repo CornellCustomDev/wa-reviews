@@ -10,7 +10,16 @@ class GuidelineConfig
 
     public bool $laravelStyle = false;
 
+    public bool $usesSail = false;
+
     public bool $caresAboutLocalization = false;
 
     public bool $hasAnApi = false;
+
+    public bool $hasSkills = false;
+
+    /**
+     * @var array<int, string>
+     */
+    public array $aiGuidelines;
 }

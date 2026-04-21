@@ -47,7 +47,7 @@ class RouteListCommand extends Command
      *
      * @var string[]
      */
-    protected $headers = ['Domain', 'Method', 'URI', 'Name', 'Action', 'Middleware'];
+    protected $headers = ['Domain', 'Method', 'URI', 'Name', 'Action', 'Middleware', 'Path'];
 
     /**
      * The terminal width resolver callback.
@@ -146,6 +146,7 @@ class RouteListCommand extends Command
             'name' => $route->getName(),
             'action' => ltrim($route->getActionName(), '\\'),
             'middleware' => $this->getMiddleware($route),
+            'path' => $this->getClosurePath($route),
             'vendor' => $this->isVendorRoute($route),
         ]);
     }
@@ -214,6 +215,25 @@ class RouteListCommand extends Command
     }
 
     /**
+     * Get the file path and line number for a closure-based route.
+     *
+     * @param  \Illuminate\Routing\Route  $route
+     * @return string|null
+     */
+    protected function getClosurePath(Route $route)
+    {
+        if (! $route->action['uses'] instanceof Closure) {
+            return null;
+        }
+
+        $reflection = new ReflectionFunction($route->action['uses']);
+
+        return str_replace(
+            '\\', '/', ltrim(Str::after($reflection->getFileName(), base_path()), DIRECTORY_SEPARATOR)
+        ).':'.$reflection->getStartLine();
+    }
+
+    /**
      * Determine if the route has been defined outside of the application.
      *
      * @param  \Illuminate\Routing\Route  $route
@@ -268,6 +288,7 @@ class RouteListCommand extends Command
             ($this->option('path') && ! Str::contains($route['uri'], $this->option('path'))) ||
             ($this->option('method') && ! Str::contains($route['method'], strtoupper($this->option('method')))) ||
             ($this->option('domain') && ! Str::contains((string) $route['domain'], $this->option('domain'))) ||
+            ($this->option('middleware') && ! Str::contains($route['middleware'], $this->option('middleware'))) ||
             ($this->option('except-vendor') && $route['vendor']) ||
             ($this->option('only-vendor') && ! $route['vendor'])) {
             return;
@@ -416,14 +437,20 @@ class RouteListCommand extends Command
      * Get the formatted action for display on the CLI.
      *
      * @param  array  $route
-     * @return string
+     * @return string|null
      */
     protected function formatActionForCli($route)
     {
         ['action' => $action, 'name' => $name] = $route;
 
         if ($action === 'Closure' || $action === ViewController::class) {
-            return $name;
+            $path = $route['path'] ?? null;
+
+            if ($name && $path) {
+                return $name.'   '.$path;
+            }
+
+            return $name ?? $path;
         }
 
         $name = $name ? "$name   " : null;
@@ -500,6 +527,7 @@ class RouteListCommand extends Command
             ['action', null, InputOption::VALUE_OPTIONAL, 'Filter the routes by action'],
             ['name', null, InputOption::VALUE_OPTIONAL, 'Filter the routes by name'],
             ['domain', null, InputOption::VALUE_OPTIONAL, 'Filter the routes by domain'],
+            ['middleware', null, InputOption::VALUE_OPTIONAL, 'Filter the routes by middleware'],
             ['path', null, InputOption::VALUE_OPTIONAL, 'Only show routes matching the given path pattern'],
             ['except-path', null, InputOption::VALUE_OPTIONAL, 'Do not display the routes matching the given path pattern'],
             ['reverse', 'r', InputOption::VALUE_NONE, 'Reverse the ordering of the routes'],
