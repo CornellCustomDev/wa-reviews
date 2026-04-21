@@ -107,6 +107,11 @@ class Issue extends Model
         return $this->hasMany(Item::class);
     }
 
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable')->oldest();
+    }
+
     public function chats(User $user): MorphMany
     {
         return $this->morphMany(ChatHistory::class, 'context')

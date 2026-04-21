@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\Agents;
 use App\Enums\GuidelineStatus;
+use App\Models\Comment;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -76,6 +77,11 @@ class Scope extends Model
         return $this->morphMany(ChatHistory::class, 'context')
             ->where('agent_id', Agent::findAgent(Agents::ModelChatAgent)->id)
             ->where('user_id', $user->id);
+    }
+
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable')->oldest();
     }
 
     public function pageHasBeenRetrieved(): bool
