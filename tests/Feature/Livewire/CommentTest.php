@@ -146,4 +146,16 @@ class CommentTest extends FeatureTestCase
             'body' => 'Scope comment.',
         ]);
     }
+
+    #[Test] public function save_edit_without_active_edit_session_does_nothing(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $project = Project::factory()->create(['team_id' => $team->id]);
+        $issue = Issue::factory()->create(['project_id' => $project->id]);
+
+        Livewire::test(Comments::class, ['commentable' => $issue])
+            ->call('saveEdit')
+            ->assertHasNoErrors();
+    }
 }

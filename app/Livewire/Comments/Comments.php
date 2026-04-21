@@ -41,6 +41,10 @@ class Comments extends Component
 
     public function saveEdit(): void
     {
+        if ($this->editingId === null) {
+            return;
+        }
+
         $comment = Comment::findOrFail($this->editingId);
         $this->authorize('update', $comment);
         $this->validate(['editBody' => 'required|string|max:2000']);

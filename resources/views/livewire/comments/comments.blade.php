@@ -17,12 +17,12 @@
                         <div class="flex justify-between items-center text-xs text-cds-gray-500">
                             <span>{{ $comment->user->name }} &middot; {{ $comment->created_at->diffForHumans() }}</span>
                             <div class="flex gap-1">
-                                @if($comment->isEditableBy(auth()->user()))
+                                @if(auth()->user() && $comment->isEditableBy(auth()->user()))
                                     <x-forms.button size="xs" class="secondary" wire:click="startEdit({{ $comment->id }})" title="Edit comment">
                                         <flux:icon.pencil-square variant="micro" />
                                     </x-forms.button>
                                 @endif
-                                @if($comment->isDeletableBy(auth()->user()))
+                                @if(auth()->user() && $comment->isDeletableBy(auth()->user()))
                                     <x-forms.button.delete size="xs"
                                         wire:click="deleteComment({{ $comment->id }})"
                                         wire:confirm="Delete this comment?"
