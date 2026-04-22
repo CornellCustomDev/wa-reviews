@@ -4,7 +4,7 @@
 
 ## Overview
 
-Allow any user with project access (reviewers, team admins, report viewers) to leave threaded comments on individual Issues and Scopes/Pages. Comments give report viewers a direct channel to ask questions or flag concerns without requiring edit access to the review itself.
+Allow any user with project access (reviewers, team admins, report viewers) to leave comments on individual Issues and Scopes/Pages. Comments are displayed in chronological order — flat, no threading. They give report viewers a direct channel to ask questions or flag concerns without requiring edit access to the review itself.
 
 ## Data Model
 
@@ -22,7 +22,7 @@ New `comments` table (polymorphic):
 
 **Model relationships:**
 - `Comment` → `morphTo commentable`, `belongsTo user`
-- `Issue`, `Scope`, `Page` → each get `morphMany comments`
+- `Issue`, `Scope`, ~~`Page`~~ → each get `morphMany comments`
 
 ## Authorization — `CommentPolicy`
 
@@ -38,8 +38,8 @@ New `comments` table (polymorphic):
 
 `app/Livewire/Comments/Comments.php`
 
-- Accepts a polymorphic `$commentable` (Issue, Scope, or Page)
-- Renders the comment thread
+- Accepts a polymorphic `$commentable` (Issue or Scope)
+- Renders comments in chronological order (flat list)
 - `addComment(string $body)` — creates comment, checks `create` policy
 - `updateComment(int $id, string $body)` — checks `update` policy
 - `deleteComment(int $id)` — checks `delete` policy
@@ -74,6 +74,14 @@ New `comments` table (polymorphic):
 - Add `withCount('comments')` to the scopes eager-load
 - Wrap the Notes cell content in a flex row: notes text on the left, `flux:badge` pinned right when `$scope->comments_count > 0`
 
+## Naming Conflict Resolution
+
+The `scopes` table has an existing `comments` column (a JSON array used by the Google Sheets export and the AI analysis context service). This conflicts with the new polymorphic `comments` relationship. Resolve by renaming the column to `checklist_comments` via migration and updating the two affected files:
+
+- `app/Models/Scope.php` — rename `comments` → `checklist_comments` in `$fillable` and `$casts`
+- `app/Exports/ProjectReportGoogle.php` — update `$scope->comments` → `$scope->checklist_comments`
+- `app/Services/GuidelinesAnalyzer/GuidelinesAnalyzerService.php` — update `'comments' => $scope->comments` → `'comments' => $scope->checklist_comments`
+
 ## Files to Create
 
 - `database/migrations/*_create_comments_table.php` (generated via `artisan make:migration`)
@@ -88,7 +96,7 @@ New `comments` table (polymorphic):
 
 - `app/Models/Issue.php` — add `morphMany comments`
 - `app/Models/Scope.php` — add `morphMany comments`
-- `app/Models/Page.php` — add `morphMany comments`
+- ~~`app/Models/Page.php` — add `morphMany comments`~~
 - `app/Livewire/Issues/IssueSidebar.php` — add `showComments`, `clickComments()`, rename heading
 - `resources/views/livewire/issues/issue-sidebar.blade.php` — Comments button + panel
 - `app/Livewire/Scopes/ScopeSidebar.php` — add `showComments`, `clickComments()`

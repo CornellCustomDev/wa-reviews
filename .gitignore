@@ -38,3 +38,5 @@ bun.lock
 /.mcp.json
 /AGENTS.md
 /CLAUDE.md
+/.superpowers
+/docs/superpowers/plans
