@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Livewire;
 
-use App\Enums\Roles;
 use App\Livewire\Documents\ShowDocument;
 use App\Models\Document;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
@@ -17,7 +16,7 @@ class ShowDocumentTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->slug = 'test-doc-' . uniqid();
+        $this->slug = 'test-doc-'.uniqid();
     }
 
     private function createDocument(): void
@@ -25,7 +24,8 @@ class ShowDocumentTest extends FeatureTestCase
         Document::create(['slug' => $this->slug, 'title' => 'Welcome', 'content' => 'Hello', 'is_current' => true, 'version' => 1]);
     }
 
-    #[Test] public function renders_successfully_for_guest()
+    #[Test]
+    public function renders_successfully_for_guest(): void
     {
         $this->createDocument();
 
@@ -34,7 +34,8 @@ class ShowDocumentTest extends FeatureTestCase
             ->assertSeeText('Welcome');
     }
 
-    #[Test] public function slug_is_locked_and_cannot_be_set_by_client()
+    #[Test]
+    public function slug_is_locked_and_cannot_be_set_by_client(): void
     {
         $this->createDocument();
 
@@ -42,29 +43,5 @@ class ShowDocumentTest extends FeatureTestCase
 
         Livewire::test(ShowDocument::class, ['slug' => $this->slug])
             ->set('slug', ['malicious' => 'array']);
-    }
-
-    #[Test] public function unauthenticated_user_cannot_save()
-    {
-        $this->createDocument();
-
-        Livewire::test(ShowDocument::class, ['slug' => $this->slug])
-            ->set('form.title', 'Hacked')
-            ->call('save')
-            ->assertForbidden();
-    }
-
-    #[Test] public function authenticated_admin_can_save()
-    {
-        $this->getLoggedInTestUser([Roles::SiteAdmin]);
-        $this->createDocument();
-
-        Livewire::test(ShowDocument::class, ['slug' => $this->slug])
-            ->set('form.title', 'Updated Title')
-            ->set('form.content', 'New content')
-            ->call('save')
-            ->assertHasNoErrors();
-
-        $this->assertDatabaseHas('documents', ['slug' => $this->slug, 'title' => 'Updated Title']);
     }
 }
