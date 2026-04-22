@@ -13,7 +13,7 @@
         <x-forms.button wire:click="clickComments()" icon="chat-bubble-oval-left" @class(['secondary' => $showComments])>
             <span x-show="$wire.showComments">Hide </span> Comments
             @if($this->commentsCount > 0)
-                <flux:badge size="sm" color="white">{{ $this->commentsCount }}</flux:badge>
+                <x-forms.button.badge>{{ $this->commentsCount }}</x-forms.button.badge>
             @endif
         </x-forms.button>
     </div>

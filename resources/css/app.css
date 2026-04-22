@@ -133,6 +133,11 @@
             @apply bg-wa-na;
         }
     }
+
+    [data-flux-badge] {
+        @apply bg-cds-gray-100;
+        @apply size-4 rounded-sm px-1 pt-1.5 ml-1;
+    }
 }
 
 [data-cds-impact] {
