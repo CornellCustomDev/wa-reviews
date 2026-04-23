@@ -1,22 +1,16 @@
 <div>
-    <x-forms.edit-model-wrapper :model="$document">
+    <x-forms.edit-wrapper>
         <x-slot:view>
-            @if($document->title)
-                <h1>{{ $document->title }}</h1>
+            @if($title)
+                <h1>{{ $title }}</h1>
             @endif
-            <div>
-                {!! $document->content !!}
-            </div>
+            <div>{!! $content !!}</div>
         </x-slot:view>
-        <x-slot:edit>
-            <form wire:submit="save">
-                <x-forms.input label="Title" wire:model="form.title" />
-                <x-forms.textarea label="Content" wire:model="form.content" size="lg"/>
-                <x-forms.button.submit-group>
-                    <x-forms.button type="submit">Update Document</x-forms.button>
-                    <x-forms.button x-on:click="showEdit = false" class="secondary">Cancel</x-forms.button>
-                </x-forms.button.submit-group>
-            </form>
-        </x-slot:edit>
-    </x-forms.edit-model-wrapper>
+
+        @can('update', $this->getDocument())
+            <x-slot:edit>
+                <livewire:documents.edit-document :slug="$slug" />
+            </x-slot:edit>
+        @endcan
+    </x-forms.edit-wrapper>
 </div>
