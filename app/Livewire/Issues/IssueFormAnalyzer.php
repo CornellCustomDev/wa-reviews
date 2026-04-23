@@ -91,6 +91,10 @@ class IssueFormAnalyzer extends Component
         foreach ($guidelines as $guideline) {
             $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
             $itemVals['chat_history_ulid'] = $chatHistory?->ulid->toString();
+            // Protect against AI making up fake guidelines
+            if (!GuidelinesAnalyzerService::isValidGuidelineId($itemVals['guideline_id'] ?? null)) {
+                continue;
+            }
             $this->recommendations->push($itemVals);
         }
         unset($this->hasUnreviewedItems);

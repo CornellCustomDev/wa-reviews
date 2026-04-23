@@ -76,11 +76,16 @@ class IssueAnalyzer extends Component
 
     private function storeGeneratedItems(array $guidelines, ?ChatHistory $chatHistory): void
     {
-        // Create an item for each guideline
+        // Create an item for each guideline/mc
         foreach ($guidelines as $guideline) {
+            $itemVals = GuidelinesAnalyzerService::mapResponseToItemArray($guideline);
+            // Protect against AI making up fake guidelines
+            if (!GuidelinesAnalyzerService::isValidGuidelineId($itemVals['guideline_id'] ?? null)) {
+                continue;
+            }
             $item = Item::create([
                 'issue_id' => $this->issue->id,
-                ...GuidelinesAnalyzerService::mapResponseToItemArray($guideline),
+                ...$itemVals,
                 'chat_history_ulid' => $chatHistory?->ulid,
             ]);
 

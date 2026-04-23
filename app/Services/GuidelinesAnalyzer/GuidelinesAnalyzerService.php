@@ -247,6 +247,15 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
         ];
     }
 
+    public static function isValidGuidelineId(mixed $guidelineId): bool
+    {
+        if (!is_numeric($guidelineId) || (int) $guidelineId == 0) {
+            return false;
+        }
+
+        return Guideline::whereKey($guidelineId)->exists();
+    }
+
     public static function mapIssueToSchema(Issue $issue): array
     {
         return [
