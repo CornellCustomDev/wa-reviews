@@ -253,7 +253,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
             return false;
         }
 
-        return Guideline::where('number', $guidelineId)->exists();
+        return Guideline::whereKey($guidelineId)->exists();
     }
 
     public static function mapIssueToSchema(Issue $issue): array
