@@ -11,9 +11,7 @@ class DocumentsRenderingTest extends FeatureTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (! Document::where('slug', 'welcome')->where('is_current', true)->exists()) {
-            Document::create(['slug' => 'welcome', 'title' => 'Welcome', 'content' => 'Hello', 'is_current' => true, 'version' => 1]);
-        }
+        Document::create(['slug' => 'document-test', 'title' => 'Welcome', 'content' => 'Hello', 'is_current' => true, 'version' => 1]);
     }
 
     #[Test]

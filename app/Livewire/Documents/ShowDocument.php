@@ -15,21 +15,22 @@ class ShowDocument extends Component
     public ?string $title;
     public string $content;
 
-    public bool $showEdit = false;
-
     public function mount(): void
     {
-        $this->getDocument();
+        $this->refreshDocument();
     }
 
-    #[On('version-updated')]
     #[Computed]
     public function getDocument(): Document
     {
-        $document = Document::get($this->slug);
-        $this->title = $document->title;
-        $this->content = $document->content;
+        return Document::get($this->slug);
+    }
 
-        return $document;
+    #[On('version-updated')]
+    public function refreshDocument(): void
+    {
+        $document = $this->getDocument();
+        $this->title = $document->title;
+        $this->content = $document->content ?? '';
     }
 }
