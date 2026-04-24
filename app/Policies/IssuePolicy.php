@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\Project;
+use App\Enums\ProjectStatus;
 use App\Models\Issue;
+use App\Models\Project;
 use App\Models\User;
 
 class IssuePolicy
@@ -32,23 +33,19 @@ class IssuePolicy
     {
         $project = $issue->project;
 
-        // Issue status updates are only for completed projects
-        if (! $project->isCompleted()) {
-            return false;
-        }
-
-        // Status updates can only be made by the reviewer, report viewer, or a team manager
-        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
-            || $project->isReportViewer($user)
-            || $user->can('manage-projects', $project->team);
+        return match ($project->status) {
+            ProjectStatus::ReviewComplete => $this->canUpdateStatusInReviewComplete($user, $project),
+            ProjectStatus::CustomerResponse => $this->canUpdateStatusInCustomerResponse($user, $project),
+            ProjectStatus::VerificationReview => $this->canUpdateStatusInVerificationReview($user, $project),
+            default => false,
+        };
     }
 
     public function updateNeedsMitigation(User $user, Issue $issue): bool
     {
         $project = $issue->project;
 
-        // Mitigation updates are only for completed projects
-        if (! $project->isCompleted()) {
+        if (! $project->isPostReview()) {
             return false;
         }
 
@@ -56,7 +53,6 @@ class IssuePolicy
             return false;
         }
 
-        // Mitigation updates can only be made by the reviewer or a team manager
         return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team);
     }
@@ -74,5 +70,27 @@ class IssuePolicy
     public function forceDelete(User $user, Issue $issue): bool
     {
         return false;
+    }
+
+    private function canUpdateStatusInReviewComplete(User $user, Project $project): bool
+    {
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || $user->can('manage-projects', $project->team)
+            || $user->isAdministrator();
+    }
+
+    private function canUpdateStatusInCustomerResponse(User $user, Project $project): bool
+    {
+        return $project->isReportViewer($user)
+            || $user->can('manage-projects', $project->team)
+            || $user->isAdministrator();
+    }
+
+    private function canUpdateStatusInVerificationReview(User $user, Project $project): bool
+    {
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || $project->isVerifier($user)
+            || $user->can('manage-projects', $project->team)
+            || $user->isAdministrator();
     }
 }
