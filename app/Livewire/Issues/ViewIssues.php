@@ -26,6 +26,7 @@ class ViewIssues extends Component
                 'guideline.criterion:id,number,name,level',
                 'guideline.category:id,name',
             ])
+            ->withCount('comments')
             ->get()
             ->sortBy(['guideline_id', 'guideline_instance']);
     }

@@ -1,5 +1,5 @@
 @props([
-    'href',
+    'href' => null,
 ])
 @php
     $attributes = $attributes->merge([

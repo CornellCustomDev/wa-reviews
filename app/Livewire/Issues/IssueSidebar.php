@@ -3,6 +3,8 @@
 namespace App\Livewire\Issues;
 
 use App\Models\Issue;
+use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -16,6 +18,8 @@ class IssueSidebar extends Component
     public bool $showAnalyzer = false;
     #[Url(as: 'debug', history: true)]
     public bool $showDebug = false;
+    #[Url(as: 'comments', history: true)]
+    public bool $showComments = false;
     public bool $showGuideline = false;
 
     public string $debug = '';
@@ -25,6 +29,7 @@ class IssueSidebar extends Component
         $this->showChat = !$this->showChat;
         $this->showAnalyzer = false;
         $this->showDebug = false;
+        $this->showComments = false;
     }
 
     public function clickAnalyzer(): void
@@ -32,6 +37,7 @@ class IssueSidebar extends Component
         $this->showChat = false;
         $this->showAnalyzer = !$this->showAnalyzer;
         $this->showDebug = false;
+        $this->showComments = false;
     }
 
     public function clickDebug(): void
@@ -39,5 +45,26 @@ class IssueSidebar extends Component
         $this->showChat = false;
         $this->showAnalyzer = false;
         $this->showDebug = !$this->showDebug;
+        $this->showComments = false;
+    }
+
+    public function clickComments(): void
+    {
+        $this->showChat = false;
+        $this->showAnalyzer = false;
+        $this->showDebug = false;
+        $this->showComments = !$this->showComments;
+    }
+
+    #[Computed]
+    public function commentsCount(): int
+    {
+        return $this->issue->comments()->count();
+    }
+
+    #[On('comments-updated')]
+    public function commentsUpdates(): void
+    {
+        unset($this->commentsCount);
     }
 }
