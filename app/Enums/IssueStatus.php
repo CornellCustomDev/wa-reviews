@@ -8,9 +8,11 @@ enum IssueStatus: string
 
     case Reviewed = 'Reviewed';
     case Fixed = 'Fixed';
-    case Verified = 'Verified Fixed';
+    case NotBeingFixed = 'Not Being Fixed';
     case FalsePositive = 'False Positive';
-    case WontFix = 'Not Being Fixed';
+    case Verified = 'Verified Fixed';
+    case NotFixed = 'Not Fixed';
+    case NewIssue = 'New Issue';
 
     public static function toSelectArray(): array
     {
@@ -22,14 +24,33 @@ enum IssueStatus: string
             ->toArray();
     }
 
+    public static function forPhase(ProjectStatus $projectStatus): array
+    {
+        $cases = match ($projectStatus) {
+            ProjectStatus::ReviewComplete => [self::Reviewed, self::FalsePositive],
+            ProjectStatus::CustomerResponse => [self::Reviewed, self::Fixed, self::NotBeingFixed, self::FalsePositive],
+            ProjectStatus::VerificationReview => [self::Verified, self::NotFixed, self::FalsePositive, self::NotBeingFixed],
+            default => self::cases(),
+        };
+
+        return collect($cases)
+            ->map(fn (self $status) => [
+                'value' => $status->value(),
+                'option' => $status->value(),
+            ])
+            ->toArray();
+    }
+
     public function description(): string
     {
         return match ($this) {
-            self::Reviewed => '', // Don't show anything
+            self::Reviewed => '',
             self::Fixed => '🛠️ Fixed',
-            self::Verified => '✅ Verified',
+            self::NotBeingFixed => 'Not being fixed',
             self::FalsePositive => 'False positive',
-            self::WontFix => 'Not being fixed',
+            self::Verified => '✅ Verified Fixed',
+            self::NotFixed => '❌ Not Fixed',
+            self::NewIssue => 'New Issue',
         };
     }
 }
