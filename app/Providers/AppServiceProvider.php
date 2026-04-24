@@ -12,7 +12,6 @@ use App\Services\CornellAI\OpenAIChatService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use App\Services\SiteImprove\SiteimproveService;
-use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire;

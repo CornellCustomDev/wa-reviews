@@ -16,7 +16,7 @@ class LivewireAuth
     public function handle(Request $request, Closure $next): Response
     {
         // If this is /livewire/update without a logged in user, return forbidden
-        if ($request->isMethod('POST') && $request->getRequestUri() === '/livewire/update') {
+        if ($request->isMethod('POST') && $request->path() === 'livewire/update') {
             if (! $this->identityManager->hasIdentity()) {
                 if (app()->runningInConsole()) {
                     return response('Forbidden', Response::HTTP_FORBIDDEN);

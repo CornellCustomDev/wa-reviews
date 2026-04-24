@@ -2,9 +2,7 @@
 
 namespace Tests\Feature;
 
-use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Config;
-use Livewire\Mechanisms\HandleRequests\HandleRequests;
 use PHPUnit\Framework\Attributes\Test;
 
 class RouteAccessTest extends FeatureTestCase
@@ -22,7 +20,7 @@ class RouteAccessTest extends FeatureTestCase
     }
 
     #[Test]
-    public function projects_not_publicly_accessibly(): void
+    public function projects_not_publicly_accessible(): void
     {
         config(['cu-auth.remote_user_override' => null]);
 
