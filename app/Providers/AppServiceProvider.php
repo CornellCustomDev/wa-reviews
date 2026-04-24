@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Ai\Prism\Providers\CornellApi;
-use App\Models\User;
+use App\Middleware\LivewireAuth;
 use App\Services\CornellAI\ApiGatewayChatService;
 use App\Services\CornellAI\AzureChatService;
 use App\Services\CornellAI\ChatServiceFactory;
@@ -12,8 +12,10 @@ use App\Services\CornellAI\OpenAIChatService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use App\Services\SiteImprove\SiteimproveService;
-use Illuminate\Support\Facades\Gate;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Livewire;
 use OpenAI;
 
 class AppServiceProvider extends ServiceProvider
@@ -71,6 +73,14 @@ class AppServiceProvider extends ServiceProvider
                 organization: null,
                 project: null,
             );
+        });
+
+        /**
+         * Only logged in users can post data to livewire components
+         */
+        Livewire::setUpdateRoute(function ($handle) {
+            return Route::post('/livewire/update', $handle)
+                ->middleware(['web', LivewireAuth::class]);
         });
     }
 }

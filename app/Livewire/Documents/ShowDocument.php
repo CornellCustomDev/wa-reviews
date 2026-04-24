@@ -3,34 +3,22 @@
 namespace App\Livewire\Documents;
 
 use App\Models\Document;
-use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class ShowDocument extends Component
 {
-    #[Locked]
-    public string $slug;
-    public ?string $title;
-    public string $content;
+    #[Locked] public Document $document;
 
-    public function mount(): void
+    public function mount(string $slug): void
     {
-        $this->refreshDocument();
-    }
-
-    #[Computed]
-    public function getDocument(): Document
-    {
-        return Document::get($this->slug);
+        $this->document = Document::get($slug);
     }
 
     #[On('version-updated')]
     public function refreshDocument(): void
     {
-        $document = $this->getDocument();
-        $this->title = $document->title;
-        $this->content = $document->content ?? '';
+        $this->document = Document::get($this->document->slug);
     }
 }

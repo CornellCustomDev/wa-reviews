@@ -35,13 +35,13 @@ class ShowDocumentTest extends FeatureTestCase
     }
 
     #[Test]
-    public function slug_is_locked_and_cannot_be_set_by_client(): void
+    public function document_is_locked_and_cannot_be_set_by_client(): void
     {
         $this->createDocument();
 
         $this->expectException(CannotUpdateLockedPropertyException::class);
 
         Livewire::test(ShowDocument::class, ['slug' => $this->slug])
-            ->set('slug', ['malicious' => 'array']);
+            ->set('document', ['malicious' => 'array']);
     }
 }
