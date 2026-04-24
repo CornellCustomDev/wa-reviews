@@ -16,11 +16,13 @@ use Tests\Feature\FeatureTestCase;
 
 class CommentTest extends FeatureTestCase
 {
-    #[Test] public function team_member_can_add_comment_to_issue(): void
+    #[Test]
+    public function team_member_can_add_comment_to_issue(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id]);
+        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
+        $project->assignToUser($user);
         $issue = Issue::factory()->create(['project_id' => $project->id]);
 
         Livewire::test(Comments::class, ['commentable' => $issue])
@@ -36,14 +38,15 @@ class CommentTest extends FeatureTestCase
         ]);
     }
 
-    #[Test] public function report_viewer_can_add_comment_to_completed_project_issue(): void
+    #[Test]
+    public function report_viewer_can_add_comment_to_completed_project_issue(): void
     {
         $admin = $this->getLoggedInTestUser([Roles::TeamAdmin]);
         $viewer = User::factory()->create();
         $team = $admin->teams()->first();
         $project = Project::factory()->create([
             'team_id' => $team->id,
-            'status' => ProjectStatus::Completed,
+            'status' => ProjectStatus::ReviewComplete,
         ]);
         $project->addReportViewer($viewer);
         $issue = Issue::factory()->create(['project_id' => $project->id]);
@@ -61,7 +64,8 @@ class CommentTest extends FeatureTestCase
         ]);
     }
 
-    #[Test] public function author_can_edit_comment_within_10_minutes(): void
+    #[Test]
+    public function author_can_edit_comment_within_10_minutes(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -82,7 +86,8 @@ class CommentTest extends FeatureTestCase
         $this->assertDatabaseHas('comments', ['id' => $comment->id, 'body' => 'Updated text.']);
     }
 
-    #[Test] public function author_cannot_edit_comment_after_10_minutes(): void
+    #[Test]
+    public function author_cannot_edit_comment_after_10_minutes(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -99,7 +104,8 @@ class CommentTest extends FeatureTestCase
             ->assertForbidden();
     }
 
-    #[Test] public function author_can_delete_own_comment(): void
+    #[Test]
+    public function author_can_delete_own_comment(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -114,7 +120,8 @@ class CommentTest extends FeatureTestCase
         $this->assertDatabaseMissing('comments', ['id' => $comment->id]);
     }
 
-    #[Test] public function non_author_cannot_delete_another_users_comment(): void
+    #[Test]
+    public function non_author_cannot_delete_another_users_comment(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -128,11 +135,13 @@ class CommentTest extends FeatureTestCase
             ->assertForbidden();
     }
 
-    #[Test] public function team_member_can_add_comment_to_scope(): void
+    #[Test]
+    public function team_member_can_add_comment_to_scope(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id]);
+        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
+        $project->assignToUser($user);
         $scope = Scope::factory()->create(['project_id' => $project->id]);
 
         Livewire::test(Comments::class, ['commentable' => $scope])
@@ -147,7 +156,8 @@ class CommentTest extends FeatureTestCase
         ]);
     }
 
-    #[Test] public function save_edit_without_active_edit_session_does_nothing(): void
+    #[Test]
+    public function save_edit_without_active_edit_session_does_nothing(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();

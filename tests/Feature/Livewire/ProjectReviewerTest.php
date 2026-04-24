@@ -3,13 +3,13 @@
 namespace Tests\Feature\Livewire;
 
 use App\Enums\ProjectStatus;
+use App\Enums\Roles;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\UpdateReviewer;
 use App\Livewire\Projects\Workflow;
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
-use App\Enums\Roles;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;
@@ -17,7 +17,9 @@ use Tests\Feature\FeatureTestCase;
 class ProjectReviewerTest extends FeatureTestCase
 {
     protected Team $team;
+
     protected User $user;
+
     protected $start;
 
     protected function setUp(): void
@@ -26,7 +28,8 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->fakeSiteimproveService();
     }
 
-    #[Test] public function reviewer_can_create_project()
+    #[Test]
+    public function reviewer_can_create_project()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -39,7 +42,8 @@ class ProjectReviewerTest extends FeatureTestCase
             ->assertRedirect(route('project.show', Project::latest()->first()));
     }
 
-    #[Test] public function reviewer_can_assign_self_as_reviewer()
+    #[Test]
+    public function reviewer_can_assign_self_as_reviewer()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -62,7 +66,8 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->assertNotContains($user->id, array_column($nonAssignedMembersAfter, 'id'));
     }
 
-    #[Test] public function reviewer_cannot_assign_others()
+    #[Test]
+    public function reviewer_cannot_assign_others()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -86,7 +91,8 @@ class ProjectReviewerTest extends FeatureTestCase
             ->assertNotDispatched('close-update-reviewer');
     }
 
-    #[Test] public function reviewer_can_update_project_status()
+    #[Test]
+    public function reviewer_can_update_project_status()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -114,11 +120,12 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->assertEquals(ProjectStatus::NotStarted, $project->fresh()->status);
     }
 
-    #[Test] public function reviewer_cannot_update_reviewer_of_completed_project()
+    #[Test]
+    public function reviewer_cannot_update_reviewer_of_completed_project()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::Completed]);
+        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
 
         // Attempt assign the project to the user
         Livewire::test(UpdateReviewer::class, ['project' => $project])

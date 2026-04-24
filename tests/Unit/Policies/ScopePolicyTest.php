@@ -17,7 +17,8 @@ class ScopePolicyTest extends TestCase
     use TestDatabase;
 
     #[DataProvider('viewScopeProvider')]
-    #[Test] public function view_scope($role, $isTeamMember, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function view_scope($role, $isTeamMember, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
@@ -26,7 +27,7 @@ class ScopePolicyTest extends TestCase
             'project_id' => $project->id,
         ]);
 
-        $result = (new ScopePolicy())->view($user, $scope);
+        $result = (new ScopePolicy)->view($user, $scope);
 
         $this->assertEquals($expected, $result, $description);
     }
@@ -40,19 +41,20 @@ class ScopePolicyTest extends TestCase
             [Roles::Reviewer, true, false, ProjectStatus::NotStarted, true, 'Reviewer can view scope'],
             [null, true, false, ProjectStatus::NotStarted, true, 'Team member can view scope'],
             [null, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot view in-progress scope'],
-            [null, false, true, ProjectStatus::Completed, true, 'Report viewer can view completed scope'],
-            [Roles::TeamAdmin, false, false, ProjectStatus::Completed, false, 'Non-member cannot view scope'],
+            [null, false, true, ProjectStatus::ReviewComplete, true, 'Report viewer can view ReviewComplete scope'],
+            [Roles::TeamAdmin, false, false, ProjectStatus::ReviewComplete, false, 'Non-member cannot view scope'],
         ];
     }
 
     #[DataProvider('createScopeProvider')]
-    #[Test] public function create_scope($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function create_scope($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
         $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isReportViewer: $isReportViewer, status: $status);
 
-        $result = (new ScopePolicy())->create($user, $project);
+        $result = (new ScopePolicy)->create($user, $project);
 
         $this->assertEquals($expected, $result, $description);
     }
@@ -68,14 +70,15 @@ class ScopePolicyTest extends TestCase
             [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot create scope'],
             [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot create scope'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, false, 'Site admin cannot create scope in completed project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, false, 'Team admin cannot create scope in completed project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, false, 'Reviewer cannot create scope in completed project'],
+            [Roles::SiteAdmin, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot create scope in post-review project'],
+            [Roles::TeamAdmin, true, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot create scope in post-review project'],
+            [Roles::Reviewer, true, true, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot create scope in post-review project'],
         ];
     }
 
     #[DataProvider('deleteScopeProvider')]
-    #[Test] public function delete_scope($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function delete_scope($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
@@ -84,7 +87,7 @@ class ScopePolicyTest extends TestCase
             'project_id' => $project->id,
         ]);
 
-        $result = (new ScopePolicy())->delete($user, $scope);
+        $result = (new ScopePolicy)->delete($user, $scope);
 
         $this->assertEquals($expected, $result, $description);
     }
@@ -100,9 +103,9 @@ class ScopePolicyTest extends TestCase
             [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot delete scope'],
             [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot delete scope'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, false, 'Site admin cannot delete completed scope'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, false, 'Team admin can delete completed scope'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, false, 'Reviewer can delete completed scope'],
+            [Roles::SiteAdmin, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot delete post-review scope'],
+            [Roles::TeamAdmin, true, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot delete post-review scope'],
+            [Roles::Reviewer, true, true, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot delete post-review scope'],
         ];
     }
 }
