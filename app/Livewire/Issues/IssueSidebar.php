@@ -4,6 +4,7 @@ namespace App\Livewire\Issues;
 
 use App\Models\Issue;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -59,5 +60,11 @@ class IssueSidebar extends Component
     public function commentsCount(): int
     {
         return $this->issue->comments()->count();
+    }
+
+    #[On('comments-updated')]
+    public function commentsUpdates(): void
+    {
+        unset($this->commentsCount);
     }
 }

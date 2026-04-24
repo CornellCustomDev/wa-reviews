@@ -50,20 +50,7 @@ class CommentPolicyTest extends TestCase
 
     // --- update ---
 
-    #[Test] public function author_can_edit_comment_within_10_minutes(): void
-    {
-        $user = User::factory()->create();
-        $comment = Comment::factory()->create([
-            'user_id' => $user->id,
-            'created_at' => now()->subMinutes(5),
-        ]);
-
-        $result = (new CommentPolicy())->update($user, $comment);
-
-        $this->assertTrue($result);
-    }
-
-    #[Test] public function author_can_edit_comment_at_exactly_10_minutes(): void
+    #[Test] public function author_can_edit_comment_before_10_minutes(): void
     {
         $user = User::factory()->create();
         $createdAt = now()->subMinutes(9)->subSeconds(59);
@@ -82,7 +69,7 @@ class CommentPolicyTest extends TestCase
         $user = User::factory()->create();
         $comment = Comment::factory()->create([
             'user_id' => $user->id,
-            'created_at' => now()->subMinutes(11),
+            'created_at' => now()->subMinutes(10)->subSecond(),
         ]);
 
         $result = (new CommentPolicy())->update($user, $comment);

@@ -74,7 +74,7 @@ class CommentTest extends FeatureTestCase
         ]);
 
         Livewire::test(Comments::class, ['commentable' => $issue])
-            ->call('startEdit', $comment->id)
+            ->call('showEdit', $comment->id)
             ->set('editBody', 'Updated text.')
             ->call('saveEdit')
             ->assertHasNoErrors();
@@ -91,11 +91,11 @@ class CommentTest extends FeatureTestCase
         $comment = Comment::factory()->for($issue, 'commentable')->create([
             'user_id' => $user->id,
             'body' => 'Original text.',
-            'created_at' => now()->subMinutes(11),
+            'created_at' => now()->subMinutes(10)->subSecond(),
         ]);
 
         Livewire::test(Comments::class, ['commentable' => $issue])
-            ->call('startEdit', $comment->id)
+            ->call('showEdit', $comment->id)
             ->assertForbidden();
     }
 

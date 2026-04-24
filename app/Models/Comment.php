@@ -23,14 +23,8 @@ class Comment extends Model
         return $this->morphTo();
     }
 
-    public function isEditableBy(User $user): bool
+    public function isOwnComment(User $user): bool
     {
-        return $this->user_id === $user->id
-            && $this->created_at->diffInMinutes(now()) <= 10;
-    }
-
-    public function isDeletableBy(User $user): bool
-    {
-        return $this->user_id === $user->id || $user->isAdministrator();
+        return $this->user_id === $user->id;
     }
 }

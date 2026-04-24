@@ -4,6 +4,7 @@ namespace App\Livewire\Scopes;
 
 use App\Models\Scope;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -56,5 +57,11 @@ class ScopeSidebar extends Component
     public function commentsCount(): int
     {
         return $this->scope->comments()->count();
+    }
+
+    #[On('comments-updated')]
+    public function commentsUpdates(): void
+    {
+        unset($this->commentsCount);
     }
 }
