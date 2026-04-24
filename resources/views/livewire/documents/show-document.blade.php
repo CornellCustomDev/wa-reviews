@@ -1,15 +1,15 @@
 <div>
     <x-forms.edit-wrapper>
         <x-slot:view>
-            @if($title)
-                <h1>{{ $title }}</h1>
+            @if($document->title)
+                <h1>{{ $document->title }}</h1>
             @endif
-            <div>{!! $content !!}</div>
+            <div>{!! $document->content !!}</div>
         </x-slot:view>
 
-        @can('update', $this->getDocument())
+        @can('update', $document)
             <x-slot:edit>
-                <livewire:documents.edit-document :slug="$slug" />
+                <livewire:documents.edit-document :slug="$document->slug" />
             </x-slot:edit>
         @endcan
     </x-forms.edit-wrapper>

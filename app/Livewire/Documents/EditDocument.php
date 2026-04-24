@@ -10,11 +10,8 @@ use Livewire\Component;
 
 class EditDocument extends Component
 {
-    #[Locked]
-    public string $slug;
-
+    #[Locked] public string $slug;
     public Document $document;
-
     public DocumentForm $form;
 
     public function mount(): void
