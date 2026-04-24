@@ -23,12 +23,11 @@ trait TestDatabase
     }
 
     public static function setupTeam(
-        User   $user,
-        ?bool   $isTeamMember = false,
+        User $user,
+        ?bool $isTeamMember = false,
         ?Roles $role = null,
-        ?Team  $projectTeam = null
-    ): Team
-    {
+        ?Team $projectTeam = null
+    ): Team {
         $projectTeam ??= Team::factory()->create();
         if ($isTeamMember) {
             $team = $projectTeam;
@@ -46,14 +45,14 @@ trait TestDatabase
     }
 
     public static function setupProject(
-        Team           $projectTeam,
-        ?User          $user = null,
-        bool           $isReviewer = false,
-        bool           $hasReviewer = false,
-        bool           $isReportViewer = false,
+        Team $projectTeam,
+        ?User $user = null,
+        bool $isReviewer = false,
+        bool $hasReviewer = false,
+        bool $isVerifier = false,
+        bool $isReportViewer = false,
         ?ProjectStatus $status = null
-    ): Project
-    {
+    ): Project {
         $project = Project::factory()->create([
             'team_id' => $projectTeam->id,
             'status' => $status ?? ProjectStatus::NotStarted,
@@ -61,10 +60,18 @@ trait TestDatabase
         if ($isReviewer) {
             $project->assignment()->create([
                 'user_id' => $user->id,
+                'role' => 'reviewer',
             ]);
         } elseif ($hasReviewer) {
             $project->assignment()->create([
                 'user_id' => User::factory()->create()->id,
+                'role' => 'reviewer',
+            ]);
+        }
+        if ($isVerifier) {
+            $project->verifierAssignment()->create([
+                'user_id' => $user->id,
+                'role' => 'verifier',
             ]);
         }
         if ($isReportViewer) {
