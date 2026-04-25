@@ -44,6 +44,50 @@
         <livewire:projects.update-reviewer :project="$project"/>
     </flux:modal>
 
+    @if($project->status->isPostReview() && !$project->status->isClosed())
+        <div class="mb-2">
+            @if($project->verifier)
+                @can('update-verifier', $project)
+                    <div class="float-right">
+                        @can('manage-projects', $project->team)
+                            <flux:modal.trigger name="update-verifier">
+                                <x-forms.button icon="pencil-square" size="xs" title="Edit verifier" />
+                            </flux:modal.trigger>
+                        @endcan
+                        <x-forms.button.delete
+                            title="Remove {{ $project->verifier->name }} as verifier"
+                            size="xs"
+                            wire:click.prevent="removeVerifier"
+                            wire:confirm="Are you sure you want to remove &quot;{{ $project->verifier->name }}&quot; as verifier?"
+                        />
+                    </div>
+                @endcan
+                <x-forms.field-display label="Verifier">
+                    {{ $project->verifier->name }}
+                </x-forms.field-display>
+            @else
+                @can('update-verifier', $project)
+                    @can('manage-projects', $project->team)
+                        <flux:modal.trigger name="update-verifier">
+                            <x-forms.button icon="plus-circle">Assign Verifier</x-forms.button>
+                        </flux:modal.trigger>
+                    @else
+                        <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentVerifier">
+                            Assign to Me
+                        </x-forms.button>
+                    @endcan
+                @else
+                    <x-forms.field-display label="Verifier" class="mb-0!">
+                        <span class="text-gray-500">No verifier assigned</span>
+                    </x-forms.field-display>
+                @endcan
+            @endif
+        </div>
+        <flux:modal name="update-verifier" wire:close="closeUpdateVerifier()" class="md:w-96">
+            <livewire:projects.update-verifier :project="$project"/>
+        </flux:modal>
+    @endif
+
     <div>
         @can('update-status', $project)
             <div class="float-right">
@@ -62,14 +106,35 @@
             <h3>Update Status</h3>
 
             @switch($project->status)
-                @case(\App\Enums\ProjectStatus::Completed)
-                    The work was marked complete, but you can re-open it if you need to make changes.
+                @case(\App\Enums\ProjectStatus::Closed)
+                    The verification cycle is complete. You can re-open it if needed.
                     <div class="mt-8">
+                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open</x-forms.button>
+                    </div>
+                    @break
+                @case(\App\Enums\ProjectStatus::VerificationReview)
+                    The verifier is reviewing customer fixes.
+                    <div class="mt-8">
+                        <x-forms.button wire:click="updateStatus('next')">Complete Verification</x-forms.button>
+                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open Verification</x-forms.button>
+                    </div>
+                    @break
+                @case(\App\Enums\ProjectStatus::CustomerResponse)
+                    The report has been sent to the customer. Start verification when fixes have been applied.
+                    <div class="mt-8">
+                        <x-forms.button wire:click="updateStatus('next')">Start Verification</x-forms.button>
+                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Pause Verification</x-forms.button>
+                    </div>
+                    @break
+                @case(\App\Enums\ProjectStatus::ReviewComplete)
+                    The review is complete and ready to send to the customer.
+                    <div class="mt-8">
+                        <x-forms.button wire:click="updateStatus('next')">Send to Customer</x-forms.button>
                         <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open Review</x-forms.button>
                     </div>
                     @break
                 @case(\App\Enums\ProjectStatus::InProgress)
-                    If the work is finished, mark it as completed in order to make it available in a read-only view.
+                    When the review is finished, mark it as complete to send to the customer.
                     <div class="mt-8">
                         <x-forms.button wire:click="updateStatus('next')">Complete Review</x-forms.button>
                         <x-forms.button wire:click="updateStatus('previous')" class="secondary">Stop Review</x-forms.button>
@@ -86,7 +151,6 @@
                     </div>
                     @break
             @endswitch
-
         </form>
     </flux:modal>
 </div>
