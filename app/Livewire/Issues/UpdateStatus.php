@@ -5,6 +5,7 @@ namespace App\Livewire\Issues;
 use App\Enums\IssueStatus;
 use App\Events\IssueChanged;
 use App\Models\Issue;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -15,6 +16,7 @@ class UpdateStatus extends Component
 
     #[Validate('required')]
     public IssueStatus $status = IssueStatus::Reviewed;
+
     #[Validate('boolean|nullable')]
     public bool $needs_mitigation = false;
 
@@ -23,6 +25,12 @@ class UpdateStatus extends Component
         $this->issue = $issue;
         $this->status = $issue->status ?? IssueStatus::Reviewed;
         $this->needs_mitigation = $issue->needs_mitigation ?? false;
+    }
+
+    #[Computed]
+    public function allowedStatuses(): array
+    {
+        return IssueStatus::forPhase($this->issue->project->status);
     }
 
     public function updateStatus(): void
