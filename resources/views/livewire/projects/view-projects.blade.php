@@ -30,6 +30,9 @@
                     <flux:tab name="mine">My Projects ({{ $this->myProjects->total() }})</flux:tab>
                 @endif
                 <flux:tab name="active">Active ({{ $this->activeProjects->total() }})</flux:tab>
+                @if($this->reviewedProjects->total() > 0)
+                    <flux:tab name="reviewed">Reviewed ({{ $this->reviewedProjects->total() }})</flux:tab>
+                @endif
                 <flux:tab name="completed">Completed ({{ $this->completedProjects->total() }})</flux:tab>
             </flux:tabs>
 
@@ -41,6 +44,11 @@
             <flux:tab.panel name="active">
                 @include('livewire.projects.projects-list', ['projects' => $this->activeProjects, 'pageName' => 'active-page'])
             </flux:tab.panel>
+            @if($this->reviewedProjects->total() > 0)
+                <flux:tab.panel name="reviewed">
+                    @include('livewire.projects.projects-list', ['projects' => $this->reviewedProjects, 'pageName' => 'reviewed-page'])
+                </flux:tab.panel>
+            @endif
             <flux:tab.panel name="completed">
                 @include('livewire.projects.projects-list', ['projects' => $this->completedProjects, 'pageName' => 'completed-page'])
             </flux:tab.panel>
