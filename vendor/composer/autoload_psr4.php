@@ -96,6 +96,7 @@ return array(
     'Laravel\\Sentinel\\' => array($vendorDir . '/laravel/sentinel/src'),
     'Laravel\\Roster\\' => array($vendorDir . '/laravel/roster/src'),
     'Laravel\\Prompts\\' => array($vendorDir . '/laravel/prompts/src'),
+    'Laravel\\Pennant\\' => array($vendorDir . '/laravel/pennant/src'),
     'Laravel\\Nightwatch\\' => array($vendorDir . '/laravel/nightwatch/src'),
     'Laravel\\Mcp\\Server\\' => array($vendorDir . '/laravel/mcp/src/Server'),
     'Laravel\\Mcp\\' => array($vendorDir . '/laravel/mcp/src'),
