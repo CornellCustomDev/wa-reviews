@@ -38,13 +38,15 @@
                 <td>
                     <div class="flex justify-between items-start gap-2">
                         <div class="grow">{!! $issue->description !!}</div>
-                        @if($issue->comments_count > 0)
-                            <a href="{{ route('issue.show', $issue) }}?comments=1" class="flex-shrink-0">
-                                <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
-                                    {{ $issue->comments_count }}
-                                </flux:badge>
-                            </a>
-                        @endif
+                        @feature('comments')
+                            @if($issue->comments_count > 0)
+                                <a href="{{ route('issue.show', $issue) }}?comments=1" class="flex-shrink-0">
+                                    <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
+                                        {{ $issue->comments_count }}
+                                    </flux:badge>
+                                </a>
+                            @endif
+                        @endfeature
                     </div>
                 </td>
                 <td>
