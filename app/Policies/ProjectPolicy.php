@@ -60,7 +60,7 @@ class ProjectPolicy
         return $user->can('manage-projects', $project->team);
     }
 
-    public function updateVerifier(User $user, Project $project): bool
+    public function updateVerifier(User $user, Project $project, ?User $verifier = null): bool
     {
         if (! in_array($project->status, ProjectStatus::reviewedCases())) {
             return false;
@@ -68,6 +68,12 @@ class ProjectPolicy
 
         if ($project->isVerifier($user)) {
             return true;
+        }
+
+        if (is_null($project->verifier)) {
+            if ($verifier && $verifier->id === $user->id) {
+                return $user->can('edit-projects', $project->team);
+            }
         }
 
         return $user->can('manage-projects', $project->team);

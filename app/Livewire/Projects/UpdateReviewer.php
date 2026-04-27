@@ -40,6 +40,7 @@ class UpdateReviewer extends Component
         $validated = $this->validate([
             'user' => [
                 'required',
+                'exists:users,id',
                 Rule::unique('project_assignments', 'user_id')
                     ->where('project_id', $this->project->id)
                     ->where('role', 'reviewer')

@@ -25,9 +25,9 @@ class Workflow extends Component
         $this->dispatch('refresh-project');
     }
 
-    public function assignCurrentVerifier(): void
+    public function assignCurrentUserAsVerifier(): void
     {
-        $this->authorize('update-verifier', $this->project);
+        $this->authorize('update-verifier', [$this->project, auth()->user()]);
         $this->project->assignVerifier(auth()->user());
         $this->dispatch('refresh-project');
     }

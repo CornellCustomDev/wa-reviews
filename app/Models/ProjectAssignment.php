@@ -19,7 +19,7 @@ class ProjectAssignment extends Model
     {
         parent::boot();
 
-        static::saving(function (self $assignment) {
+        static::creating(function (self $assignment) {
             if (ProjectAssignment::where('project_id', $assignment->project_id)
                 ->where('role', $assignment->role)
                 ->whereNull('deleted_at')

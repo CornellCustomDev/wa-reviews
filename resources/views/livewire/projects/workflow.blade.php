@@ -47,7 +47,7 @@
     @if($project->status->isPostReview() && !$project->status->isClosed())
         <div class="mb-2">
             @if($project->verifier)
-                @can('update-verifier', $project)
+                @can('update-verifier', [$project, auth()->user()])
                     <div class="float-right">
                         @can('manage-projects', $project->team)
                             <flux:modal.trigger name="update-verifier">
@@ -66,13 +66,13 @@
                     {{ $project->verifier->name }}
                 </x-forms.field-display>
             @else
-                @can('update-verifier', $project)
+                @can('update-verifier', [$project, auth()->user()])
                     @can('manage-projects', $project->team)
                         <flux:modal.trigger name="update-verifier">
                             <x-forms.button icon="plus-circle">Assign Verifier</x-forms.button>
                         </flux:modal.trigger>
                     @else
-                        <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentVerifier">
+                        <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentUserAsVerifier">
                             Assign to Me
                         </x-forms.button>
                     @endcan
