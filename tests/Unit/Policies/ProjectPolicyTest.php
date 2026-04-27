@@ -181,28 +181,39 @@ class ProjectPolicyTest extends TestCase
 
     #[DataProvider('updateVerifierProvider')]
     #[Test]
-    public function update_verifier($role, $isTeamMember, $isVerifier, $status, $hasPermission, $description)
+    public function update_verifier($role, $isTeamMember, $isVerifier, $hasVerifier, $newVerifier, $status, $hasPermission, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isVerifier: $isVerifier, status: $status);
+        $project = $this->setupProject($projectTeam, $user, isVerifier: $isVerifier, hasVerifier: $hasVerifier, status: $status);
 
-        $result = (new ProjectPolicy)->updateVerifier($user, $project);
+        $verifier = match ($newVerifier) {
+            'self' => $user,
+            'other' => User::factory()->create(),
+            default => null,
+        };
+        $result = (new ProjectPolicy)->updateVerifier($user, $project, $verifier);
 
         $this->assertEquals($hasPermission, $result, $description);
     }
 
     public static function updateVerifierProvider(): array
     {
-        // role, isTeamMember, isVerifier, status, hasPermission, description
+        // role, isTeamMember, isVerifier, hasVerifier, newVerifier, status, hasPermission, description
         return [
-            [Roles::TeamAdmin, true, false, ProjectStatus::ReviewComplete, true, 'Team admin can assign verifier in ReviewComplete'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::CustomerResponse, true, 'Team admin can assign verifier in CustomerResponse'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::VerificationReview, true, 'Team admin can assign verifier in VerificationReview'],
-            [null, true, true, ProjectStatus::ReviewComplete, true, 'Assigned verifier can update verifier in ReviewComplete'],
-            [Roles::Reviewer, true, false, ProjectStatus::ReviewComplete, false, 'Non-verifier reviewer cannot update verifier'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::InProgress, false, 'Team admin cannot assign verifier in InProgress'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::Closed, false, 'Team admin cannot assign verifier in Closed'],
+            [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::ReviewComplete, true, 'Team admin can assign verifier in ReviewComplete'],
+            [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::CustomerResponse, true, 'Team admin can assign verifier in CustomerResponse'],
+            [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::VerificationReview, true, 'Team admin can assign verifier in VerificationReview'],
+            [null, true, true, false, null, ProjectStatus::ReviewComplete, true, 'Assigned verifier can update verifier in ReviewComplete'],
+            [Roles::Reviewer, true, false, false, null, ProjectStatus::ReviewComplete, false, 'Non-verifier reviewer cannot update verifier without self-assign'],
+            [Roles::TeamAdmin, true, false, false, null, ProjectStatus::InProgress, false, 'Team admin cannot assign verifier in InProgress'],
+            [Roles::TeamAdmin, true, false, false, null, ProjectStatus::Closed, false, 'Team admin cannot assign verifier in Closed'],
+
+            [Roles::Reviewer, true, false, false, 'self', ProjectStatus::ReviewComplete, true, 'Reviewer can self-assign as verifier when no verifier exists'],
+            [Roles::Reviewer, true, false, false, 'self', ProjectStatus::CustomerResponse, true, 'Reviewer can self-assign as verifier in CustomerResponse'],
+            [Roles::Reviewer, true, false, true, 'self', ProjectStatus::ReviewComplete, false, 'Reviewer cannot self-assign when verifier already assigned'],
+            [Roles::Reviewer, true, false, false, 'other', ProjectStatus::ReviewComplete, false, 'Reviewer cannot assign another user as verifier'],
+            [Roles::TeamAdmin, false, false, false, 'self', ProjectStatus::ReviewComplete, false, 'Other team admin cannot self-assign as verifier'],
         ];
     }
 

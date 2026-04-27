@@ -50,6 +50,7 @@ trait TestDatabase
         bool $isReviewer = false,
         bool $hasReviewer = false,
         bool $isVerifier = false,
+        bool $hasVerifier = false,
         bool $isReportViewer = false,
         ?ProjectStatus $status = null
     ): Project {
@@ -71,6 +72,11 @@ trait TestDatabase
         if ($isVerifier) {
             $project->verifierAssignment()->create([
                 'user_id' => $user->id,
+                'role' => 'verifier',
+            ]);
+        } elseif ($hasVerifier) {
+            $project->verifierAssignment()->create([
+                'user_id' => User::factory()->create()->id,
                 'role' => 'verifier',
             ]);
         }
