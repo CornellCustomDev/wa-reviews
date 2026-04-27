@@ -49,13 +49,17 @@ class Workflow extends Component
             case 'next':
                 $this->project->update([
                     'status' => $this->project->status->nextStatus(),
-                    'completed_at' => $this->project->status->nextStatus()->isReviewComplete() ? now() : null,
+                    'completed_at' => $this->project->status->nextStatus()->isReviewComplete()
+                        ? now()
+                        : $this->project->completed_at,
                 ]);
                 break;
             case 'previous':
                 $this->project->update([
                     'status' => $this->project->status->previousStatus(),
-                    'completed_at' => null,
+                    'completed_at' => $this->project->status->previousStatus()->isPostReview()
+                        ? $this->project->completed_at
+                        : null,
                 ]);
                 break;
             default:
