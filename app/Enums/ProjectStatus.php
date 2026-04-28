@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum ProjectStatus: string
 {
     use NamedEnum;
@@ -12,11 +14,7 @@ enum ProjectStatus: string
 
     public function label(): string
     {
-        return match ($this) {
-            self::NotStarted => 'Not Started',
-            self::InProgress => 'In Progress',
-            self::Completed  => 'Completed',
-        };
+        return Str::of($this->value())->replace('_', ' ')->ucfirst();
     }
 
     public function nextStatus(): ProjectStatus

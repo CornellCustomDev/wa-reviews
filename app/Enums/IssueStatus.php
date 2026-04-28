@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum IssueStatus: string
 {
     use NamedEnum;
@@ -15,22 +17,19 @@ enum IssueStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Reviewed      => 'Reviewed',
-            self::Fixed         => 'Fixed',
-            self::Verified      => 'Verified Fixed',
-            self::FalsePositive => 'False Positive',
-            self::WontFix       => 'Not Being Fixed',
+            self::WontFix => 'Not being fixed',
+            default       => Str::of($this->value())->replace('_', ' ')->ucfirst(),
         };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::Reviewed      => '',
-            self::Fixed         => '🛠️ Fixed',
-            self::Verified      => '✅ Verified',
-            self::FalsePositive => 'False positive',
-            self::WontFix       => 'Not being fixed',
+            self::Reviewed => '',
+            self::Fixed    => '🛠️ ' . $this->label(),
+            self::Verified => '✅ ' . $this->label(),
+            self::WontFix  => '🚫 ' . $this->label(),
+            default        => $this->label(),
         };
     }
 }
