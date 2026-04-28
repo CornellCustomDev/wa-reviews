@@ -14,6 +14,7 @@ use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerServiceInterface;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Pennant\Feature;
 use Livewire;
 use OpenAI;
 
@@ -65,6 +66,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Feature::resolveScopeUsing(fn () => null);
+        Feature::define('comments', false);
+
         $this->app['prism-manager']->extend('cornell', function ($app, $config) {
             return new CornellApi(
                 apiKey: $config['api_key'],

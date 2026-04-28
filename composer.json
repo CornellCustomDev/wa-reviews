@@ -17,6 +17,7 @@
         "google/apiclient": "^2.19",
         "laravel/framework": "^12.56",
         "laravel/nightwatch": "^1.26",
+        "laravel/pennant": "^1.23",
         "laravel/telescope": "^5.20",
         "laravel/tinker": "^2.11",
         "livewire/flux": "^2.13",

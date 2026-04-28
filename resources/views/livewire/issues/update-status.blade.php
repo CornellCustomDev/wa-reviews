@@ -3,7 +3,7 @@
         <flux:modal.trigger name="update-status" class="cursor-pointer">
             <flux:card size="sm" class="float-right bg-cds-gray-100! px-2 py-2 ml-3 mb-2">
                 <x-forms.field-display label="Status" variation="inline" class="mb-0!">
-                    {{ $issue->status ?? 'Reviewed' }}
+                    {{ $issue->status?->label() ?? \App\Enums\IssueStatus::Reviewed->label() }}
                 </x-forms.field-display>
                 @if($issue->needs_mitigation)
                     <div>
@@ -16,7 +16,7 @@
     @else
         <flux:card size="sm" class="float-right bg-cds-gray-100! px-2 py-2 ml-3 mb-2">
             <x-forms.field-display label="Status" variation="inline" class="mb-0!">
-                {{ $issue->status ?? 'Reviewed' }}
+                {{ $issue->status?->label() ?? \App\Enums\IssueStatus::Reviewed->label() }}
             </x-forms.field-display>
             @if($issue->needs_mitigation)
                 <div>

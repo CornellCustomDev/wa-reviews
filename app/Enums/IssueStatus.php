@@ -2,26 +2,26 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum IssueStatus: string
 {
     use NamedEnum;
 
-    case Reviewed = 'Reviewed';
-    case Fixed = 'Fixed';
-    case NotBeingFixed = 'Not Being Fixed';
-    case FalsePositive = 'False Positive';
-    case Verified = 'Verified Fixed';
-    case NotFixed = 'Not Fixed';
-    case NewIssue = 'New Issue';
+    case Reviewed      = 'reviewed';
+    case Fixed         = 'fixed';
+    case NotBeingFixed = 'not_being_fixed';
+    case FalsePositive = 'false_positive';
+    case Verified      = 'verified_fixed';
+    case NotFixed      = 'not_fixed';
+    case NewIssue      = 'new_issue';
 
-    public static function toSelectArray(): array
+    public function label(): string
     {
-        return collect(self::cases())
-            ->map(fn (self $status) => [
-                'value' => $status->value(),
-                'option' => $status->value(),
-            ])
-            ->toArray();
+        return match ($this) {
+            self::WontFix => 'Not being fixed',
+            default       => Str::of($this->value())->replace('_', ' ')->ucfirst(),
+        };
     }
 
     public static function forPhase(ProjectStatus $projectStatus): array
@@ -45,12 +45,11 @@ enum IssueStatus: string
     {
         return match ($this) {
             self::Reviewed => '',
-            self::Fixed => '🛠️ Fixed',
-            self::NotBeingFixed => 'Not being fixed',
-            self::FalsePositive => 'False positive',
-            self::Verified => '✅ Verified Fixed',
-            self::NotFixed => '❌ Not Fixed',
-            self::NewIssue => 'New Issue',
+            self::Fixed    => '🛠️ ' . $this->label(),
+            self::Verified => '✅ ' . $this->label(),
+            self::WontFix  => '🚫 ' . $this->label(),
+            self::NotFixed => '❌ ' . $this->label(),
+            default        => $this->label(),
         };
     }
 }

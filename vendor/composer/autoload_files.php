@@ -46,6 +46,7 @@ return array(
     '801c31d8ed748cfa537fa45402288c95' => $vendorDir . '/psy/psysh/src/functions.php',
     'a8d3953fd9959404dd22d3dfcd0a79f0' => $vendorDir . '/google/apiclient/src/aliases.php',
     'fe7fc89e061451aaaf6b63aa0d9cca67' => $vendorDir . '/laravel/nightwatch/agent/helpers.php',
+    'e96c55aecadfc85c136575ccd5393db0' => $vendorDir . '/laravel/pennant/src/helpers.php',
     '7574a4dc8fe5e660478870e55ff04aab' => $vendorDir . '/livewire/flux-pro/src/helpers.php',
     'c72349b1fe8d0deeedd3a52e8aa814d8' => $vendorDir . '/mockery/mockery/library/helpers.php',
     'ce9671a430e4846b44e1c68c7611f9f5' => $vendorDir . '/mockery/mockery/library/Mockery.php',
