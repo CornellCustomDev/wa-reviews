@@ -29,13 +29,16 @@ class ProjectStatusTest extends TestCase
         $notStarted = collect($array)->firstWhere('value', 'not_started');
         $this->assertNotNull($notStarted, 'not_started entry missing');
         $this->assertSame('Not Started', $notStarted['option']);
+        $this->assertSame('Not Started', $notStarted['label']);
 
         $inProgress = collect($array)->firstWhere('value', 'in_progress');
         $this->assertNotNull($inProgress, 'in_progress entry missing');
         $this->assertSame('In Progress', $inProgress['option']);
+        $this->assertSame('In Progress', $inProgress['label']);
 
         $completed = collect($array)->firstWhere('value', 'completed');
         $this->assertNotNull($completed, 'completed entry missing');
         $this->assertSame('Completed', $completed['option']);
+        $this->assertSame('Completed', $completed['label']);
     }
 }

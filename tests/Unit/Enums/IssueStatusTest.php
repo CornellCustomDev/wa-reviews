@@ -33,13 +33,16 @@ class IssueStatusTest extends TestCase
         $reviewed = collect($array)->firstWhere('value', 'reviewed');
         $this->assertNotNull($reviewed, 'reviewed entry missing');
         $this->assertSame('Reviewed', $reviewed['option']);
+        $this->assertSame('Reviewed', $reviewed['label']);
 
         $wontFix = collect($array)->firstWhere('value', 'not_being_fixed');
         $this->assertNotNull($wontFix, 'not_being_fixed entry missing');
         $this->assertSame('Not Being Fixed', $wontFix['option']);
+        $this->assertSame('Not Being Fixed', $wontFix['label']);
 
         $verified = collect($array)->firstWhere('value', 'verified_fixed');
         $this->assertNotNull($verified, 'verified_fixed entry missing');
         $this->assertSame('Verified Fixed', $verified['option']);
+        $this->assertSame('Verified Fixed', $verified['label']);
     }
 }

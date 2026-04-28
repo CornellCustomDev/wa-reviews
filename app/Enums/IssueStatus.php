@@ -23,16 +23,6 @@ enum IssueStatus: string
         };
     }
 
-    public static function toSelectArray(): array
-    {
-        return collect(self::cases())
-            ->map(fn (self $status) => [
-                'value' => $status->value(),
-                'option' => $status->label(),
-            ])
-            ->toArray();
-    }
-
     public function description(): string
     {
         return match ($this) {
