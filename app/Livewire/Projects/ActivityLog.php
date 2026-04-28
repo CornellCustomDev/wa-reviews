@@ -44,7 +44,7 @@ class ActivityLog extends Component
         return match($status) {
             ProjectStatus::NotStarted->value => 'zinc',
             ProjectStatus::InProgress->value => 'green',
-            ProjectStatus::Completed->value => 'blue',
+            ProjectStatus::ReviewComplete->value => 'blue',
             default => 'zinc',
         };
     }

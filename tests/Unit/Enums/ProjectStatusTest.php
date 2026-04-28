@@ -12,14 +12,14 @@ class ProjectStatusTest extends TestCase
     {
         $this->assertSame('not_started', ProjectStatus::NotStarted->value);
         $this->assertSame('in_progress', ProjectStatus::InProgress->value);
-        $this->assertSame('completed', ProjectStatus::Completed->value);
+        $this->assertSame('review_complete', ProjectStatus::ReviewComplete->value);
     }
 
     #[Test] public function label_returns_human_readable_string(): void
     {
-        $this->assertSame('Not Started', ProjectStatus::NotStarted->label());
-        $this->assertSame('In Progress', ProjectStatus::InProgress->label());
-        $this->assertSame('Completed', ProjectStatus::Completed->label());
+        $this->assertSame('Not started', ProjectStatus::NotStarted->label());
+        $this->assertSame('In progress', ProjectStatus::InProgress->label());
+        $this->assertSame('Review complete', ProjectStatus::ReviewComplete->label());
     }
 
     #[Test] public function to_select_array_uses_snake_case_value_and_label_for_option(): void
@@ -28,27 +28,27 @@ class ProjectStatusTest extends TestCase
 
         $notStarted = collect($array)->firstWhere('value', 'not_started');
         $this->assertNotNull($notStarted, 'not_started entry missing');
-        $this->assertSame('Not Started', $notStarted['option']);
-        $this->assertSame('Not Started', $notStarted['label']);
+        $this->assertSame('not_started', $notStarted['value']);
+        $this->assertSame('Not started', $notStarted['label']);
 
         $inProgress = collect($array)->firstWhere('value', 'in_progress');
         $this->assertNotNull($inProgress, 'in_progress entry missing');
-        $this->assertSame('In Progress', $inProgress['option']);
-        $this->assertSame('In Progress', $inProgress['label']);
+        $this->assertSame('in_progress', $inProgress['value']);
+        $this->assertSame('In progress', $inProgress['label']);
 
-        $completed = collect($array)->firstWhere('value', 'completed');
-        $this->assertNotNull($completed, 'completed entry missing');
-        $this->assertSame('Completed', $completed['option']);
-        $this->assertSame('Completed', $completed['label']);
+        $reviewComplete = collect($array)->firstWhere('value', 'review_complete');
+        $this->assertNotNull($reviewComplete, 'review_complete entry missing');
+        $this->assertSame('review_complete', $reviewComplete['value']);
+        $this->assertSame('Review complete', $reviewComplete['label']);
     }
 
     #[Test]
     public function new_cases_exist(): void
     {
-        $this->assertEquals('Review Complete', ProjectStatus::ReviewComplete->value);
-        $this->assertEquals('Customer Response', ProjectStatus::CustomerResponse->value);
-        $this->assertEquals('Verification Review', ProjectStatus::VerificationReview->value);
-        $this->assertEquals('Closed', ProjectStatus::Closed->value);
+        $this->assertEquals('review_complete', ProjectStatus::ReviewComplete->value);
+        $this->assertEquals('customer_response', ProjectStatus::CustomerResponse->value);
+        $this->assertEquals('verification_review', ProjectStatus::VerificationReview->value);
+        $this->assertEquals('closed', ProjectStatus::Closed->value);
     }
 
     #[Test]

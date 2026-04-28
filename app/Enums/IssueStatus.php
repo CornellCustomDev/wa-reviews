@@ -10,7 +10,7 @@ enum IssueStatus: string
 
     case Reviewed      = 'reviewed';
     case Fixed         = 'fixed';
-    case NotBeingFixed = 'not_being_fixed';
+    case WontFix       = 'not_being_fixed';
     case FalsePositive = 'false_positive';
     case Verified      = 'verified_fixed';
     case NotFixed      = 'not_fixed';
@@ -28,8 +28,8 @@ enum IssueStatus: string
     {
         $cases = match ($projectStatus) {
             ProjectStatus::ReviewComplete => [self::Reviewed, self::FalsePositive],
-            ProjectStatus::CustomerResponse => [self::Reviewed, self::Fixed, self::NotBeingFixed, self::FalsePositive],
-            ProjectStatus::VerificationReview => [self::Verified, self::NotFixed, self::FalsePositive, self::NotBeingFixed],
+            ProjectStatus::CustomerResponse => [self::Reviewed, self::Fixed, self::WontFix, self::FalsePositive],
+            ProjectStatus::VerificationReview => [self::Verified, self::NotFixed, self::FalsePositive, self::WontFix],
             default => self::cases(),
         };
 
