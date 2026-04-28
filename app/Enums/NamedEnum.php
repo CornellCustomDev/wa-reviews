@@ -15,6 +15,15 @@ trait NamedEnum
         return $this->value ?? $this->name;
     }
 
+    /**
+     * Human-readable display label. Override in individual enums to decouple
+     * display text from the backing value.
+     */
+    public function label(): string
+    {
+        return (string) $this->value();
+    }
+
     public static function names(): array
     {
         return array_column(self::cases(), 'name');
@@ -30,8 +39,8 @@ trait NamedEnum
         return collect(self::cases())
             ->map(fn ($enumCase) => [
                 'value' => $enumCase->value(),
-                'option' => $enumCase->value(),
-                'label' => $enumCase->value(),
+                'option' => $enumCase->label(),
+                'label' => $enumCase->label(),
                 'description' => $enumCase->getDescription(),
             ])
             ->toArray();

@@ -2,34 +2,34 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum IssueStatus: string
 {
     use NamedEnum;
 
-    case Reviewed = 'Reviewed';
-    case Fixed = 'Fixed';
-    case Verified = 'Verified Fixed';
-    case FalsePositive = 'False Positive';
-    case WontFix = 'Not Being Fixed';
+    case Reviewed      = 'reviewed';
+    case Fixed         = 'fixed';
+    case Verified      = 'verified_fixed';
+    case FalsePositive = 'false_positive';
+    case WontFix       = 'not_being_fixed';
 
-    public static function toSelectArray(): array
+    public function label(): string
     {
-        return collect(self::cases())
-            ->map(fn (self $status) => [
-                'value' => $status->value(),
-                'option' => $status->value(),
-            ])
-            ->toArray();
+        return match ($this) {
+            self::WontFix => 'Not being fixed',
+            default       => Str::of($this->value())->replace('_', ' ')->ucfirst(),
+        };
     }
 
     public function description(): string
     {
         return match ($this) {
-            self::Reviewed => '', // Don't show anything
-            self::Fixed => '🛠️ Fixed',
-            self::Verified => '✅ Verified',
-            self::FalsePositive => 'False positive',
-            self::WontFix => 'Not being fixed',
+            self::Reviewed => '',
+            self::Fixed    => '🛠️ ' . $this->label(),
+            self::Verified => '✅ ' . $this->label(),
+            self::WontFix  => '🚫 ' . $this->label(),
+            default        => $this->label(),
         };
     }
 }

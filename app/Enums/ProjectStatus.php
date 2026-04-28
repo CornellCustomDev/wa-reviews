@@ -2,16 +2,20 @@
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 enum ProjectStatus: string
 {
     use NamedEnum;
 
-    case NotStarted = 'Not Started';
-    case InProgress = 'In Progress';
-    case Completed  = 'Completed';
-//    case OnHold     = 'On Hold';
-//    case Cancelled  = 'Cancelled';
-//    case Archived   = 'Archived';
+    case NotStarted = 'not_started';
+    case InProgress = 'in_progress';
+    case Completed  = 'completed';
+
+    public function label(): string
+    {
+        return Str::of($this->value())->replace('_', ' ')->ucfirst();
+    }
 
     public function nextStatus(): ProjectStatus
     {
