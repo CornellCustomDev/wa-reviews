@@ -36,7 +36,7 @@ enum IssueStatus: string
         return collect($cases)
             ->map(fn (self $status) => [
                 'value' => $status->value(),
-                'option' => $status->value(),
+                'option' => $status->label(),
             ])
             ->toArray();
     }
