@@ -67,7 +67,7 @@ class ProjectPolicy
         }
 
         if ($project->isVerifier($user)) {
-            return true;
+            return $user->can('edit-projects', $project->team);
         }
 
         if (is_null($project->verifier)) {

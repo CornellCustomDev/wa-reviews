@@ -44,7 +44,7 @@ class UpdateVerifier extends Component
         $user = User::find($validated['user']);
         $this->project->assignVerifier($user);
 
-        unset($this->nonAssignedVerifiers);
+        unset($this->nonAssignedMembers);
         $this->project->refresh();
 
         $this->dispatch('close-update-verifier');
