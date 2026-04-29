@@ -13,14 +13,20 @@
             Project
         </flux:table.column>
         <flux:table.column>Site</flux:table.column>
-        <flux:table.column
-            sortable
-            :sorted="$this->isSorted('reviewer.name', $pageName)"
-            :direction="$this->sortDirection($pageName)"
-            wire:click="sortBy('reviewer.name', '{{ $pageName }}', 'asc')"
-        >
-            Reviewer
-        </flux:table.column>
+        @feature('verification-reviews')
+            <flux:table.column>
+                Reviewers
+            </flux:table.column>
+        @else
+            <flux:table.column
+                sortable
+                :sorted="$this->isSorted('reviewer.name', $pageName)"
+                :direction="$this->sortDirection($pageName)"
+                wire:click="sortBy('reviewer.name', '{{ $pageName }}', 'asc')"
+            >
+                Reviewer
+            </flux:table.column>
+       @endfeature
         <flux:table.column
             class="w-[150px]"
             sortable
@@ -43,10 +49,16 @@
     </flux:table.columns>
 
     <flux:table.rows>
+        @php
+            /** @var App\Models\Project $project */
+        @endphp
         @foreach ($projects as $project)
             <flux:table.row :key="$project->id">
                 <flux:table.cell>
                     <a href="{{ route('project.show', $project) }}">{{ $project->name }}</a>
+                    @if($this->showTeams() && $project->team)
+                        (<a href="{{ route('teams.show', $project->team) }}">{{ $project->team->name }}</a>)
+                    @endif
                 </flux:table.cell>
                 <flux:table.cell class="break-words">
                     @if($project->site_url)
@@ -57,13 +69,18 @@
                     @endif
                 </flux:table.cell>
                 <flux:table.cell>
-                    @if($project->reviewer)
+                    @if($project->isPostReview())
+                        @if($project->verifier && $project->reviewer)
+                            Reviewer: {{ $project->reviewer->name }}
+                            <br>
+                            Verifier: {{ $project->verifier->name }}
+                        @else
+                            {{ $project->reviewer->name ?? $project->verifier->name ?? 'Not assigned' }}
+                        @endif
+                    @elseif($project->reviewer)
                         {{ $project->reviewer->name }}
                     @else
-                        Not assigned
-                    @endif
-                    @if($this->showTeams() && $project->team)
-                        (<a href="{{ route('teams.show', $project->team) }}">{{ $project->team->name }}</a>)
+                        <i>Not assigned</i>
                     @endif
                 </flux:table.cell>
                 <flux:table.cell class="whitespace-nowrap">

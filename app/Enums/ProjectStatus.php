@@ -168,6 +168,10 @@ enum ProjectStatus: string
 
     public static function completedCases(): array
     {
+        if (! Feature::active('verification-reviews')) {
+            return [...self::reviewedCases(), self::Closed];
+        }
+
         return [self::Closed];
     }
 }
