@@ -4,6 +4,7 @@ namespace App\Livewire\Projects;
 
 use App\Events\ProjectChanged;
 use App\Models\Project;
+use Laravel\Pennant\Feature;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -17,6 +18,10 @@ class Workflow extends Component
     {
         if ($this->project->status->isNotStarted() && $this->project->reviewer) {
             return "Are you ready to have {$this->project->reviewer->name} start work on the project?";
+        }
+
+        if (! Feature::active('verification-reviews') && $this->project->status->isReviewComplete()) {
+            return "The review is complete, but you can re-open it if you need to make changes.";
         }
 
         return $this->project->status->description();
