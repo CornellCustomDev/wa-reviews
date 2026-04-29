@@ -44,6 +44,10 @@
         <livewire:projects.update-reviewer :project="$project"/>
     </flux:modal>
 
+    @if($project->verifier)
+
+    @endif
+
     @if($project->status->isPostReview() && !$project->status->isClosed())
         <div class="mb-2">
             @if($project->verifier)
@@ -105,52 +109,16 @@
         <form class="mb-0!">
             <h3>Update Status</h3>
 
-            @switch($project->status)
-                @case(\App\Enums\ProjectStatus::Closed)
-                    The verification cycle is complete. You can re-open it if needed.
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open</x-forms.button>
-                    </div>
-                    @break
-                @case(\App\Enums\ProjectStatus::VerificationReview)
-                    The verifier is reviewing customer fixes.
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('next')">Complete Verification</x-forms.button>
-                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open Verification</x-forms.button>
-                    </div>
-                    @break
-                @case(\App\Enums\ProjectStatus::CustomerResponse)
-                    The report has been sent to the customer. Start verification when fixes have been applied.
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('next')">Start Verification</x-forms.button>
-                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Pause Verification</x-forms.button>
-                    </div>
-                    @break
-                @case(\App\Enums\ProjectStatus::ReviewComplete)
-                    The review is complete and ready to send to the customer.
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('next')">Send to Customer</x-forms.button>
-                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Re-open Review</x-forms.button>
-                    </div>
-                    @break
-                @case(\App\Enums\ProjectStatus::InProgress)
-                    When the review is finished, mark it as complete to send to the customer.
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('next')">Complete Review</x-forms.button>
-                        <x-forms.button wire:click="updateStatus('previous')" class="secondary">Stop Review</x-forms.button>
-                    </div>
-                    @break
-                @default()
-                    @if($project->reviewer)
-                        Are you ready to have {{ $project->reviewer->name }} start work on the project?
-                    @else
-                        No reviewer has been assigned to this project. Are you sure you want to start the review?
-                    @endif
-                    <div class="mt-8">
-                        <x-forms.button wire:click="updateStatus('next')">Start Review</x-forms.button>
-                    </div>
-                    @break
-            @endswitch
+            {{ $this->statusDescription }}
+
+            <div class="mt-8">
+                @if($this->nextActionLabel)
+                    <x-forms.button wire:click="updateStatus('next')">{{ $this->nextActionLabel }}</x-forms.button>
+                @endif
+                @if($this->previousActionLabel)
+                    <x-forms.button wire:click="updateStatus('previous')" class="secondary">{{ $this->previousActionLabel }}</x-forms.button>
+                @endif
+            </div>
         </form>
     </flux:modal>
 </div>

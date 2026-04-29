@@ -56,8 +56,9 @@ class ProjectStatusTest extends TestCase
     {
         $this->assertSame(ProjectStatus::InProgress, ProjectStatus::NotStarted->nextStatus());
         $this->assertSame(ProjectStatus::ReviewComplete, ProjectStatus::InProgress->nextStatus());
-        $this->assertSame(ProjectStatus::CustomerResponse, ProjectStatus::ReviewComplete->nextStatus());
-        $this->assertSame(ProjectStatus::VerificationReview, ProjectStatus::CustomerResponse->nextStatus());
+        // $this->assertSame(ProjectStatus::CustomerResponse, ProjectStatus::ReviewComplete->nextStatus());
+        // $this->assertSame(ProjectStatus::VerificationReview, ProjectStatus::CustomerResponse->nextStatus());
+         $this->assertSame(ProjectStatus::VerificationReview, ProjectStatus::ReviewComplete->nextStatus());
         $this->assertSame(ProjectStatus::Closed, ProjectStatus::VerificationReview->nextStatus());
         $this->assertSame(ProjectStatus::Closed, ProjectStatus::Closed->nextStatus());
     }
@@ -67,8 +68,9 @@ class ProjectStatusTest extends TestCase
     {
         $this->assertSame(ProjectStatus::NotStarted, ProjectStatus::InProgress->previousStatus());
         $this->assertSame(ProjectStatus::InProgress, ProjectStatus::ReviewComplete->previousStatus());
-        $this->assertSame(ProjectStatus::ReviewComplete, ProjectStatus::CustomerResponse->previousStatus());
-        $this->assertSame(ProjectStatus::CustomerResponse, ProjectStatus::VerificationReview->previousStatus());
+        $this->assertSame(ProjectStatus::ReviewComplete, ProjectStatus::VerificationReview->previousStatus());
+        // $this->assertSame(ProjectStatus::ReviewComplete, ProjectStatus::CustomerResponse->previousStatus());
+        // $this->assertSame(ProjectStatus::CustomerResponse, ProjectStatus::VerificationReview->previousStatus());
         $this->assertSame(ProjectStatus::VerificationReview, ProjectStatus::Closed->previousStatus());
     }
 
@@ -116,5 +118,17 @@ class ProjectStatusTest extends TestCase
     {
         $this->assertTrue(ProjectStatus::Closed->isClosed());
         $this->assertFalse(ProjectStatus::VerificationReview->isClosed());
+    }
+
+    #[Test]
+    public function next_action_label_returns_null_for_closed(): void
+    {
+        $this->assertNull(ProjectStatus::Closed->nextActionLabel());
+    }
+
+    #[Test]
+    public function previous_action_label_returns_null_for_not_started(): void
+    {
+        $this->assertNull(ProjectStatus::NotStarted->previousActionLabel());
     }
 }

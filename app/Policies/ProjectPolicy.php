@@ -85,6 +85,10 @@ class ProjectPolicy
             return true;
         }
 
+        if ($project->isVerifier($user) && $user->can('edit-projects', $project->team)) {
+            return true;
+        }
+
         return $user->can('manage-projects', $project->team);
     }
 

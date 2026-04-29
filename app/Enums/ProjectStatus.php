@@ -25,9 +25,9 @@ enum ProjectStatus: string
         return match ($this) {
             self::NotStarted => self::InProgress,
             self::InProgress => self::ReviewComplete,
-            self::ReviewComplete => self::CustomerResponse,
+            self::ReviewComplete => self::VerificationReview,
             self::CustomerResponse => self::VerificationReview,
-            self::VerificationReview => self::Closed,
+            self::VerificationReview,
             self::Closed => self::Closed,
         };
     }
@@ -35,12 +35,50 @@ enum ProjectStatus: string
     public function previousStatus(): ProjectStatus
     {
         return match ($this) {
+            self::NotStarted,
             self::InProgress => self::NotStarted,
             self::ReviewComplete => self::InProgress,
             self::CustomerResponse => self::ReviewComplete,
-            self::VerificationReview => self::CustomerResponse,
+            self::VerificationReview => self::ReviewComplete,
             self::Closed => self::VerificationReview,
-            self::NotStarted => self::NotStarted,
+        };
+    }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::NotStarted => 'No reviewer has been assigned to this project. Are you sure you want to start the review?',
+            self::InProgress => 'When the review is finished, mark it as complete.',
+            self::ReviewComplete => 'The review is complete. Work should be verified after fixes have been applied.',
+            self::CustomerResponse => 'The report has been sent to the customer. Start verification when fixes have been applied.',
+            self::VerificationReview => 'When verification is finished, mark it as complete.',
+            self::Closed => 'The review and verification is complete. You can re-open it if needed.',
+        };
+    }
+
+    public function nextActionLabel(): ?string
+    {
+        return match ($this) {
+            self::NotStarted => 'Start Review',
+            self::InProgress => 'Complete Review',
+            self::ReviewComplete => 'Start Verification',
+            // self::ReviewComplete => 'Send to Customer',
+            self::CustomerResponse => 'Start Verification',
+            self::VerificationReview => 'Complete Verification',
+            self::Closed => null,
+        };
+    }
+
+    public function previousActionLabel(): ?string
+    {
+        return match ($this) {
+            self::NotStarted => null,
+            self::InProgress => 'Stop Review',
+            self::ReviewComplete => 'Re-open Review',
+            self::CustomerResponse => 'Review Complete',
+            // self::VerificationReview => 'Return to Customer',
+            self::VerificationReview => 'Pause Verification',
+            self::Closed => 'Re-open',
         };
     }
 

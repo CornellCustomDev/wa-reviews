@@ -25,18 +25,11 @@ class UpdateReviewer extends Component
             ->all();
     }
 
-    #[On('team-changes')]
-    public function teamChanges(): void
-    {
-        unset($this->nonAssignedMembers);
-        $this->project->refresh();
-    }
-
     public function save()
     {
         $this->authorize('update-reviewer', [$this->project, User::find($this->user)]);
 
-        // Validate that the user exists and is not already assigned to the project
+        // Validate that the user exists and is not already assigned to the project as a reviewer
         $validated = $this->validate([
             'user' => [
                 'required',
@@ -50,7 +43,9 @@ class UpdateReviewer extends Component
 
         $user = User::find($validated['user']);
         $this->project->assignToUser($user);
-        $this->teamChanges();
+
+        unset($this->nonAssignedMembers);
+        $this->project->refresh();
 
         $this->dispatch('close-update-reviewer');
     }

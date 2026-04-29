@@ -4,12 +4,35 @@ namespace App\Livewire\Projects;
 
 use App\Events\ProjectChanged;
 use App\Models\Project;
+use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Workflow extends Component
 {
     public Project $project;
+
+    #[Computed]
+    public function statusDescription(): string
+    {
+        if ($this->project->status->isNotStarted() && $this->project->reviewer) {
+            return "Are you ready to have {$this->project->reviewer->name} start work on the project?";
+        }
+
+        return $this->project->status->description();
+    }
+
+    #[Computed]
+    public function nextActionLabel(): ?string
+    {
+        return $this->project->status->nextActionLabel();
+    }
+
+    #[Computed]
+    public function previousActionLabel(): ?string
+    {
+        return $this->project->status->previousActionLabel();
+    }
 
     public function assignCurrentUser(): void
     {

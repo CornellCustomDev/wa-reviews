@@ -17,7 +17,7 @@ class UpdateVerifier extends Component
     public $user;
 
     #[Computed]
-    public function nonAssignedVerifiers(): array
+    public function nonAssignedMembers(): array
     {
         return $this->project->team->users()
             ->get()->except($this->project->verifier?->id ?? [])
@@ -27,8 +27,9 @@ class UpdateVerifier extends Component
 
     public function save(): void
     {
-        $this->authorize('update-verifier', $this->project);
+        $this->authorize('update-verifier', [$this->project, User::find($this->user)]);
 
+        // Validate that the user exists and is not already assigned to the project as verifier
         $validated = $this->validate([
             'user' => [
                 'required',
@@ -42,6 +43,7 @@ class UpdateVerifier extends Component
 
         $user = User::find($validated['user']);
         $this->project->assignVerifier($user);
+
         unset($this->nonAssignedVerifiers);
         $this->project->refresh();
 

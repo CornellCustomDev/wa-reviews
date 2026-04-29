@@ -8,20 +8,12 @@ use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\UpdateReviewer;
 use App\Livewire\Projects\Workflow;
 use App\Models\Project;
-use App\Models\Team;
-use App\Models\User;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;
 
 class ProjectReviewerTest extends FeatureTestCase
 {
-    protected Team $team;
-
-    protected User $user;
-
-    protected $start;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -140,15 +132,31 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->assertNotNull($project->completed_at);
         $completedAt = $project->completed_at;
 
-        // ReviewComplete → CustomerResponse: should preserve completed_at
+        // ReviewComplete → VerificationReview: should preserve completed_at
         Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'next');
 
         $project->refresh();
-        $this->assertEquals(ProjectStatus::CustomerResponse, $project->status);
+        $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
         $this->assertEquals($completedAt, $project->completed_at);
 
-        // CustomerResponse → ReviewComplete: should preserve completed_at
+        // VerificationReview -> Closed: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'next');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::Closed, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // Closed -> VerificationReview: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'previous');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // VerificationReview → ReviewComplete: should preserve completed_at
         Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'previous');
 
