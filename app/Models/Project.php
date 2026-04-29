@@ -72,12 +72,14 @@ class Project extends Model
 
     public function reviewer(): HasOneThrough
     {
-        return $this->throughAssignment()->hasReviewer();
+        return $this->throughAssignment()->hasReviewer()
+            ->where('project_assignments.role', 'reviewer');
     }
 
     public function verifier(): HasOneThrough
     {
-        return $this->throughVerifierAssignment()->hasReviewer();
+        return $this->throughVerifierAssignment()->hasReviewer()
+            ->where('project_assignments.role', 'verifier');
     }
 
     public function assignments(): HasMany

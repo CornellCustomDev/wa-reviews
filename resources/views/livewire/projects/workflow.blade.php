@@ -45,31 +45,31 @@
     </flux:modal>
 
     @if($project->verifier)
-
+        <div class="mb-2">
+            @can('update-verifier', [$project, auth()->user()])
+                <div class="float-right">
+                    @can('manage-projects', $project->team)
+                        <flux:modal.trigger name="update-verifier">
+                            <x-forms.button icon="pencil-square" size="xs" title="Edit verifier" />
+                        </flux:modal.trigger>
+                    @endcan
+                    <x-forms.button.delete
+                        title="Remove {{ $project->verifier->name }} as verifier"
+                        size="xs"
+                        wire:click.prevent="removeVerifier()"
+                        wire:confirm="Are you sure you want to remove &quot;{{ $project->verifier->name }}&quot; as verifier?"
+                    />
+                </div>
+            @endcan
+            <x-forms.field-display label="Verifier">
+                {{ $project->verifier->name }}
+            </x-forms.field-display>
+        </div>
     @endif
 
     @if($project->status->isPostReview() && !$project->status->isClosed())
         <div class="mb-2">
-            @if($project->verifier)
-                @can('update-verifier', [$project, auth()->user()])
-                    <div class="float-right">
-                        @can('manage-projects', $project->team)
-                            <flux:modal.trigger name="update-verifier">
-                                <x-forms.button icon="pencil-square" size="xs" title="Edit verifier" />
-                            </flux:modal.trigger>
-                        @endcan
-                        <x-forms.button.delete
-                            title="Remove {{ $project->verifier->name }} as verifier"
-                            size="xs"
-                            wire:click.prevent="removeVerifier"
-                            wire:confirm="Are you sure you want to remove &quot;{{ $project->verifier->name }}&quot; as verifier?"
-                        />
-                    </div>
-                @endcan
-                <x-forms.field-display label="Verifier">
-                    {{ $project->verifier->name }}
-                </x-forms.field-display>
-            @else
+            @empty($project->verifier)
                 @can('update-verifier', [$project, auth()->user()])
                     @can('manage-projects', $project->team)
                         <flux:modal.trigger name="update-verifier">

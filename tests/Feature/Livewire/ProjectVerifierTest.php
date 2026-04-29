@@ -139,4 +139,24 @@ class ProjectVerifierTest extends FeatureTestCase
             ->assertForbidden()
             ->assertNotDispatched('close-update-verifier');
     }
+
+    #[Test]
+    public function team_admin_can_remove_verifier()
+    {
+        $admin = $this->getLoggedInTestUser([Roles::TeamAdmin]);
+        $team = $admin->teams()->first();
+        $verifier = $this->makeTestUser([Roles::Reviewer], $team);
+
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::ReviewComplete,
+        ]);
+        $project->assignVerifier($verifier);
+
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('removeVerifier')
+            ->assertDispatched('refresh-project');
+
+        $this->assertNull($project->fresh()->verifier);
+    }
 }
