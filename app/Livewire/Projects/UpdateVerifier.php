@@ -4,6 +4,7 @@ namespace App\Livewire\Projects;
 
 use App\Enums\Roles;
 use App\Models\Project;
+use App\Models\ProjectAssignment;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
@@ -36,7 +37,7 @@ class UpdateVerifier extends Component
                 'exists:users,id',
                 Rule::unique('project_assignments', 'user_id')
                     ->where('project_id', $this->project->id)
-                    ->where('role', 'verifier')
+                    ->where('role', ProjectAssignment::VERIFIER)
                     ->whereNull('deleted_at'),
             ],
         ]);

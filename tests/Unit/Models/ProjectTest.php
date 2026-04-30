@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
+use App\Models\ProjectAssignment;
 use App\Models\User;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -24,7 +25,7 @@ class ProjectTest extends TestCase
         $project = self::setupProject($team, $user, isReviewer: true, status: ProjectStatus::ReviewComplete);
 
         // Create and soft-delete a verifier assignment, leaving only a deleted row
-        $assignment = $project->verifierAssignment()->create(['user_id' => $verifier->id, 'role' => 'verifier']);
+        $assignment = $project->verifierAssignment()->create(['user_id' => $verifier->id, 'role' => ProjectAssignment::VERIFIER]);
         $assignment->delete();
         $project->refresh();
 

@@ -59,27 +59,27 @@ class Project extends Model
     public function assignment(): HasOne
     {
         return $this->hasOne(ProjectAssignment::class, 'project_id')
-            ->where('role', 'reviewer')
+            ->where('role', ProjectAssignment::REVIEWER)
             ->with(['reviewer:id,name,email']);
     }
 
     public function verifierAssignment(): HasOne
     {
         return $this->hasOne(ProjectAssignment::class, 'project_id')
-            ->where('role', 'verifier')
+            ->where('role', ProjectAssignment::VERIFIER)
             ->with(['reviewer:id,name,email']);
     }
 
     public function reviewer(): HasOneThrough
     {
         return $this->throughAssignment()->hasReviewer()
-            ->where('project_assignments.role', 'reviewer');
+            ->where('project_assignments.role', ProjectAssignment::REVIEWER);
     }
 
     public function verifier(): HasOneThrough
     {
         return $this->throughVerifierAssignment()->hasReviewer()
-            ->where('project_assignments.role', 'verifier');
+            ->where('project_assignments.role', ProjectAssignment::VERIFIER);
     }
 
     public function assignments(): HasMany
@@ -121,12 +121,13 @@ class Project extends Model
         ProjectAssignment::create([
             'project_id' => $this->id,
             'user_id' => $user->id,
-            'role' => 'reviewer',
+            'role' => ProjectAssignment::REVIEWER,
         ]);
 
         $delta = [
             'user_id' => $user->id,
             'user_name' => $user->name,
+            'role' => ProjectAssignment::REVIEWER,
         ];
         event(new ProjectChanged($this, 'assigned', $delta));
 
@@ -156,12 +157,13 @@ class Project extends Model
         ProjectAssignment::create([
             'project_id' => $this->id,
             'user_id' => $user->id,
-            'role' => 'verifier',
+            'role' => ProjectAssignment::VERIFIER,
         ]);
 
         $delta = [
             'user_id' => $user->id,
             'user_name' => $user->name,
+            'role' => ProjectAssignment::VERIFIER,
         ];
         event(new ProjectChanged($this, 'verifier assigned', $delta));
 
@@ -285,7 +287,7 @@ class Project extends Model
         $query
             ->leftJoin('project_assignments as reviewer_pa', function ($join) {
                 $join->on('reviewer_pa.project_id', '=', 'projects.id')
-                    ->where('reviewer_pa.role', '=', 'reviewer')
+                    ->where('reviewer_pa.role', '=', ProjectAssignment::REVIEWER)
                     ->whereNull('reviewer_pa.deleted_at');
             })
             ->leftJoin('users as reviewer', 'reviewer_pa.user_id', '=', 'reviewer.id');
@@ -297,7 +299,7 @@ class Project extends Model
         $query
             ->leftJoin('project_assignments as verifier_pa', function ($join) {
                 $join->on('verifier_pa.project_id', '=', 'projects.id')
-                    ->where('verifier_pa.role', '=', 'verifier')
+                    ->where('verifier_pa.role', '=', ProjectAssignment::VERIFIER)
                     ->whereNull('verifier_pa.deleted_at');
             })
             ->leftJoin('users as verifier', 'verifier_pa.user_id', '=', 'verifier.id');

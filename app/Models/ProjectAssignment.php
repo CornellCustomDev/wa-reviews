@@ -13,6 +13,9 @@ class ProjectAssignment extends Model
     use HasTimestamps;
     use SoftDeletes;
 
+    public const string REVIEWER = 'reviewer';
+    public const string VERIFIER = 'verifier';
+
     protected $fillable = ['project_id', 'user_id', 'role'];
 
     public static function boot(): void

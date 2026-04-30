@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
 use App\Models\Project;
+use App\Models\ProjectAssignment;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -61,23 +62,23 @@ trait TestDatabase
         if ($isReviewer) {
             $project->assignment()->create([
                 'user_id' => $user->id,
-                'role' => 'reviewer',
+                'role' => ProjectAssignment::REVIEWER,
             ]);
         } elseif ($hasReviewer) {
             $project->assignment()->create([
                 'user_id' => User::factory()->create()->id,
-                'role' => 'reviewer',
+                'role' => ProjectAssignment::REVIEWER,
             ]);
         }
         if ($isVerifier) {
             $project->verifierAssignment()->create([
                 'user_id' => $user->id,
-                'role' => 'verifier',
+                'role' => ProjectAssignment::VERIFIER,
             ]);
         } elseif ($hasVerifier) {
             $project->verifierAssignment()->create([
                 'user_id' => User::factory()->create()->id,
-                'role' => 'verifier',
+                'role' => ProjectAssignment::VERIFIER,
             ]);
         }
         if ($isReportViewer) {
