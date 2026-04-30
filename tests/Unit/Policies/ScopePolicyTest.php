@@ -148,6 +148,9 @@ class ScopePolicyTest extends TestCase
     {
         // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::NotStarted, true, 'Site admin can delete not-started scope'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::NotStarted, true, 'Team admin can delete not-started scope'],
+
             [Roles::SiteAdmin, false, false, false, false, ProjectStatus::InProgress, true, 'Site admin can delete in-progress scope'],
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::InProgress, true, 'Team admin can delete in-progress scope'],
             [Roles::Reviewer, true, true, false, false, ProjectStatus::InProgress, true, 'Reviewer can delete in-progress scope'],

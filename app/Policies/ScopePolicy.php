@@ -24,17 +24,20 @@ class ScopePolicy
             return $project->isVerifier($user) && $user->can('edit-projects', $project->team);
         }
 
-        return $project->isInProgress() && $user->can('update', $project);
+        return ($project->isNotStarted() || $project->isInProgress())
+            && $user->can('update', $project);
     }
 
     public function update(User $user, Scope $scope): bool
     {
-        return $scope->project->isInProgress() && $user->can('update', $scope->project);
+        return ($scope->project->isNotStarted() || $scope->project->isInProgress())
+            && $user->can('update', $scope->project);
     }
 
     public function delete(User $user, Scope $scope): bool
     {
-        return $scope->project->isInProgress() && $user->can('update', $scope->project);
+        return ($scope->project->isNotStarted() || $scope->project->isInProgress())
+            && $user->can('update', $scope->project);
     }
 
     public function restore(User $user, Scope $scope): bool
