@@ -146,6 +146,7 @@ class Project extends Model
         $delta = [
             'user_id' => $reviewer->id,
             'user_name' => $reviewer->name,
+            'role' => $reviewer->role,
         ];
         event(new ProjectChanged($this, 'unassigned', $delta));
     }
@@ -182,6 +183,7 @@ class Project extends Model
         $delta = [
             'user_id' => $verifier->id,
             'user_name' => $verifier->name,
+            'role' => $verifier->role,
         ];
         event(new ProjectChanged($this, 'verifier unassigned', $delta));
     }
