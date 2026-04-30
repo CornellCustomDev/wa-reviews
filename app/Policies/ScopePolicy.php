@@ -20,17 +20,21 @@ class ScopePolicy
 
     public function create(User $user, Project $project): bool
     {
-        return $user->can('update', $project);
+        if ($project->isInVerification()) {
+            return $project->isVerifier($user) && $user->can('edit-projects', $project->team);
+        }
+
+        return $project->isActive() && $user->can('update', $project);
     }
 
     public function update(User $user, Scope $scope): bool
     {
-        return $user->can('update', $scope->project);
+        return $scope->project->isActive() && $user->can('update', $scope->project);
     }
 
     public function delete(User $user, Scope $scope): bool
     {
-        return $user->can('update', $scope->project);
+        return $scope->project->isActive() && $user->can('update', $scope->project);
     }
 
     public function restore(User $user, Scope $scope): bool

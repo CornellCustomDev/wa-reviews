@@ -6,6 +6,7 @@ use App\Livewire\Scopes\AddScope;
 use App\Livewire\Scopes\CreateScope;
 use App\Livewire\Scopes\ShowScope;
 use App\Livewire\Scopes\UpdateScope;
+use App\Livewire\Scopes\ViewScopes;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Models\Team;
@@ -122,5 +123,21 @@ class ScopeTest extends FeatureTestCase
             ->set('form.notes', 'This is an updated scope')
             ->call('save')
             ->assertForbidden();
+    }
+
+    #[Test] public function reviewer_can_delete_scope()
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $project = Project::factory()->create(['team_id' => $team->id]);
+        $project->assignToUser($user);
+        $scope = Scope::factory()->create([
+            'project_id' => $project->id,
+            'title' => 'Test Scope',
+        ]);
+
+        Livewire::test(ViewScopes::class, ['project' => $scope->project])
+            ->call('delete', $scope)
+            ->assertDispatched('refresh-scopes');
     }
 }

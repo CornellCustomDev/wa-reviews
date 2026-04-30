@@ -34,9 +34,9 @@
         </div>
     </div>
 
-    @if($project->isInProgress() || $project->isCompleted())
+    @unless($project->isNotStarted())
         <x-forms.button :href="route('project.report', $project)">
             View {{ $project->isInProgress() ? 'Draft' : '' }} Report
         </x-forms.button>
-    @endif
+    @endunless
 </div>

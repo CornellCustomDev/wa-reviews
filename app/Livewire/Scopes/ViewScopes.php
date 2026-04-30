@@ -45,7 +45,9 @@ class ViewScopes extends Component
 
     public function delete(Scope $scope): void
     {
-        $this->authorize('update', $scope->project);
+        $this->authorize('delete', $scope);
+
+        $this->dispatch('refresh-scopes');
         $scope->delete();
     }
 }

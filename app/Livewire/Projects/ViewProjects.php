@@ -40,7 +40,19 @@ class ViewProjects extends Component
         $pageName = 'my-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
         $query = Project::myProjects(auth()->user())
-            ->with(['reviewer']);
+            ->with(['reviewer', 'verifier']);
+
+        return $this->sortQuery($query, $pageName)
+            ->paginate(10, pageName: $pageName);
+    }
+
+    #[Computed]
+    public function reviewedProjects(): LengthAwarePaginator
+    {
+        $pageName = 'reviewed-page';
+        $this->setSortDefaults($pageName, 'created_at', 'desc');
+        $query = Project::reviewedProjects(auth()->user())
+            ->with(['reviewer', 'verifier']);
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
@@ -51,8 +63,8 @@ class ViewProjects extends Component
     {
         $pageName = 'completed-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
-        $query = Project::completedProjects(auth()->user())
-            ->with(['reviewer']);
+        $query = Project::closedProjects(auth()->user())
+            ->with(['reviewer', 'verifier']);
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
@@ -68,8 +80,9 @@ class ViewProjects extends Component
     public function getTeamsWithCreateProjectPermission(): Collection
     {
         $user = auth()->user();
+
         return Team::get()
-            ->filter(fn(Team $team) => $user->can('create-projects', $team))
+            ->filter(fn (Team $team) => $user->can('create-projects', $team))
             ->sortBy('name');
     }
 

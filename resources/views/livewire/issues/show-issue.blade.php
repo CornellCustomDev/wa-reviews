@@ -1,9 +1,11 @@
 <div>
     <div class="cwd-component align-right">
         @if($issue->scope)
-            <x-forms.button.back :href="route('scope.show', $issue->scope)" title="Back to Scope" />
+            <x-forms.button.back :href="route('scope.show', $issue->scope)" title="Back to Scope"/>
         @else
-            <x-forms.button.back :href="route('project.show', ['project' => $issue->project, 'tab' => 'issues'])" title="Back to Project" />
+            <x-forms.button.back
+                :href="route('project.show', ['project' => $issue->project, 'tab' => 'issues'])"
+                title="Back to Project"/>
         @endif
     </div>
 
@@ -13,16 +15,21 @@
         @endif
     </h1>
 
-    <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4 mb-8 min-h-16" x-data="{ edit: $wire.entangle('showEdit').live }">
+    <div class="col-span-2 border rounded-sm border-cds-gray-200 p-4 mb-8 min-h-16"
+         x-data="{ edit: $wire.entangle('showEdit').live }">
         <div class="float-right">
-            @if($issue->project->isCompleted())
+            @if($issue->project->hasBeenReviewed())
                 <livewire:issues.update-status :issue="$issue"/>
             @else
                 @can('update', $issue)
-                    <x-forms.button icon="pencil-square" x-show="!edit" x-on:click="edit = !edit" title="Edit issue" />
-                    <x-forms.button icon="x-mark" x-cloak class="secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing issue" />
+                    <x-forms.button icon="pencil-square" x-show="!edit" x-on:click="edit = !edit"
+                                    title="Edit issue"/>
+                    <x-forms.button icon="x-mark" x-cloak class="secondary" x-show="edit"
+                                    x-on:click="edit = !edit" title="Cancel editing issue"/>
 
-                    <x-forms.button icon="document-duplicate" x-show="!edit" wire:click="clone" wire:confirm="Do you want to create a new issue based on this one?" title="Duplicate issue" />
+                    <x-forms.button icon="document-duplicate" x-show="!edit" wire:click="clone"
+                                    wire:confirm="Do you want to create a new issue based on this one?"
+                                    title="Duplicate issue"/>
                 @endcan
             @endif
         </div>
@@ -33,15 +40,16 @@
                     <a href="{{ route('scope.show', $issue->scope) }}">{{ $issue->scope->title }}</a>
                     @if($issue->scope->url)
                         (<a href="{{ $issue->scope->url }}" target="_blank">{{ $issue->scope->url }}</a>
-                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />)
+                        <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro"/>)
                     @endif
                 </x-forms.field-display>
             @endif
             @if($issue->siaRule)
                 <flux:subheading class="items-center">
-                    <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue->siaRule->id }}/failed" target="_blank">
+                    <a href="{{ $this->siteimproveUrl() }}#/sia-r{{ $issue->siaRule->id }}/failed"
+                       target="_blank">
                         Siteimprove Issue Detail
-                        <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1" />
+                        <flux:icon.clipboard-document-list class="inline-block text-cds-gray-700 -mt-1"/>
                     </a>
                 </flux:subheading>
             @endif
@@ -62,7 +70,9 @@
                             <flux:subheading class="items-center">
                                 <a href="{{ $imagePath }}" target="_blank">
                                     Image {{ $loop->iteration }}
-                                </a> <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
+                                </a>
+                                <flux:icon.arrow-top-right-on-square class="inline-block -mt-1"
+                                                                     variant="micro"/>
                             </flux:subheading>
                             @continue
                         @endif
@@ -71,21 +81,24 @@
                         @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
                         @if(in_array($fileType, ['pdf', 'eml']))
                             <div class="max-w-60 bg-black/60 text-white text-center p-2">
-                                <a href="{{ $imagePath }}" class="text-white" target="_blank" rel="noopener noreferrer">
+                                <a href="{{ $imagePath }}" class="text-white" target="_blank"
+                                   rel="noopener noreferrer">
                                     <i class="fa fa-file"></i> {{ $imageName }}
                                 </a>
                             </div>
                         @else
                             @if(in_array($fileType, ['mp4', 'webm']))
                                 <div class="relative">
-                                <video src="{{ $imagePath }}" class="max-w-60" controls></video>
-                                <div class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
-                                    {{ $imageName }}
-                                </div>
+                                    <video src="{{ $imagePath }}" class="max-w-60" controls></video>
+                                    <div
+                                        class="absolute bottom-0 left-0 w-full bg-black/60 text-white text-center p-1">
+                                        {{ $imageName }}
+                                    </div>
                                 </div>
                             @else
                                 <flux:tooltip position="bottom" class="align-middle">
-                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false" class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">
+                                    <flux:button wire:click="viewImage('{{ $imagePath }}')" :loading="false"
+                                                 class="px-0.5! w-24 h-24 overflow-hidden hover:border-cds-blue-900">
                                         <div class="relative w-full h-full">
                                             <img
                                                 src="{{ $imagePath }}"
@@ -123,12 +136,15 @@
                                     wire:click="rejectAI"
                                 />
                             @elseif($issue->isAiAccepted())
-                                <flux:button icon="sparkles" size="xs" variant="ghost" class="text-cds-blue-600!"/>
+                                <flux:button icon="sparkles" size="xs" variant="ghost"
+                                             class="text-cds-blue-600!"/>
                             @endif
 
                             <flux:tooltip.content class="max-w-[20rem] space-y-2">
                                 @if($issue->hasUnreviewedAi())
-                                    <flux:heading class="text-white">This AI-generated response needs to be reviewed</flux:heading>
+                                    <flux:heading class="text-white">This AI-generated response needs to be
+                                        reviewed
+                                    </flux:heading>
                                 @endif
                                 <flux:subheading class="text-white">AI Reasoning</flux:subheading>
                                 <blockquote class="mb-0 pl-2">{!! $issue->ai_reasoning  !!}</blockquote>
@@ -137,30 +153,32 @@
                     </flux:heading>
 
                     <p>
-                    <x-forms.button
-                        data-cds-button-assessment
-                        class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
-                        size="xs"
-                        x-on:click.prevent="$dispatch('show-guideline', {number: {{ $issue->guideline->number }} })"
-                    >
-                        {{ $issue->guideline->getNumber() }}
-                    </x-forms.button>
+                        <x-forms.button
+                            data-cds-button-assessment
+                            class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
+                            size="xs"
+                            x-on:click.prevent="$dispatch('show-guideline', {number: {{ $issue->guideline->number }} })"
+                        >
+                            {{ $issue->guideline->getNumber() }}
+                        </x-forms.button>
 
-                    @if($issue->guideline->number < 100)
-                        {{ $issue->assessment->getDescription() }} for Guideline {{ $issue->guideline->number }} - {{ $issue->guideline->name }}
-                        <br>
+                        @if($issue->guideline->number < 100)
+                            {{ $issue->assessment->getDescription() }} for
+                            Guideline {{ $issue->guideline->number }} - {{ $issue->guideline->name }}
+                            <br>
                             {{ $issue->guideline->getCriterionInfo() }}
-                    @else
-                        {{ $issue->assessment->getDescription() }} for Best Practice
-                        <br>
+                        @else
+                            {{ $issue->assessment->getDescription() }} for Best Practice
+                            <br>
                             {{ $issue->guideline->name }}
-                    @endif
+                        @endif
                     </p>
                 </div>
 
                 @if($issue->impact)
                     <x-forms.field-display label="Impact" variation="inline">
-                        <flux:badge data-cds-impact class="{{ Str::of($issue->impact->value())->lower() }}" size="sm">
+                        <flux:badge data-cds-impact class="{{ Str::of($issue->impact->value())->lower() }}"
+                                    size="sm">
                             {{ $issue->impact->value() }}
                         </flux:badge>
                         {{ $issue->impact->getLongDescription() }}
@@ -176,7 +194,8 @@
 
             @if($issue->content_issue)
                 <p>
-                <flux:icon.information-circle class="inline-block text-cds-blue-600" variant="mini"/> Content entry issue
+                    <flux:icon.information-circle class="inline-block text-cds-blue-600" variant="mini"/>
+                    Content entry issue
                 </p>
             @endif
 
@@ -192,7 +211,7 @@
         </div>
 
         <div x-show="edit" x-cloak>
-            <livewire:issues.update-issue :$issue />
+            <livewire:issues.update-issue :$issue/>
         </div>
     </div>
 
@@ -208,5 +227,5 @@
 
 {{-- Sidebar for AI help --}}
 <x-slot:sidebarPrimary>
-    <livewire:issues.issue-sidebar :$issue />
+    <livewire:issues.issue-sidebar :$issue/>
 </x-slot:sidebarPrimary>

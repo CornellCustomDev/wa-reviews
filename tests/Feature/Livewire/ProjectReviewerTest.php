@@ -3,30 +3,25 @@
 namespace Tests\Feature\Livewire;
 
 use App\Enums\ProjectStatus;
+use App\Enums\Roles;
 use App\Livewire\Projects\CreateProject;
 use App\Livewire\Projects\UpdateReviewer;
 use App\Livewire\Projects\Workflow;
 use App\Models\Project;
-use App\Models\Team;
-use App\Models\User;
-use App\Enums\Roles;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;
 
 class ProjectReviewerTest extends FeatureTestCase
 {
-    protected Team $team;
-    protected User $user;
-    protected $start;
-
     protected function setUp(): void
     {
         parent::setUp();
         $this->fakeSiteimproveService();
     }
 
-    #[Test] public function reviewer_can_create_project()
+    #[Test]
+    public function reviewer_can_create_project()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -39,7 +34,8 @@ class ProjectReviewerTest extends FeatureTestCase
             ->assertRedirect(route('project.show', Project::latest()->first()));
     }
 
-    #[Test] public function reviewer_can_assign_self_as_reviewer()
+    #[Test]
+    public function reviewer_can_assign_self_as_reviewer()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -62,7 +58,8 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->assertNotContains($user->id, array_column($nonAssignedMembersAfter, 'id'));
     }
 
-    #[Test] public function reviewer_cannot_assign_others()
+    #[Test]
+    public function reviewer_cannot_assign_others()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -86,7 +83,8 @@ class ProjectReviewerTest extends FeatureTestCase
             ->assertNotDispatched('close-update-reviewer');
     }
 
-    #[Test] public function reviewer_can_update_project_status()
+    #[Test]
+    public function reviewer_can_update_project_status()
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
@@ -114,11 +112,73 @@ class ProjectReviewerTest extends FeatureTestCase
         $this->assertEquals(ProjectStatus::NotStarted, $project->fresh()->status);
     }
 
-    #[Test] public function reviewer_cannot_update_reviewer_of_completed_project()
+    #[Test]
+    public function completed_at_is_set_on_review_complete_and_preserved_through_post_review_phases(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::Completed]);
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::InProgress,
+        ]);
+        $project->assignToUser($user);
+
+        // InProgress → ReviewComplete: should set completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'next');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::ReviewComplete, $project->status);
+        $this->assertNotNull($project->completed_at);
+        $completedAt = $project->completed_at;
+
+        // ReviewComplete → VerificationReview: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'next');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // VerificationReview -> Closed: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'next');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::Closed, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // Closed -> VerificationReview: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'previous');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // VerificationReview → ReviewComplete: should preserve completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'previous');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::ReviewComplete, $project->status);
+        $this->assertEquals($completedAt, $project->completed_at);
+
+        // ReviewComplete → InProgress: should clear completed_at
+        Livewire::test(Workflow::class, ['project' => $project])
+            ->call('updateStatus', 'previous');
+
+        $project->refresh();
+        $this->assertEquals(ProjectStatus::InProgress, $project->status);
+        $this->assertNull($project->completed_at);
+    }
+
+    #[Test]
+    public function reviewer_cannot_update_reviewer_of_completed_project()
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
 
         // Attempt assign the project to the user
         Livewire::test(UpdateReviewer::class, ['project' => $project])

@@ -11,7 +11,7 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class UpdateReviewer extends Component
+class UpdateVerifier extends Component
 {
     public Project $project;
 
@@ -21,40 +21,45 @@ class UpdateReviewer extends Component
     public function nonAssignedMembers(): array
     {
         return $this->project->team->users()
-            ->get()->except($this->project->reviewer?->id ?? [])
+            ->get()->except($this->project->verifier?->id ?? [])
             ->filter(fn ($user) => $user->hasRole([Roles::Reviewer, Roles::TeamAdmin], $this->project->team->id))
             ->all();
     }
 
-    public function save()
+    public function save(): void
     {
-        $this->authorize('update-reviewer', [$this->project, User::find($this->user)]);
+        $this->authorize('update-verifier', [$this->project, User::find($this->user)]);
 
-        // Validate that the user exists and is not already assigned to the project as a reviewer
+        // Validate that the user exists and is not already assigned to the project as verifier
         $validated = $this->validate([
             'user' => [
                 'required',
                 'exists:users,id',
                 Rule::unique('project_assignments', 'user_id')
                     ->where('project_id', $this->project->id)
-                    ->where('role', ProjectAssignment::REVIEWER)
+                    ->where('role', ProjectAssignment::VERIFIER)
                     ->whereNull('deleted_at'),
             ],
         ]);
 
         $user = User::find($validated['user']);
-        $this->project->assignToUser($user);
+        $this->project->assignVerifier($user);
 
         unset($this->nonAssignedMembers);
         $this->project->refresh();
 
-        $this->dispatch('close-update-reviewer');
+        $this->dispatch('close-update-verifier');
     }
 
-    #[On('reset-update-reviewer')]
-    public function resetUpdateReviewer(): void
+    #[On('reset-update-verifier')]
+    public function resetUpdateVerifier(): void
     {
         $this->user = null;
         $this->resetValidation();
+    }
+
+    public function render()
+    {
+        return view('livewire.projects.update-verifier');
     }
 }

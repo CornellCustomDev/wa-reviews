@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\Project;
+use App\Enums\IssueStatus;
 use App\Models\Issue;
+use App\Models\Project;
 use App\Models\User;
 
 class IssuePolicy
@@ -20,26 +21,35 @@ class IssuePolicy
 
     public function create(User $user, Project $project): bool
     {
-        return $user->can('update', $project);
+        if ($project->isInVerification()) {
+            return $project->isVerifier($user) && $user->can('edit-projects', $project->team);
+        }
+
+        return $project->isInProgress() && $user->can('update', $project);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return $user->can('update', $issue->project);
+        return $issue->project->isInProgress() && $user->can('update', $issue->project);
     }
 
     public function updateStatus(User $user, Issue $issue): bool
     {
         $project = $issue->project;
 
-        // Issue status updates are only for completed projects
-        if (! $project->isCompleted()) {
+        // Only reviewed projects
+        if (! $project->hasBeenReviewed()) {
             return false;
         }
 
-        // Status updates can only be made by the reviewer, report viewer, or a team manager
+        // Report viewers can update status if the project is not in verification
+        if ($project->isReportViewer($user)) {
+            return ! $project->isInVerification();
+        }
+
+        // Updates can only be made by the reviewer, verifier, or a team manager
         return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
-            || $project->isReportViewer($user)
+            || ($project->isVerifier($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team);
     }
 
@@ -47,23 +57,25 @@ class IssuePolicy
     {
         $project = $issue->project;
 
-        // Mitigation updates are only for completed projects
-        if (! $project->isCompleted()) {
+        // Only reviewed projects
+        if (! $project->hasBeenReviewed()) {
             return false;
         }
 
-        if ($user->cannot('edit-projects', $project->team)) {
-            return false;
-        }
-
-        // Mitigation updates can only be made by the reviewer or a team manager
+        // Updates can only be made by the reviewer, verifier, or a team manager
         return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || ($project->isVerifier($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team);
     }
 
     public function delete(User $user, Issue $issue): bool
     {
-        return $user->can('update', $issue->project);
+        if ($issue->project->isInVerification() && $issue->status == IssueStatus::NewIssue) {
+            return $issue->project->isVerifier($user) && $user->can('edit-projects', $issue->project->team);
+        }
+
+        // Issues can be deleted if the project is active.
+        return $issue->project->isActive() && $user->can('update', $issue->project);
     }
 
     public function restore(User $user, Issue $issue): bool

@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Policies;
 
+use App\Enums\IssueStatus;
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
 use App\Models\Issue;
@@ -17,162 +18,197 @@ class IssuePolicyTest extends TestCase
     use TestDatabase;
 
     #[DataProvider('viewIssueProvider')]
-    #[Test] public function view_issue($role, $isTeamMember, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function view_issue($role, $isTeamMember, $isVerifier, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReportViewer: $isReportViewer, status: $status);
-        $issue = Issue::factory()->create([
-            'project_id' => $project->id,
-        ]);
+        $project = $this->setupProject($projectTeam, $user, isVerifier: $isVerifier, isReportViewer: $isReportViewer, status: $status);
+        $issue = Issue::factory()->create(['project_id' => $project->id]);
 
-        $result = (new IssuePolicy())->view($user, $issue);
+        $result = (new IssuePolicy)->view($user, $issue);
 
         $this->assertEquals($expected, $result, $description);
     }
 
     public static function viewIssueProvider(): array
     {
-        // role, isTeamMember, isReportViewer, status, expected, description
+        // role, isTeamMember, isVerifier, isReportViewer, status, expected, description
         return [
-            [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can view issue'],
-            [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can view issue'],
-            [Roles::Reviewer, true, false, ProjectStatus::NotStarted, true, 'Reviewer can view issue'],
-            [null, true, false, ProjectStatus::NotStarted, true, 'Team member can view issue'],
-            [null, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot view in-progress issue'],
-            [null, false, true, ProjectStatus::Completed, true, 'Report viewer can view completed issue'],
-            [Roles::TeamAdmin, false, false, ProjectStatus::Completed, false, 'Non-member cannot view issue'],
+            [Roles::SiteAdmin, false, false, false, ProjectStatus::NotStarted, true, 'Site admin can view issue'],
+            [Roles::TeamAdmin, true, false, false, ProjectStatus::NotStarted, true, 'Team admin can view issue'],
+            [Roles::Reviewer, true, false, false, ProjectStatus::NotStarted, true, 'Reviewer can view issue'],
+            [Roles::Reviewer, true, true, false, ProjectStatus::NotStarted, true, 'Verifier can view issue'],
+            [null, true, false, false, ProjectStatus::NotStarted, true, 'Team member can view issue'],
+            [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot view in-progress issue'],
+            [null, false, false, true, ProjectStatus::ReviewComplete, true, 'Report viewer can view ReviewComplete issue'],
+            [null, false, false, true, ProjectStatus::Closed, true, 'Report viewer can view Closed issue'],
+            [Roles::TeamAdmin, false, false, false, ProjectStatus::Closed, false, 'Non-member cannot view issue'],
         ];
     }
 
     #[DataProvider('createIssueProvider')]
-    #[Test] public function create_issue($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function create_issue($role, $isTeamMember, $isReviewer, $isVerifier, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isReportViewer: $isReportViewer, status: $status);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isVerifier: $isVerifier, isReportViewer: $isReportViewer, status: $status);
 
-        $result = (new IssuePolicy())->create($user, $project);
+        $result = (new IssuePolicy)->create($user, $project);
 
         $this->assertEquals($expected, $result, $description);
     }
 
     public static function createIssueProvider(): array
     {
-        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
+        // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, true, 'Site admin can create issue in-progress project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, true, 'Team admin can create issue in-progress project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::InProgress, true, 'Reviewer can create issue in-progress project'],
-            [null, true, false, false, ProjectStatus::InProgress, false, 'Team member cannot create issue in-progress project'],
-            [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot create issue'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot create issue'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::InProgress, true, 'Site admin can create issue in-progress'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::InProgress, true, 'Team admin can create issue in-progress'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::InProgress, true, 'Reviewer can create issue in-progress'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::InProgress, false, 'Verifier cannot create issue in-progress'],
+            [null, true, false, false, false, ProjectStatus::InProgress, false, 'Team member cannot create issue'],
+            [null, false, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot create issue'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, false, 'Site admin cannot create issue in completed project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, false, 'Team admin cannot create issue in completed project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, false, 'Reviewer cannot create issue in completed project'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot create issue in ReviewComplete'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::ReviewComplete, false, 'Verifier cannot create issue in ReviewComplete'],
+            [null, false, false, false, true, ProjectStatus::ReviewComplete, false, 'Report viewer cannot create issue'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot create issue in ReviewComplete'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot create issue in ReviewComplete'],
+
+            [Roles::Reviewer, true, false, false, false, ProjectStatus::VerificationReview, false, 'Reviewer cannot create issue in VerificationReview'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can create issue in VerificationReview'],
+            [null, false, false, false, true, ProjectStatus::VerificationReview, false, 'Report viewer cannot create issue in VerificationReview'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::VerificationReview, false, 'Site admin cannot create issue in VerificationReview'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::VerificationReview, false, 'Team admin cannot create issue in VerificationReview'],
+
         ];
     }
 
     #[DataProvider('deleteIssueProvider')]
-    #[Test] public function delete_issue($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function delete_issue($role, $isTeamMember, $isReviewer, $isVerifier, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isReportViewer: $isReportViewer, status: $status);
-        $issue = Issue::factory()->create([
-            'project_id' => $project->id,
-        ]);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isVerifier: $isVerifier, isReportViewer: $isReportViewer, status: $status);
+        $issue = Issue::factory()->create(['project_id' => $project->id]);
 
-        $result = (new IssuePolicy())->delete($user, $issue);
+        $result = (new IssuePolicy)->delete($user, $issue);
 
         $this->assertEquals($expected, $result, $description);
     }
 
     public static function deleteIssueProvider(): array
     {
-        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
+        // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, true, 'Site admin can delete in-progress issue'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, true, 'Team admin can delete in-progress issue'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::InProgress, true, 'Reviewer can delete in-progress issue'],
-            [Roles::Reviewer, true, false, false, ProjectStatus::InProgress, false, 'Team member cannot delete in-progress issue'],
-            [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot delete issue'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot delete issue'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::InProgress, true, 'Site admin can delete in-progress issue'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::InProgress, true, 'Team admin can delete in-progress issue'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::InProgress, true, 'Reviewer can delete in-progress issue'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::InProgress, false, 'Verifier cannot delete in-progress issue'],
+            [Roles::Reviewer, true, false, false, false, ProjectStatus::InProgress, false, 'Non-assigned reviewer cannot delete'],
+            [null, false, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot delete issue'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, false, 'Site admin cannot delete completed issue'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, false, 'Team admin cannot delete completed issue'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, false, 'Reviewer cannot delete completed issue'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot delete ReviewComplete issue'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot delete ReviewComplete issue'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot delete ReviewComplete issue'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::ReviewComplete, false, 'Verifier cannot delete ReviewComplete issue'],
+
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::VerificationReview, false, 'Site admin cannot delete VerificationReview issue'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::VerificationReview, false, 'Team admin cannot delete VerificationReview issue'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, false, 'Reviewer cannot delete VerificationReview issue'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, false, 'Verifier cannot delete VerificationReview issue'],
         ];
     }
 
-    #[DataProvider('updateIssueStatusProvider')]
-    #[Test] public function update_issue_status($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function verifier_can_delete_new_issue_in_verification()
     {
         $user = User::factory()->create();
-        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isReportViewer: $isReportViewer, status: $status);
-        $issue = Issue::factory()->create([
-            'project_id' => $project->id,
-        ]);
+        $projectTeam = $this->setupTeam($user, true, Roles::Reviewer);
+        $project = $this->setupProject($projectTeam, $user, isVerifier: true, status: ProjectStatus::VerificationReview);
+        $issue = Issue::factory()->create(['project_id' => $project->id, 'status' => IssueStatus::NewIssue]);
 
-        $result = (new IssuePolicy())->updateStatus($user, $issue);
+        $result = (new IssuePolicy)->delete($user, $issue);
+
+        $this->assertTrue($result);
+    }
+
+    #[DataProvider('updateIssueStatusProvider')]
+    #[Test]
+    public function update_issue_status(
+        ?Roles $role, bool $isTeamMember, bool $isReviewer, bool $isVerifier,
+        bool $isReportViewer, ProjectStatus $status, bool $expected, string $description
+    ) {
+        $user = User::factory()->create();
+        $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isVerifier: $isVerifier, isReportViewer: $isReportViewer, status: $status);
+        $issue = Issue::factory()->create(['project_id' => $project->id]);
+
+        $result = (new IssuePolicy)->updateStatus($user, $issue);
 
         $this->assertEquals($expected, $result, $description);
     }
 
     public static function updateIssueStatusProvider(): array
     {
-        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
+        // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, true, 'Site admin can update issue status in completed project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, true, 'Team admin can update issue status in completed project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, true, 'Reviewer can update issue status in completed project'],
-            [null, true, false, false, ProjectStatus::Completed, false, 'Team member cannot update issue status in completed project'],
-            [null, false, false, true, ProjectStatus::Completed, true, 'Report viewer can update issue status in completed project'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::Completed, false, 'Non-member cannot update issue status'],
+            // ReviewComplete — reviewer, viewer, report viewer and team admin only
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, true, 'Reviewer can update status in ReviewComplete'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::ReviewComplete, true, 'Verifier can update status in ReviewComplete'],
+            [null, false, false, false, true, ProjectStatus::ReviewComplete, true, 'Report viewer can update status in ReviewComplete'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'TeamAdmin can update status in ReviewComplete'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, true, 'SiteAdmin can update status in ReviewComplete'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, false, 'Site admin cannot update issue status in in-progress project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, false, 'Team admin cannot update issue status in in-progress project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::InProgress, false, 'Reviewer cannot update issue status in in-progress project'],
-            [null, true, false, false, ProjectStatus::InProgress, false, 'Team member cannot update issue status in in-progress project'],
-            [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot update issue status in in-progress project'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot update issue status in in-progress project'],
+            // VerificationReview — reviewer, verifier, team admin
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, true, 'Reviewer can update status in VerificationReview'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can update status in VerificationReview'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::VerificationReview, true, 'TeamAdmin can update status in VerificationReview'],
+            [null, false, false, false, true, ProjectStatus::VerificationReview, false, 'Report viewer cannot update status in VerificationReview'],
+
+            // Active phases — nobody
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::InProgress, false, 'Site admin cannot update status in InProgress'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::InProgress, false, 'TeamAdmin cannot update status in InProgress'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::InProgress, false, 'Reviewer cannot update status in InProgress'],
+
+            // Closed — nobody
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::Closed, false, 'Site admin cannot update status in Closed'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::Closed, false, 'TeamAdmin cannot update status in Closed'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::Closed, false, 'Reviewer cannot update status in Closed'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::Closed, false, 'Verifier cannot update status in Closed'],
+            [null, false, false, false, true, ProjectStatus::Closed, false, 'Report viewer cannot update status in Closed'],
         ];
     }
 
     #[DataProvider('updateIssueNeedsMitigationProvider')]
-    #[Test] public function update_issue_needs_mitigation($role, $isTeamMember, $isReviewer, $isReportViewer, $status, $expected, $description)
+    #[Test]
+    public function update_issue_needs_mitigation($role, $isTeamMember, $isReviewer, $isVerifier, $isReportViewer, $status, $expected, $description)
     {
         $user = User::factory()->create();
         $projectTeam = $this->setupTeam($user, $isTeamMember, $role);
-        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isReportViewer: $isReportViewer, status: $status);
-        $issue = Issue::factory()->create([
-            'project_id' => $project->id,
-        ]);
+        $project = $this->setupProject($projectTeam, $user, isReviewer: $isReviewer, isVerifier: $isVerifier, isReportViewer: $isReportViewer, status: $status);
+        $issue = Issue::factory()->create(['project_id' => $project->id]);
 
-        $result = (new IssuePolicy())->updateNeedsMitigation($user, $issue);
+        $result = (new IssuePolicy)->updateNeedsMitigation($user, $issue);
 
         $this->assertEquals($expected, $result, $description);
     }
 
     public static function updateIssueNeedsMitigationProvider(): array
     {
-        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
+        // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::Completed, true, 'Site admin can update needs mitigation in completed project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::Completed, true, 'Team admin can update needs mitigation in completed project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::Completed, true, 'Reviewer can update needs mitigation in completed project'],
-            [null, true, false, false, ProjectStatus::Completed, false, 'Team member cannot update needs mitigation in completed project'],
-            [null, false, false, true, ProjectStatus::Completed, false, 'Report viewer cannot update needs mitigation in completed project'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::Completed, false, 'Non-member cannot update needs mitigation'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, true, 'Site admin can update mitigation in ReviewComplete'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'TeamAdmin can update mitigation in ReviewComplete'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, true, 'Reviewer can update mitigation in ReviewComplete'],
+            [null, true, false, false, false, ProjectStatus::ReviewComplete, false, 'Team member cannot update mitigation'],
+            [null, false, false, false, true, ProjectStatus::ReviewComplete, false, 'Report viewer cannot update mitigation'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, false, 'Site admin cannot update needs mitigation in in-progress project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, false, 'Team admin cannot update needs mitigation in in-progress project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::InProgress, false, 'Reviewer cannot update needs mitigation in in-progress project'],
-            [null, true, false, false, ProjectStatus::InProgress, false, 'Team member cannot update needs mitigation in in-progress project'],
-            [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot update needs mitigation in in-progress project'],
-            [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot update needs mitigation in in-progress project'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::InProgress, false, 'Site admin cannot update mitigation in InProgress'],
+            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::InProgress, false, 'TeamAdmin cannot update mitigation in InProgress'],
         ];
     }
 }

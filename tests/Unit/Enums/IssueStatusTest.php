@@ -3,6 +3,7 @@
 namespace Tests\Unit\Enums;
 
 use App\Enums\IssueStatus;
+use App\Enums\ProjectStatus;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -21,9 +22,9 @@ class IssueStatusTest extends TestCase
     {
         $this->assertSame('Reviewed', IssueStatus::Reviewed->label());
         $this->assertSame('Fixed', IssueStatus::Fixed->label());
-        $this->assertSame('Not Being Fixed', IssueStatus::WontFix->label());
-        $this->assertSame('False Positive', IssueStatus::FalsePositive->label());
-        $this->assertSame('Verified Fixed', IssueStatus::Verified->label());
+        $this->assertSame('Not being fixed', IssueStatus::WontFix->label());
+        $this->assertSame('False positive', IssueStatus::FalsePositive->label());
+        $this->assertSame('Verified fixed', IssueStatus::Verified->label());
     }
 
     #[Test] public function to_select_array_uses_snake_case_value_and_label_for_option(): void
@@ -32,17 +33,51 @@ class IssueStatusTest extends TestCase
 
         $reviewed = collect($array)->firstWhere('value', 'reviewed');
         $this->assertNotNull($reviewed, 'reviewed entry missing');
-        $this->assertSame('Reviewed', $reviewed['option']);
+        $this->assertSame('reviewed', $reviewed['value']);
         $this->assertSame('Reviewed', $reviewed['label']);
 
         $wontFix = collect($array)->firstWhere('value', 'not_being_fixed');
         $this->assertNotNull($wontFix, 'not_being_fixed entry missing');
-        $this->assertSame('Not Being Fixed', $wontFix['option']);
-        $this->assertSame('Not Being Fixed', $wontFix['label']);
+        $this->assertSame('not_being_fixed', $wontFix['value']);
+        $this->assertSame('Not being fixed', $wontFix['label']);
 
         $verified = collect($array)->firstWhere('value', 'verified_fixed');
         $this->assertNotNull($verified, 'verified_fixed entry missing');
-        $this->assertSame('Verified Fixed', $verified['option']);
-        $this->assertSame('Verified Fixed', $verified['label']);
+        $this->assertSame('verified_fixed', $verified['value']);
+        $this->assertSame('Verified fixed', $verified['label']);
+    }
+
+    #[Test]
+    public function for_phase_review_complete(): void
+    {
+        $options = IssueStatus::forPhase(ProjectStatus::ReviewComplete);
+        $values = array_column($options, 'value');
+        $this->assertContains('reviewed', $values);
+        $this->assertContains('fixed', $values);
+        $this->assertContains('false_positive', $values);
+        $this->assertContains('not_being_fixed', $values);
+        $this->assertNotContains('verified_fixed', $values);
+        $this->assertNotContains('not_fixed', $values);
+        $this->assertNotContains('new_issue', $values);
+    }
+
+    #[Test]
+    public function for_phase_verification_review(): void
+    {
+        $options = IssueStatus::forPhase(ProjectStatus::VerificationReview);
+        $values = array_column($options, 'value');
+        $this->assertContains('verified_fixed', $values);
+        $this->assertContains('not_fixed', $values);
+        $this->assertContains('new_issue', $values);
+        $this->assertContains('reviewed', $values);
+        $this->assertContains('fixed', $values);
+        $this->assertContains('false_positive', $values);
+        $this->assertContains('not_being_fixed', $values);
+    }
+
+    #[Test]
+    public function wont_fix_case_renamed_to_not_being_fixed(): void
+    {
+        $this->assertEquals('not_being_fixed', IssueStatus::WontFix->value);
     }
 }

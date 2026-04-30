@@ -35,7 +35,7 @@
             <x-forms.select
                 label="Status"
                 wire:model="status"
-                :options="\App\Enums\IssueStatus::toSelectArray()"
+                :options="$this->allowedStatuses"
                 required
             />
 

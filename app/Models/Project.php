@@ -31,7 +31,6 @@ class Project extends Model
         'siteimprove_id',
         'status',
         'completed_at',
-        'assignment_id',
         'responsible_unit',
         'contact_name',
         'contact_netid',
@@ -59,18 +58,33 @@ class Project extends Model
 
     public function assignment(): HasOne
     {
-        return $this->hasOne(
-            related: ProjectAssignment::class,
-            foreignKey: 'project_id',
-            localKey: 'id'
-        )->with([
-            'reviewer:id,name,email',
-        ]);
+        return $this->hasOne(ProjectAssignment::class, 'project_id')
+            ->where('role', ProjectAssignment::REVIEWER)
+            ->with(['reviewer:id,name,email']);
+    }
+
+    public function verifierAssignment(): HasOne
+    {
+        return $this->hasOne(ProjectAssignment::class, 'project_id')
+            ->where('role', ProjectAssignment::VERIFIER)
+            ->with(['reviewer:id,name,email']);
     }
 
     public function reviewer(): HasOneThrough
     {
-        return $this->throughAssignment()->hasReviewer();
+        return $this->throughAssignment()->hasReviewer()
+            ->where('project_assignments.role', ProjectAssignment::REVIEWER);
+    }
+
+    public function verifier(): HasOneThrough
+    {
+        return $this->throughVerifierAssignment()->hasReviewer()
+            ->where('project_assignments.role', ProjectAssignment::VERIFIER);
+    }
+
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(ProjectAssignment::class, 'project_id');
     }
 
     public function issues(): HasMany
@@ -102,28 +116,21 @@ class Project extends Model
 
     public function assignToUser(User $user): void
     {
-        // We need to first remove the existing assignment
         $this->unassign();
 
-        // TODO: Can do this as `$project->assignment()->create(['user_id' => $user?->id]);`
-
-        // Create an assignment
-        $assignment = ProjectAssignment::create([
+        ProjectAssignment::create([
             'project_id' => $this->id,
             'user_id' => $user->id,
+            'role' => ProjectAssignment::REVIEWER,
         ]);
 
-        // Reference the assignment from the project
-        $this->assignment_id = $assignment->id;
-        $this->save();
-
         $delta = [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'user_name' => $user->name,
+            'role' => ProjectAssignment::REVIEWER,
         ];
         event(new ProjectChanged($this, 'assigned', $delta));
 
-        // Make sure anything using this object gets the new assignment
         $this->refresh();
     }
 
@@ -138,15 +145,58 @@ class Project extends Model
         $this->assignment->delete();
 
         $delta = [
-            'user_id'   => $reviewer->id,
+            'user_id' => $reviewer->id,
             'user_name' => $reviewer->name,
+            'role' => $reviewer->role,
         ];
         event(new ProjectChanged($this, 'unassigned', $delta));
+    }
+
+    public function assignVerifier(User $user): void
+    {
+        $this->unassignVerifier();
+
+        ProjectAssignment::create([
+            'project_id' => $this->id,
+            'user_id' => $user->id,
+            'role' => ProjectAssignment::VERIFIER,
+        ]);
+
+        $delta = [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'role' => ProjectAssignment::VERIFIER,
+        ];
+        event(new ProjectChanged($this, 'verifier assigned', $delta));
+
+        $this->refresh();
+    }
+
+    public function unassignVerifier(): void
+    {
+        $verifier = $this->verifierAssignment?->reviewer;
+        if (empty($verifier)) {
+            return;
+        }
+
+        $this->verifierAssignment->delete();
+
+        $delta = [
+            'user_id' => $verifier->id,
+            'user_name' => $verifier->name,
+            'role' => $verifier->role,
+        ];
+        event(new ProjectChanged($this, 'verifier unassigned', $delta));
     }
 
     public function isReviewer(User $user): bool
     {
         return $user->id === $this->reviewer?->id;
+    }
+
+    public function isVerifier(User $user): bool
+    {
+        return $user->id === $this->verifier?->id;
     }
 
     public function isNotStarted(): bool
@@ -159,9 +209,29 @@ class Project extends Model
         return $this->status->isInProgress();
     }
 
-    public function isCompleted(): bool
+    public function isActive(): bool
     {
-        return $this->status->isCompleted();
+        return $this->status->isActive();
+    }
+
+    public function isReviewComplete(): bool
+    {
+        return $this->status->isReviewComplete();
+    }
+
+    public function hasBeenReviewed(): bool
+    {
+        return $this->status->hasBeenReviewed();
+    }
+
+    public function isInVerification(): bool
+    {
+        return $this->status->isInVerification();
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->status->isClosed();
     }
 
     public function addReportViewer(User $user): void
@@ -174,7 +244,7 @@ class Project extends Model
         $this->reportViewers()->attach($user->id);
 
         $delta = [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'user_name' => $user->name,
         ];
         event(new ProjectChanged($this, 'added viewer', $delta));
@@ -185,7 +255,7 @@ class Project extends Model
         $this->reportViewers()->detach($user->id);
 
         $delta = [
-            'user_id'   => $user->id,
+            'user_id' => $user->id,
             'user_name' => $user->name,
         ];
         event(new ProjectChanged($this, 'removed viewer', $delta));
@@ -206,13 +276,11 @@ class Project extends Model
     protected function visibleTo(Builder $query, User $user): void
     {
         if ($user->isAdministrator()) {
-            return; // Admins can see all projects
+            return;
         }
 
         $query->where(function (Builder $query) use ($user) {
-            // Projects in the user's teams
             $query->whereIn('team_id', $user->teams->pluck('id'));
-            // Projects where the user is a report viewer
             $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
         });
     }
@@ -221,9 +289,24 @@ class Project extends Model
     protected function withReviewer(Builder $query): void
     {
         $query
-            ->leftJoin('project_assignments', 'projects.assignment_id', '=', 'project_assignments.id')
-            ->leftJoin('users as reviewer', 'project_assignments.user_id', '=', 'reviewer.id')
-        ;
+            ->leftJoin('project_assignments as reviewer_pa', function ($join) {
+                $join->on('reviewer_pa.project_id', '=', 'projects.id')
+                    ->where('reviewer_pa.role', '=', ProjectAssignment::REVIEWER)
+                    ->whereNull('reviewer_pa.deleted_at');
+            })
+            ->leftJoin('users as reviewer', 'reviewer_pa.user_id', '=', 'reviewer.id');
+    }
+
+    #[\Illuminate\Database\Eloquent\Attributes\Scope]
+    protected function withVerifier(Builder $query): void
+    {
+        $query
+            ->leftJoin('project_assignments as verifier_pa', function ($join) {
+                $join->on('verifier_pa.project_id', '=', 'projects.id')
+                    ->where('verifier_pa.role', '=', ProjectAssignment::VERIFIER)
+                    ->whereNull('verifier_pa.deleted_at');
+            })
+            ->leftJoin('users as verifier', 'verifier_pa.user_id', '=', 'verifier.id');
     }
 
     public static function activeProjects(User $user): Builder
@@ -238,18 +321,29 @@ class Project extends Model
     {
         return static::query()
             ->where(function (Builder $query) use ($user) {
-                $query->whereHas('assignment', fn ($q) => $q->where('user_id', $user->id));
+                $query->whereHas('assignments', fn ($q) => $q->where('user_id', $user->id)->whereNull('deleted_at'));
                 $query->orWhereHas('reportViewers', fn ($q) => $q->where('user_id', $user->id));
             })
             ->withReviewer()
+            ->withVerifier()
             ->select('projects.*');
     }
 
-    public static function completedProjects(User $user): Builder
+    public static function reviewedProjects(User $user): Builder
     {
         return static::query()->visibleTo($user)
-            ->whereIn('status', ProjectStatus::completedCases())
+            ->whereIn('status', ProjectStatus::reviewedCases())
             ->withReviewer()
+            ->withVerifier()
+            ->select('projects.*');
+    }
+
+    public static function closedProjects(User $user): Builder
+    {
+        return static::query()->visibleTo($user)
+            ->whereIn('status', ProjectStatus::closedCases())
+            ->withReviewer()
+            ->withVerifier()
             ->select('projects.*');
     }
 
@@ -266,12 +360,13 @@ class Project extends Model
     public function updateSiteimprove(): void
     {
         if (empty($this->siteimprove_url)) {
-            if (!empty($this->siteimprove_id)) {
+            if (! empty($this->siteimprove_id)) {
                 // If we have a siteimprove_id already set but the siteimprove_url is empty, we should remove the siteimprove_id
                 $this->update([
                     'siteimprove_id' => null,
                 ]);
             }
+
             return;
         }
         $siteimprove_id = $this->siteimprove_id ?: (SiteimproveService::findSite($this->site_url) ?? '');

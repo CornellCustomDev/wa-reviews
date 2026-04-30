@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Enums\Permissions;
+use App\Enums\ProjectStatus;
 use App\Models\Project;
 use App\Models\Team;
 use App\Models\User;
@@ -23,7 +24,7 @@ class ProjectPolicy
     {
         return $project->team->isTeamMember($user)
             || $user->can('manage-projects', $project->team)
-            || ($project->isReportViewer($user) && $project->isCompleted());
+            || ($project->isReportViewer($user) && ($project->hasBeenReviewed() || $project->isClosed()));
     }
 
     public function create(User $user, Team $team): bool
@@ -33,8 +34,8 @@ class ProjectPolicy
 
     public function update(User $user, Project $project): bool
     {
-        // Projects cannot be updated while they have a status of "completed"
-        if ($project->isCompleted()) {
+        // Projects cannot be updated when they are closed
+        if ($project->isClosed()) {
             return false;
         }
 
@@ -45,33 +46,53 @@ class ProjectPolicy
 
     public function updateReviewer(User $user, Project $project, ?User $reviewer = null): bool
     {
-        // No updating the reviewer if the project is completed
-        if ($project->isCompleted()) {
+        // Reviewer can only be set while the project is active.
+        if (! $project->isActive()) {
             return false;
         }
 
-        // If this is the reviewer's project, they can assign it to another reviewer
+        // If this is the reviewer's project, they can assign it to another reviewer.
         if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
             return true;
         }
 
-        // If there is no reviewer, the user can assign to self
+        // If there is no reviewer, the current user can assign to self.
         if (is_null($project->reviewer)) {
-            // Assigning to the current user
             if ($reviewer && $reviewer->id == $user->id) {
                 return $user->can('create-projects', $project->team);
             }
         }
 
-        // Otherwise, the user must have permission to manage projects for the team
+        return $user->can('manage-projects', $project->team);
+    }
+
+    public function updateVerifier(User $user, Project $project, ?User $verifier = null): bool
+    {
+        // Only projects in review can update the verifier
+        if (! $project->hasBeenReviewed()) {
+            return false;
+        }
+
+        // If this is the verifier's project, they can assign it to another verifier.
+        if ($project->isVerifier($user) && $user->can('edit-projects', $project->team)) {
+            return true;
+        }
+
+        // If there is no verifier, the current user can assign to self.
+        if (is_null($project->verifier)) {
+            if ($verifier && $verifier->id === $user->id) {
+                return $user->can('edit-projects', $project->team);
+            }
+        }
+
         return $user->can('manage-projects', $project->team);
     }
 
     public function updateStatus(User $user, Project $project): bool
     {
-        // If this is the reviewer's project, they can update the status if it's in progress
-        if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
-            return true;
+        // If this is the user's project, they can update the status if it's in progress
+        if ($project->isReviewer($user) || $project->isVerifier($user)) {
+            return $user->can('edit-projects', $project->team);
         }
 
         return $user->can('manage-projects', $project->team);
@@ -79,24 +100,23 @@ class ProjectPolicy
 
     public function updateReportViewers(User $user, Project $project): bool
     {
-        // Report viewers are only managed for completed projects
-        if (! $project->isCompleted()) {
+        // Projects must be reviewed before report reviewers can be added
+        if ($project->isActive()) {
             return false;
         }
 
-        // If this is the reviewer's project, they can update report viewers
-        if ($project->isReviewer($user) && $user->can('edit-projects', $project->team)) {
-            return true;
+        // If this is the user's project, they can update report viewers
+        if ($project->isReviewer($user) || $project->isVerifier($user)) {
+            return $user->can('edit-projects', $project->team);
         }
 
-        // Otherwise, the user must have permission to manage projects for the team
         return $user->can('manage-projects', $project->team);
     }
 
     public function delete(User $user, Project $project): bool
     {
-        if ($project->isCompleted()) {
-            // Completed projects cannot be deleted except by a site administrator
+        // Only administrators can delete projects after they are reviewed
+        if ($project->hasBeenReviewed() || $project->isClosed()) {
             return $user->isAdministrator();
         }
 

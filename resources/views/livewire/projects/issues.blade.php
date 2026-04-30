@@ -7,7 +7,7 @@
             <th>Target</th>
             <th>Issue</th>
             <th>Assessment</th>
-            @if($project->isCompleted())
+            @if($project->hasBeenReviewed() || $project->isClosed())
                 <th>Remediation</th>
             @endif
             <th>Actions</th>
@@ -27,7 +27,8 @@
                 </td>
                 <td>
                     @if($issue->scope)
-                        <a href="{{ route('scope.show', $issue->scope) }}" title="View scope {{ $issue->scope->id }}">
+                        <a href="{{ route('scope.show', $issue->scope) }}"
+                           title="View scope {{ $issue->scope->id }}">
                             {{ $issue->scope->title }}
                         </a>
                     @endif
@@ -39,25 +40,25 @@
                     <div class="flex justify-between items-start gap-2">
                         <div class="grow">{!! $issue->description !!}</div>
                         @feature('comments')
-                            @if($issue->comments_count > 0)
-                                <a href="{{ route('issue.show', $issue) }}?comments=1" class="flex-shrink-0">
-                                    <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
-                                        {{ $issue->comments_count }}
-                                    </flux:badge>
-                                </a>
-                            @endif
+                        @if($issue->comments_count > 0)
+                            <a href="{{ route('issue.show', $issue) }}?comments=1" class="flex-shrink-0">
+                                <flux:badge size="sm" color="blue" icon="chat-bubble-oval-left">
+                                    {{ $issue->comments_count }}
+                                </flux:badge>
+                            </a>
+                        @endif
                         @endfeature
                     </div>
                 </td>
                 <td>
                     @include('livewire.issues.assessment', ['issue' => $issue])
                 </td>
-                @if($project->isCompleted())
+                @if($project->hasBeenReviewed() || $project->isClosed())
                     <td class="text-nowrap">
                         {!! $issue->status?->description() !!}
                         @if($issue->needs_mitigation)
                             <div>
-                                <flux:icon.exclamation-triangle variant="mini" class="text-yellow-500" />
+                                <flux:icon.exclamation-triangle variant="mini" class="text-yellow-500"/>
                                 Required
                             </div>
                         @endif
@@ -79,7 +80,7 @@
             </tr>
         @endforeach
     </table>
-    <livewire:issues.item-show-guideline />
+    <livewire:issues.item-show-guideline/>
 
     @can('create', [\App\Models\Issue::class, $project])
         <x-forms.button.add :href="route('project.issue.create', $project)">Add Issue</x-forms.button.add>
