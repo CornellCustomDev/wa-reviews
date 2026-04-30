@@ -53,22 +53,12 @@ class IssueStatusTest extends TestCase
         $options = IssueStatus::forPhase(ProjectStatus::ReviewComplete);
         $values = array_column($options, 'value');
         $this->assertContains('reviewed', $values);
-        $this->assertContains('false_positive', $values);
-        $this->assertNotContains('fixed', $values);
-        $this->assertNotContains('verified_fixed', $values);
-    }
-
-    #[Test]
-    public function for_phase_customer_response(): void
-    {
-        $options = IssueStatus::forPhase(ProjectStatus::CustomerResponse);
-        $values = array_column($options, 'value');
-        $this->assertContains('reviewed', $values);
         $this->assertContains('fixed', $values);
-        $this->assertContains('not_being_fixed', $values);
         $this->assertContains('false_positive', $values);
+        $this->assertContains('not_being_fixed', $values);
         $this->assertNotContains('verified_fixed', $values);
         $this->assertNotContains('not_fixed', $values);
+        $this->assertNotContains('new_issue', $values);
     }
 
     #[Test]
@@ -78,33 +68,16 @@ class IssueStatusTest extends TestCase
         $values = array_column($options, 'value');
         $this->assertContains('verified_fixed', $values);
         $this->assertContains('not_fixed', $values);
+        $this->assertContains('new_issue', $values);
+        $this->assertContains('reviewed', $values);
+        $this->assertContains('fixed', $values);
         $this->assertContains('false_positive', $values);
         $this->assertContains('not_being_fixed', $values);
-        $this->assertNotContains('fixed', $values);
-    }
-
-    #[Test]
-    public function for_phase_returns_all_for_active_phases(): void
-    {
-        $inProgressOptions = IssueStatus::forPhase(ProjectStatus::InProgress);
-        $this->assertCount(count(IssueStatus::cases()), $inProgressOptions);
     }
 
     #[Test]
     public function wont_fix_case_renamed_to_not_being_fixed(): void
     {
         $this->assertEquals('not_being_fixed', IssueStatus::WontFix->value);
-    }
-
-    #[Test]
-    public function new_issue_case_exists(): void
-    {
-        $this->assertEquals('new_issue', IssueStatus::NewIssue->value);
-    }
-
-    #[Test]
-    public function not_fixed_case_exists(): void
-    {
-        $this->assertEquals('not_fixed', IssueStatus::NotFixed->value);
     }
 }

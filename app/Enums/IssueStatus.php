@@ -10,8 +10,8 @@ enum IssueStatus: string
 
     case Reviewed      = 'reviewed';
     case Fixed         = 'fixed';
-    case WontFix       = 'not_being_fixed';
     case FalsePositive = 'false_positive';
+    case WontFix       = 'not_being_fixed';
     case Verified      = 'verified_fixed';
     case NotFixed      = 'not_fixed';
     case NewIssue      = 'new_issue';
@@ -27,9 +27,8 @@ enum IssueStatus: string
     public static function forPhase(ProjectStatus $projectStatus): array
     {
         $cases = match ($projectStatus) {
-            ProjectStatus::ReviewComplete => [self::Reviewed, self::FalsePositive],
-            ProjectStatus::CustomerResponse => [self::Reviewed, self::Fixed, self::WontFix, self::FalsePositive],
-            ProjectStatus::VerificationReview => [self::Reviewed, self::Verified, self::NotFixed, self::FalsePositive, self::WontFix],
+            ProjectStatus::ReviewComplete => [self::Reviewed, self::Fixed, self::FalsePositive, self::WontFix],
+            ProjectStatus::VerificationReview => [self::Verified, self::NotFixed, self::NewIssue, self::Reviewed, self::Fixed, self::FalsePositive, self::WontFix],
             default => self::cases(),
         };
 
