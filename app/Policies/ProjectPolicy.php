@@ -69,7 +69,7 @@ class ProjectPolicy
     public function updateVerifier(User $user, Project $project, ?User $verifier = null): bool
     {
         // Only projects in review can update the verifier
-        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
+        if (! $project->hasBeenReviewed()) {
             return false;
         }
 
