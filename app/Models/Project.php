@@ -141,6 +141,7 @@ class Project extends Model
             return;
         }
 
+        // Deleting the assignment cascades to the project assignment, as well
         $this->assignment->delete();
 
         $delta = [
@@ -235,6 +236,7 @@ class Project extends Model
 
     public function addReportViewer(User $user): void
     {
+        // if the user is already a viewer, do nothing
         if ($this->isReportViewer($user)) {
             return;
         }
@@ -359,6 +361,7 @@ class Project extends Model
     {
         if (empty($this->siteimprove_url)) {
             if (! empty($this->siteimprove_id)) {
+                // If we have a siteimprove_id already set but the siteimprove_url is empty, we should remove the siteimprove_id
                 $this->update([
                     'siteimprove_id' => null,
                 ]);
@@ -373,6 +376,7 @@ class Project extends Model
                     'siteimprove_id' => $siteimprove_id,
                 ]);
             }
+            // Run to cache the siteimprove data
             SiteimproveService::make($siteimprove_id)->getPagesWithIssues(bustCache: true);
         }
     }
