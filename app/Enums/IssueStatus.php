@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 use Illuminate\Support\Str;
+use Laravel\Pennant\Feature;
 
 enum IssueStatus: string
 {
@@ -27,12 +28,19 @@ enum IssueStatus: string
     public static function forPhase(ProjectStatus $projectStatus): array
     {
         $cases = match ($projectStatus) {
-            ProjectStatus::ReviewComplete => [self::Reviewed, self::Fixed, self::FalsePositive, self::WontFix],
+            ProjectStatus::ReviewComplete => [
+                self::Reviewed,
+                self::Fixed,
+                ! Feature::active('verification-reviews') ? self::Verified : null,
+                self::FalsePositive,
+                self::WontFix
+            ],
             ProjectStatus::VerificationReview => [self::Verified, self::NotFixed, self::NewIssue, self::Reviewed, self::Fixed, self::FalsePositive, self::WontFix],
             default => self::cases(),
         };
 
         return collect($cases)
+            ->filter()
             ->map(fn (self $status) => [
                 'value' => $status->value(),
                 'option' => $status->label(),
