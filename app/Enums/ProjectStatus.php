@@ -12,7 +12,6 @@ enum ProjectStatus: string
     case NotStarted         = 'not_started';
     case InProgress         = 'in_progress';
     case ReviewComplete     = 'review_complete';
-    case CustomerResponse   = 'customer_response';
     case VerificationReview = 'verification_review';
     case Closed             = 'closed';
 
@@ -35,7 +34,6 @@ enum ProjectStatus: string
             self::NotStarted => self::InProgress,
             self::InProgress => self::ReviewComplete,
             self::ReviewComplete => self::VerificationReview,
-            self::CustomerResponse => self::VerificationReview,
             self::VerificationReview,
             self::Closed => self::Closed,
         };
@@ -51,7 +49,6 @@ enum ProjectStatus: string
             self::NotStarted,
             self::InProgress => self::NotStarted,
             self::ReviewComplete => self::InProgress,
-            self::CustomerResponse => self::ReviewComplete,
             self::VerificationReview => self::ReviewComplete,
             self::Closed => self::VerificationReview,
         };
@@ -72,7 +69,6 @@ enum ProjectStatus: string
             self::NotStarted => 'No reviewer has been assigned to this project. Are you sure you want to start the review?',
             self::InProgress => 'When the review is finished, mark it as complete.',
             self::ReviewComplete => 'The review is complete. Work should be verified after fixes have been applied.',
-            self::CustomerResponse => 'The report has been sent to the customer. Start verification when fixes have been applied.',
             self::VerificationReview => 'When verification is finished, mark it as complete.',
             self::Closed => 'The review and verification is complete. You can re-open it if needed.',
         };
@@ -88,8 +84,6 @@ enum ProjectStatus: string
             self::NotStarted => 'Start Review',
             self::InProgress => 'Complete Review',
             self::ReviewComplete => 'Start Verification',
-            // self::ReviewComplete => 'Send to Customer',
-            self::CustomerResponse => 'Start Verification',
             self::VerificationReview => 'Complete Verification',
             self::Closed => null,
         };
@@ -105,8 +99,6 @@ enum ProjectStatus: string
             self::NotStarted => null,
             self::InProgress => 'Stop Review',
             self::ReviewComplete => 'Re-open Review',
-            self::CustomerResponse => 'Review Complete',
-            // self::VerificationReview => 'Return to Customer',
             self::VerificationReview => 'Pause Verification',
             self::Closed => 'Re-open',
         };
@@ -158,7 +150,7 @@ enum ProjectStatus: string
 
     public static function reviewedCases(): array
     {
-        return [self::ReviewComplete, self::CustomerResponse, self::VerificationReview];
+        return [self::ReviewComplete, self::VerificationReview];
     }
 
     public static function closedCases(): array

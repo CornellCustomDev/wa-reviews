@@ -46,7 +46,6 @@ class ProjectStatusTest extends TestCase
     public function new_cases_exist(): void
     {
         $this->assertEquals('review_complete', ProjectStatus::ReviewComplete->value);
-        $this->assertEquals('customer_response', ProjectStatus::CustomerResponse->value);
         $this->assertEquals('verification_review', ProjectStatus::VerificationReview->value);
         $this->assertEquals('closed', ProjectStatus::Closed->value);
     }
@@ -84,7 +83,7 @@ class ProjectStatusTest extends TestCase
     public function reviewed_cases_returns_post_review_phases(): void
     {
         $this->assertEquals(
-            [ProjectStatus::ReviewComplete, ProjectStatus::CustomerResponse, ProjectStatus::VerificationReview],
+            [ProjectStatus::ReviewComplete, ProjectStatus::VerificationReview],
             ProjectStatus::reviewedCases()
         );
     }
@@ -101,7 +100,6 @@ class ProjectStatusTest extends TestCase
         $this->assertFalse(ProjectStatus::NotStarted->hasBeenReviewed());
         $this->assertFalse(ProjectStatus::InProgress->hasBeenReviewed());
         $this->assertTrue(ProjectStatus::ReviewComplete->hasBeenReviewed());
-        $this->assertTrue(ProjectStatus::CustomerResponse->hasBeenReviewed());
         $this->assertTrue(ProjectStatus::VerificationReview->hasBeenReviewed());
         $this->assertFalse(ProjectStatus::Closed->hasBeenReviewed());
     }

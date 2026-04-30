@@ -131,12 +131,6 @@ class IssuePolicyTest extends TestCase
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'TeamAdmin can update status in ReviewComplete'],
             [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, true, 'SiteAdmin can update status in ReviewComplete'],
 
-            // CustomerResponse — report viewer and team admin only
-            [null, false, false, false, true, ProjectStatus::CustomerResponse, true, 'Report viewer can update status in CustomerResponse'],
-            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::CustomerResponse, true, 'TeamAdmin can update status in CustomerResponse'],
-            [Roles::Reviewer, true, true, false, false, ProjectStatus::CustomerResponse, true, 'Reviewer can update status in CustomerResponse'],
-            [null, false, false, true, false, ProjectStatus::CustomerResponse, false, 'Verifier cannot update status in CustomerResponse'],
-
             // VerificationReview — reviewer, verifier, team admin
             [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, true, 'Reviewer can update status in VerificationReview'],
             [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can update status in VerificationReview'],

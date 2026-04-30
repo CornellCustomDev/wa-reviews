@@ -45,7 +45,6 @@ class CommentPolicyTest extends TestCase
 
             // Reviewer can comment in reviewedCases
             [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, true, 'Reviewer can comment in ReviewComplete'],
-            [Roles::Reviewer, true, true, false, false, ProjectStatus::CustomerResponse, true, 'Reviewer can comment in CustomerResponse'],
             [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, true, 'Reviewer can comment in VerificationReview'],
 
             // Verifier (assigned) can comment in reviewedCases
@@ -54,11 +53,9 @@ class CommentPolicyTest extends TestCase
 
             // Team admin can comment in reviewedCases
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'Team admin can comment in ReviewComplete'],
-            [Roles::TeamAdmin, true, false, false, false, ProjectStatus::CustomerResponse, true, 'Team admin can comment in CustomerResponse'],
 
             // Report viewer (customer) can comment in reviewedCases
             [null, false, false, false, true, ProjectStatus::ReviewComplete, true, 'Report viewer can comment in ReviewComplete'],
-            [null, false, false, false, true, ProjectStatus::CustomerResponse, true, 'Report viewer can comment in CustomerResponse'],
             [null, false, false, false, true, ProjectStatus::VerificationReview, true, 'Report viewer can comment in VerificationReview'],
 
             // Nobody can comment when Closed

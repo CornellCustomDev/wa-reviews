@@ -202,7 +202,6 @@ class ProjectPolicyTest extends TestCase
         // role, isTeamMember, isVerifier, hasVerifier, newVerifier, status, hasPermission, description
         return [
             [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::ReviewComplete, true, 'Team admin can assign verifier in ReviewComplete'],
-            [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::CustomerResponse, true, 'Team admin can assign verifier in CustomerResponse'],
             [Roles::TeamAdmin, true, false, false, 'other', ProjectStatus::VerificationReview, true, 'Team admin can assign verifier in VerificationReview'],
             [Roles::Reviewer, true, true, false, null, ProjectStatus::ReviewComplete, true, 'Assigned verifier can update verifier in ReviewComplete'],
             [Roles::Reviewer, true, true, false, 'other', ProjectStatus::ReviewComplete, true, 'Assigned verifier can re-assign new verifier in ReviewComplete'],
@@ -211,7 +210,6 @@ class ProjectPolicyTest extends TestCase
             [Roles::TeamAdmin, true, false, false, null, ProjectStatus::Closed, false, 'Team admin cannot assign verifier in Closed'],
 
             [Roles::Reviewer, true, false, false, 'self', ProjectStatus::ReviewComplete, true, 'Reviewer can self-assign as verifier when no verifier exists'],
-            [Roles::Reviewer, true, false, false, 'self', ProjectStatus::CustomerResponse, true, 'Reviewer can self-assign as verifier in CustomerResponse'],
             [Roles::Reviewer, true, false, true, 'self', ProjectStatus::ReviewComplete, false, 'Reviewer cannot self-assign when verifier already assigned'],
             [Roles::Reviewer, true, false, false, 'other', ProjectStatus::ReviewComplete, false, 'Reviewer cannot assign another user as verifier'],
             [Roles::TeamAdmin, false, false, false, 'self', ProjectStatus::ReviewComplete, false, 'Other team admin cannot self-assign as verifier'],
