@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
+use App\Enums\IssueStatus;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
 use App\Models\Guideline;
@@ -146,6 +147,11 @@ class IssueForm extends Form
         }
 
         $this->issue = $project->issues()->create($attributes);
+
+        if ($project->isInVerification()) {
+            $this->issue->status = IssueStatus::NewIssue;
+            $this->issue->save();
+        }
 
         $image_links = [];
         /** @var TemporaryUploadedFile $file */

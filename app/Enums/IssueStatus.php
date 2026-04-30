@@ -44,10 +44,10 @@ enum IssueStatus: string
     {
         return match ($this) {
             self::Reviewed => '',
-            self::Fixed    => '🛠️ ' . $this->label(),
             self::Verified => '✅ ' . $this->label(),
             self::WontFix  => '🚫 ' . $this->label(),
             self::NotFixed => '❌ ' . $this->label(),
+            self::NewIssue => '🆕 ' . $this->label(),
             default        => $this->label(),
         };
     }

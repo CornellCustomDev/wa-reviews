@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\IssueStatus;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
@@ -20,14 +21,16 @@ class IssuePolicy
 
     public function create(User $user, Project $project): bool
     {
-        return $project->isInProgress()
-            && $user->can('update', $project);
+        if ($project->isInVerification()) {
+            return $project->isVerifier($user) && $user->can('edit-projects', $project->team);
+        }
+
+        return $project->isInProgress() && $user->can('update', $project);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return $issue->project->isInProgress()
-            && $user->can('update', $issue->project);
+        return $issue->project->isInProgress() && $user->can('update', $issue->project);
     }
 
     public function updateStatus(User $user, Issue $issue): bool
@@ -67,12 +70,12 @@ class IssuePolicy
 
     public function delete(User $user, Issue $issue): bool
     {
-        // Issues can only be deleted if the project is active.
-        if (! $issue->project->isActive()) {
-            return false;
+        if ($issue->project->isInVerification() && $issue->status == IssueStatus::NewIssue) {
+            return $issue->project->isVerifier($user) && $user->can('edit-projects', $issue->project->team);
         }
 
-        return $user->can('update', $issue->project);
+        // Issues can be deleted if the project is active.
+        return $issue->project->isActive() && $user->can('update', $issue->project);
     }
 
     public function restore(User $user, Issue $issue): bool
