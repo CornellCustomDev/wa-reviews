@@ -45,53 +45,53 @@
     </flux:modal>
 
     @feature('verification-reviews')
-    @if($project->verifier)
-        <div class="mb-2">
-            @can('update-verifier', [$project, auth()->user()])
-                <div class="float-right">
-                    @can('manage-projects', $project->team)
-                        <flux:modal.trigger name="update-verifier">
-                            <x-forms.button icon="pencil-square" size="xs" title="Edit verifier"/>
-                        </flux:modal.trigger>
-                    @endcan
-                    <x-forms.button.delete
-                        title="Remove {{ $project->verifier->name }} as verifier"
-                        size="xs"
-                        wire:click.prevent="removeVerifier()"
-                        wire:confirm="Are you sure you want to remove &quot;{{ $project->verifier->name }}&quot; as verifier?"
-                    />
-                </div>
-            @endcan
-            <x-forms.field-display label="Verifier">
-                {{ $project->verifier->name }}
-            </x-forms.field-display>
-        </div>
-    @endif
-
-    @if($project->hasBeenReviewed())
-        <div class="mb-2">
-            @empty($project->verifier)
+        @if($project->verifier)
+            <div class="mb-2">
                 @can('update-verifier', [$project, auth()->user()])
-                    @can('manage-projects', $project->team)
-                        <flux:modal.trigger name="update-verifier">
-                            <x-forms.button icon="plus-circle">Assign Verifier</x-forms.button>
-                        </flux:modal.trigger>
-                    @else
-                        <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentUserAsVerifier">
-                            Assign to Me
-                        </x-forms.button>
-                    @endcan
-                @else
-                    <x-forms.field-display label="Verifier" class="mb-0!">
-                        <span class="text-gray-500">No verifier assigned</span>
-                    </x-forms.field-display>
+                    <div class="float-right">
+                        @can('manage-projects', $project->team)
+                            <flux:modal.trigger name="update-verifier">
+                                <x-forms.button icon="pencil-square" size="xs" title="Edit verifier"/>
+                            </flux:modal.trigger>
+                        @endcan
+                        <x-forms.button.delete
+                            title="Remove {{ $project->verifier->name }} as verifier"
+                            size="xs"
+                            wire:click.prevent="removeVerifier()"
+                            wire:confirm="Are you sure you want to remove &quot;{{ $project->verifier->name }}&quot; as verifier?"
+                        />
+                    </div>
                 @endcan
-            @endif
-        </div>
-        <flux:modal name="update-verifier" wire:close="closeUpdateVerifier()" class="md:w-96">
-            <livewire:projects.update-verifier :project="$project"/>
-        </flux:modal>
-    @endif
+                <x-forms.field-display label="Verifier">
+                    {{ $project->verifier->name }}
+                </x-forms.field-display>
+            </div>
+        @endif
+
+        @if($project->hasBeenReviewed())
+            <div class="mb-2">
+                @empty($project->verifier)
+                    @can('update-verifier', [$project, auth()->user()])
+                        @can('manage-projects', $project->team)
+                            <flux:modal.trigger name="update-verifier">
+                                <x-forms.button icon="plus-circle">Assign Verifier</x-forms.button>
+                            </flux:modal.trigger>
+                        @else
+                            <x-forms.button icon="plus-circle" wire:click.prevent="assignCurrentUserAsVerifier">
+                                Assign to Me
+                            </x-forms.button>
+                        @endcan
+                    @else
+                        <x-forms.field-display label="Verifier" class="mb-0!">
+                            <span class="text-gray-500">No verifier assigned</span>
+                        </x-forms.field-display>
+                    @endcan
+                @endif
+            </div>
+            <flux:modal name="update-verifier" wire:close="closeUpdateVerifier()" class="md:w-96">
+                <livewire:projects.update-verifier :project="$project"/>
+            </flux:modal>
+        @endif
     @endfeature
 
     <div>
