@@ -90,20 +90,20 @@ class ProjectStatusTest extends TestCase
     }
 
     #[Test]
-    public function completed_cases_returns_closed(): void
+    public function closed_cases_returns_closed(): void
     {
-        $this->assertEquals([ProjectStatus::Closed], ProjectStatus::completedCases());
+        $this->assertEquals([ProjectStatus::Closed], ProjectStatus::closedCases());
     }
 
     #[Test]
-    public function is_post_review_returns_true_for_reviewed_and_completed_cases(): void
+    public function is_reviewed_returns_true_for_review_phases_only(): void
     {
-        $this->assertFalse(ProjectStatus::NotStarted->isPostReview());
-        $this->assertFalse(ProjectStatus::InProgress->isPostReview());
-        $this->assertTrue(ProjectStatus::ReviewComplete->isPostReview());
-        $this->assertTrue(ProjectStatus::CustomerResponse->isPostReview());
-        $this->assertTrue(ProjectStatus::VerificationReview->isPostReview());
-        $this->assertTrue(ProjectStatus::Closed->isPostReview());
+        $this->assertFalse(ProjectStatus::NotStarted->hasBeenReviewed());
+        $this->assertFalse(ProjectStatus::InProgress->hasBeenReviewed());
+        $this->assertTrue(ProjectStatus::ReviewComplete->hasBeenReviewed());
+        $this->assertTrue(ProjectStatus::CustomerResponse->hasBeenReviewed());
+        $this->assertTrue(ProjectStatus::VerificationReview->hasBeenReviewed());
+        $this->assertFalse(ProjectStatus::Closed->hasBeenReviewed());
     }
 
     #[Test]

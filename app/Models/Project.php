@@ -204,19 +204,24 @@ class Project extends Model
         return $this->status->isInProgress();
     }
 
-    public function isCompleted(): bool
+    public function isActive(): bool
     {
-        return $this->status->isCompleted();
-    }
-
-    public function isPostReview(): bool
-    {
-        return $this->status->isPostReview();
+        return $this->status->isActive();
     }
 
     public function isReviewComplete(): bool
     {
         return $this->status->isReviewComplete();
+    }
+
+    public function hasBeenReviewed(): bool
+    {
+        return $this->status->hasBeenReviewed();
+    }
+
+    public function isInVerification(): bool
+    {
+        return $this->status->isInVerification();
     }
 
     public function isClosed(): bool
@@ -327,10 +332,10 @@ class Project extends Model
             ->select('projects.*');
     }
 
-    public static function completedProjects(User $user): Builder
+    public static function closedProjects(User $user): Builder
     {
         return static::query()->visibleTo($user)
-            ->whereIn('status', ProjectStatus::completedCases())
+            ->whereIn('status', ProjectStatus::closedCases())
             ->withReviewer()
             ->withVerifier()
             ->select('projects.*');

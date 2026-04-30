@@ -16,11 +16,11 @@ class Workflow extends Component
     #[Computed]
     public function statusDescription(): string
     {
-        if ($this->project->status->isNotStarted() && $this->project->reviewer) {
+        if ($this->project->isNotStarted() && $this->project->reviewer) {
             return "Are you ready to have {$this->project->reviewer->name} start work on the project?";
         }
 
-        if (! Feature::active('verification-reviews') && $this->project->status->isReviewComplete()) {
+        if (! Feature::active('verification-reviews') && $this->project->isReviewComplete()) {
             return "The review is complete, but you can re-open it if you need to make changes.";
         }
 
@@ -85,9 +85,9 @@ class Workflow extends Component
             case 'previous':
                 $this->project->update([
                     'status' => $this->project->status->previousStatus(),
-                    'completed_at' => $this->project->status->previousStatus()->isPostReview()
-                        ? $this->project->completed_at
-                        : null,
+                    'completed_at' => ($this->project->status->previousStatus()->isInProgress())
+                        ? null
+                        : $this->project->completed_at,
                 ]);
                 break;
             default:

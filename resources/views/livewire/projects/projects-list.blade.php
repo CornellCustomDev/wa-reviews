@@ -14,9 +14,9 @@
         </flux:table.column>
         <flux:table.column>Site</flux:table.column>
         @feature('verification-reviews')
-            <flux:table.column>
-                Reviewers
-            </flux:table.column>
+        <flux:table.column>
+            Reviewers
+        </flux:table.column>
         @else
             <flux:table.column
                 sortable
@@ -26,26 +26,26 @@
             >
                 Reviewer
             </flux:table.column>
-       @endfeature
-        <flux:table.column
-            class="w-[150px]"
-            sortable
-            :sorted="$this->isSorted('created_at', $pageName)"
-            :direction="$this->sortDirection($pageName)"
-            wire:click="sortBy('created_at', '{{ $pageName }}', 'desc')"
-        >
-            Created
-        </flux:table.column>
-        <flux:table.column
-            class="w-[100px]"
-            sortable
-            :sorted="$this->isSorted('status', $pageName)"
-            :direction="$this->sortDirection($pageName)"
-            wire:click="sortBy('status', '{{ $pageName }}', 'asc')"
-        >
-            Status
-        </flux:table.column>
-        <flux:table.column class="w-[100px]">Actions</flux:table.column>
+            @endfeature
+            <flux:table.column
+                class="w-[150px]"
+                sortable
+                :sorted="$this->isSorted('created_at', $pageName)"
+                :direction="$this->sortDirection($pageName)"
+                wire:click="sortBy('created_at', '{{ $pageName }}', 'desc')"
+            >
+                Created
+            </flux:table.column>
+            <flux:table.column
+                class="w-[100px]"
+                sortable
+                :sorted="$this->isSorted('status', $pageName)"
+                :direction="$this->sortDirection($pageName)"
+                wire:click="sortBy('status', '{{ $pageName }}', 'asc')"
+            >
+                Status
+            </flux:table.column>
+            <flux:table.column class="w-[100px]">Actions</flux:table.column>
     </flux:table.columns>
 
     <flux:table.rows>
@@ -69,7 +69,7 @@
                     @endif
                 </flux:table.cell>
                 <flux:table.cell>
-                    @if($project->isPostReview())
+                    @if($project->hasBeenReviewed() || $project->isClosed())
                         @if($project->verifier && $project->reviewer)
                             Reviewer: {{ $project->reviewer->name }}
                             <br>
@@ -89,16 +89,16 @@
                 <flux:table.cell>{{ $project->status?->label() }}</flux:table.cell>
                 <flux:table.cell>
                     <x-forms.button.view
-                            title="View project {{ $project->id }}"
-                            size="xs"
-                            :href="route('project.show', $project)"
+                        title="View project {{ $project->id }}"
+                        size="xs"
+                        :href="route('project.show', $project)"
                     />
                     @can('delete', $project)
                         <x-forms.button.delete
-                                title="Delete Project {{ $project->id }}"
-                                size="xs"
-                                wire:click.prevent="delete('{{ $project->id }}')"
-                                wire:confirm="Are you sure you want to delete the project &quot;{{ $project->name }}&quot;?"
+                            title="Delete Project {{ $project->id }}"
+                            size="xs"
+                            wire:click.prevent="delete('{{ $project->id }}')"
+                            wire:confirm="Are you sure you want to delete the project &quot;{{ $project->name }}&quot;?"
                         />
                     @endcan
                 </flux:table.cell>

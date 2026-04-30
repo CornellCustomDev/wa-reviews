@@ -2,7 +2,6 @@
 
 namespace App\Policies;
 
-use App\Enums\ProjectStatus;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\User;
@@ -21,44 +20,58 @@ class IssuePolicy
 
     public function create(User $user, Project $project): bool
     {
-        return $user->can('update', $project);
+        return $project->isInProgress()
+            && $user->can('update', $project);
     }
 
     public function update(User $user, Issue $issue): bool
     {
-        return $user->can('update', $issue->project);
+        return $issue->project->isInProgress()
+            && $user->can('update', $issue->project);
     }
 
     public function updateStatus(User $user, Issue $issue): bool
     {
         $project = $issue->project;
 
-        return match ($project->status) {
-            ProjectStatus::ReviewComplete => $this->canUpdateStatusInReviewComplete($user, $project),
-            ProjectStatus::CustomerResponse => $this->canUpdateStatusInCustomerResponse($user, $project),
-            ProjectStatus::VerificationReview => $this->canUpdateStatusInVerificationReview($user, $project),
-            default => false,
-        };
+        // Only reviewed projects that are open
+        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
+            return false;
+        }
+
+        // Report viewers can update status if the project is not in verification
+        if ($project->isReportViewer($user)) {
+            return ! $project->isInVerification();
+        }
+
+        // Updates can only be made by the reviewer, verifier, or a team manager
+        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || ($project->isVerifier($user) && $user->can('edit-projects', $project->team))
+            || $user->can('manage-projects', $project->team);
     }
 
     public function updateNeedsMitigation(User $user, Issue $issue): bool
     {
         $project = $issue->project;
 
-        if (! $project->isPostReview()) {
+        // Only reviewed projects that are open
+        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
             return false;
         }
 
-        if ($user->cannot('edit-projects', $project->team)) {
-            return false;
-        }
-
+        // Updates can only be made by the reviewer, verifier, or a team manager
         return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
+            || ($project->isVerifier($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team);
     }
 
     public function delete(User $user, Issue $issue): bool
     {
+        // Issues can only be deleted if the project is active.
+        if (! $issue->project->isActive()) {
+            return false;
+        }
+
         return $user->can('update', $issue->project);
     }
 
@@ -70,27 +83,5 @@ class IssuePolicy
     public function forceDelete(User $user, Issue $issue): bool
     {
         return false;
-    }
-
-    private function canUpdateStatusInReviewComplete(User $user, Project $project): bool
-    {
-        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
-            || $user->can('manage-projects', $project->team)
-            || $user->isAdministrator();
-    }
-
-    private function canUpdateStatusInCustomerResponse(User $user, Project $project): bool
-    {
-        return $project->isReportViewer($user)
-            || $user->can('manage-projects', $project->team)
-            || $user->isAdministrator();
-    }
-
-    private function canUpdateStatusInVerificationReview(User $user, Project $project): bool
-    {
-        return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
-            || $project->isVerifier($user)
-            || $user->can('manage-projects', $project->team)
-            || $user->isAdministrator();
     }
 }

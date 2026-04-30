@@ -63,7 +63,7 @@ class ViewProjects extends Component
     {
         $pageName = 'completed-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
-        $query = Project::completedProjects(auth()->user())
+        $query = Project::closedProjects(auth()->user())
             ->with(['reviewer', 'verifier']);
 
         return $this->sortQuery($query, $pageName)

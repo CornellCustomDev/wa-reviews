@@ -32,6 +32,7 @@ class IssuePolicyTest extends TestCase
 
     public static function viewIssueProvider(): array
     {
+        // role, isTeamMember, isReportViewer, status, expected, description
         return [
             [Roles::SiteAdmin, false, false, ProjectStatus::NotStarted, true, 'Site admin can view issue'],
             [Roles::TeamAdmin, true, false, ProjectStatus::NotStarted, true, 'Team admin can view issue'],
@@ -59,6 +60,7 @@ class IssuePolicyTest extends TestCase
 
     public static function createIssueProvider(): array
     {
+        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
         return [
             [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, true, 'Site admin can create issue in-progress'],
             [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, true, 'Team admin can create issue in-progress'],
@@ -88,6 +90,7 @@ class IssuePolicyTest extends TestCase
 
     public static function deleteIssueProvider(): array
     {
+        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
         return [
             [Roles::SiteAdmin, false, false, false, ProjectStatus::InProgress, true, 'Site admin can delete in-progress issue'],
             [Roles::TeamAdmin, true, false, false, ProjectStatus::InProgress, true, 'Team admin can delete in-progress issue'],
@@ -121,21 +124,22 @@ class IssuePolicyTest extends TestCase
     {
         // role, isTeamMember, isReviewer, isVerifier, isReportViewer, status, expected, description
         return [
-            // ReviewComplete — reviewer and team admin only
+            // ReviewComplete — reviewer, viewer, report viewer and team admin only
             [Roles::Reviewer, true, true, false, false, ProjectStatus::ReviewComplete, true, 'Reviewer can update status in ReviewComplete'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::ReviewComplete, true, 'Verifier can update status in ReviewComplete'],
+            [null, false, false, false, true, ProjectStatus::ReviewComplete, true, 'Report viewer can update status in ReviewComplete'],
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'TeamAdmin can update status in ReviewComplete'],
-            [null, false, false, false, true, ProjectStatus::ReviewComplete, false, 'Report viewer cannot update status in ReviewComplete'],
-            [null, false, false, true, false, ProjectStatus::ReviewComplete, false, 'Verifier cannot update status in ReviewComplete'],
+            [Roles::SiteAdmin, false, false, false, false, ProjectStatus::ReviewComplete, true, 'SiteAdmin can update status in ReviewComplete'],
 
             // CustomerResponse — report viewer and team admin only
             [null, false, false, false, true, ProjectStatus::CustomerResponse, true, 'Report viewer can update status in CustomerResponse'],
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::CustomerResponse, true, 'TeamAdmin can update status in CustomerResponse'],
-            [Roles::Reviewer, true, true, false, false, ProjectStatus::CustomerResponse, false, 'Reviewer cannot update status in CustomerResponse'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::CustomerResponse, true, 'Reviewer can update status in CustomerResponse'],
             [null, false, false, true, false, ProjectStatus::CustomerResponse, false, 'Verifier cannot update status in CustomerResponse'],
 
             // VerificationReview — reviewer, verifier, team admin
             [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, true, 'Reviewer can update status in VerificationReview'],
-            [null, false, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can update status in VerificationReview'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can update status in VerificationReview'],
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::VerificationReview, true, 'TeamAdmin can update status in VerificationReview'],
             [null, false, false, false, true, ProjectStatus::VerificationReview, false, 'Report viewer cannot update status in VerificationReview'],
 
@@ -147,6 +151,9 @@ class IssuePolicyTest extends TestCase
             // Closed — nobody
             [Roles::SiteAdmin, false, false, false, false, ProjectStatus::Closed, false, 'Site admin cannot update status in Closed'],
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::Closed, false, 'TeamAdmin cannot update status in Closed'],
+            [Roles::Reviewer, true, true, false, false, ProjectStatus::Closed, false, 'Reviewer cannot update status in Closed'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::Closed, false, 'Verifier cannot update status in Closed'],
+            [null, false, false, false, true, ProjectStatus::Closed, false, 'Report viewer cannot update status in Closed'],
         ];
     }
 
@@ -166,6 +173,7 @@ class IssuePolicyTest extends TestCase
 
     public static function updateIssueNeedsMitigationProvider(): array
     {
+        // role, isTeamMember, isReviewer, isReportViewer, status, expected, description
         return [
             [Roles::SiteAdmin, false, false, false, ProjectStatus::ReviewComplete, true, 'Site admin can update mitigation in ReviewComplete'],
             [Roles::TeamAdmin, true, false, false, ProjectStatus::ReviewComplete, true, 'TeamAdmin can update mitigation in ReviewComplete'],

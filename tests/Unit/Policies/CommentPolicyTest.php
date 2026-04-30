@@ -49,8 +49,8 @@ class CommentPolicyTest extends TestCase
             [Roles::Reviewer, true, true, false, false, ProjectStatus::VerificationReview, true, 'Reviewer can comment in VerificationReview'],
 
             // Verifier (assigned) can comment in reviewedCases
-            [null, true, false, true, false, ProjectStatus::ReviewComplete, true, 'Verifier can comment in ReviewComplete'],
-            [null, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can comment in VerificationReview'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::ReviewComplete, true, 'Verifier can comment in ReviewComplete'],
+            [Roles::Reviewer, true, false, true, false, ProjectStatus::VerificationReview, true, 'Verifier can comment in VerificationReview'],
 
             // Team admin can comment in reviewedCases
             [Roles::TeamAdmin, true, false, false, false, ProjectStatus::ReviewComplete, true, 'Team admin can comment in ReviewComplete'],

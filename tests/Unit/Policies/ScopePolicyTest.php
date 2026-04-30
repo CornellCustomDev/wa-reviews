@@ -70,9 +70,9 @@ class ScopePolicyTest extends TestCase
             [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot create scope'],
             [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot create scope'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot create scope in post-review project'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot create scope in post-review project'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot create scope in post-review project'],
+            [Roles::SiteAdmin, false, false, false, ProjectStatus::Closed, false, 'Site admin cannot create scope in closed project'],
+            [Roles::TeamAdmin, true, false, false, ProjectStatus::Closed, false, 'Team admin cannot create scope in closed project'],
+            [Roles::Reviewer, true, true, false, ProjectStatus::Closed, false, 'Reviewer cannot create scope in closed project'],
         ];
     }
 
@@ -103,9 +103,9 @@ class ScopePolicyTest extends TestCase
             [null, false, false, true, ProjectStatus::InProgress, false, 'Report viewer cannot delete scope'],
             [Roles::TeamAdmin, false, false, false, ProjectStatus::InProgress, false, 'Non-member cannot delete scope'],
 
-            [Roles::SiteAdmin, false, false, false, ProjectStatus::ReviewComplete, false, 'Site admin cannot delete post-review scope'],
-            [Roles::TeamAdmin, true, false, false, ProjectStatus::ReviewComplete, false, 'Team admin cannot delete post-review scope'],
-            [Roles::Reviewer, true, true, false, ProjectStatus::ReviewComplete, false, 'Reviewer cannot delete post-review scope'],
+            [Roles::SiteAdmin, false, false, false, ProjectStatus::Closed, false, 'Site admin cannot delete closed project scope'],
+            [Roles::TeamAdmin, true, false, false, ProjectStatus::Closed, false, 'Team admin cannot delete closed project scope'],
+            [Roles::Reviewer, true, true, false, ProjectStatus::Closed, false, 'Reviewer cannot delete closed project scope'],
         ];
     }
 }

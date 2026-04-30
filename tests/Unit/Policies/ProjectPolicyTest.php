@@ -118,9 +118,9 @@ class ProjectPolicyTest extends TestCase
     {
         // role, isTeamMember, isReviewer, status, hasPermission, description
         return [
-            [Roles::SiteAdmin, false, false, ProjectStatus::ReviewComplete, false, 'SiteAdmin cannot update post-review project'],
-            [Roles::TeamAdmin, true, true, ProjectStatus::ReviewComplete, false, 'Team admin cannot update post-review project'],
-            [Roles::Reviewer, true, true, ProjectStatus::ReviewComplete, false, 'Reviewer cannot update post-review project'],
+            [Roles::SiteAdmin, false, false, ProjectStatus::Closed, false, 'SiteAdmin cannot update closed project'],
+            [Roles::TeamAdmin, true, true, ProjectStatus::Closed, false, 'Team admin cannot update closed project'],
+            [Roles::Reviewer, true, true, ProjectStatus::Closed, false, 'Reviewer cannot update closed project'],
 
             [Roles::SiteAdmin, false, false, ProjectStatus::InProgress, true, 'Site admin can update in-progress project'],
             [Roles::TeamAdmin, true, false, ProjectStatus::InProgress, true, 'Team admin can update in-progress project'],

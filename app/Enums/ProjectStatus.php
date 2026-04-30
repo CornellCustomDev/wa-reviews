@@ -18,7 +18,7 @@ enum ProjectStatus: string
 
     public function label(): string
     {
-        if (! Feature::active('verification-reviews') && $this->isPostReview()) {
+        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
             return 'Completed';
         }
 
@@ -27,7 +27,7 @@ enum ProjectStatus: string
 
     public function nextStatus(): ProjectStatus
     {
-        if (! Feature::active('verification-reviews') && ($this->isInProgress() || $this->isPostReview())) {
+        if (! Feature::active('verification-reviews') && ($this->isInProgress() || $this->hasBeenReviewed() || $this->isClosed())) {
             return self::Closed;
         }
 
@@ -43,7 +43,7 @@ enum ProjectStatus: string
 
     public function previousStatus(): ProjectStatus
     {
-        if (! Feature::active('verification-reviews') && $this->isPostReview()) {
+        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
             return self::InProgress;
         }
 
@@ -63,7 +63,7 @@ enum ProjectStatus: string
             if ($this->isInProgress()) {
                 return "If the work is finished, mark it as completed in order to make it available in a read-only view.";
             }
-            if ($this->isPostReview()) {
+            if ($this->hasBeenReviewed() || $this->isClosed()) {
                 return 'The review is complete, but you can re-open it if you need to make changes.';
             }
         }
@@ -80,7 +80,7 @@ enum ProjectStatus: string
 
     public function nextActionLabel(): ?string
     {
-        if (! Feature::active('verification-reviews') && $this->isPostReview()) {
+        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
             return null;
         }
 
@@ -97,7 +97,7 @@ enum ProjectStatus: string
 
     public function previousActionLabel(): ?string
     {
-        if (! Feature::active('verification-reviews') && $this->isPostReview()) {
+        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
             return 'Re-open Review';
         }
 
@@ -122,6 +122,11 @@ enum ProjectStatus: string
         return $this === self::InProgress;
     }
 
+    public function isActive(): bool
+    {
+        return in_array($this, self::activeCases());
+    }
+
     public function isReviewComplete(): bool
     {
         if (! Feature::active('verification-reviews')) {
@@ -131,12 +136,12 @@ enum ProjectStatus: string
         return $this === self::ReviewComplete;
     }
 
-    public function isCustomerResponse(): bool
+    public function hasBeenReviewed(): bool
     {
-        return $this === self::CustomerResponse;
+        return in_array($this, self::reviewedCases());
     }
 
-    public function isVerificationReview(): bool
+    public function isInVerification(): bool
     {
         return $this === self::VerificationReview;
     }
@@ -144,16 +149,6 @@ enum ProjectStatus: string
     public function isClosed(): bool
     {
         return $this === self::Closed;
-    }
-
-    public function isCompleted(): bool
-    {
-        return $this === self::Closed;
-    }
-
-    public function isPostReview(): bool
-    {
-        return in_array($this, [...self::reviewedCases(), ...self::completedCases()]);
     }
 
     public static function activeCases(): array
@@ -166,7 +161,7 @@ enum ProjectStatus: string
         return [self::ReviewComplete, self::CustomerResponse, self::VerificationReview];
     }
 
-    public static function completedCases(): array
+    public static function closedCases(): array
     {
         if (! Feature::active('verification-reviews')) {
             return [...self::reviewedCases(), self::Closed];

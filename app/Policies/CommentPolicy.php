@@ -14,12 +14,13 @@ class CommentPolicy
     {
         $project = $commentable->project;
 
-        if (! in_array($project->status, ProjectStatus::reviewedCases())) {
+        // Projects can only be commented on if they are open and have been reviewed
+        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
             return false;
         }
 
         return ($project->isReviewer($user) && $user->can('edit-projects', $project->team))
-            || $project->isVerifier($user)
+            || ($project->isVerifier($user) && $user->can('edit-projects', $project->team))
             || $user->can('manage-projects', $project->team)
             || $project->isReportViewer($user);
     }
