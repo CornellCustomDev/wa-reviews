@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0ccda16a9f819f88d90287502e83a766",
+    "content-hash": "8ab2eac6059e057677fcaad05f2325d8",
     "packages": [
         {
             "name": "brick/math",
@@ -292,85 +292,129 @@
             "time": "2025-08-20T19:15:30+00:00"
         },
         {
-            "name": "cornell-custom-dev/laravel-starter-kit",
-            "version": "v0.5.x-dev",
+            "name": "cornell-custom-dev/laravel-cu-auth",
+            "version": "v1.2.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/CornellCustomDev/CD-LaravelStarterKit.git",
-                "reference": "3df2b9e64ee03ae283fb481c2162e6066ce8fd2e"
+                "url": "https://github.com/CornellCustomDev/CD-LaravelCUAuth.git",
+                "reference": "d21450af1f3f920b9ac94c55de97460bd2baa126"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelStarterKit/zipball/3df2b9e64ee03ae283fb481c2162e6066ce8fd2e",
-                "reference": "3df2b9e64ee03ae283fb481c2162e6066ce8fd2e",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/d21450af1f3f920b9ac94c55de97460bd2baa126",
+                "reference": "d21450af1f3f920b9ac94c55de97460bd2baa126",
                 "shasum": ""
             },
             "require": {
-                "cubear/cwd_framework_lite": "^3.0",
-                "ext-ldap": "*",
                 "ext-openssl": "*",
-                "giggsey/locale": "^2.7",
-                "livewire/livewire": "^3.5",
-                "onelogin/php-saml": "^4.2",
-                "php": "^8.2",
-                "propaganistas/laravel-phone": "^5.3",
-                "spatie/laravel-package-tools": "^1.18"
+                "illuminate/support": "^11.0|^12.0",
+                "onelogin/php-saml": "^4.3.1",
+                "php": "^8.2"
             },
             "require-dev": {
                 "laravel/pint": "^1.20",
-                "orchestra/testbench": "^8.32",
-                "phpunit/phpunit": "^10.5"
+                "orchestra/testbench": "^9.0|^10.0",
+                "phpunit/phpunit": "^10.5|^11.5"
             },
             "type": "library",
             "extra": {
                 "laravel": {
                     "providers": [
-                        "CornellCustomDev\\LaravelStarterKit\\StarterKitServiceProvider",
-                        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider",
+                        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "CornellCustomDev\\LaravelStarterKit\\CUAuth\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "A Laravel package for authentication and identity management at Cornell University",
+            "support": {
+                "issues": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/issues",
+                "source": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/tree/v1.2.0"
+            },
+            "time": "2026-01-26T22:02:55+00:00"
+        },
+        {
+            "name": "cornell-custom-dev/laravel-ldap",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/CornellCustomDev/CD-LaravelLdap.git",
+                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelLdap/zipball/a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
+                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ldap": "*",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.29",
+                "orchestra/testbench": "^10.0|^11.0",
+                "php-mock/php-mock-phpunit": "^2.15",
+                "phpunit/phpunit": "^12.5"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
                         "CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider"
                     ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "CornellCustomDev\\LaravelStarterKit\\": "src"
+                    "CornellCustomDev\\LaravelStarterKit\\Ldap\\": "src"
                 }
             },
-            "notification-url": "https://packagist.org/downloads/",
+            "autoload-dev": {
+                "psr-4": {
+                    "CornellCustomDev\\LaravelStarterKit\\Ldap\\Tests\\": "tests"
+                }
+            },
+            "scripts": {
+                "post-autoload-dump": [
+                    "@clear",
+                    "@prepare"
+                ],
+                "clear": [
+                    "@php vendor/bin/testbench package:purge-skeleton --ansi"
+                ],
+                "prepare": [
+                    "@php vendor/bin/testbench package:discover --ansi"
+                ],
+                "test": [
+                    "@php vendor/bin/phpunit -c ./ --color"
+                ],
+                "sync": [
+                    "@php bin/sync"
+                ],
+                "ci": [
+                    "@post-autoload-dump",
+                    "@test"
+                ]
+            },
             "license": [
                 "MIT"
             ],
-            "description": "Cornell University Custom Development Laravel Starter Kit",
+            "description": "A Laravel package for connecting to Cornell LDAP resources",
             "support": {
-                "issues": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/issues",
-                "source": "https://github.com/CornellCustomDev/CD-LaravelStarterKit/tree/v0.5"
+                "source": "https://github.com/CornellCustomDev/CD-LaravelLdap/tree/main",
+                "issues": "https://github.com/CornellCustomDev/CD-LaravelLdap/issues"
             },
-            "time": "2025-04-08T21:14:13+00:00"
-        },
-        {
-            "name": "cubear/cwd_framework_lite",
-            "version": "3.0.9",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/CornellCustomDev/cwd_framework_lite.git",
-                "reference": "c9169a9bb5c4266d11dbda133a338e35ed48d25b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/cwd_framework_lite/zipball/c9169a9bb5c4266d11dbda133a338e35ed48d25b",
-                "reference": "c9169a9bb5c4266d11dbda133a338e35ed48d25b",
-                "shasum": ""
-            },
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "support": {
-                "issues": "https://github.com/CornellCustomDev/cwd_framework_lite/issues",
-                "source": "https://github.com/CornellCustomDev/cwd_framework_lite/tree/3.0.9"
-            },
-            "time": "2025-05-23T18:18:53+00:00"
+            "time": "2026-05-19T17:36:31+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -940,142 +984,6 @@
                 }
             ],
             "time": "2025-12-03T09:33:47+00:00"
-        },
-        {
-            "name": "giggsey/libphonenumber-for-php-lite",
-            "version": "9.0.28",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/giggsey/libphonenumber-for-php-lite.git",
-                "reference": "08acc9d605e1bb3d89dec504a09b6c435490f940"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/libphonenumber-for-php-lite/zipball/08acc9d605e1bb3d89dec504a09b6c435490f940",
-                "reference": "08acc9d605e1bb3d89dec504a09b6c435490f940",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.1",
-                "symfony/polyfill-mbstring": "^1.17"
-            },
-            "conflict": {
-                "giggsey/libphonenumber-for-php": "*"
-            },
-            "require-dev": {
-                "ext-dom": "*",
-                "friendsofphp/php-cs-fixer": "^3.71",
-                "infection/infection": "^0.29|^0.31.0",
-                "nette/php-generator": "^4.1",
-                "php-coveralls/php-coveralls": "^2.7",
-                "phpstan/extension-installer": "^1.4.3",
-                "phpstan/phpstan": "^2.1.7",
-                "phpstan/phpstan-deprecation-rules": "^2.0.1",
-                "phpstan/phpstan-phpunit": "^2.0.4",
-                "phpstan/phpstan-strict-rules": "^2.0.3",
-                "phpunit/phpunit": "^10.5.45",
-                "symfony/console": "^6.4",
-                "symfony/filesystem": "^6.4",
-                "symfony/process": "^6.4"
-            },
-            "suggest": {
-                "giggsey/libphonenumber-for-php": "Use libphonenumber-for-php for geocoding, carriers, timezones and matching"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "9.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "libphonenumber\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "Apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "Joshua Gigg",
-                    "email": "giggsey@gmail.com",
-                    "homepage": "https://giggsey.com/"
-                }
-            ],
-            "description": "A lite version of giggsey/libphonenumber-for-php, which is a PHP Port of Google's libphonenumber",
-            "homepage": "https://github.com/giggsey/libphonenumber-for-php-lite",
-            "keywords": [
-                "geocoding",
-                "geolocation",
-                "libphonenumber",
-                "mobile",
-                "phonenumber",
-                "validation"
-            ],
-            "support": {
-                "issues": "https://github.com/giggsey/libphonenumber-for-php-lite/issues",
-                "source": "https://github.com/giggsey/libphonenumber-for-php-lite"
-            },
-            "time": "2026-04-13T11:33:01+00:00"
-        },
-        {
-            "name": "giggsey/locale",
-            "version": "2.9.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/giggsey/Locale.git",
-                "reference": "fe741e99ae6ccbe8132f3d63d8ec89924e689778"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/giggsey/Locale/zipball/fe741e99ae6ccbe8132f3d63d8ec89924e689778",
-                "reference": "fe741e99ae6ccbe8132f3d63d8ec89924e689778",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "ext-json": "*",
-                "friendsofphp/php-cs-fixer": "^3.66",
-                "infection/infection": "^0.29|^0.32.0",
-                "php-coveralls/php-coveralls": "^2.7",
-                "phpstan/extension-installer": "^1.4.3",
-                "phpstan/phpstan": "^2.1.7",
-                "phpstan/phpstan-deprecation-rules": "^2.0.1",
-                "phpstan/phpstan-phpunit": "^2.0.4",
-                "phpstan/phpstan-strict-rules": "^2.0.3",
-                "phpunit/phpunit": "^10.5.45",
-                "symfony/console": "^6.4",
-                "symfony/filesystem": "^6.4",
-                "symfony/finder": "^6.4",
-                "symfony/process": "^6.4",
-                "symfony/var-exporter": "^6.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Giggsey\\Locale\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Joshua Gigg",
-                    "email": "giggsey@gmail.com",
-                    "homepage": "https://giggsey.com/"
-                }
-            ],
-            "description": "Locale functions required by libphonenumber-for-php",
-            "support": {
-                "issues": "https://github.com/giggsey/Locale/issues",
-                "source": "https://github.com/giggsey/Locale/tree/2.9.0"
-            },
-            "time": "2026-02-24T15:32:13+00:00"
         },
         {
             "name": "google/apiclient",
@@ -4322,21 +4230,21 @@
         },
         {
             "name": "onelogin/php-saml",
-            "version": "4.3.1",
+            "version": "4.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SAML-Toolkits/php-saml.git",
-                "reference": "b009f160e4ac11f49366a45e0d45706b48429353"
+                "reference": "26b3a47349415e5b7aa300ba4ab7fc316c65f19e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SAML-Toolkits/php-saml/zipball/b009f160e4ac11f49366a45e0d45706b48429353",
-                "reference": "b009f160e4ac11f49366a45e0d45706b48429353",
+                "url": "https://api.github.com/repos/SAML-Toolkits/php-saml/zipball/26b3a47349415e5b7aa300ba4ab7fc316c65f19e",
+                "reference": "26b3a47349415e5b7aa300ba4ab7fc316c65f19e",
                 "shasum": ""
             },
             "require": {
                 "php": ">=7.3",
-                "robrichards/xmlseclibs": ">=3.1.4"
+                "robrichards/xmlseclibs": "^3.1.5"
             },
             "require-dev": {
                 "pdepend/pdepend": "^2.8.0",
@@ -4382,7 +4290,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-12-09T10:50:49+00:00"
+            "time": "2026-05-07T22:38:04+00:00"
         },
         {
             "name": "openai-php/client",
@@ -5098,77 +5006,6 @@
                 }
             ],
             "time": "2025-07-13T19:23:20+00:00"
-        },
-        {
-            "name": "propaganistas/laravel-phone",
-            "version": "5.3.6",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Propaganistas/Laravel-Phone.git",
-                "reference": "89f26e8336cf8f8041609148b4fef752f0bd720e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Propaganistas/Laravel-Phone/zipball/89f26e8336cf8f8041609148b4fef752f0bd720e",
-                "reference": "89f26e8336cf8f8041609148b4fef752f0bd720e",
-                "shasum": ""
-            },
-            "require": {
-                "giggsey/libphonenumber-for-php-lite": "^8.13.35|^9.0.0",
-                "illuminate/contracts": "^10.0|^11.0|^12.0",
-                "illuminate/support": "^10.0|^11.0|^12.0",
-                "illuminate/validation": "^10.0|^11.0|^12.0",
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "laravel/pint": "^1.14",
-                "orchestra/testbench": "*",
-                "phpunit/phpunit": "^10.5|^11.5.3"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Propaganistas\\LaravelPhone\\PhoneServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "files": [
-                    "src/helpers.php"
-                ],
-                "psr-4": {
-                    "Propaganistas\\LaravelPhone\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Propaganistas",
-                    "email": "Propaganistas@users.noreply.github.com"
-                }
-            ],
-            "description": "Adds phone number functionality to Laravel based on Google's libphonenumber API.",
-            "keywords": [
-                "laravel",
-                "libphonenumber",
-                "phone",
-                "validation"
-            ],
-            "support": {
-                "issues": "https://github.com/Propaganistas/Laravel-Phone/issues",
-                "source": "https://github.com/Propaganistas/Laravel-Phone/tree/5.3.6"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/Propaganistas",
-                    "type": "github"
-                }
-            ],
-            "time": "2025-03-21T09:07:26+00:00"
         },
         {
             "name": "psr/cache",
@@ -11776,7 +11613,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "cornell-custom-dev/laravel-starter-kit": 20,
+        "cornell-custom-dev/laravel-ldap": 20,
         "maestroerror/laragent": 20
     },
     "prefer-stable": true,
