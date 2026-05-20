@@ -79,4 +79,15 @@ return [
     |
     */
     'allow_local_login' => boolval(env('ALLOW_LOCAL_LOGIN', false)),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Restrict Access for Livewire Updates
+    |--------------------------------------------------------------------------
+    |
+    | Add global middleware protection against unauthenticated posting to
+    | /livewire/update.
+    |
+    */
+    'require_livewire_auth' => boolval(env('REQUIRE_LIVEWIRE_AUTH', false)),
 ];

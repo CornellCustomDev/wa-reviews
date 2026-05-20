@@ -37,7 +37,7 @@ class AppTesters
             $appTestersField = config('cu-auth.app_testers_field');
             $tester = auth()->user()->$appTestersField ?? '';
         } else {
-            $tester = $this->identityManager->getIdentity()?->uniqueUid() ?: '';
+            $tester = $this->identityManager->getIdentity()?->id() ?: '';
         }
 
         if ($this->app_testers->contains($tester)) {

@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 interface IdentityManager
 {
+    public function hasRemoteIdentity(): bool;
+
+    /**
+     * @deprecated Use hasRemoteIdentity() instead.
+     */
     public function hasIdentity(): bool;
 
     public function getIdentity(): ?RemoteIdentity;

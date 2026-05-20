@@ -3,9 +3,9 @@
 namespace App\Listeners;
 
 use App\Models\User;
+use CornellCustomDev\LaravelStarterKit\CUAuth\DataObjects\RemoteIdentity;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Events\CUAuthenticated;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 

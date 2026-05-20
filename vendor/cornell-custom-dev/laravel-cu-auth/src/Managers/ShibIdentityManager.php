@@ -29,9 +29,15 @@ class ShibIdentityManager implements IdentityManager
 
     public const SHIB_LOGOUT_URL = '/Shibboleth.sso/Logout';
 
-    public function hasIdentity(): bool
+    public function hasRemoteIdentity(): bool
     {
         return ! empty($this->getIdentity());
+    }
+
+    /** {@inheritDoc} */
+    public function hasIdentity(): bool
+    {
+        return $this->hasRemoteIdentity();
     }
 
     public function getIdentity(): ?RemoteIdentity

@@ -5,11 +5,14 @@ namespace CornellCustomDev\LaravelStarterKit\CUAuth\Middleware;
 use Closure;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Events\CUAuthenticated;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\Concerns\ChecksLocalLogin;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class CUAuth
 {
+    use ChecksLocalLogin;
+
     public function __construct(
         protected IdentityManager $identityManager
     ) {}
@@ -17,7 +20,7 @@ class CUAuth
     public function handle(Request $request, Closure $next): Response
     {
         // If local login is allowed and someone is authenticated, let them through.
-        if (config('cu-auth.allow_local_login') && auth()->check()) {
+        if ($this->isLoggedInLocally()) {
             return $next($request);
         }
 
@@ -26,6 +29,7 @@ class CUAuth
             return redirect()->secure($request->getRequestUri());
         }
 
+        // SSO routes need to pass through so the identity manager can process the SSO responses.
         $passThrough = in_array($request->path(), [
             route('cu-auth.sso-login'),
             route('cu-auth.sso-logout'),
@@ -36,7 +40,8 @@ class CUAuth
             return $next($request);
         }
 
-        if (! $this->identityManager->hasIdentity()) {
+        // If we don't have a remote identity, redirect to the SSO login route.
+        if (! $this->identityManager->hasRemoteIdentity()) {
             return redirect()->route('cu-auth.sso-login', ['redirect_url' => $request->fullUrl()]);
         }
 

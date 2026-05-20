@@ -20427,6 +20427,7 @@ var UIEditor = class extends UIControl {
           if (cmdIsHeld && e.key.toLowerCase() === "k") {
             e.preventDefault();
             e.stopPropagation();
+            editor2.view.dom.blur();
             this.querySelector('[data-editor="link"] [data-match-target]')?.click();
           }
         });

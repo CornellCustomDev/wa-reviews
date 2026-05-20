@@ -11,7 +11,7 @@ trait RendersBladeGuidelines
 {
     private array $storedSnippets = [];
 
-    protected function renderContent(string $content, string $path): string
+    protected function renderContent(string $content, string $path, array $data = []): string
     {
         $isBladeTemplate = str_ends_with($path, '.blade.php');
 
@@ -19,19 +19,25 @@ trait RendersBladeGuidelines
             return $content;
         }
 
-        // Temporarily replace backticks and PHP opening tags with placeholders before Blade processing
-        // This prevents Blade from trying to execute PHP code examples and supports inline code
+        // Temporarily replace backticks, PHP opening tags, component tags, and Volt directives
+        // with placeholders before Blade processing. This prevents Blade from trying to execute
+        // PHP code examples, compile component references, and supports inline code.
         $placeholders = [
             '`' => '___SINGLE_BACKTICK___',
             '<?php' => '___OPEN_PHP_TAG___',
             '@volt' => '___VOLT_DIRECTIVE___',
             '@endvolt' => '___ENDVOLT_DIRECTIVE___',
+            '</x-' => '___BLADE_COMPONENT_CLOSE___',
+            '<x-' => '___BLADE_COMPONENT_OPEN___',
         ];
 
         $content = str_replace(array_keys($placeholders), array_values($placeholders), $content);
         $rendered = Blade::render($content, [
             'assist' => $this->getGuidelineAssist(),
+            ...$data,
         ]);
+
+        $rendered = html_entity_decode((string) $rendered, ENT_QUOTES | ENT_HTML5);
 
         return str_replace(array_values($placeholders), array_keys($placeholders), $rendered);
     }
@@ -51,16 +57,21 @@ trait RendersBladeGuidelines
         }, $content);
     }
 
-    protected function renderBladeFile(string $bladePath): string
+    protected function renderBladeFile(string $bladePath, array $data = []): string
     {
         if (! file_exists($bladePath)) {
             return '';
         }
 
         $content = file_get_contents($bladePath);
+
+        if ($content === false) {
+            return '';
+        }
+
         $content = $this->processBoostSnippets($content);
 
-        $rendered = $this->renderContent($content, $bladePath);
+        $rendered = $this->renderContent($content, $bladePath, $data);
 
         $rendered = str_replace(array_keys($this->storedSnippets), array_values($this->storedSnippets), $rendered);
 

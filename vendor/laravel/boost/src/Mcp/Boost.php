@@ -4,28 +4,21 @@ declare(strict_types=1);
 
 namespace Laravel\Boost\Mcp;
 
-use InvalidArgumentException;
 use Laravel\Boost\Mcp\Methods\CallToolWithExecutor;
 use Laravel\Boost\Mcp\Prompts\LaravelCodeSimplifier\LaravelCodeSimplifier;
-use Laravel\Boost\Mcp\Prompts\PackageGuidelinePrompt;
+use Laravel\Boost\Mcp\Prompts\UpgradeInertiav3\UpgradeInertiaV3;
+use Laravel\Boost\Mcp\Prompts\UpgradeLaravelv13\UpgradeLaravelV13;
 use Laravel\Boost\Mcp\Prompts\UpgradeLivewirev4\UpgradeLivewireV4;
-use Laravel\Boost\Mcp\Resources\PackageGuidelineResource;
 use Laravel\Boost\Mcp\Tools\ApplicationInfo;
 use Laravel\Boost\Mcp\Tools\BrowserLogs;
 use Laravel\Boost\Mcp\Tools\DatabaseConnections;
 use Laravel\Boost\Mcp\Tools\DatabaseQuery;
 use Laravel\Boost\Mcp\Tools\DatabaseSchema;
 use Laravel\Boost\Mcp\Tools\GetAbsoluteUrl;
-use Laravel\Boost\Mcp\Tools\GetConfig;
 use Laravel\Boost\Mcp\Tools\LastError;
-use Laravel\Boost\Mcp\Tools\ListArtisanCommands;
-use Laravel\Boost\Mcp\Tools\ListAvailableConfigKeys;
-use Laravel\Boost\Mcp\Tools\ListAvailableEnvVars;
-use Laravel\Boost\Mcp\Tools\ListRoutes;
 use Laravel\Boost\Mcp\Tools\ReadLogEntries;
 use Laravel\Boost\Mcp\Tools\SearchDocs;
 use Laravel\Boost\Mcp\Tools\Tinker;
-use Laravel\Boost\Support\Composer;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Prompt;
 use Laravel\Mcp\Server\Resource;
@@ -46,7 +39,7 @@ class Boost extends Server
     /**
      * The MCP server's instructions for the LLM.
      */
-    protected string $instructions = 'Laravel ecosystem MCP server offering database schema access, Artisan commands, error logs, Tinker execution, semantic documentation search and more. Boost helps with code generation.';
+    protected string $instructions = 'Laravel ecosystem MCP server offering database schema access, error logs, semantic documentation search, and more. Boost helps with code generation.';
 
     /**
      * The default pagination length for resources that support pagination.
@@ -96,12 +89,7 @@ class Boost extends Server
             DatabaseQuery::class,
             DatabaseSchema::class,
             GetAbsoluteUrl::class,
-            GetConfig::class,
             LastError::class,
-            ListArtisanCommands::class,
-            ListAvailableConfigKeys::class,
-            ListAvailableEnvVars::class,
-            ListRoutes::class,
             ReadLogEntries::class,
             SearchDocs::class,
             Tinker::class,
@@ -113,12 +101,9 @@ class Boost extends Server
      */
     protected function discoverResources(): array
     {
-        $availableResources = [
+        return $this->filterPrimitives([
             Resources\ApplicationInfo::class,
-            ...$this->discoverThirdPartyPrimitives(Resource::class),
-        ];
-
-        return $this->filterPrimitives($availableResources, 'resources');
+        ], 'resources');
     }
 
     /**
@@ -126,40 +111,12 @@ class Boost extends Server
      */
     protected function discoverPrompts(): array
     {
-        $availablePrompts = [
+        return $this->filterPrimitives([
             LaravelCodeSimplifier::class,
+            UpgradeInertiaV3::class,
+            UpgradeLaravelV13::class,
             UpgradeLivewireV4::class,
-            ...$this->discoverThirdPartyPrimitives(Prompt::class),
-        ];
-
-        return $this->filterPrimitives($availablePrompts, 'prompts');
-    }
-
-    /**
-     * @template T of Prompt|Resource
-     *
-     * @param  class-string<T>  $primitiveType
-     * @return array<int, T>
-     */
-    private function discoverThirdPartyPrimitives(string $primitiveType): array
-    {
-        $primitiveClass = match ($primitiveType) {
-            Prompt::class => PackageGuidelinePrompt::class,
-            Resource::class => PackageGuidelineResource::class,
-            default => throw new InvalidArgumentException('Invalid Primitive Type'),
-        };
-
-        $primitives = [];
-
-        foreach (Composer::packagesDirectoriesWithBoostGuidelines() as $package => $path) {
-            $corePath = $path.DIRECTORY_SEPARATOR.'core.blade.php';
-
-            if (file_exists($corePath)) {
-                $primitives[] = new $primitiveClass($package, $corePath);
-            }
-        }
-
-        return $primitives;
+        ], 'prompts');
     }
 
     /**

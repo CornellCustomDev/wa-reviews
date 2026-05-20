@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Laravel\Boost\Install\Concerns;
 
 use Illuminate\Support\Collection;
+use Laravel\Boost\Support\Composer;
+use Laravel\Boost\Support\Npm;
 use Laravel\Roster\Enums\Packages;
 use Laravel\Roster\Package;
 use Laravel\Roster\Roster;
@@ -23,12 +25,13 @@ trait DiscoverPackagePaths
     ];
 
     /**
-     * Packages that should be excluded from automatic guideline inclusion.
-     * These packages require explicit configuration to be included.
+     * Packages excluded from Roster-based guideline discovery.
+     * Boost is already loaded by getCoreGuidelines(); Sail requires explicit opt-in.
      *
      * @var array<int, Packages>
      */
-    protected array $optInPackages = [
+    protected array $excludedPackages = [
+        Packages::BOOST,
         Packages::SAIL,
     ];
 
@@ -48,7 +51,7 @@ trait DiscoverPackagePaths
 
     protected function shouldExcludePackage(Package $package): bool
     {
-        if (in_array($package->package(), $this->optInPackages, true)) {
+        if (in_array($package->package(), $this->excludedPackages, true)) {
             return true;
         }
 
@@ -94,5 +97,16 @@ trait DiscoverPackagePaths
     protected function getBoostAiPath(): string
     {
         return __DIR__.'/../../../.ai';
+    }
+
+    protected function resolveFirstPartyBoostPath(Package $package, string $subpath): ?string
+    {
+        if (! Composer::isFirstPartyPackage($package->rawName()) && ! Npm::isFirstPartyPackage($package->rawName())) {
+            return null;
+        }
+
+        $path = implode(DIRECTORY_SEPARATOR, [$package->path(), 'resources', 'boost', $subpath]);
+
+        return is_dir($path) ? $path : null;
     }
 }

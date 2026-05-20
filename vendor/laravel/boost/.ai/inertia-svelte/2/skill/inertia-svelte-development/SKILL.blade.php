@@ -10,16 +10,6 @@ metadata:
 @endphp
 # Inertia Svelte Development
 
-## When to Apply
-
-Activate this skill when:
-
-- Creating or modifying Svelte page components for Inertia
-- Working with forms in Svelte (using `<Form>` or `useForm`)
-- Implementing client-side navigation with `<Link>` or `router`
-- Using v2 features: deferred props, prefetching, or polling
-- Building Svelte-specific features with the Inertia protocol
-
 ## Documentation
 
 Use `search-docs` for detailed Inertia v2 Svelte patterns and documentation.
@@ -259,26 +249,15 @@ export let users
 
 ### Polling
 
-Automatically refresh data at intervals:
+Use the `usePoll` hook to automatically refresh data at intervals. It handles cleanup on unmount and throttles polling when the tab is inactive.
 
-@boostsnippet("Polling Example", "svelte")
+@boostsnippet("Basic Polling", "svelte")
 <script>
-import { router } from '@inertiajs/svelte'
-import { onMount, onDestroy } from 'svelte'
+import { usePoll } from '@inertiajs/svelte'
 
 export let stats
 
-let interval
-
-onMount(() => {
-    interval = setInterval(() => {
-        router.reload({ only: ['stats'] })
-    }, 5000) // Poll every 5 seconds
-})
-
-onDestroy(() => {
-    clearInterval(interval)
-})
+usePoll(5000)
 </script>
 
 <div>
@@ -286,6 +265,37 @@ onDestroy(() => {
     <div>Active Users: {stats.activeUsers}</div>
 </div>
 @endboostsnippet
+
+@boostsnippet("Polling With Request Options and Manual Control", "svelte")
+<script>
+import { usePoll } from '@inertiajs/svelte'
+
+export let stats
+
+const { start, stop } = usePoll(5000, {
+    only: ['stats'],
+    onStart() {
+        console.log('Polling request started')
+    },
+    onFinish() {
+        console.log('Polling request finished')
+    },
+}, {
+    autoStart: false,
+    keepAlive: true,
+})
+</script>
+
+<div>
+    <h1>Dashboard</h1>
+    <div>Active Users: {stats.activeUsers}</div>
+    <button on:click={start}>Start Polling</button>
+    <button on:click={stop}>Stop Polling</button>
+</div>
+@endboostsnippet
+
+- `autoStart` (default `true`) — set to `false` to start polling manually via the returned `start()` function
+- `keepAlive` (default `false`) — set to `true` to prevent throttling when the browser tab is inactive
 
 ## Server-Side Patterns
 

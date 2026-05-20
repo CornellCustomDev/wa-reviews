@@ -1,35 +1,52 @@
 {
-  "name": "cornell-custom-dev/laravel-cu-auth",
-  "description": "A Laravel package for authentication and identity management at Cornell University",
-  "license": "MIT",
-  "type": "library",
-  "require": {
-    "php": "^8.2",
-    "ext-openssl": "*",
-    "illuminate/support": "^11.0|^12.0",
-    "onelogin/php-saml": "^4.3.1"
-  },
-  "require-dev": {
-    "laravel/pint": "^1.20",
-    "orchestra/testbench": "^9.0|^10.0",
-    "phpunit/phpunit": "^10.5|^11.5"
-  },
-  "autoload": {
-    "psr-4": {
-      "CornellCustomDev\\LaravelStarterKit\\CUAuth\\": "src"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "CornellCustomDev\\LaravelStarterKit\\CUAuth\\Tests\\": "tests"
-    }
-  },
-  "extra": {
-    "laravel": {
-      "providers": [
-        "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider"
-      ]
-    }
-  },
-  "prefer-stable": true
+    "name": "cornell-custom-dev/laravel-cu-auth",
+    "description": "A Laravel package for authentication and identity management at Cornell University",
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "ext-openssl": "*",
+        "illuminate/support": "^12.0|^13.0",
+        "onelogin/php-saml": "^4.3.1"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.20",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.5|^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "CornellCustomDev\\LaravelStarterKit\\CUAuth\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CornellCustomDev\\LaravelStarterKit\\CUAuth\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "test": "@php vendor/bin/phpunit -c ./ --color",
+        "sync": "@php bin/sync",
+        "ci": [
+            "@post-autoload-dump",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CornellCustomDev\\LaravelStarterKit\\CUAuth\\CUAuthServiceProvider"
+            ]
+        }
+    },
+    "prefer-stable": true
 }

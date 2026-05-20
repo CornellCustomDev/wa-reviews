@@ -6,6 +6,31 @@ namespace Laravel\Boost\Support;
 
 class Composer
 {
+    /** @var array<int, string> */
+    public const FIRST_PARTY_SCOPES = [
+        'laravel',
+    ];
+
+    /** @var array<int, string> */
+    public const FIRST_PARTY_PACKAGES = [
+        'livewire/livewire',
+        'livewire/flux',
+        'livewire/flux-pro',
+        'livewire/volt',
+        'inertiajs/inertia-laravel',
+        'pestphp/pest',
+        'phpunit/phpunit',
+    ];
+
+    public static function isFirstPartyPackage(string $composerName): bool
+    {
+        if (collect(self::FIRST_PARTY_SCOPES)->contains(fn (string $scope): bool => str_starts_with($composerName, $scope.'/'))) {
+            return true;
+        }
+
+        return in_array($composerName, self::FIRST_PARTY_PACKAGES, true);
+    }
+
     public static function packagesDirectories(): array
     {
         return collect(static::packages())
@@ -48,9 +73,9 @@ class Composer
     }
 
     /**
-     * @param  string|null  $subpath  Optional subpath under resources/boost/ (e.g., 'guidelines')
+     * @return array<string, string>
      */
-    private static function packagesDirectoriesWithBoostSubpath(?string $subpath = null): array
+    private static function packagesDirectoriesWithBoostSubpath(string $subpath): array
     {
         return collect(self::packagesDirectories())
             ->map(fn (string $path): string => implode(DIRECTORY_SEPARATOR, array_filter([

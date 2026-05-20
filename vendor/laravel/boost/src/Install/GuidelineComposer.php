@@ -10,7 +10,6 @@ use Laravel\Boost\Concerns\RendersBladeGuidelines;
 use Laravel\Boost\Install\Concerns\DiscoverPackagePaths;
 use Laravel\Boost\Support\Composer;
 use Laravel\Roster\Package;
-use Laravel\Roster\PackageCollection;
 use Laravel\Roster\Roster;
 use Symfony\Component\Finder\Exception\DirectoryNotFoundException;
 use Symfony\Component\Finder\Finder;
@@ -27,8 +26,6 @@ class GuidelineComposer
     protected ?Collection $guidelines = null;
 
     protected GuidelineConfig $config;
-
-    protected ?SkillComposer $skillComposer = null;
 
     public function __construct(protected Roster $roster, protected Herd $herd)
     {
@@ -58,6 +55,13 @@ class GuidelineComposer
     public function customGuidelinePath(string $path = ''): string
     {
         return base_path($this->userGuidelineDir.'/'.ltrim($path, '/'));
+    }
+
+    protected function isCustomGuideline(string $path): bool
+    {
+        $resolvedBase = realpath($this->customGuidelinePath());
+
+        return $resolvedBase !== false && str_contains($path, $resolvedBase);
     }
 
     /**
@@ -94,11 +98,14 @@ class GuidelineComposer
             return $this->guidelines;
         }
 
+        $excluded = config('boost.guidelines.exclude', []);
+
         $base = collect()
             ->merge($this->getCoreGuidelines())
             ->merge($this->getConditionalGuidelines())
             ->merge($this->getPackageGuidelines())
-            ->merge($this->getThirdPartyGuidelines());
+            ->merge($this->getThirdPartyGuidelines())
+            ->reject(fn (array $guideline, string $key): bool => in_array($key, $excluded, true));
 
         $basePaths = $base->pluck('path')->filter()->values();
 
@@ -128,6 +135,7 @@ class GuidelineComposer
             'foundation' => $this->guideline('foundation'),
             'boost' => $this->guideline('boost/core'),
             'php' => $this->guideline('php/core'),
+            'deployments' => $this->guideline('deployments/core'),
         ]);
     }
 
@@ -166,13 +174,23 @@ class GuidelineComposer
             ->mapWithKeys(fn ($config, $key): array => [$key => $this->guideline($config['path'])]);
     }
 
-    protected function getPackageGuidelines(): PackageCollection
+    protected function getPackageGuidelines(): Collection
     {
         return $this->roster->packages()
             ->reject(fn (Package $package): bool => $this->shouldExcludePackage($package))
-            ->flatMap(function ($package): Collection {
+            ->flatMap(function (Package $package): Collection {
                 $guidelineDir = $this->normalizePackageName($package->name());
-                $guidelines = collect([$guidelineDir.'/core' => $this->guideline($guidelineDir.'/core')]);
+
+                $vendorPath = $this->resolveFirstPartyBoostPath($package, 'guidelines');
+
+                $vendorCorePath = $vendorPath !== null
+                    ? implode(DIRECTORY_SEPARATOR, [$vendorPath, 'core'])
+                    : null;
+
+                $guidelines = collect([
+                    $guidelineDir.'/core' => $this->resolveGuideline($vendorCorePath, $guidelineDir.'/core'),
+                ]);
+
                 $packageGuidelines = $this->guidelinesDir($guidelineDir.'/'.$package->majorVersion());
 
                 foreach ($packageGuidelines as $guideline) {
@@ -189,6 +207,22 @@ class GuidelineComposer
     }
 
     /**
+     * @return array{content: string, name: string, description: string, path: ?string, custom: bool, third_party: bool}
+     */
+    private function resolveGuideline(?string $vendorPath, string $guidelineKey): array
+    {
+        if ($vendorPath !== null) {
+            foreach (['.blade.php', '.md'] as $ext) {
+                if (file_exists($vendorPath.$ext)) {
+                    return $this->guideline($vendorPath.$ext, false, $guidelineKey);
+                }
+            }
+        }
+
+        return $this->guideline($guidelineKey);
+    }
+
+    /**
      * @return Collection<string, array>
      */
     protected function getThirdPartyGuidelines(): Collection
@@ -196,6 +230,10 @@ class GuidelineComposer
         $guidelines = collect();
 
         foreach (Composer::packagesDirectoriesWithBoostGuidelines() as $package => $path) {
+            if (Composer::isFirstPartyPackage($package)) {
+                continue;
+            }
+
             foreach ($this->guidelinesDir($path, true) as $guideline) {
                 $guidelines->put($package, $guideline);
             }
@@ -239,9 +277,9 @@ class GuidelineComposer
     /**
      * @return array{content: string, name: string, description: string, path: ?string, custom: bool, third_party: bool}
      */
-    protected function guideline(string $path, bool $thirdParty = false): array
+    protected function guideline(string $path, bool $thirdParty = false, ?string $overrideKey = null): array
     {
-        $path = $this->guidelinePath($path);
+        $path = $this->guidelinePath($path, $overrideKey);
 
         if ($path === null) {
             return [
@@ -269,7 +307,7 @@ class GuidelineComposer
             'name' => str_replace(['.blade.php', '.md'], '', basename($path)),
             'description' => $description,
             'path' => $path,
-            'custom' => str_contains($path, $this->customGuidelinePath()),
+            'custom' => $this->isCustomGuideline($path),
             'third_party' => $thirdParty,
             'tokens' => round(str_word_count($rendered) * 1.3),
         ];
@@ -277,9 +315,7 @@ class GuidelineComposer
 
     protected function getGuidelineAssist(): GuidelineAssist
     {
-        $skillsComposer = $this->skillComposer ??= new SkillComposer($this->roster, $this->config);
-
-        return new GuidelineAssist($this->roster, $this->config, $skillsComposer->skills());
+        return new GuidelineAssist($this->roster, $this->config);
     }
 
     protected function prependPackageGuidelinePath(string $path): string
@@ -301,7 +337,7 @@ class GuidelineComposer
         return str_replace('/', DIRECTORY_SEPARATOR, $basePath.$path);
     }
 
-    protected function guidelinePath(string $path): ?string
+    protected function guidelinePath(string $path, ?string $overrideKey = null): ?string
     {
         // Relative path, prepend our package path to it
         if (! file_exists($path)) {
@@ -314,8 +350,19 @@ class GuidelineComposer
 
         $path = realpath($path);
 
-        // If this is a custom guideline, return it unchanged
-        if (str_contains($path, $this->customGuidelinePath())) {
+        if ($this->isCustomGuideline($path)) {
+            return $path;
+        }
+
+        if ($overrideKey !== null) {
+            foreach (['.blade.php', '.md'] as $ext) {
+                $customPath = $this->prependUserGuidelinePath($overrideKey.$ext);
+
+                if (file_exists($customPath)) {
+                    return realpath($customPath);
+                }
+            }
+
             return $path;
         }
 
@@ -328,6 +375,6 @@ class GuidelineComposer
 
         $customPath = $this->prependUserGuidelinePath($relativePath);
 
-        return file_exists($customPath) ? $customPath : $path;
+        return file_exists($customPath) ? realpath($customPath) : $path;
     }
 }

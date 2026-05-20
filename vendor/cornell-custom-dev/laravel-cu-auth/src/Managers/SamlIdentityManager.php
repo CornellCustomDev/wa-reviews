@@ -57,9 +57,15 @@ class SamlIdentityManager implements IdentityManager
         'title' => 'urn:oid:2.5.4.12',
     ];
 
-    public function hasIdentity(): bool
+    public function hasRemoteIdentity(): bool
     {
         return ! empty($this->getIdentity());
+    }
+
+    /** {@inheritDoc} */
+    public function hasIdentity(): bool
+    {
+        return $this->hasRemoteIdentity();
     }
 
     public function getIdentity(): ?RemoteIdentity

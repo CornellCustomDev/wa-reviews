@@ -60,14 +60,14 @@ if ($loading) {
     <?php if ($closable): ?>
         <div class="[[data-flux-select-search]:has([data-flux-loading])_&]:opacity-0 transition-opacity absolute top-0 bottom-0 flex items-center justify-center pe-1 end-0">
             <ui-close>
-                <flux:button square variant="subtle" size="sm" aria-label="Clear search input">
+                <flux:button square variant="subtle" size="sm" aria-label="{{ __('Clear search input') }}">
                     <flux:icon.x-mark variant="micro" />
                 </flux:button>
             </ui-close>
         </div>
     <?php elseif ($clearable): ?>
         <div class="[[data-flux-select-search]:has([data-flux-loading])_&]:opacity-0 transition-opacity absolute top-0 bottom-0 flex items-center justify-center pe-1 end-0 [[data-flux-select-search]:has(input:placeholder-shown)_&]:hidden">
-            <flux:button square variant="subtle" size="sm" tabindex="-1" aria-label="Clear command input"
+            <flux:button square variant="subtle" size="sm" tabindex="-1" aria-label="{{ __('Clear command input') }}"
                 x-data="fluxSelectSearchClearable"
                 x-on:click="clear()"
             >

@@ -1,5 +1,10 @@
 @blaze(fold: true, memo: true)
 
+@props([
+    'iconVariant' => 'mini',
+    'size' => null,
+])
+
 @php
 $attributes = $attributes->merge([
     'variant' => 'subtle',
@@ -17,6 +22,6 @@ $attributes = $attributes->merge([
     x-bind:data-copyable-copied="copied"
     aria-label="{{ __('Copy to clipboard') }}"
 >
-    <flux:icon.clipboard-document-check variant="mini" class="hidden [[data-copyable-copied]>&]:block" />
-    <flux:icon.clipboard-document variant="mini" class="block [[data-copyable-copied]>&]:hidden" />
+    <flux:icon.clipboard-document-check :variant="$iconVariant" class="hidden [[data-copyable-copied]>&]:block" />
+    <flux:icon.clipboard-document :variant="$iconVariant" class="block [[data-copyable-copied]>&]:hidden" />
 </flux:button>

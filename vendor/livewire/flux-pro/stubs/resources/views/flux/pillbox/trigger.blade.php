@@ -44,7 +44,7 @@ $classes = Flux::classes()
             :size="$size === 'sm' ? 'xs' : 'sm'"
             square
             tabindex="-1"
-            aria-label="Clear selected"
+            aria-label="{{ __('Clear selected') }}"
             x-on:click.prevent.stop="$el.closest('ui-pillbox').clear()"
         >
             <flux:icon.x-mark variant="micro" />

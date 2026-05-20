@@ -52,7 +52,16 @@ class Cursor extends Agent implements SupportsGuidelines, SupportsMcp, SupportsS
 
     public function mcpConfigPath(): string
     {
-        return '.cursor/mcp.json';
+        return config('boost.agents.cursor.mcp_config_path', '.cursor/mcp.json');
+    }
+
+    /** {@inheritDoc} */
+    public function httpMcpServerConfig(string $url): array
+    {
+        return [
+            'command' => 'npx',
+            'args' => ['-y', 'mcp-remote', $url],
+        ];
     }
 
     public function guidelinesPath(): string
