@@ -6,6 +6,13 @@ export default defineConfig({
   title: "Prism",
   head: [
     [
+      "link",
+      {
+        rel: "icon",
+        href: "/favicon.ico",
+      },
+    ],
+    [
       "script",
       {
         src: "https://cdn.tailwindcss.com",
@@ -119,6 +126,14 @@ export default defineConfig({
                 link: "/core-concepts/image-generation",
               },
               {
+                text: "Moderation",
+                link: "/core-concepts/moderation",
+              },
+              {
+                text: "Audio",
+                link: "/core-concepts/audio",
+              },
+              {
                 text: "Schemas",
                 link: "/core-concepts/schemas",
               },
@@ -169,6 +184,10 @@ export default defineConfig({
                 link: "/providers/deepseek",
               },
               {
+                text: "ElevenLabs",
+                link: "/providers/elevenlabs",
+              },
+              {
                 text: "Groq",
                 link: "/providers/groq",
               },
@@ -189,12 +208,24 @@ export default defineConfig({
                 link: "/providers/openai",
               },
               {
+                text: "OpenRouter",
+                link: "/providers/openrouter",
+              },
+              {
                 text: "Voyage AI",
                 link: "/providers/voyageai",
               },
               {
                 text: "XAI",
                 link: "/providers/xai",
+              },
+              {
+                text: "Perplexity",
+                link: "/providers/perplexity",
+              },
+              {
+                text: "Z AI",
+                link: "/providers/z",
               },
             ],
           },
@@ -245,7 +276,7 @@ export default defineConfig({
     ],
     footer: {
       message: "Released under the MIT License.",
-      copyright: "Copyright © 2024-present TJ Miller",
+      copyright: "Copyright © 2026-present TJ Miller",
     },
   },
   vite: {

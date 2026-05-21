@@ -17,10 +17,29 @@ return [
     'prism_server' => [
         'enabled' => env('PRISM_SERVER_ENABLED', false),
     ],
+    'request_timeout' => env('PRISM_REQUEST_TIMEOUT', 30),
     'providers' => [
         // Provider configurations here
     ],
 ];
+```
+
+## Request Timeout
+
+Prism includes a global request timeout that applies to all provider HTTP requests. By default, requests will timeout after 30 seconds. You can adjust this value to accommodate longer-running operations like complex generations or large context windows:
+
+```php
+'request_timeout' => env('PRISM_REQUEST_TIMEOUT', 30),
+```
+
+This timeout applies to both the connection and the overall request duration. If you're working with providers that need more time for complex operations, increase this value accordingly.
+
+Request timeouts can also be set by using the `withClientOptions()` method.
+
+```php
+Prism::text()
+  ->withClientOptions(['timeout' => 120]) // [!code focus]
+  ->asText()
 ```
 
 ## Provider Configuration
@@ -65,6 +84,7 @@ PROVIDER_API_KEY=your-api-key-here
 PROVIDER_URL=https://custom-endpoint.com
 
 ```
+
 > [!NOTE]
 > Remember to always refer to your chosen provider's documentation pages for the most up-to-date configuration options and requirements specific to that provider.
 
@@ -73,12 +93,12 @@ PROVIDER_URL=https://custom-endpoint.com
 You can override config in your code in two ways:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 // Via the third parameter of `using()`
 $response = Prism::text()
-    ->using(Provider::OpenAI, 'claude-3-5-sonnet-20241022', [
+    ->using(Provider::OpenAI, 'gpt-4o', [
         'url' => 'new-base-url'
     ])
     ->withPrompt('Explain quantum computing.')
@@ -86,7 +106,7 @@ $response = Prism::text()
 
 // Or via `usingProviderConfig()` (note that this will re-resolve the provider).
 $response = Prism::text()
-    ->using(Provider::OpenAI, 'claude-3-5-sonnet-20241022')
+    ->using(Provider::OpenAI, 'gpt-4o')
     ->usingProviderConfig([
         'url' => 'new-base-url'
     ])

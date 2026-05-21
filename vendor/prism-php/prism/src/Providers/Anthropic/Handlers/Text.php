@@ -7,11 +7,13 @@ namespace Prism\Prism\Providers\Anthropic\Handlers;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use Prism\Prism\Concerns\CallsTools;
 use Prism\Prism\Contracts\PrismRequest;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Exceptions\PrismException;
 use Prism\Prism\Providers\Anthropic\Concerns\ExtractsCitations;
+use Prism\Prism\Providers\Anthropic\Concerns\ExtractsProviderToolCalls;
 use Prism\Prism\Providers\Anthropic\Concerns\ExtractsText;
 use Prism\Prism\Providers\Anthropic\Concerns\ExtractsThinking;
 use Prism\Prism\Providers\Anthropic\Concerns\HandlesHttpRequests;
@@ -34,7 +36,7 @@ use Prism\Prism\ValueObjects\Usage;
 
 class Text
 {
-    use CallsTools, ExtractsCitations, ExtractsText, ExtractsThinking, HandlesHttpRequests, ProcessesRateLimits;
+    use CallsTools, ExtractsCitations, ExtractsProviderToolCalls, ExtractsText, ExtractsThinking, HandlesHttpRequests, ProcessesRateLimits;
 
     protected Response $tempResponse;
 
@@ -51,16 +53,6 @@ class Text
 
         $this->prepareTempResponse();
 
-        $responseMessage = new AssistantMessage(
-            $this->tempResponse->text,
-            $this->tempResponse->toolCalls,
-            $this->tempResponse->additionalContent,
-        );
-
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
-        $this->request->addMessage($responseMessage);
-
         return match ($this->tempResponse->finishReason) {
             FinishReason::ToolCalls => $this->handleToolCalls(),
             FinishReason::Stop, FinishReason::Length => $this->handleStop(),
@@ -76,7 +68,7 @@ class Text
     public static function buildHttpRequestPayload(PrismRequest $request): array
     {
         if (! $request->is(TextRequest::class)) {
-            throw new \InvalidArgumentException('Request must be an instance of '.TextRequest::class);
+            throw new InvalidArgumentException('Request must be an instance of '.TextRequest::class);
         }
 
         return Arr::whereNotNull([
@@ -91,27 +83,32 @@ class Text
                         : config('prism.anthropic.default_thinking_budget', 1024),
                 ]
                 : null,
-            'max_tokens' => $request->maxTokens(),
+            'max_tokens' => $request->maxTokens() ?? 64000,
             'temperature' => $request->temperature(),
             'top_p' => $request->topP(),
             'tools' => static::buildTools($request) ?: null,
             'tool_choice' => ToolChoiceMap::map($request->toolChoice()),
+            'mcp_servers' => $request->providerOptions('mcp_servers'),
+            'cache_control' => $request->providerOptions('cache_control'),
         ]);
     }
 
     protected function handleToolCalls(): Response
     {
         $toolResults = $this->callTools($this->request->tools(), $this->tempResponse->toolCalls);
-        $message = new ToolResultMessage($toolResults);
-
-        // Apply tool result caching if configured
-        if ($tool_result_cache_type = $this->request->providerOptions('tool_result_cache_type')) {
-            $message->withProviderOptions(['cacheType' => $tool_result_cache_type]);
-        }
-
-        $this->request->addMessage($message);
 
         $this->addStep($toolResults);
+
+        $this->request->addMessage(new AssistantMessage(
+            $this->tempResponse->text,
+            $this->tempResponse->toolCalls,
+            $this->tempResponse->additionalContent,
+        ));
+
+        $toolResultMessage = new ToolResultMessage($toolResults);
+
+        $this->request->addMessage($toolResultMessage);
+        $this->request->resetToolChoice();
 
         if ($this->responseBuilder->steps->count() < $this->request->maxSteps()) {
             return $this->handle();
@@ -132,16 +129,20 @@ class Text
      */
     protected function addStep(array $toolResults = []): void
     {
+        $data = $this->httpResponse->json();
+
         $this->responseBuilder->addStep(new Step(
             text: $this->tempResponse->text,
             finishReason: $this->tempResponse->finishReason,
             toolCalls: $this->tempResponse->toolCalls,
             toolResults: $toolResults,
+            providerToolCalls: $this->extractProviderToolCalls($data),
             usage: $this->tempResponse->usage,
             meta: $this->tempResponse->meta,
             messages: $this->request->messages(),
             systemPrompts: $this->request->systemPrompts(),
             additionalContent: $this->tempResponse->additionalContent,
+            raw: $data,
         ));
     }
 
@@ -151,8 +152,6 @@ class Text
 
         $this->tempResponse = new Response(
             steps: new Collection,
-            responseMessages: new Collection,
-            messages: new Collection,
             text: $this->extractText($data),
             finishReason: FinishReasonMap::map(data_get($data, 'stop_reason', '')),
             toolCalls: $this->extractToolCalls($data),
@@ -168,8 +167,9 @@ class Text
                 model: data_get($data, 'model'),
                 rateLimits: $this->processRateLimits($this->httpResponse)
             ),
+            messages: new Collection,
             additionalContent: Arr::whereNotNull([
-                'messagePartsWithCitations' => $this->extractCitations($data),
+                'citations' => $this->extractCitations($data),
                 ...$this->extractThinking($data),
             ])
         );
@@ -190,6 +190,7 @@ class Text
             fn (ProviderTool $tool): array => [
                 'type' => $tool->type,
                 'name' => $tool->name,
+                ...$tool->options,
             ],
             $request->providerTools()
         );

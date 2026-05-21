@@ -43,22 +43,19 @@ class Text
 
         $this->validateResponse($data);
 
-        $responseMessage = new AssistantMessage(
-            data_get($data, 'message.content') ?? '',
-            $this->mapToolCalls(data_get($data, 'message.tool_calls', [])),
-        );
-
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
-        $request->addMessage($responseMessage);
-
         // Check for tool calls first, regardless of finish reason
         if (! empty(data_get($data, 'message.tool_calls'))) {
             return $this->handleToolCalls($data, $request);
         }
 
-        return match ($this->mapFinishReason($data)) {
-            FinishReason::Stop => $this->handleStop($data, $request),
+        $finishReason = $this->mapFinishReason($data);
+
+        return match ($finishReason) {
+            FinishReason::Stop,
+            FinishReason::Length,
+            FinishReason::Unknown,
+            FinishReason::ContentFilter,
+            FinishReason::Other => $this->handleStop($data, $request),
             default => throw new PrismException('Ollama: unknown finish reason'),
         };
     }
@@ -68,18 +65,21 @@ class Text
      */
     protected function sendRequest(Request $request): array
     {
-        if (count($request->systemPrompts()) > 1) {
-            throw new PrismException('Ollama does not support multiple system prompts using withSystemPrompt / withSystemPrompts. However, you can provide additional system prompts by including SystemMessages in with withMessages.');
-        }
-
+        /** @var \Illuminate\Http\Client\Response $response */
         $response = $this
             ->client
             ->post('api/chat', [
                 'model' => $request->model(),
-                'system' => data_get($request->systemPrompts(), '0.content', ''),
-                'messages' => (new MessageMap($request->messages()))->map(),
+                'messages' => (new MessageMap(array_merge(
+                    $request->systemPrompts(),
+                    $request->messages()
+                )))->map(),
                 'tools' => ToolMap::map($request->tools()),
                 'stream' => false,
+                ...Arr::whereNotNull([
+                    'think' => $request->providerOptions('thinking'),
+                    'keep_alive' => $request->providerOptions('keep_alive'),
+                ]),
                 'options' => Arr::whereNotNull(array_merge([
                     'temperature' => $request->temperature(),
                     'num_predict' => $request->maxTokens() ?? 2048,
@@ -95,14 +95,18 @@ class Text
      */
     protected function handleToolCalls(array $data, Request $request): Response
     {
-        $toolResults = $this->callTools(
-            $request->tools(),
-            $this->mapToolCalls(data_get($data, 'message.tool_calls', [])),
-        );
+        $toolCalls = $this->mapToolCalls(data_get($data, 'message.tool_calls', []));
 
-        $request->addMessage(new ToolResultMessage($toolResults));
+        $toolResults = $this->callTools($request->tools(), $toolCalls);
 
         $this->addStep($data, $request, $toolResults);
+
+        $request->addMessage(new AssistantMessage(
+            data_get($data, 'message.content') ?? '',
+            $toolCalls,
+        ));
+        $request->addMessage(new ToolResultMessage($toolResults));
+        $request->resetToolChoice();
 
         if ($this->shouldContinue($request)) {
             return $this->handle($request);
@@ -137,6 +141,7 @@ class Text
             finishReason: $this->mapFinishReason($data),
             toolCalls: $this->mapToolCalls(data_get($data, 'message.tool_calls', []) ?? []),
             toolResults: $toolResults,
+            providerToolCalls: [],
             usage: new Usage(
                 data_get($data, 'prompt_eval_count', 0),
                 data_get($data, 'eval_count', 0),
@@ -146,8 +151,9 @@ class Text
                 model: $request->model(),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: [],
+            raw: $data,
         ));
     }
 

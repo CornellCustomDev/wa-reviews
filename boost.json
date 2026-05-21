@@ -4,17 +4,17 @@
         "copilot",
         "claude_code"
     ],
+    "cloud": false,
     "guidelines": true,
-    "herd_mcp": false,
     "mcp": true,
-    "packages": [
-        "laravel/nightwatch"
-    ],
+    "nightwatch": true,
     "sail": false,
     "skills": [
+        "laravel-best-practices",
+        "configure-nightwatch",
+        "pennant-development",
         "fluxui-development",
         "livewire-development",
-        "tailwindcss-development",
-        "configure-nightwatch"
+        "tailwindcss-development"
     ]
 }

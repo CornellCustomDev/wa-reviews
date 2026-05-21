@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace Prism\Prism\Structured;
 
 use Illuminate\Support\Collection;
-use Prism\Prism\Contracts\Message;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Exceptions\PrismStructuredDecodingException;
+use Prism\Prism\ValueObjects\ProviderToolCall;
+use Prism\Prism\ValueObjects\ToolCall;
+use Prism\Prism\ValueObjects\ToolResult;
 use Prism\Prism\ValueObjects\Usage;
 
 readonly class ResponseBuilder
@@ -15,20 +17,9 @@ readonly class ResponseBuilder
     /** @var Collection<int, Step> */
     public Collection $steps;
 
-    /** @var Collection<int, Message> */
-    public Collection $responseMessages;
-
     public function __construct()
     {
         $this->steps = new Collection;
-        $this->responseMessages = new Collection;
-    }
-
-    public function addResponseMessage(Message $message): self
-    {
-        $this->responseMessages->push($message);
-
-        return $this;
     }
 
     public function addStep(Step $step): self
@@ -45,16 +36,35 @@ readonly class ResponseBuilder
 
         return new Response(
             steps: $this->steps,
-            responseMessages: $this->responseMessages,
             text: $finalStep->text,
-            structured: $finalStep->structured === [] && $finalStep->finishReason === FinishReason::Stop
-                ? $this->decodeObject($finalStep->text)
-                : $finalStep->structured,
+            structured: $this->extractFinalStructuredData($finalStep),
             finishReason: $finalStep->finishReason,
             usage: $this->calculateTotalUsage(),
             meta: $finalStep->meta,
+            toolCalls: $this->aggregateToolCalls(),
+            providerToolCalls: $this->aggregateProviderToolCalls(),
+            toolResults: $this->aggregateToolResults(),
             additionalContent: $finalStep->additionalContent,
+            raw: $finalStep->raw,
         );
+    }
+
+    /**
+     * @return array<mixed>
+     */
+    protected function extractFinalStructuredData(Step $finalStep): array
+    {
+        if ($this->shouldDecodeFromText($finalStep)) {
+            return $this->decodeObject($finalStep->text);
+        }
+
+        return $finalStep->structured;
+    }
+
+    protected function shouldDecodeFromText(Step $finalStep): bool
+    {
+        return $finalStep->structured === []
+            && $finalStep->finishReason === FinishReason::Stop;
     }
 
     /**
@@ -63,10 +73,49 @@ readonly class ResponseBuilder
     protected function decodeObject(string $responseText): array
     {
         try {
+            $pattern = '/^```(?:json)?\s*\n?(.*?)\n?```$/s';
+
+            if (preg_match($pattern, trim($responseText), $matches)) {
+                $responseText = trim($matches[1]);
+            }
+
             return json_decode($responseText, true, flags: JSON_THROW_ON_ERROR);
         } catch (\JsonException) {
             throw PrismStructuredDecodingException::make($responseText);
         }
+    }
+
+    /**
+     * @return array<int, ToolCall>
+     */
+    protected function aggregateToolCalls(): array
+    {
+        return $this->steps
+            ->flatMap(fn (Step $step): array => $step->toolCalls)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, ProviderToolCall>
+     */
+    protected function aggregateProviderToolCalls(): array
+    {
+        return $this->steps
+            ->flatMap(fn (Step $step): array => $step->providerToolCalls)
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @return array<int, ToolResult>
+     */
+    protected function aggregateToolResults(): array
+    {
+        return $this->steps
+            ->flatMap(fn (Step $step): array => $step->toolResults)
+            ->values()
+            ->all();
     }
 
     protected function calculateTotalUsage(): Usage

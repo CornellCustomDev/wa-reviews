@@ -6,7 +6,6 @@ namespace Prism\Prism\Providers\Ollama\Handlers;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Arr;
-use Prism\Prism\Exceptions\PrismException;
 use Prism\Prism\Providers\Ollama\Concerns\MapsFinishReason;
 use Prism\Prism\Providers\Ollama\Concerns\ValidatesResponse;
 use Prism\Prism\Providers\Ollama\Maps\MessageMap;
@@ -40,8 +39,6 @@ class Structured
             data_get($data, 'message.content') ?? '',
         );
 
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
         $request->addMessage($responseMessage);
 
         $this->addStep($data, $request);
@@ -66,8 +63,9 @@ class Structured
                 model: $request->model(),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: [],
+            raw: $data,
         ));
     }
 
@@ -76,16 +74,18 @@ class Structured
      */
     protected function sendRequest(Request $request): array
     {
-        if (count($request->systemPrompts()) > 1) {
-            throw new PrismException('Ollama does not support multiple system prompts using withSystemPrompt / withSystemPrompts. However, you can provide additional system prompts by including SystemMessages in with withMessages.');
-        }
-
+        /** @var \Illuminate\Http\Client\Response $response */
         $response = $this->client->post('api/chat', [
             'model' => $request->model(),
-            'system' => data_get($request->systemPrompts(), '0.content', ''),
-            'messages' => (new MessageMap($request->messages()))->map(),
+            'messages' => (new MessageMap(array_merge(
+                $request->systemPrompts(),
+                $request->messages()
+            )))->map(),
             'format' => $request->schema()->toArray(),
             'stream' => false,
+            ...Arr::whereNotNull([
+                'keep_alive' => $request->providerOptions('keep_alive'),
+            ]),
             'options' => Arr::whereNotNull(array_merge([
                 'temperature' => $request->temperature(),
                 'num_predict' => $request->maxTokens() ?? 2048,

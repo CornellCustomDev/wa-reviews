@@ -12,11 +12,12 @@ class FinishReasonMap
     {
         return match ($status) {
             'incomplete' => FinishReason::Length,
+            'length' => FinishReason::Length,
             'failed' => FinishReason::Error,
             'completed' => match ($type) {
                 'function_call' => FinishReason::ToolCalls,
                 'message' => FinishReason::Stop,
-                default => FinishReason::Unknown,
+                default => str_ends_with((string) $type, '_call') ? FinishReason::ToolCalls : FinishReason::Unknown,
             },
             default => FinishReason::Unknown,
         };

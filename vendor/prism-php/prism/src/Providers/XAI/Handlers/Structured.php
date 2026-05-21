@@ -46,8 +46,6 @@ class Structured
 
         $responseMessage = new AssistantMessage($content);
 
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
         $request->addMessage($responseMessage);
 
         $this->addStep($data, $request, $parsed);
@@ -63,7 +61,6 @@ class Structured
     {
         $this->responseBuilder->addStep(new Step(
             text: data_get($data, 'choices.0.message.content') ?? '',
-            structured: $parsed ?? [],
             finishReason: $this->mapFinishReason($data),
             usage: new Usage(
                 promptTokens: data_get($data, 'usage.prompt_tokens', 0),
@@ -74,8 +71,10 @@ class Structured
                 model: data_get($data, 'model'),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: [],
+            structured: $parsed ?? [],
+            raw: $data,
         ));
     }
 
@@ -84,7 +83,8 @@ class Structured
 
         $responseFormat = $this->buildResponseFormat($request);
 
-        return $this->client->post(
+        /** @var ClientResponse $response */
+        $response = $this->client->post(
             'chat/completions',
             array_merge([
                 'model' => $request->model(),
@@ -96,6 +96,8 @@ class Structured
                 'top_p' => $request->topP(),
             ]))
         );
+
+        return $response;
     }
 
     /**

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Prism\Prism\Text;
 
 use Illuminate\Support\Collection;
-use Prism\Prism\Contracts\Message;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Usage;
 
 readonly class ResponseBuilder
@@ -13,20 +13,9 @@ readonly class ResponseBuilder
     /** @var Collection<int, Step> */
     public Collection $steps;
 
-    /** @var Collection<int, Message> */
-    public Collection $responseMessages;
-
     public function __construct()
     {
         $this->steps = new Collection;
-        $this->responseMessages = new Collection;
-    }
-
-    public function addResponseMessage(Message $message): self
-    {
-        $this->responseMessages->push($message);
-
-        return $this;
     }
 
     public function addStep(Step $step): self
@@ -41,17 +30,32 @@ readonly class ResponseBuilder
         /** @var Step $finalStep */
         $finalStep = $this->steps->last();
 
+        // Build messages collection: input messages + final assistant message
+        $messages = collect($finalStep->messages);
+
+        // Include provider_tool_calls in additionalContent if present
+        $additionalContent = $finalStep->additionalContent;
+        if ($finalStep->providerToolCalls !== []) {
+            $additionalContent['provider_tool_calls'] = $finalStep->providerToolCalls;
+        }
+
+        $messages->push(new AssistantMessage(
+            content: $finalStep->text,
+            toolCalls: $finalStep->toolCalls,
+            additionalContent: $additionalContent,
+        ));
+
         return new Response(
             steps: $this->steps,
-            responseMessages: $this->responseMessages,
             text: $finalStep->text,
             finishReason: $finalStep->finishReason,
             toolCalls: $finalStep->toolCalls,
             toolResults: $finalStep->toolResults,
             usage: $this->calculateTotalUsage(),
             meta: $finalStep->meta,
-            messages: collect($finalStep->messages),
+            messages: $messages,
             additionalContent: $finalStep->additionalContent,
+            raw: $finalStep->raw,
         );
     }
 

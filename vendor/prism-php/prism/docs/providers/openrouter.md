@@ -11,6 +11,10 @@ Add your OpenRouter configuration to `config/prism.php`:
     'openrouter' => [
         'api_key' => env('OPENROUTER_API_KEY'),
         'url' => env('OPENROUTER_URL', 'https://openrouter.ai/api/v1'),
+        'site' => [
+            'http_referer' => env('OPENROUTER_SITE_HTTP_REFERER'),
+            'x_title' => env('OPENROUTER_SITE_X_TITLE'),
+        ],
     ],
 ],
 ```
@@ -22,6 +26,8 @@ Set your OpenRouter API key and URL in your `.env` file:
 ```env
 OPENROUTER_API_KEY=your_api_key_here
 OPENROUTER_URL=https://openrouter.ai/api/v1
+OPENROUTER_SITE_HTTP_REFERER=https://your-site.example
+OPENROUTER_SITE_X_TITLE="Your Site Name"
 ```
 
 ## Usage
@@ -41,6 +47,9 @@ echo $response->text;
 ```
 
 ### Structured Output
+
+> [!NOTE]
+> OpenRouter uses OpenAI-compatible structured outputs. For strict schema validation, the root schema should be an `ObjectSchema`.
 
 ```php
 use Prism\Prism\Facades\Prism;
@@ -85,21 +94,107 @@ $response = Prism::text()
 echo $response->text;
 ```
 
+### Multimodal Prompts
+
+OpenRouter keeps the OpenAI content-part schema, so you can mix text and images inside a single user turn.
+
+```php
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
+use Prism\Prism\ValueObjects\Media\Image;
+
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'openai/gpt-4o-mini')
+    ->withPrompt('Describe the key trends in this diagram.', [
+        Image::fromLocalPath('storage/charts/retention.png'),
+    ])
+    ->generate();
+
+echo $response->text;
+```
+
+> [!TIP]
+> `Image` value objects are serialized into the `image_url` entries that OpenRouter expects, so you can attach multiple images or pair them with plain text in the same message.
+
+### Documents
+
+OpenRouter supports sending documents (PDFs) to compatible models:
+
+```php
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
+use Prism\Prism\ValueObjects\Media\Document;
+
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'anthropic/claude-sonnet-4')
+    ->withPrompt('Summarize this document.', [
+        Document::fromUrl('https://example.com/report.pdf', 'report.pdf'),
+    ])
+    ->generate();
+
+echo $response->text;
+```
+
+> [!TIP]
+> `Document` value objects support URLs and base64-encoded content. File IDs and chunks are not supported via OpenRouter.
+
+### Videos
+
+OpenRouter supports sending video files to compatible models (like Gemini). Videos can be provided as URLs or base64-encoded content:
+
+```php
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
+use Prism\Prism\ValueObjects\Media\Video;
+
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'google/gemini-3-flash-preview')
+    ->withPrompt('Describe what happens in this video.', [
+        Video::fromLocalPath('/path/to/video.mp4'),
+    ])
+    ->generate();
+
+echo $response->text;
+```
+
+You can also use YouTube URLs with Gemini models via OpenRouter:
+
+```php
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'google/gemini-3-flash-preview')
+    ->withPrompt('Summarize this video.', [
+        Video::fromUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ'),
+    ])
+    ->generate();
+```
+
+> [!NOTE]
+> Video support varies by model. Check [OpenRouter's models page](https://openrouter.ai/models?input_modalities=video) for models with video input support.
+
 ### Streaming
 
 ```php
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
+use Prism\Prism\Enums\StreamEventType;
 
 $stream = Prism::text()
     ->using(Provider::OpenRouter, 'openai/gpt-4-turbo')
     ->withPrompt('Tell me a long story about AI.')
     ->asStream();
 
-foreach ($stream as $chunk) {
-    echo $chunk->text;
+foreach ($stream as $event) {
+    if ($event->type() === StreamEventType::TextDelta) {
+        echo $event->delta;
+    }
 }
 ```
+
+> [!NOTE]
+> OpenRouter keeps SSE connections alive by emitting comment events such as `: OPENROUTER PROCESSING`. These lines are safe to ignore while parsing the stream.
+>
+> [!WARNING]
+> Mid-stream failures propagate as normal SSE payloads with `error` details and `finish_reason: "error"` while the HTTP status remains 200. Make sure to inspect each chunk for an `error` field so you can surface failures to the caller and stop reading the stream.
 
 ### Streaming with Tools
 
@@ -121,22 +216,13 @@ $stream = Prism::text()
     ->withTools([$weatherTool])
     ->asStream();
 
-foreach ($stream as $chunk) {
-    echo $chunk->text;
-    
-    // Handle tool calls
-    if ($chunk->toolCalls) {
-        foreach ($chunk->toolCalls as $toolCall) {
-            echo "Tool called: {$toolCall->name}\n";
-        }
-    }
-    
-    // Handle tool results
-    if ($chunk->toolResults) {
-        foreach ($chunk->toolResults as $result) {
-            echo "Tool result: {$result->result}\n";
-        }
-    }
+foreach ($stream as $event) {
+    match ($event->type()) {
+        StreamEventType::TextDelta => echo $event->delta,
+        StreamEventType::ToolCall => echo "Tool called: {$event->toolName}\n",
+        StreamEventType::ToolResult => echo "Tool result: " . json_encode($event->result) . "\n",
+        default => null,
+    };
 }
 ```
 
@@ -147,34 +233,88 @@ Some models (like OpenAI's o1 series) support reasoning tokens that show the mod
 ```php
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
-use Prism\Prism\Enums\ChunkType;
+use Prism\Prism\Enums\StreamEventType;
 
 $stream = Prism::text()
     ->using(Provider::OpenRouter, 'openai/o1-preview')
     ->withPrompt('Solve this complex math problem: What is the derivative of x^3 + 2x^2 - 5x + 1?')
     ->asStream();
 
-foreach ($stream as $chunk) {
-    if ($chunk->chunkType === ChunkType::Thinking) {
+foreach ($stream as $event) {
+    if ($event->type() === StreamEventType::ThinkingDelta) {
         // This is the model's reasoning/thinking process
-        echo "Thinking: " . $chunk->text . "\n";
-    } else {
+        echo "Thinking: " . $event->delta . "\n";
+    } elseif ($event->type() === StreamEventType::TextDelta) {
         // This is the final answer
-        echo $chunk->text;
+        echo $event->delta;
     }
 }
 ```
 
+#### Reasoning Effort
+
+Control how much reasoning the model performs before generating a response using the `reasoning` parameter. The way this is structured depends on the underlying model you are calling:
+
+```php
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'openai/gpt-5-mini')
+    ->withPrompt('Write a PHP function to implement a binary search algorithm with proper error handling')
+    ->withProviderOptions([
+        'reasoning' => [
+            'effort' => 'high',  // Can be "high", "medium", or "low" (OpenAI-style)
+            'max_tokens' =>  2000, // Specific token limit (Gemini / Anthropic-style)
+            
+            // Optional: Default is false. All models support this.
+            'exclude' => false, // Set to true to exclude reasoning tokens from response
+            // Or enable reasoning with the default parameters:
+            'enabled' => true // Default: inferred from `effort` or `max_tokens`
+        ]
+    ])
+    ->asText();
+```
+
+### Provider Routing & Advanced Options
+
+Use `withProviderOptions()` to forward OpenRouter-specific controls such as model preferences or sampling parameters. Prism automatically forwards the native request values for `temperature`, `top_p`, and `max_tokens`, so you can continue tuning them through the usual Prism API without duplicating them in `withProviderOptions()`. For transform pipelines, OpenRouter currently documents `"middle-out"` as the primary example—consult the parameter reference for additional context.
+
+```php
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
+
+$response = Prism::text()
+    ->using(Provider::OpenRouter, 'openai/gpt-4o')
+    ->withPrompt('Draft a concise product changelog entry.')
+    ->withProviderOptions([
+        // https://openrouter.ai/docs/model-routing
+        'models' => [
+            'anthropic/claude-sonnet-4.5',
+            'openai/gpt-4o-mini',
+        ],
+        'top_k' => 40,
+        // Reference: https://openrouter.ai/docs/api-reference/parameters for the full parameter list.
+    ])
+    ->generate();
+
+echo $response->text;
+```
+
+> [!IMPORTANT]
+> The values you supply here are passed directly to OpenRouter. Consult the [Parameters reference](https://openrouter.ai/docs/api-reference/parameters) and [Provider Routing guide](https://openrouter.ai/docs/provider-routing) for the full list of supported keys.
+
+The single `model` parameter and the fallback `models` array work together. When both are present, OpenRouter first tries the `model` value, then walks the `models` list in order—exactly as outlined in the [Model Routing guide](https://openrouter.ai/docs/features/model-routing). Fallbacks trigger for moderation flags, context-length errors, rate limits, or provider downtime, and the final `model` field in the response reveals which entry actually served the request (and therefore which pricing tier applies). If you prefer OpenRouter to choose the initial model, set `model` to `openrouter/auto` and still supply a `models` array for explicit overrides when needed. Because metadata is centralized, you can double-check `supported_parameters`, context length, and per-request limits via the [Models API](https://openrouter.ai/docs/overview/models) before rolling out changes.
+
 ## Available Models
 
-OpenRouter supports many models from different providers. Some popular options include:
+OpenRouter supports many models from different providers. The [Models API](https://openrouter.ai/docs/overview/models) returns structured metadata—`supported_parameters`, context length, pricing, and more—so you can verify capabilities programmatically before issuing requests. Some popular options include:
 
-- `openai/gpt-4-turbo`
-- `openai/gpt-3.5-turbo`
-- `anthropic/claude-3-5-sonnet`
-- `meta-llama/llama-3.1-70b`
-- `google/gemini-pro`
-- `mistralai/mistral-7b-instruct`
+- `x-ai/grok-code-fast-1`
+- `anthropic/claude-sonnet-4.5`
+- `google/gemini-2.5-flash`
+- `deepseek/deepseek-chat-v3-0324`
+- `z-ai/glm-4.6`
+- `tngtech/deepseek-r1t2-chimera:free`
+- `qwen/qwen3-coder-30b-a3b-instruct`
+- `mistralai/mistral-nemo`
 
 Visit [OpenRouter's models page](https://openrouter.ai/models) for a complete list of available models.
 
@@ -187,6 +327,9 @@ Visit [OpenRouter's models page](https://openrouter.ai/models) for a complete li
 - ✅ Provider Routing
 - ✅ Streaming
 - ✅ Reasoning/Thinking Tokens (for compatible models)
+- ✅ Image Support
+- ✅ Video Support
+- ✅ Document Support
 - ❌ Embeddings (not yet implemented)
 - ❌ Image Generation (not yet implemented)
 

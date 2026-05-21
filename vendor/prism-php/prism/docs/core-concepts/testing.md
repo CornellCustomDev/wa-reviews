@@ -7,7 +7,7 @@ Want to make sure your Prism integrations work flawlessly? Let's dive into testi
 First, let's look at how to set up basic response faking:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Usage;
 use Prism\Prism\Testing\TextResponseFake;
@@ -131,7 +131,7 @@ Prism::fake([
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Facades\Tool;
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\TextStepFake;
 use Prism\Prism\Text\ResponseBuilder;
 use Prism\Prism\ValueObjects\Meta;
@@ -321,8 +321,11 @@ expect($outputText)->toBe('fake response text')
 
 ## Testing Structured Output
 
+> [!NOTE]
+> When testing OpenAI-style structured output (strict mode), the root schema should be an `ObjectSchema`.
+
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\StructuredResponseFake;
 use Prism\Prism\ValueObjects\Usage;
 use Prism\Prism\ValueObjects\Meta;
@@ -372,7 +375,7 @@ it('can generate structured response', function () {
 ## Testing Embeddings
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Embedding;
 use Prism\Prism\ValueObjects\EmbeddingsUsage;
@@ -402,6 +405,17 @@ it('can generate embeddings', function () {
 ## Assertions
 
 `PrismFake` provides several helpful assertion methods:
+
+> [!NOTE]
+> When testing streamed responses, you must consume the stream before assertions will work. The `asStream()` method returns a generator, and the request is only recorded once the generator is iterated.
+>
+> ```php
+> // Consume the stream before making assertions
+> $chunks = collect($prism->asStream());
+>
+> // Now assertions will work
+> $fake->assertCallCount(1);
+> ```
 
 ```php
 // Assert specific prompt was sent

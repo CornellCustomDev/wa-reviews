@@ -21,9 +21,13 @@ use Prism\Prism\Exceptions\PrismRateLimitedException;
 use Prism\Prism\Exceptions\PrismRequestTooLargeException;
 use Prism\Prism\Images\Request as ImagesRequest;
 use Prism\Prism\Images\Response as ImagesResponse;
+use Prism\Prism\Moderation\Request as ModerationRequest;
+use Prism\Prism\Moderation\Response as ModerationResponse;
+use Prism\Prism\Providers\OpenAI\Concerns\ProcessRateLimits;
 use Prism\Prism\Providers\OpenAI\Handlers\Audio;
 use Prism\Prism\Providers\OpenAI\Handlers\Embeddings;
 use Prism\Prism\Providers\OpenAI\Handlers\Images;
+use Prism\Prism\Providers\OpenAI\Handlers\Moderation;
 use Prism\Prism\Providers\OpenAI\Handlers\Stream;
 use Prism\Prism\Providers\OpenAI\Handlers\Structured;
 use Prism\Prism\Providers\OpenAI\Handlers\Text;
@@ -36,6 +40,7 @@ use Prism\Prism\Text\Response as TextResponse;
 class OpenAI extends Provider
 {
     use InitializesClient;
+    use ProcessRateLimits;
 
     public function __construct(
         #[\SensitiveParameter] public readonly string $apiKey,
@@ -89,6 +94,17 @@ class OpenAI extends Provider
     }
 
     #[\Override]
+    public function moderation(ModerationRequest $request): ModerationResponse
+    {
+        $handler = new Moderation($this->client(
+            $request->clientOptions(),
+            $request->clientRetry()
+        ));
+
+        return $handler->handle($request);
+    }
+
+    #[\Override]
     public function textToSpeech(TextToSpeechRequest $request): TextToSpeechResponse
     {
         $handler = new Audio($this->client(
@@ -124,11 +140,29 @@ class OpenAI extends Provider
     public function handleRequestException(string $model, RequestException $e): never
     {
         match ($e->response->getStatusCode()) {
-            429 => throw PrismRateLimitedException::make(),
+            429 => throw PrismRateLimitedException::make(
+                rateLimits: $this->processRateLimits($e->response),
+                retryAfter: (int) $e->response->header('retry-after')
+            ),
             529 => throw PrismProviderOverloadedException::make(ProviderName::OpenAI),
             413 => throw PrismRequestTooLargeException::make(ProviderName::OpenAI),
-            default => throw PrismException::providerRequestError($model, $e),
+            default => $this->handleResponseErrors($e),
         };
+    }
+
+    protected function handleResponseErrors(RequestException $e): never
+    {
+        $data = $e->response->json() ?? [];
+        $message = data_get($data, 'error.message');
+        $message = is_array($message) ? implode(', ', $message) : $message;
+
+        throw PrismException::providerRequestErrorWithDetails(
+            provider: 'OpenAI',
+            statusCode: $e->response->getStatusCode(),
+            errorType: data_get($data, 'error.type'),
+            errorMessage: $message,
+            previous: $e
+        );
     }
 
     /**
