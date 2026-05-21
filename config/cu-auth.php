@@ -11,7 +11,7 @@ return [
     | - php-saml: OneLogin SAML PHP Toolkit
     |
     */
-    'identity_manager' => env('CU_AUTH_IDENTITY_MANGER', 'apache-shib'),
+    'identity_manager' => env('CU_AUTH_IDENTITY_MANAGER', 'apache-shib'),
 
     /*
     |--------------------------------------------------------------------------
@@ -48,10 +48,8 @@ return [
     | PHP-SAML Configuration
     |--------------------------------------------------------------------------
     |
-    | Path for storing SAML certificates outside of version control.
-    |
-    | (Note: Configuration for the OneLogin SAML PHP Toolkit is primarily
-    | in config/php-saml-toolkit.php.)
+    | Note: Configuration for the OneLogin SAML PHP Toolkit can be found
+    | in config/php-saml-toolkit.php.
     |
     | The default path of storage/app/keys is ignored by git in a standard
     | Laravel installation, so typically this does not need to be changed.
@@ -81,4 +79,15 @@ return [
     |
     */
     'allow_local_login' => boolval(env('ALLOW_LOCAL_LOGIN', false)),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Restrict Access for Livewire Updates
+    |--------------------------------------------------------------------------
+    |
+    | Add global middleware protection against unauthenticated posting to
+    | /livewire/update.
+    |
+    */
+    'require_livewire_auth' => boolval(env('REQUIRE_LIVEWIRE_AUTH', true)),
 ];

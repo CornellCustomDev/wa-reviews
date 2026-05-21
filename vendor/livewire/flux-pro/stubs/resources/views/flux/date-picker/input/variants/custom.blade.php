@@ -5,6 +5,7 @@
 @props([
     'placeholder' => null,
     'clearable' => false,
+    'dropdown' => null,
     'invalid' => null,
     'variant' => 'outline',
     'size' => null,
@@ -51,11 +52,13 @@ $inputClasses = Flux::classes()
     <ui-date-picker-trigger {{ $attributes->class($classes) }} data-flux-control data-flux-group-target>
         <flux:icon.calendar variant="mini" class="me-2 shrink-0 text-zinc-400/75 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[disabled]_&]:text-white/40!" />
 
-        <div class="-ml-px flex items-center flex-1" wire:ignore data-flux-date-inputs>
-            <input x-on:click.stop type="text" inputmode="numeric" aria-label="Day" data-flux-day-input class="{{ $inputClasses->add('font-mono w-[calc(2ch+2px)]') }}" />
-            <input x-on:click.stop type="text" inputmode="numeric" aria-label="Month" data-flux-month-input class="{{ $inputClasses->add('font-mono w-[calc(2ch+2px)]') }}" />
-            <input x-on:click.stop type="text" inputmode="numeric" aria-label="Year" data-flux-year-input class="{{ $inputClasses->add('font-mono w-[calc(4ch+2px)]') }}" />
+        <div class="-ml-px flex items-center min-w-0 overflow-hidden" dir="ltr" wire:ignore data-flux-date-inputs>
+            <input x-on:click.stop type="text" inputmode="numeric" aria-label="{{ __('Day') }}" data-flux-day-input class="{{ $inputClasses->add('font-mono w-[calc(2ch+2px)]') }}" />
+            <input x-on:click.stop type="text" inputmode="numeric" aria-label="{{ __('Month') }}" data-flux-month-input class="{{ $inputClasses->add('font-mono w-[calc(2ch+2px)]') }}" />
+            <input x-on:click.stop type="text" inputmode="numeric" aria-label="{{ __('Year') }}" data-flux-year-input class="{{ $inputClasses->add('font-mono w-[calc(4ch+2px)]') }}" />
         </div>
+
+        <span class="flex-1"></span>
 
         <?php if ($clearable): ?>
             <flux:button
@@ -65,7 +68,7 @@ $inputClasses = Flux::classes()
                 :size="$size === 'sm' || $size === 'xs' ? 'xs' : 'sm'"
                 square
                 tabindex="-1"
-                aria-label="Clear date"
+                aria-label="{{ __('Clear date') }}"
                 x-on:click.prevent.stop="$el.closest('ui-date-picker').clear();"
                 inset
             >
@@ -73,6 +76,8 @@ $inputClasses = Flux::classes()
             </flux:button>
         <?php endif; ?>
 
-        <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 shrink-0 text-zinc-400/75 [ui-date-picker-trigger:hover:not(:has(input:hover))_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[ui-date-picker-trigger:hover:not(:has(input:hover))_&]:text-white dark:[[disabled]_&]:text-white/40!" />
+        <?php if ($dropdown !== false && $dropdown !== 'false'): ?>
+            <flux:icon.chevron-down variant="mini" class="ms-2 -me-1 shrink-0 text-zinc-400/75 [ui-date-picker-trigger:hover:not(:has(input:hover))_&]:text-zinc-800 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[ui-date-picker-trigger:hover:not(:has(input:hover))_&]:text-white dark:[[disabled]_&]:text-white/40!" />
+        <?php endif; ?>
     </ui-date-picker-trigger>
 </flux:with-field>

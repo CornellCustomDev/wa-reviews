@@ -1,0 +1,52 @@
+{
+    "name": "cornell-custom-dev/laravel-ldap",
+    "description": "A Laravel package for connecting to Cornell LDAP resources",
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": "^8.3",
+        "ext-ldap": "*",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.29",
+        "orchestra/testbench": "^10.0|^11.0",
+        "php-mock/php-mock-phpunit": "^2.15",
+        "phpunit/phpunit": "^12.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "CornellCustomDev\\LaravelStarterKit\\Ldap\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CornellCustomDev\\LaravelStarterKit\\Ldap\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "clear": "@php vendor/bin/testbench package:purge-skeleton --ansi",
+        "prepare": "@php vendor/bin/testbench package:discover --ansi",
+        "test": "@php vendor/bin/phpunit -c ./ --color",
+        "sync": "@php bin/sync",
+        "ci": [
+            "@post-autoload-dump",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider"
+            ]
+        }
+    },
+    "prefer-stable": true
+}

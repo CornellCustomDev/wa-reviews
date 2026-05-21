@@ -15,6 +15,7 @@
     'unavailable' => null,
     'withInputs' => null,
     'clearable' => null,
+    'dropdown' => null,
     'withToday' => null,
     'type' => 'button',
     'presets' => null,
@@ -89,6 +90,10 @@ if (is_array($value)) {
 if (isset($unavailable)) {
     $unavailable = collect($unavailable)->implode(',');
 }
+
+if (isset($dropdown) && $dropdown === false) {
+    $dropdown = 'false';
+}
 @endphp
 
 <flux:with-field :$attributes :$name>
@@ -98,13 +103,14 @@ if (isset($unavailable)) {
         data-flux-date-picker
         @if ($mode) mode="{{ $mode }}" @endif
         months="{{ $months }}"
+        @if (isset($dropdown)) dropdown="{{ $dropdown }}" @endif
         @if (isset($unavailable) && $unavailable !== '') unavailable="{{ $unavailable }}" @endif
         @if ($showName) name="{{ $name }}" @endif
         @if (isset($value)) value="{{ $value }}" @endif
     >
         <?php if ($trigger === null): ?>
             <?php if ($type === 'input'): ?>
-            <flux:date-picker.input variant="custom" :$placeholder :$invalid :$size :$clearable />
+            <flux:date-picker.input variant="custom" :$placeholder :$invalid :$size :$clearable :$dropdown />
             <?php else: ?>
             <flux:date-picker.button :$placeholder :$invalid :$size :$clearable />
             <?php endif; ?>
@@ -142,9 +148,9 @@ if (isset($unavailable)) {
                                         <span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">{{ __('Start') }}</span>
                                         <ui-date-picker-trigger class="{{ $bareInputClasses }}" data-bare>
                                             <div class="flex items-center" data-flux-date-inputs>
-                                                <input type="text" inputmode="numeric" aria-label="Day" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                                <input type="text" inputmode="numeric" aria-label="Month" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                                <input type="text" inputmode="numeric" aria-label="Year" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Day') }}" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Month') }}" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Year') }}" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
                                             </div>
                                         </ui-date-picker-trigger>
                                     </div>
@@ -152,9 +158,9 @@ if (isset($unavailable)) {
                                         <span class="max-sm:hidden text-sm font-medium text-zinc-800 dark:text-white">{{ __('End') }}</span>
                                         <ui-date-picker-trigger class="{{ $bareInputClasses }}" data-bare>
                                             <div class="flex items-center" data-flux-date-inputs>
-                                                <input type="text" inputmode="numeric" aria-label="Day" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                                <input type="text" inputmode="numeric" aria-label="Month" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                                <input type="text" inputmode="numeric" aria-label="Year" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Day') }}" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Month') }}" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                                <input type="text" inputmode="numeric" aria-label="{{ __('Year') }}" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
                                             </div>
                                         </ui-date-picker-trigger>
                                     </div>
@@ -162,9 +168,9 @@ if (isset($unavailable)) {
                             <?php else: ?>
                                 <ui-date-picker-trigger class="{{ $bareInputClasses }}" data-bare>
                                     <div class="flex items-center" data-flux-date-inputs>
-                                        <input type="text" inputmode="numeric" aria-label="Day" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                        <input type="text" inputmode="numeric" aria-label="Month" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
-                                        <input type="text" inputmode="numeric" aria-label="Year" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
+                                        <input type="text" inputmode="numeric" aria-label="{{ __('Day') }}" data-flux-day-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                        <input type="text" inputmode="numeric" aria-label="{{ __('Month') }}" data-flux-month-input class="{{ $dateInputClasses }} w-[calc(2ch+2px)]" />
+                                        <input type="text" inputmode="numeric" aria-label="{{ __('Year') }}" data-flux-year-input class="{{ $dateInputClasses }} w-[calc(4ch+2px)]" />
                                     </div>
                                 </ui-date-picker-trigger>
                             <?php endif; ?>
@@ -210,7 +216,7 @@ if (isset($unavailable)) {
 
                             <div class="flex items-center">
                                 <?php if ($withToday): ?>
-                                    <ui-calendar-today class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none" aria-label="Previous month">
+                                    <ui-calendar-today class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none" aria-label="{{ __('Previous month') }}">
                                         <div class="relative">
                                             <template name="today">
                                                 <div class="cursor-default absolute inset-0 mt-[3px] flex items-center justify-center text-[.5625rem] font-semibold"><slot></slot></div>
@@ -223,12 +229,12 @@ if (isset($unavailable)) {
                                     </ui-calendar-today>
                                 <?php endif; ?>
 
-                                <ui-calendar-previous class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none" aria-label="Previous month">
+                                <ui-calendar-previous class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none" aria-label="{{ __('Previous month') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 rtl:hidden"> <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" /> </svg>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 hidden rtl:block"> <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /> </svg>
                                 </ui-calendar-previous>
 
-                                <ui-calendar-next class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none [&[disabled]_&]:text-zinc-400" aria-label="Next month">
+                                <ui-calendar-next class="size-10 sm:size-8 rounded-lg flex items-center justify-center text-zinc-400 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-white/5 dark:hover:text-white [&[disabled]]:opacity-50 [&[disabled]]:pointer-events-none [&[disabled]_&]:text-zinc-400" aria-label="{{ __('Next month') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 rtl:hidden"> <path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /> </svg>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="size-5 hidden rtl:block"> <path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" /> </svg>
                                 </ui-calendar-next>

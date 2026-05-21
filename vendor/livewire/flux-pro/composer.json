@@ -17,7 +17,7 @@
         "symfony/console": "^6.0|^7.0|^8.0",
         "livewire/livewire": "^3.7.4|^4.0",
         "laravel/prompts": "^0.1.24|^0.2|^0.3",
-        "livewire/flux": "2.13.2|dev-main"
+        "livewire/flux": "2.14.1|dev-main"
     },
     "autoload": {
         "psr-4": {

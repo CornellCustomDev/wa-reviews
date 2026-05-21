@@ -11,6 +11,7 @@ use Laravel\Boost\Install\Enums\McpInstallationStrategy;
 use Laravel\Boost\Install\Enums\Platform;
 use Laravel\Boost\Install\Mcp\FileWriter;
 use Laravel\Boost\Install\Mcp\TomlFileWriter;
+use Laravel\Boost\Support\CommandNormalizer;
 
 abstract class Agent
 {
@@ -138,6 +139,40 @@ abstract class Agent
     }
 
     /**
+     * Build the HTTP MCP server configuration payload for file-based installation.
+     *
+     * @return array<string, mixed>
+     */
+    public function httpMcpServerConfig(string $url): array
+    {
+        return [
+            'type' => 'http',
+            'url' => $url,
+        ];
+    }
+
+    /**
+     * Install an HTTP MCP server using the file-based strategy.
+     */
+    public function installHttpMcp(string $key, string $url): bool
+    {
+        $path = $this->mcpConfigPath();
+
+        if (! $path) {
+            return false;
+        }
+
+        $writer = str_ends_with($path, '.toml')
+            ? new TomlFileWriter($path, $this->defaultMcpConfig())
+            : new FileWriter($path, $this->defaultMcpConfig());
+
+        return $writer
+            ->configKey($this->mcpConfigKey())
+            ->addServerConfig($key, $this->httpMcpServerConfig($url))
+            ->save();
+    }
+
+    /**
      * Build the MCP server configuration payload for file-based installation.
      *
      * @param  array<int, string>  $args
@@ -236,19 +271,7 @@ abstract class Agent
      */
     protected function normalizeCommand(string $command, array $args = []): array
     {
-        if (str_starts_with($command, '/') || preg_match('#^[a-zA-Z]:[/\\\\]#', $command)) {
-            return [
-                'command' => $command,
-                'args' => $args,
-            ];
-        }
-
-        $parts = str($command)->explode(' ');
-
-        return [
-            'command' => $parts->first(),
-            'args' => $parts->skip(1)->values()->merge($args)->all(),
-        ];
+        return CommandNormalizer::normalize($command, $args);
     }
 
     /**

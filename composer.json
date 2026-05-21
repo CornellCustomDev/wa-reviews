@@ -7,13 +7,18 @@
         "flux-pro": {
             "type": "composer",
             "url": "https://composer.fluxui.dev"
+        },
+        "cornell-custom-dev/laravel-ldap": {
+            "type": "vcs",
+            "url": "https://github.com/CornellCustomDev/CD-LaravelLdap.git"
         }
     },
     "require": {
         "php": "^8.3",
         "ext-dom": "*",
         "ext-libxml": "*",
-        "cornell-custom-dev/laravel-starter-kit": "v0.5.x-dev",
+        "cornell-custom-dev/laravel-cu-auth": "dev-livewire-auth",
+        "cornell-custom-dev/laravel-ldap": "dev-main",
         "google/apiclient": "^2.19",
         "laravel/framework": "^12.56",
         "laravel/nightwatch": "^1.26",

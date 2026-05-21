@@ -47,7 +47,7 @@ $classes = Flux::classes()
             :size="$size === 'sm' || $size === 'xs' ? 'xs' : 'sm'"
             square
             tabindex="-1"
-            aria-label="Clear date"
+            aria-label="{{ __('Clear date') }}"
             x-on:click.prevent.stop="$el.closest('ui-date-picker').clear()"
         >
             <flux:icon.x-mark variant="micro" />

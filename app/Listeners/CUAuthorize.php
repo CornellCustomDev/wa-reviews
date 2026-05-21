@@ -3,9 +3,9 @@
 namespace App\Listeners;
 
 use App\Models\User;
+use CornellCustomDev\LaravelStarterKit\CUAuth\DataObjects\RemoteIdentity;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Events\CUAuthenticated;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -15,22 +15,20 @@ class CUAuthorize
         protected IdentityManager $identityManager
     ) {}
 
-    public function handle(CUAuthenticated $event): void
+    public function handle(CUAuthenticated $event, ?RemoteIdentity $remoteIdentity = null): void
     {
-        $remoteIdentity = $this->identityManager->getIdentity();
-        $netid = $event->remoteUser;
-        $uid = $remoteIdentity->principalName() ?: $netid . '@cornell.edu';
+        $remoteIdentity ??= $this->identityManager->getIdentity();
 
         // Look for a matching user.
-        $user = User::firstWhere('uid', $uid);
+        $user = User::firstWhere('email', $remoteIdentity->email());
 
         if (empty($user)) {
             // User does not exist, so create them.
             $user = new User;
-            $user->name = $remoteIdentity->name() ?: $netid;
+            $user->name = $remoteIdentity->name() ?: $remoteIdentity->id();
             $user->email = $remoteIdentity->email();
-            $user->uid = $uid;
-            $user->password = Hash::make('password');
+            $user->uid = $remoteIdentity->uid;
+            $user->password = Str::random(32);
             $user->save();
             Log::info("CUAuthorize: Created user $user->email with ID $user->id.");
         }

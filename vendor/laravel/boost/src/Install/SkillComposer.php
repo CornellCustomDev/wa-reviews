@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use Laravel\Boost\Concerns\RendersBladeGuidelines;
 use Laravel\Boost\Install\Concerns\DiscoverPackagePaths;
 use Laravel\Boost\Support\Composer;
+use Laravel\Roster\Package;
 use Laravel\Roster\Roster;
 use Symfony\Component\Yaml\Yaml;
 
@@ -49,9 +50,12 @@ class SkillComposer
             return $this->skills;
         }
 
+        $excluded = config('boost.skills.exclude', []);
+
         return $this->skills = collect()
             ->merge($this->getBoostSkills())
             ->merge($this->getThirdPartySkills())
+            ->reject(fn (Skill $skill, string $key): bool => in_array($key, $excluded, true))
             ->merge($this->getUserSkills());
     }
 
@@ -60,12 +64,28 @@ class SkillComposer
      */
     protected function getBoostSkills(): Collection
     {
-        return $this->discoverPackagePaths($this->getBoostAiPath())
-            ->flatMap(fn (array $package): Collection => $this->discoverSkillsFromPath(
-                $package['path'],
-                $package['name'],
-                $package['version']
-            ));
+        /** @var Collection<string, Skill> $skills */
+        $skills = $this->getRoster()->packages()
+            ->reject(fn (Package $package): bool => $this->shouldExcludePackage($package))
+            ->collect()
+            ->flatMap(function (Package $package): Collection {
+                $name = $this->normalizePackageName($package->name());
+
+                $vendorSkillPath = $this->resolveFirstPartyBoostPath($package, 'skills');
+
+                $vendorSkills = $vendorSkillPath !== null
+                    ? $this->discoverSkillsFromDirectory($vendorSkillPath, $name)
+                    : collect();
+
+                $aiPath = $this->getBoostAiPath().DIRECTORY_SEPARATOR.$name;
+                $aiSkills = is_dir($aiPath)
+                    ? $this->discoverSkillsFromPath($aiPath, $name, $package->majorVersion())
+                    : collect();
+
+                return $aiSkills->merge($vendorSkills);
+            });
+
+        return $skills;
     }
 
     /**
@@ -74,12 +94,15 @@ class SkillComposer
     protected function getThirdPartySkills(): Collection
     {
         $skills = collect(Composer::packagesDirectoriesWithBoostSkills())
+            ->reject(fn (string $path, string $package): bool => Composer::isFirstPartyPackage($package))
             ->flatMap(fn (string $path, string $package): Collection => $this->discoverSkillsFromDirectory($path, $package));
 
-        $selectedPackages = $this->config->aiGuidelines ?? [];
+        if (! isset($this->config->aiGuidelines)) {
+            return $skills;
+        }
 
         return $skills->filter(
-            fn (Skill $skill): bool => in_array($skill->package, $selectedPackages, true)
+            fn (Skill $skill): bool => in_array($skill->package, $this->config->aiGuidelines, true)
         );
     }
 
@@ -167,9 +190,11 @@ class SkillComposer
             return null;
         }
 
-        $content = file_get_contents($skillFile);
+        $content = str_ends_with($skillFile, '.blade.php')
+            ? $this->renderBladeFile($skillFile)
+            : file_get_contents($skillFile);
 
-        if ($content === false) {
+        if ($content === false || $content === '') {
             return null;
         }
 
@@ -206,7 +231,9 @@ class SkillComposer
      */
     protected function parseSkillFrontmatter(string $content): array
     {
-        if (! preg_match('/^---\s*\n(.*?)\n---\s*\n/s', $content, $matches)) {
+        $content = preg_replace('/^(\s*<!--.*?-->\s*)+/s', '', $content);
+
+        if (! preg_match('/^\s*---\s*\n(.*?)\n---\s*\n/s', (string) $content, $matches)) {
             return [];
         }
 
@@ -228,6 +255,6 @@ class SkillComposer
 
     protected function getGuidelineAssist(): GuidelineAssist
     {
-        return new GuidelineAssist($this->roster, $this->config, $this->skills());
+        return new GuidelineAssist($this->roster, $this->config);
     }
 }

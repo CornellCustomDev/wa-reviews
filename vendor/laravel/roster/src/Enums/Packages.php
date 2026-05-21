@@ -4,11 +4,9 @@ namespace Laravel\Roster\Enums;
 
 enum Packages: string
 {
-    // Compound
-    case INERTIA = 'inertia';
-    case WAYFINDER = 'wayfinder';
-
     // BACKEND
+    case AI = 'ai';
+    case BOOST = 'boost';
     case BREEZE = 'breeze';
     case CASHIER = 'cashier';
     case DUSK = 'dusk';
@@ -27,6 +25,7 @@ enum Packages: string
     case NIGHTWATCH = 'nightwatch';
     case NOVA = 'nova';
     case OCTANE = 'octane';
+    case PAIL = 'pail';
     case PASSPORT = 'passport';
     case PENNANT = 'pennant';
     case PEST = 'pest';
@@ -43,12 +42,14 @@ enum Packages: string
     case STATAMIC = 'statamic';
     case TELESCOPE = 'telescope';
     case VOLT = 'volt';
-    case WAYFINDER_LARAVEL = 'wayfinder_laravel';
+    case WAYFINDER = 'wayfinder';
     case ZIGGY = 'ziggy';
 
     // NPM
     case ALPINEJS = 'alpinejs';
     case ECHO = 'laravel-echo';
+    case ECHO_REACT = 'echo-react';
+    case ECHO_VUE = 'echo-vue';
     case ESLINT = 'eslint';
     case INERTIA_REACT = 'inertia-react';
     case INERTIA_SVELTE = 'inertia-svelte';

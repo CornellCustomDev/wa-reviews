@@ -1,5 +1,10 @@
 @blaze(fold: true, memo: true)
 
+@props([
+    'iconVariant' => 'mini',
+    'size' => null,
+])
+
 @php
 $attributes = $attributes->merge([
     'variant' => 'subtle',
@@ -15,8 +20,8 @@ $attributes = $attributes->merge([
     x-data="fluxInputClearable"
     x-on:click="clear()"
     tabindex="-1"
-    aria-label="Clear input"
+    aria-label="{{ __('Clear input') }}"
     data-flux-clear-button
 >
-    <flux:icon.x-mark variant="micro" />
+    <flux:icon.x-mark :variant="$iconVariant" />
 </flux:button>
