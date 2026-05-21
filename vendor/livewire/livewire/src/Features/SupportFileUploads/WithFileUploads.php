@@ -2,10 +2,10 @@
 
 namespace Livewire\Features\SupportFileUploads;
 
-use Facades\Livewire\Features\SupportFileUploads\GenerateSignedUploadUrl;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\UploadedFile;
 use Livewire\Attributes\Renderless;
+use Livewire\Facades\GenerateSignedUploadUrlFacade;
 
 trait WithFileUploads
 {
@@ -17,19 +17,30 @@ trait WithFileUploads
 
             $file = UploadedFile::fake()->create($fileInfo[0]['name'], $fileInfo[0]['size'] / 1024, $fileInfo[0]['type']);
 
-            $this->dispatch('upload:generatedSignedUrlForS3', name: $name, payload: GenerateSignedUploadUrl::forS3($file))->self();
+            $this->dispatch('upload:generatedSignedUrlForS3', name: $name, payload: GenerateSignedUploadUrlFacade::forS3($file))->self();
 
             return;
         }
 
-        $this->dispatch('upload:generatedSignedUrl', name: $name, url: GenerateSignedUploadUrl::forLocal())->self();
+        $this->dispatch('upload:generatedSignedUrl', name: $name, url: GenerateSignedUploadUrlFacade::forLocal())->self();
     }
 
-    function _finishUpload($name, $tmpPath, $isMultiple, $append = false)
+    function _finishUpload($name, $tmpPath, $isMultiple, $append = true)
     {
         if (FileUploadConfiguration::shouldCleanupOldUploads()) {
             $this->cleanupOldUploads();
         }
+
+        // Verify and extract paths from signed references.
+        $tmpPath = collect($tmpPath)->map(function ($signedPath) {
+            $path = TemporaryUploadedFile::extractPathFromSignedPath($signedPath);
+
+            if ($path === false) {
+                abort(403, 'Invalid upload reference.');
+            }
+
+            return $path;
+        })->toArray();
 
         if ($isMultiple) {
             $file = collect($tmpPath)->map(function ($i) {
@@ -62,26 +73,27 @@ trait WithFileUploads
     function _uploadErrored($name, $errorsInJson, $isMultiple) {
         $this->dispatch('upload:errored', name: $name)->self();
 
-        if (is_null($errorsInJson)) {
-            // Handle any translations/custom names
-            $translator = app()->make('translator');
+        if (! is_null($errorsInJson)) {
+            $errorsInJson = $isMultiple
+                ? str_ireplace('files', $name, $errorsInJson)
+                : str_ireplace('files.0', $name, $errorsInJson);
 
-            $attribute = $translator->get("validation.attributes.{$name}");
-            if ($attribute === "validation.attributes.{$name}") $attribute = $name;
+            $errors = json_decode($errorsInJson, true)['errors'] ?? null;
 
-            $message = trans('validation.uploaded', ['attribute' => $attribute]);
-            if ($message === 'validation.uploaded') $message = "The {$name} failed to upload.";
-
-            throw ValidationException::withMessages([$name => $message]);
+            if ($errors) {
+                throw ValidationException::withMessages($errors);
+            }
         }
 
-        $errorsInJson = $isMultiple
-            ? str_ireplace('files', $name, $errorsInJson)
-            : str_ireplace('files.0', $name, $errorsInJson);
+        $translator = app()->make('translator');
 
-        $errors = json_decode($errorsInJson, true)['errors'];
+        $attribute = $translator->get("validation.attributes.{$name}");
+        if ($attribute === "validation.attributes.{$name}") $attribute = $name;
 
-        throw (ValidationException::withMessages($errors));
+        $message = trans('validation.uploaded', ['attribute' => $attribute]);
+        if ($message === 'validation.uploaded') $message = "The {$name} failed to upload.";
+
+        throw ValidationException::withMessages([$name => $message]);
     }
 
     function _removeUpload($name, $tmpFilename)
