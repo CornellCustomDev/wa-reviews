@@ -62,14 +62,12 @@
             'dev_requirement' => false,
         ),
         'cornell-custom-dev/laravel-ldap' => array(
-            'pretty_version' => 'dev-main',
-            'version' => 'dev-main',
+            'pretty_version' => 'v1.0.0',
+            'version' => '1.0.0.0',
             'reference' => 'a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-ldap',
-            'aliases' => array(
-                0 => '9999999-dev',
-            ),
+            'aliases' => array(),
             'dev_requirement' => false,
         ),
         'cornell-custom-dev/wa-reviews' => array(
@@ -489,6 +487,15 @@
                 0 => '*',
             ),
         ),
+        'laravel/agent-detector' => array(
+            'pretty_version' => 'v2.0.2',
+            'version' => '2.0.2.0',
+            'reference' => '90694b9256099591cf9e55d08c18ba7a00bf099f',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../laravel/agent-detector',
+            'aliases' => array(),
+            'dev_requirement' => true,
+        ),
         'laravel/boost' => array(
             'pretty_version' => 'v2.4.8',
             'version' => '2.4.8.0',
@@ -524,6 +531,15 @@
             'install_path' => __DIR__ . '/../laravel/nightwatch',
             'aliases' => array(),
             'dev_requirement' => false,
+        ),
+        'laravel/pao' => array(
+            'pretty_version' => 'v1.1.0',
+            'version' => '1.1.0.0',
+            'reference' => '519eecdefb9d5da362876376b52207c8f11b477c',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../laravel/pao',
+            'aliases' => array(),
+            'dev_requirement' => true,
         ),
         'laravel/pennant' => array(
             'pretty_version' => 'v1.23.0',

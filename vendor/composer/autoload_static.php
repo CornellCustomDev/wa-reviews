@@ -41,11 +41,13 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         '2cffec82183ee1cea088009cef9a6fc3' => __DIR__ . '/..' . '/ezyang/htmlpurifier/library/HTMLPurifier.composer.php',
         '3bd81c9b8fcc150b69d8b63b4d2ccf23' => __DIR__ . '/..' . '/spatie/flare-client-php/src/helpers.php',
         '1f87db08236948d07391152dccb70f04' => __DIR__ . '/..' . '/google/apiclient-services/autoload.php',
+        '23dd7ece5822da3d0100ef3deb0ef55f' => __DIR__ . '/..' . '/laravel/agent-detector/src/functions.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
         '61ba3e92ef91a7a0f1cc260ebd9290e4' => __DIR__ . '/..' . '/openai-php/client/src/OpenAI.php',
         '801c31d8ed748cfa537fa45402288c95' => __DIR__ . '/..' . '/psy/psysh/src/functions.php',
         'a8d3953fd9959404dd22d3dfcd0a79f0' => __DIR__ . '/..' . '/google/apiclient/src/aliases.php',
         'fe7fc89e061451aaaf6b63aa0d9cca67' => __DIR__ . '/..' . '/laravel/nightwatch/agent/helpers.php',
+        '309cd39bb536ff667b25a3a76938cb83' => __DIR__ . '/..' . '/laravel/pao/src/Autoload.php',
         'e96c55aecadfc85c136575ccd5393db0' => __DIR__ . '/..' . '/laravel/pennant/src/helpers.php',
         '7574a4dc8fe5e660478870e55ff04aab' => __DIR__ . '/..' . '/livewire/flux-pro/src/helpers.php',
         'c72349b1fe8d0deeedd3a52e8aa814d8' => __DIR__ . '/..' . '/mockery/mockery/library/helpers.php',
@@ -178,10 +180,12 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
             'Laravel\\Roster\\' => 15,
             'Laravel\\Prompts\\' => 16,
             'Laravel\\Pennant\\' => 16,
+            'Laravel\\Pao\\' => 12,
             'Laravel\\Nightwatch\\' => 19,
             'Laravel\\Mcp\\Server\\' => 19,
             'Laravel\\Mcp\\' => 12,
             'Laravel\\Boost\\' => 14,
+            'Laravel\\AgentDetector\\' => 22,
             'Laratrust\\' => 10,
             'LarAgent\\' => 9,
         ),
@@ -608,6 +612,10 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         array (
             0 => __DIR__ . '/..' . '/laravel/pennant/src',
         ),
+        'Laravel\\Pao\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/laravel/pao/src',
+        ),
         'Laravel\\Nightwatch\\' =>
         array (
             0 => __DIR__ . '/..' . '/laravel/nightwatch/src',
@@ -623,6 +631,10 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'Laravel\\Boost\\' =>
         array (
             0 => __DIR__ . '/..' . '/laravel/boost/src',
+        ),
+        'Laravel\\AgentDetector\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/laravel/agent-detector/src',
         ),
         'Laratrust\\' =>
         array (
@@ -4557,6 +4569,9 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'Laratrust\\Traits\\HasLaratrustEvents' => __DIR__ . '/..' . '/santigarcor/laratrust/src/Traits/HasLaratrustEvents.php',
         'Laratrust\\Traits\\HasLaratrustScopes' => __DIR__ . '/..' . '/santigarcor/laratrust/src/Traits/HasLaratrustScopes.php',
         'Laratrust\\Traits\\HasRolesAndPermissions' => __DIR__ . '/..' . '/santigarcor/laratrust/src/Traits/HasRolesAndPermissions.php',
+        'Laravel\\AgentDetector\\AgentDetector' => __DIR__ . '/..' . '/laravel/agent-detector/src/AgentDetector.php',
+        'Laravel\\AgentDetector\\AgentResult' => __DIR__ . '/..' . '/laravel/agent-detector/src/AgentResult.php',
+        'Laravel\\AgentDetector\\KnownAgent' => __DIR__ . '/..' . '/laravel/agent-detector/src/KnownAgent.php',
         'Laravel\\Boost\\Boost' => __DIR__ . '/..' . '/laravel/boost/src/Boost.php',
         'Laravel\\Boost\\BoostManager' => __DIR__ . '/..' . '/laravel/boost/src/BoostManager.php',
         'Laravel\\Boost\\BoostServiceProvider' => __DIR__ . '/..' . '/laravel/boost/src/BoostServiceProvider.php',
@@ -4841,6 +4856,24 @@ class ComposerStaticInitb8d2a7fb3836f334cabf3a4d633b3432
         'Laravel\\Nightwatch\\Types\\Number' => __DIR__ . '/..' . '/laravel/nightwatch/src/Types/Number.php',
         'Laravel\\Nightwatch\\Types\\Str' => __DIR__ . '/..' . '/laravel/nightwatch/src/Types/Str.php',
         'Laravel\\Nightwatch\\UserProvider' => __DIR__ . '/..' . '/laravel/nightwatch/src/UserProvider.php',
+        'Laravel\\Pao\\Contracts\\Driver' => __DIR__ . '/..' . '/laravel/pao/src/Contracts/Driver.php',
+        'Laravel\\Pao\\Drivers\\Concerns\\ProfileCollector' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Concerns/ProfileCollector.php',
+        'Laravel\\Pao\\Drivers\\Concerns\\TestResultParsable' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Concerns/TestResultParsable.php',
+        'Laravel\\Pao\\Drivers\\Paratest\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Paratest/Starter.php',
+        'Laravel\\Pao\\Drivers\\Paratest\\WrapperRunner' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Paratest/WrapperRunner.php',
+        'Laravel\\Pao\\Drivers\\Pest\\Plugin' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Pest/Plugin.php',
+        'Laravel\\Pao\\Drivers\\Pest\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Pest/Starter.php',
+        'Laravel\\Pao\\Drivers\\Phpstan\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Phpstan/Starter.php',
+        'Laravel\\Pao\\Drivers\\Phpunit\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Phpunit/Starter.php',
+        'Laravel\\Pao\\Drivers\\Rector\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Rector/Starter.php',
+        'Laravel\\Pao\\Drivers\\Starter' => __DIR__ . '/..' . '/laravel/pao/src/Drivers/Starter.php',
+        'Laravel\\Pao\\Exceptions\\ShouldNotHappenException' => __DIR__ . '/..' . '/laravel/pao/src/Exceptions/ShouldNotHappenException.php',
+        'Laravel\\Pao\\Execution' => __DIR__ . '/..' . '/laravel/pao/src/Execution.php',
+        'Laravel\\Pao\\Laravel\\PaoOutputStyle' => __DIR__ . '/..' . '/laravel/pao/src/Laravel/PaoOutputStyle.php',
+        'Laravel\\Pao\\Laravel\\ServiceProvider' => __DIR__ . '/..' . '/laravel/pao/src/Laravel/ServiceProvider.php',
+        'Laravel\\Pao\\OutputCleaner' => __DIR__ . '/..' . '/laravel/pao/src/OutputCleaner.php',
+        'Laravel\\Pao\\UserFilters\\CaptureFilter' => __DIR__ . '/..' . '/laravel/pao/src/UserFilters/CaptureFilter.php',
+        'Laravel\\Pao\\UserFilters\\NullFilter' => __DIR__ . '/..' . '/laravel/pao/src/UserFilters/NullFilter.php',
         'Laravel\\Pennant\\Attributes\\Name' => __DIR__ . '/..' . '/laravel/pennant/src/Attributes/Name.php',
         'Laravel\\Pennant\\Commands\\FeatureMakeCommand' => __DIR__ . '/..' . '/laravel/pennant/src/Commands/FeatureMakeCommand.php',
         'Laravel\\Pennant\\Commands\\PurgeCommand' => __DIR__ . '/..' . '/laravel/pennant/src/Commands/PurgeCommand.php',
