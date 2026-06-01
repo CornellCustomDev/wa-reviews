@@ -28,12 +28,10 @@ readonly class RemoteIdentity
         return new RemoteIdentity(
             idp: $idp,
             uid: $uid,
-            principalName: $eduPersonPrincipalName
-                ?? trim($mail ?? ''),
+            principalName: trim($eduPersonPrincipalName ?? ''),
             displayName: $displayName
                 ?? $cn
                 ?? trim(($givenName ?? '').' '.($sn ?? '')),
-            email: trim($mail ?? ''),
             mail: trim($mail ?? ''),
             data: $data,
         );
@@ -61,20 +59,29 @@ readonly class RemoteIdentity
         };
     }
 
-    /*
-     * Returns the eduPersonPrincipalName
-     */
     public function principalName(): string
     {
         return $this->principalName;
     }
 
+    public function primaryEmail(): string
+    {
+        return $this->principalName;
+    }
+
+    public function emailAlias(): string
+    {
+        return $this->mail;
+    }
+
     /**
      * Returns the primary email (netid@cornell.edu|cwid@med.cornell.edu) if available, otherwise the alias email.
+     *
+     * @deprecated Use of email() should be replaced with primaryEmai() or emailAlias(), as appropriate.
      */
     public function email(): string
     {
-        return $this->principalName ?: $this->mail;
+        return $this->primaryEmail() ?: $this->emailAlias();
     }
 
     /**
