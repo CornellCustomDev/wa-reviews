@@ -23,6 +23,16 @@
 
     <h1>Projects</h1>
 
+    <div class="flex items-center gap-3 mb-4">
+        <flux:input
+            wire:model.live.debounce.300ms="search"
+            placeholder="Search projects…"
+            icon="magnifying-glass"
+            clearable
+            class="max-w-sm"
+        />
+    </div>
+
     <div class="mb-8 w-full max-[992px]:overflow-x-auto">
         <flux:tab.group>
             <flux:tabs wire:model.live="tab">
