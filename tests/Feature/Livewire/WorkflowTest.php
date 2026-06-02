@@ -92,4 +92,15 @@ class WorkflowTest extends FeatureTestCase
         Livewire::test(Workflow::class, ['project' => $project])
             ->assertSee('Report Viewers');
     }
+
+    #[Test]
+    public function report_tab_is_not_shown_on_project_page(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $project = Project::factory()->create(['team_id' => $team->id]);
+
+        Livewire::test(\App\Livewire\Projects\ShowProject::class, ['project' => $project])
+            ->assertDontSeeHtml('name="report"');
+    }
 }

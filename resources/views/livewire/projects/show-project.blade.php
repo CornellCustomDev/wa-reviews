@@ -85,7 +85,6 @@
             <flux:tab name="siteimprove">
                 Siteimprove ({{ count($this->siteimprovePagesWithIssues) }})
             </flux:tab>
-            <flux:tab name="report">Report</flux:tab>
             @can('manage-projects', $project->team)
                 <flux:tab name="log">Activity</flux:tab>
             @endcan
@@ -99,18 +98,6 @@
         </flux:tab.panel>
         <flux:tab.panel name="siteimprove">
             <livewire:projects.siteimprove-pages :$project :siteimprove-pages="$this->siteimprovePagesWithIssues" />
-        </flux:tab.panel>
-        <flux:tab.panel name="report">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-                <div class="col-span-3">
-                    <livewire:projects.report-data :$project />
-                </div>
-                <div class="col-span-2">
-                    @can('update-report-viewers', $project)
-                        <livewire:projects.report-viewers :$project />
-                    @endcan
-                </div>
-            </div>
         </flux:tab.panel>
         @can('manage-projects', $project->team)
             <flux:tab.panel name="log">
