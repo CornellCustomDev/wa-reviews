@@ -50,14 +50,17 @@ class Report extends Component
         $this->form->validateForCompletion();
         $this->form->update();
 
+        $nextStatus = $this->project->status->nextStatus();
         $this->project->update([
-            'status' => $this->project->status->nextStatus(),
-            'completed_at' => now(),
+            'status' => $nextStatus,
+            'completed_at' => $nextStatus->isReviewComplete()
+                ? now()
+                : $this->project->completed_at,
         ]);
 
         event(new ProjectChanged($this->project, 'status changed'));
 
-        $this->redirect(route('project.report', $this->project), navigate: true);
+        $this->redirect(route('project.show', $this->project), navigate: true);
     }
 
     public function viewImage(string $imageUrl): void

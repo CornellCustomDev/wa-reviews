@@ -47,7 +47,7 @@ class ReportCompletionTest extends FeatureTestCase
             ->set('form.summary', 'Overall the site has several critical issues.')
             ->call('completeReview')
             ->assertHasNoErrors()
-            ->assertRedirect(route('project.report', $project));
+            ->assertRedirect(route('project.show', $project));
 
         $this->assertEquals(ProjectStatus::ReviewComplete, $project->fresh()->status);
     }
