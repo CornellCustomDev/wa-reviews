@@ -68,8 +68,16 @@ The application follows a specific workflow for accessibility reviews:
     - Add observations manually
     - Use AI to suggest observations (must be approved to be included in reports)
 
-5. **Complete and Report**: Fill out report fields, update status to Complete Review, and view the report.
+5. **Complete and Report**: Fill out report fields and mark the review complete.
     - Add read-only viewers via the Report Viewers panel
+    - The project status advances from `InProgress` to `ReviewComplete`
+
+6. **Verification Review**: Assign a verifier to check the work after fixes have been applied.
+    - Advance the project to `VerificationReview` using "Start Verification"
+    - The verifier confirms fixes are applied and completes the verification phase
+
+7. **Close the Project**: Once verification is done, advance the status to `Closed` and view the final report.
+    - Full status progression: `NotStarted` → `InProgress` → `ReviewComplete` → `VerificationReview` → `Closed`
 
 ### Team Structure
 The application uses a team-based approach to manage access:
