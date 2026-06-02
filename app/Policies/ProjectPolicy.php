@@ -100,7 +100,7 @@ class ProjectPolicy
 
     public function updateReportViewers(User $user, Project $project): bool
     {
-        // Projects must be reviewed before report reviewers can be added
+        // Report viewers cannot be added to projects that haven't started yet
         if ($project->isNotStarted()) {
             return false;
         }
