@@ -46,7 +46,7 @@ class WorkflowTest extends FeatureTestCase
         $project->assignToUser($user);
 
         Livewire::test(Workflow::class, ['project' => $project])
-            ->assertSee('Finalize Report')
+            ->assertSee('Review & Finalize Report')
             ->assertDontSee('Start Review');
     }
 
@@ -80,13 +80,13 @@ class WorkflowTest extends FeatureTestCase
     }
 
     #[Test]
-    public function report_viewers_section_is_visible_when_review_complete(): void
+    public function report_viewers_section_is_visible_when_in_progress(): void
     {
         $user = $this->getLoggedInTestUser([Roles::TeamAdmin]);
         $team = $user->teams()->first();
         $project = Project::factory()->create([
             'team_id' => $team->id,
-            'status' => ProjectStatus::ReviewComplete,
+            'status' => ProjectStatus::InProgress,
         ]);
 
         Livewire::test(Workflow::class, ['project' => $project])

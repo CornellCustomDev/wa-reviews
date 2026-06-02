@@ -101,7 +101,7 @@ class ProjectPolicy
     public function updateReportViewers(User $user, Project $project): bool
     {
         // Projects must be reviewed before report reviewers can be added
-        if ($project->isActive()) {
+        if ($project->isNotStarted()) {
             return false;
         }
 
