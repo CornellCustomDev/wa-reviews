@@ -14,7 +14,6 @@
         "configure-nightwatch",
         "pennant-development",
         "fluxui-development",
-        "livewire-development",
-        "tailwindcss-development"
+        "livewire-development"
     ]
 }

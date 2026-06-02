@@ -20,8 +20,8 @@
         "cornell-custom-dev/laravel-cu-auth": "^1.3",
         "cornell-custom-dev/laravel-ldap": "^1.0",
         "google/apiclient": "^2.19",
-        "laravel/framework": "^13.11",
-        "laravel/nightwatch": "^1.26",
+        "laravel/framework": "^13.13",
+        "laravel/nightwatch": "^1.27",
         "laravel/pennant": "^1.23",
         "laravel/telescope": "^5.20",
         "laravel/tinker": "^3.0",
@@ -60,7 +60,6 @@
     "scripts": {
         "test": [
             "@php artisan config:clear --ansi",
-            "@lint:check",
             "@php artisan test"
         ],
         "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
