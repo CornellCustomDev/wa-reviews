@@ -1,12 +1,12 @@
 {
-    "mcpServers": {
-        "laravel-boost": {
-            "command": "lando",
-            "args": [
-                "php",
-                "/app/artisan",
-                "boost:mcp"
-            ]
-        }
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "lando",
+      "args": [
+        "php",
+        "/app/artisan",
+        "boost:mcp"
+      ]
     }
+  }
 }
