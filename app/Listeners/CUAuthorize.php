@@ -20,14 +20,18 @@ class CUAuthorize
         $remoteIdentity ??= $this->identityManager->getIdentity();
 
         // Look for a matching user.
-        $user = User::firstWhere('email', $remoteIdentity->email());
+        $user = User::whereIn('email', array_filter([
+            $remoteIdentity->primaryEmail(),
+            // This allows to log in with an old emailAlias email if someone has an account with that
+            $remoteIdentity->emailAlias() ?: null,
+        ]))->first();
 
         if (empty($user)) {
             // User does not exist, so create them.
             $user = new User;
             $user->name = $remoteIdentity->name() ?: $remoteIdentity->id();
-            $user->email = $remoteIdentity->email();
-            $user->uid = $remoteIdentity->uid;
+            $user->email = $remoteIdentity->primaryEmail();
+            $user->uid = $remoteIdentity->id();
             $user->password = Str::random(32);
             $user->save();
             Log::info("CUAuthorize: Created user $user->email with ID $user->id.");

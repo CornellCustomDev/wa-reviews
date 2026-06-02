@@ -55,7 +55,7 @@
         'cornell-custom-dev/laravel-cu-auth' => array(
             'pretty_version' => 'dev-livewire-auth',
             'version' => 'dev-livewire-auth',
-            'reference' => 'ee85a6ddb6bcad92ec1c2012ced096a296172dd2',
+            'reference' => '4b6776a12ddb7340d26d738d5741d59a22c9d11f',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-cu-auth',
             'aliases' => array(),

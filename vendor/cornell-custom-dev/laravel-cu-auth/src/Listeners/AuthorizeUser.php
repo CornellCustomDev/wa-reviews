@@ -20,13 +20,13 @@ class AuthorizeUser
 
         // Look for a matching user.
         $userModel = config('auth.providers.users.model');
-        $user = $userModel::firstWhere('email', $remoteIdentity->email());
+        $user = $userModel::firstWhere('email', $remoteIdentity->primaryEmail() ?: $remoteIdentity->emailAlias());
 
         if (empty($user)) {
             // User does not exist, so create them.
             $user = new $userModel;
             $user->name = $remoteIdentity->name();
-            $user->email = $remoteIdentity->email();
+            $user->email = $remoteIdentity->primaryEmail() ?: $remoteIdentity->emailAlias();
             $user->password = Str::random(32);
             $user->save();
             Log::info("AuthorizeUser: Created user $user->email with ID $user->id.");
