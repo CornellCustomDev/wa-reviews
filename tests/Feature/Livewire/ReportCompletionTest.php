@@ -115,4 +115,22 @@ class ReportCompletionTest extends FeatureTestCase
 
         $this->assertEquals('New URLs', $project->fresh()->urls_included);
     }
+
+    #[Test]
+    public function save_report_is_forbidden_for_non_reviewer(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $otherUser = $this->makeTestUser([Roles::Reviewer], $team);
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::InProgress,
+        ]);
+        $project->assignToUser($otherUser);
+
+        Livewire::test(Report::class, ['project' => $project])
+            ->set('form.urls_included', 'Hacked content')
+            ->call('saveReport')
+            ->assertForbidden();
+    }
 }

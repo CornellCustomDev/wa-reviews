@@ -12,16 +12,32 @@
 
             <div x-show="!editReport">
                 <x-forms.field-display label="URLs included in review">
-                    {!! $project->urls_included ?? '<span class="text-gray-400">Not set</span>' !!}
+                    @if($project->urls_included)
+                        {{ $project->urls_included }}
+                    @else
+                        <span class="text-gray-400">Not set</span>
+                    @endif
                 </x-forms.field-display>
                 <x-forms.field-display label="URLs excluded from review">
-                    {!! $project->urls_excluded ?? '<span class="text-gray-400">Not set</span>' !!}
+                    @if($project->urls_excluded)
+                        {{ $project->urls_excluded }}
+                    @else
+                        <span class="text-gray-400">Not set</span>
+                    @endif
                 </x-forms.field-display>
                 <x-forms.field-display label="Testing notes and procedure">
-                    {!! $project->review_procedure ?? '<span class="text-gray-400">Not set</span>' !!}
+                    @if($project->review_procedure)
+                        {{ $project->review_procedure }}
+                    @else
+                        <span class="text-gray-400">Not set</span>
+                    @endif
                 </x-forms.field-display>
                 <x-forms.field-display class="mb-0!" label="Summary and Overall Findings">
-                    {!! $project->summary ?? '<span class="text-gray-400 font-normal">Required before completing review</span>' !!}
+                    @if($project->summary)
+                        {{ $project->summary }}
+                    @else
+                        <span class="text-gray-400 font-normal">Required before completing review</span>
+                    @endif
                 </x-forms.field-display>
             </div>
 

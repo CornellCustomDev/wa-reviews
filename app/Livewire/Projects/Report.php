@@ -47,6 +47,7 @@ class Report extends Component
     public function completeReview(): void
     {
         $this->authorize('update-status', $this->project);
+        $this->showEdit = true;
         $this->form->validateForCompletion();
         $this->form->update();
 
