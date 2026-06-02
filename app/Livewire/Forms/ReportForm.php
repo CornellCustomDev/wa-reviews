@@ -33,4 +33,11 @@ class ReportForm extends Form
         $this->validate();
         $this->project->update($this->all());
     }
+
+    public function validateForCompletion(): void
+    {
+        $this->validateOnly('summary', [
+            'summary' => ['required', 'string'],
+        ]);
+    }
 }
