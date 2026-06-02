@@ -77,6 +77,12 @@ class ViewProjects extends Component
     }
 
     #[Computed]
+    public function hasMyProjects(): bool
+    {
+        return Project::myProjects(auth()->user())->exists();
+    }
+
+    #[Computed]
     public function showTeams(): bool
     {
         return auth()->user()->isAdministrator() || auth()->user()->teams->count() > 1;

@@ -6,6 +6,7 @@ use App\Enums\ProjectStatus;
 use App\Enums\Roles;
 use App\Livewire\Projects\ViewProjects;
 use App\Models\Project;
+use App\Models\ProjectAssignment;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;
@@ -32,6 +33,23 @@ class ViewProjectsTest extends FeatureTestCase
             ->set('search', 'WCAG')
             ->assertSee('WCAG Review Alpha')
             ->assertDontSee('Annual Audit Beta');
+    }
+
+    #[Test] public function my_projects_tab_stays_visible_when_search_filters_it_empty(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::TeamAdmin]);
+        $team = $user->teams()->first();
+
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'name' => 'WCAG Review Alpha',
+            'status' => ProjectStatus::NotStarted,
+        ]);
+        $project->assignments()->create(['user_id' => $user->id, 'role' => ProjectAssignment::REVIEWER]);
+
+        Livewire::test(ViewProjects::class)
+            ->set('search', 'xyz_nomatch_xyz')
+            ->assertSee('My Projects');
     }
 
     #[Test] public function shows_no_results_when_search_has_no_match(): void
