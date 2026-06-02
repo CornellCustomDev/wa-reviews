@@ -95,4 +95,24 @@ class ReportCompletionTest extends FeatureTestCase
             ->call('completeReview')
             ->assertForbidden();
     }
+
+    #[Test]
+    public function report_fields_are_editable_on_report_page(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $team = $user->teams()->first();
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::InProgress,
+            'urls_included' => 'Old URLs',
+        ]);
+        $project->assignToUser($user);
+
+        Livewire::test(Report::class, ['project' => $project])
+            ->set('form.urls_included', 'New URLs')
+            ->call('saveReport')
+            ->assertHasNoErrors();
+
+        $this->assertEquals('New URLs', $project->fresh()->urls_included);
+    }
 }

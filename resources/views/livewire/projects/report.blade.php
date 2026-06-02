@@ -1,6 +1,71 @@
 <div class="max-w-[900px]">
     <h1>Report: {{ $project->name }}</h1>
 
+    @if($project->isInProgress())
+        <div class="border rounded-sm border-cds-gray-200 p-4 mb-8" x-data="{ editReport: $wire.entangle('showEdit').live }">
+            @can('update', $project)
+                <x-forms.button icon="pencil-square" class="float-right" x-show="!editReport" x-on:click="editReport = true" title="Edit report data" />
+                <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="editReport" x-on:click="editReport = false" title="Cancel editing" />
+            @endcan
+
+            <flux:heading level="2" size="xl" class="mb-2">Report Data</flux:heading>
+
+            <div x-show="!editReport">
+                <x-forms.field-display label="URLs included in review">
+                    {!! $project->urls_included ?? '<span class="text-gray-400">Not set</span>' !!}
+                </x-forms.field-display>
+                <x-forms.field-display label="URLs excluded from review">
+                    {!! $project->urls_excluded ?? '<span class="text-gray-400">Not set</span>' !!}
+                </x-forms.field-display>
+                <x-forms.field-display label="Testing notes and procedure">
+                    {!! $project->review_procedure ?? '<span class="text-gray-400">Not set</span>' !!}
+                </x-forms.field-display>
+                <x-forms.field-display class="mb-0!" label="Summary and Overall Findings">
+                    {!! $project->summary ?? '<span class="text-gray-400 font-normal">Required before completing review</span>' !!}
+                </x-forms.field-display>
+            </div>
+
+            <div x-show="editReport" x-cloak>
+                <x-forms.textarea
+                    label="URLs included in review"
+                    wire:model="form.urls_included"
+                    size="sm"
+                    description="Briefly describe what the scope of the review was - what pages were included as part of the assessment."
+                />
+                <x-forms.textarea
+                    label="URLs excluded from review"
+                    wire:model="form.urls_excluded"
+                    size="sm"
+                    description="Briefly describe any pages that were reachable from the site or application that were not part of the scope of this review."
+                />
+                <x-forms.textarea
+                    label="Testing notes and procedure"
+                    wire:model="form.review_procedure"
+                    description="Mention the browser you tested in, which operating system, and your screen reader/browser combination, as well as any other relevant information related to your review process."
+                />
+                <x-forms.textarea
+                    label="Summary and Overall Findings"
+                    wire:model="form.summary"
+                    size="lg"
+                    description="Summarize your findings as a whole in a few sentences."
+                />
+                <x-forms.button.submit-group>
+                    <x-forms.button wire:click="saveReport">Save</x-forms.button>
+                    <x-forms.button x-on:click="editReport = false" class="secondary">Cancel</x-forms.button>
+                </x-forms.button.submit-group>
+            </div>
+
+            @can('update-status', $project)
+                <div class="mt-4 pt-4 border-t border-cds-gray-200">
+                    <x-forms.button wire:click="completeReview">Complete Review</x-forms.button>
+                    @error('form.summary')
+                        <flux:error>{{ $message }}</flux:error>
+                    @enderror
+                </div>
+            @endcan
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
         <div class="col-span-1 order-first md:order-last print:hidden">
@@ -52,12 +117,11 @@
         </div>
     </div>
 
-
     <p class="italic">
         Please note: This summary document is not comprehensive of all accessibility issues.
         It represents the major issues that should be prioritized but there are likely additional
         items that will need to be addressed as well. Please continue to utilize
-        <a href="https://it.cornell.edu/siteimprove">Cornell’s Siteimprove tool</a>
+        <a href="https://it.cornell.edu/siteimprove">Cornell's Siteimprove tool</a>
         as well as other
         <a href="https://it.cornell.edu/accessibility/recommended-web-accessibility-testing-plan">manual testing techniques</a>
         to identify and address WCAG 2 AA compliance issues.
@@ -80,7 +144,6 @@
 
     <h3>Testing notes and procedure</h3>
     {!! $project->review_procedure !!}
-
 
     <h2>Overview of findings</h2>
     {!! $project->summary !!}
