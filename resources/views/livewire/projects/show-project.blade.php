@@ -3,7 +3,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div class="col-span-3 mb-4">
-            <div class="border rounded-sm border-cds-gray-200 p-4" x-data="{ edit: $wire.entangle('showEdit').live }">
+            <div class="border rounded-sm border-cds-gray-200 p-4" x-data="{ edit: $wire.entangle('showEdit').live, open: false }">
                 @can('update', $project)
                     <x-forms.button icon="pencil-square" class="float-right" x-show="!edit" x-on:click="edit = !edit" title="Edit project" />
                     <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="edit" x-on:click="edit = !edit" title="Cancel editing project" />
@@ -11,7 +11,7 @@
                 @endcan
 
                 <div x-show="!edit">
-                    <flux:subheading class="items-center break-words">
+                    <flux:subheading class="items-center wrap-break-word">
                         <a href="{{ $project->site_url }}" target="_blank">{{ $project->site_url }}</a>
                         <flux:icon.arrow-top-right-on-square class="inline-block -mt-1" variant="micro" />
                     </flux:subheading>
@@ -20,39 +20,49 @@
                     </flux:subheading>
 
                     <hr class="mt-2">
+                </div>
 
-                    @if($project->description)
-                        <div class="mb-4">
-                            {!! $project->description !!}
-                        </div>
-                    @endif
+                <div x-show="!edit">
+                    <flux:button class="secondary" size="xs" x-on:click="open = !open">
+                        <flux:icon.chevron-right class="size-3 transition-transform duration-200" x-bind:class="open ? 'rotate-90' : ''" />
+                        <span x-text="open ? 'Hide details' : 'Show details'"></span>
+                    </flux:button>
 
-                    @if($project->responsible_unit)
-                        <x-forms.field-display label="Responsible unit" variation="inline" class="mb-0!">
-                            {{ $project->responsible_unit }}
-                        </x-forms.field-display>
-                    @endif
+                    <div x-show="open" class="mt-4">
 
-                    @if($project->contact_name)
-                        <x-forms.field-display label="Point of contact" variation="inline" class="mb-0!">
-                            {{ $project->contact_name }}
-                            @if($project->contact_netid)
-                                ({{ $project->contact_netid }})
-                            @endif
-                        </x-forms.field-display>
-                    @endif
+                        @if($project->description)
+                            <div class="mb-4">
+                                {!! $project->description !!}
+                            </div>
+                        @endif
 
-                    @if($project->audience)
-                        <x-forms.field-display label="Audience" variation="inline" class="mb-0!">
-                            {{ $project->audience }}
-                        </x-forms.field-display>
-                    @endif
+                        @if($project->responsible_unit)
+                            <x-forms.field-display label="Responsible unit" variation="inline" class="mb-0!">
+                                {{ $project->responsible_unit }}
+                            </x-forms.field-display>
+                        @endif
 
-                    @if($project->site_purpose)
-                        <x-forms.field-display label="Site purpose" variation="inline" class="mb-0!">
-                            {!! $project->site_purpose !!}
-                        </x-forms.field-display>
-                    @endif
+                        @if($project->contact_name)
+                            <x-forms.field-display label="Point of contact" variation="inline" class="mb-0!">
+                                {{ $project->contact_name }}
+                                @if($project->contact_netid)
+                                    ({{ $project->contact_netid }})
+                                @endif
+                            </x-forms.field-display>
+                        @endif
+
+                        @if($project->audience)
+                            <x-forms.field-display label="Audience" variation="inline" class="mb-0!">
+                                {{ $project->audience }}
+                            </x-forms.field-display>
+                        @endif
+
+                        @if($project->site_purpose)
+                            <x-forms.field-display label="Site purpose" variation="inline" class="mb-0!">
+                                {!! $project->site_purpose !!}
+                            </x-forms.field-display>
+                        @endif
+                    </div>
                 </div>
 
                 <div x-show="edit" x-cloak>
