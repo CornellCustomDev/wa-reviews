@@ -3,7 +3,6 @@
 namespace App\Livewire\Projects;
 
 use App\Events\ProjectChanged;
-use App\Livewire\Forms\ReportForm;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Services\SiteImprove\SiteimproveService;
@@ -13,14 +12,7 @@ use Livewire\Component;
 class Report extends Component
 {
     public Project $project;
-    public ReportForm $form;
-    public bool $showEdit = false;
     public ?string $selectedImage = null;
-
-    public function mount(Project $project): void
-    {
-        $this->form->setModel($project);
-    }
 
     #[Computed]
     public function issues()
@@ -36,20 +28,9 @@ class Report extends Component
         return SiteimproveService::getPageReportUrlForScope($scope);
     }
 
-    public function saveReport(): void
-    {
-        $this->authorize('update', $this->project);
-        $this->form->update();
-        $this->showEdit = false;
-        $this->project->refresh();
-    }
-
     public function completeReview(): void
     {
         $this->authorize('update-status', $this->project);
-        $this->showEdit = true;
-        $this->form->validateForCompletion();
-        $this->form->update();
 
         $nextStatus = $this->project->status->nextStatus();
         $this->project->update([

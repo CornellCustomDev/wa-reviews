@@ -10,6 +10,8 @@ class ReportForm extends Form
 {
     public ?Project $project;
 
+    #[Validate('nullable|string', as: 'Site purpose')]
+    public string $site_purpose = '';
     #[Validate('nullable|string', as: 'URLs included')]
     public string $urls_included = '';
     #[Validate('nullable|string', as: 'URLs excluded')]
@@ -22,6 +24,7 @@ class ReportForm extends Form
     public function setModel(Project $project): void
     {
         $this->project = $project;
+        $this->site_purpose = $project->site_purpose ?? '';
         $this->urls_included = $project->urls_included ?? '';
         $this->urls_excluded = $project->urls_excluded ?? '';
         $this->review_procedure = $project->review_procedure ?? '';

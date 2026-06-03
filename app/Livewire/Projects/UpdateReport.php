@@ -22,6 +22,7 @@ class UpdateReport extends Component
         $this->authorize('update', $this->form->project);
         $this->form->update();
 
-        return redirect()->route('project.show', ['project' => $this->form->project, 'tab' => 'report']);
+        $this->dispatch('close-edit');
+        $this->dispatch('report-updated');
     }
 }
