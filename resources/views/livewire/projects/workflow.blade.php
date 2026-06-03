@@ -152,12 +152,4 @@
             </div>
         </form>
     </flux:modal>
-
-    {{-- Report Viewers (visible from InProgress onward) --}}
-    @unless($project->status->isNotStarted())
-        <flux:separator class="my-2"/>
-        @can('update-report-viewers', $project)
-            <livewire:projects.report-viewers :project="$project"/>
-        @endcan
-    @endunless
 </div>

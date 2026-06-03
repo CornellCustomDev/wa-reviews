@@ -1,7 +1,7 @@
-<div class="max-w-[900px]">
+<div>
     <h1>Report: {{ $project->name }}</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
         <div class="col-span-1 order-first md:order-last print:hidden">
             <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
@@ -17,13 +17,19 @@
                 </x-forms.menu>
             </flux:dropdown>
             @can('update-status', $project)
-                <div class="mt-4 pt-4 border-t border-cds-gray-200">
+                <div class="my-4 pt-4 border-t border-cds-gray-200">
                     <x-forms.button wire:click="completeReview">Complete Review</x-forms.button>
                 </div>
             @endcan
+            {{-- Report Viewers (visible from InProgress onward) --}}
+            @unless($project->status->isNotStarted())
+                @can('update-report-viewers', $project)
+                    <livewire:projects.report-viewers :project="$project"/>
+                @endcan
+            @endunless
         </div>
 
-        <div class="col-span-3 max-w-[675px]">
+        <div class="col-span-2">
             <table class="table bordered">
                 <tr>
                     <th style="width: 200px">Prepared by</th>
@@ -64,6 +70,7 @@
         </div>
     </div>
 
+<div class="max-w-[900px]">
     <p class="italic">
         Please note: This summary document is not comprehensive of all accessibility issues.
         It represents the major issues that should be prioritized but there are likely additional
@@ -199,4 +206,5 @@
             </div>
         @endif
     </flux:modal>
+</div>
 </div>
