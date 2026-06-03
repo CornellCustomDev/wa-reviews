@@ -38,7 +38,7 @@ class MessageMap
     public function __invoke(): array
     {
         array_map(
-            fn (Message $message) => $this->mapMessage($message),
+            $this->mapMessage(...),
             $this->messages
         );
 
@@ -95,7 +95,7 @@ class MessageMap
             'type' => 'function',
             'function' => [
                 'name' => $toolCall->name,
-                'arguments' => json_encode($toolCall->arguments()),
+                'arguments' => json_encode($toolCall->arguments() ?: (object) []),
             ],
         ], $message->toolCalls);
 

@@ -31,24 +31,30 @@ class Embeddings
         }
 
         return new EmbeddingsResponse(
-            embeddings: array_map(fn (array $item): \Prism\Prism\ValueObjects\Embedding => Embedding::fromArray($item), data_get($data, 'embeddings', [])),
-            usage: new EmbeddingsUsage(data_get($data, 'prompt_eval_count', null)),
+            embeddings: array_map(Embedding::fromArray(...), data_get($data, 'embeddings', [])),
+            usage: new EmbeddingsUsage(data_get($data, 'prompt_eval_count')),
             meta: new Meta(
                 id: '',
                 model: data_get($data, 'model', ''),
             ),
+            raw: $data,
         );
     }
 
     protected function sendRequest(Request $request): Response
     {
-        return $this->client->post(
+        /** @var Response $response */
+        $response = $this->client->post(
             'api/embed',
             Arr::whereNotNull([
                 'model' => $request->model(),
                 'input' => $request->inputs(),
+                'dimensions' => $request->providerOptions('dimensions'),
+                'keep_alive' => $request->providerOptions('keep_alive'),
                 'options' => $request->providerOptions() ?: null,
             ])
         );
+
+        return $response;
     }
 }

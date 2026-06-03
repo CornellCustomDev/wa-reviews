@@ -62,6 +62,8 @@ class LocalFilesystemAdapter extends FilesystemAdapter
      * @param  \DateTimeInterface  $expiration
      * @param  array  $options
      * @return string
+     *
+     * @throws \RuntimeException
      */
     public function temporaryUrl($path, $expiration, array $options = [])
     {
@@ -80,7 +82,7 @@ class LocalFilesystemAdapter extends FilesystemAdapter
         return $url->to($url->temporarySignedRoute(
             'storage.'.$this->disk,
             $expiration,
-            ['path' => rawurldecode($path)],
+            ['path' => strtr(rawurlencode($path), ['%2F' => '/'])],
             absolute: false
         ));
     }
@@ -92,6 +94,8 @@ class LocalFilesystemAdapter extends FilesystemAdapter
      * @param  \DateTimeInterface  $expiration
      * @param  array  $options
      * @return array
+     *
+     * @throws \RuntimeException
      */
     public function temporaryUploadUrl($path, $expiration, array $options = [])
     {
@@ -111,7 +115,7 @@ class LocalFilesystemAdapter extends FilesystemAdapter
             'url' => $url->to($url->temporarySignedRoute(
                 'storage.'.$this->disk.'.upload',
                 $expiration,
-                ['path' => rawurlencode($path), 'upload' => true],
+                ['path' => strtr(rawurlencode($path), ['%2F' => '/']), 'upload' => true],
                 absolute: false
             )),
             'headers' => [],

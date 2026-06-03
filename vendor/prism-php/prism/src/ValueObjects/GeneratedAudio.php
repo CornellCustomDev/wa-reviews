@@ -4,20 +4,21 @@ declare(strict_types=1);
 
 namespace Prism\Prism\ValueObjects;
 
-readonly class GeneratedAudio
+class GeneratedAudio extends Media\Media
 {
-    public function __construct(
-        public ?string $base64 = null,
-        public ?string $type = null,
-    ) {}
-
-    public function hasBase64(): bool
+    public function __construct(?string $base64 = null, public ?string $type = null)
     {
-        return $this->base64 !== null;
+        parent::__construct(null, $base64, $type);
     }
 
-    public function getMimeType(): ?string
+    /**
+     * @return array<string, mixed>
+     */
+    #[\Override]
+    public function toArray(): array
     {
-        return $this->type;
+        return array_merge(parent::toArray(), [
+            'type' => $this->type,
+        ]);
     }
 }

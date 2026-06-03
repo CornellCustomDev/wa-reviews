@@ -130,6 +130,7 @@ class MySqlSchemaState extends SchemaState
             $value .= ' --ssl-key="${:LARAVEL_LOAD_SSL_KEY}"';
         }
 
+        /** @phpstan-ignore classConstant.notFound */
         if (($config['options'][Mysql::ATTR_SSL_VERIFY_SERVER_CERT] ?? null) === false) {
             if (version_compare($versionInfo['version'], '5.7.11', '>=') && ! $versionInfo['isMariaDb']) {
                 $value .= ' --ssl-mode=DISABLED';
@@ -172,6 +173,8 @@ class MySqlSchemaState extends SchemaState
      * @param  array  $variables
      * @param  int  $depth
      * @return \Symfony\Component\Process\Process
+     *
+     * @throws \Throwable
      */
     protected function executeDumpProcess(Process $process, $output, array $variables, int $depth = 0)
     {

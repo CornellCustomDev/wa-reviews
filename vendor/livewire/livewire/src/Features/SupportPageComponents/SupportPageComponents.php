@@ -5,6 +5,7 @@ namespace Livewire\Features\SupportPageComponents;
 use function Livewire\{on, off, once};
 use Livewire\Drawer\ImplicitRouteBinding;
 use Livewire\ComponentHook;
+use Livewire\Mechanisms\HandleRouting\LivewirePageController;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -143,6 +144,14 @@ class SupportPageComponents extends ComponentHook
             throw $exception;
         }
 
+        // Merge lazy/defer route defaults so that ->lazy() and ->defer()
+        // route macros work even when the component has no mount() method...
+        foreach (['lazy', 'defer'] as $key) {
+            if (array_key_exists($key, $route->defaults) && ! array_key_exists($key, $params)) {
+                $params[$key] = $route->defaults[$key];
+            }
+        }
+
         return $params;
     }
 
@@ -230,14 +239,24 @@ class SupportPageComponents extends ComponentHook
 
         $uses = $action['uses'] ?? false;
 
-        if (! $uses) return;
+        if (! $uses) return false;
 
         if (is_string($uses)) {
             $class = str($uses)->before('@')->toString();
             $method = str($uses)->after('@')->toString();
 
+            // Case 1: Direct component class usage (Route::get('/path', Component::class))
             if (is_subclass_of($class, \Livewire\Component::class) && $method === '__invoke') {
                 return $class;
+            }
+
+            // Case 2: Route::livewire macro usage (via LivewirePageController)
+            if (str($uses)->contains(LivewirePageController::class)) {
+                $component = $action['livewire_component'] ?? null;
+
+                if (! $component) return false;
+
+                return app('livewire.factory')->resolveComponentClass($component);
             }
         }
 

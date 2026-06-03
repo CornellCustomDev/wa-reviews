@@ -3,6 +3,7 @@
 namespace Prism\Prism\Providers\DeepSeek\Handlers;
 
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
 use Prism\Prism\Exceptions\PrismException;
 use Prism\Prism\Providers\DeepSeek\Concerns\MapsFinishReason;
@@ -46,6 +47,7 @@ class Structured
      */
     protected function sendRequest(Request $request): array
     {
+        /** @var Response $response */
         $response = $this->client->post(
             'chat/completions',
             array_merge([
@@ -80,7 +82,6 @@ class Structured
         $text = data_get($data, 'choices.0.message.content') ?? '';
 
         $responseMessage = new AssistantMessage($text);
-        $this->responseBuilder->addResponseMessage($responseMessage);
         $request->addMessage($responseMessage);
 
         $step = new Step(
@@ -95,8 +96,9 @@ class Structured
                 model: data_get($data, 'model'),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: [],
+            raw: $data
         );
 
         $this->responseBuilder->addStep($step);

@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace Prism\Prism\Providers\OpenRouter\Handlers;
 
 use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Support\Arr;
+use Illuminate\Http\Client\Response;
 use Prism\Prism\Concerns\CallsTools;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Exceptions\PrismException;
+use Prism\Prism\Providers\OpenRouter\Concerns\BuildsRequestOptions;
 use Prism\Prism\Providers\OpenRouter\Concerns\MapsFinishReason;
 use Prism\Prism\Providers\OpenRouter\Concerns\ValidatesResponses;
 use Prism\Prism\Providers\OpenRouter\Maps\MessageMap;
 use Prism\Prism\Providers\OpenRouter\Maps\ToolCallMap;
-use Prism\Prism\Providers\OpenRouter\Maps\ToolChoiceMap;
-use Prism\Prism\Providers\OpenRouter\Maps\ToolMap;
 use Prism\Prism\Text\Request;
 use Prism\Prism\Text\Response as TextResponse;
 use Prism\Prism\Text\ResponseBuilder;
@@ -27,6 +26,7 @@ use Prism\Prism\ValueObjects\Usage;
 
 class Text
 {
+    use BuildsRequestOptions;
     use CallsTools;
     use MapsFinishReason;
     use ValidatesResponses;
@@ -44,19 +44,9 @@ class Text
 
         $this->validateResponse($data);
 
-        $responseMessage = new AssistantMessage(
-            data_get($data, 'choices.0.message.content') ?? '',
-            ToolCallMap::map(data_get($data, 'choices.0.message.tool_calls', [])),
-            []
-        );
-
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
-        $request = $request->addMessage($responseMessage);
-
         return match ($this->mapFinishReason($data)) {
             FinishReason::ToolCalls => $this->handleToolCalls($data, $request),
-            FinishReason::Stop => $this->handleStop($data, $request),
+            FinishReason::Stop, FinishReason::Length => $this->handleStop($data, $request),
             default => throw new PrismException('OpenRouter: unknown finish reason'),
         };
     }
@@ -66,14 +56,19 @@ class Text
      */
     protected function handleToolCalls(array $data, Request $request): TextResponse
     {
-        $toolResults = $this->callTools(
-            $request->tools(),
-            ToolCallMap::map(data_get($data, 'choices.0.message.tool_calls', []))
-        );
+        $toolCalls = ToolCallMap::map(data_get($data, 'choices.0.message.tool_calls', []));
 
-        $request = $request->addMessage(new ToolResultMessage($toolResults));
+        $toolResults = $this->callTools($request->tools(), $toolCalls);
 
         $this->addStep($data, $request, $toolResults);
+
+        $request = $request->addMessage(new AssistantMessage(
+            data_get($data, 'choices.0.message.content') ?? '',
+            $toolCalls,
+            []
+        ));
+        $request = $request->addMessage(new ToolResultMessage($toolResults));
+        $request->resetToolChoice();
 
         if ($this->shouldContinue($request)) {
             return $this->handle($request);
@@ -102,21 +97,17 @@ class Text
      */
     protected function sendRequest(Request $request): array
     {
+        /** @var Response $response */
         $response = $this->client->post(
             'chat/completions',
             array_merge([
                 'model' => $request->model(),
                 'messages' => (new MessageMap($request->messages(), $request->systemPrompts()))(),
                 'max_tokens' => $request->maxTokens(),
-            ], Arr::whereNotNull([
-                'temperature' => $request->temperature(),
-                'top_p' => $request->topP(),
-                'tools' => ToolMap::map($request->tools()),
-                'tool_choice' => ToolChoiceMap::map($request->toolChoice()),
-            ]))
+            ], $this->buildRequestOptions($request))
         );
 
-        return $response->json();
+        return $response->json() ?? [];
     }
 
     /**
@@ -130,17 +121,19 @@ class Text
             finishReason: $this->mapFinishReason($data),
             toolCalls: ToolCallMap::map(data_get($data, 'choices.0.message.tool_calls', [])),
             toolResults: $toolResults,
+            providerToolCalls: [],
             usage: new Usage(
-                data_get($data, 'usage.prompt_tokens'),
-                data_get($data, 'usage.completion_tokens'),
+                (int) data_get($data, 'usage.prompt_tokens', 0),
+                (int) data_get($data, 'usage.completion_tokens', 0),
             ),
             meta: new Meta(
-                id: data_get($data, 'id'),
-                model: data_get($data, 'model'),
+                id: data_get($data, 'id', ''),
+                model: data_get($data, 'model', $request->model()),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: [],
+            raw: $data,
         ));
     }
 }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Prism\Prism\ValueObjects\Media;
 
 /**
- * Note: Prism currently only supports Documents with Anthropic.
+ * Note: Prism currently only supports Documents with Anthropic and OpenRouter.
  */
 class Document extends Media
 {
@@ -15,6 +15,11 @@ class Document extends Media
      * @var null|array<string>
      */
     protected ?array $chunks = null;
+
+    public static function fromFileId(string $fileId, ?string $title = null): static
+    {
+        return parent::fromFileId($fileId)->setDocumentTitle($title);
+    }
 
     /**
      * @deprecated Use `fromLocalPath()` instead.
@@ -89,5 +94,17 @@ class Document extends Media
     public function chunks(): ?array
     {
         return $this->chunks;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[\Override]
+    public function toArray(): array
+    {
+        return array_merge(parent::toArray(), [
+            'document_title' => $this->documentTitle,
+            'chunks' => $this->chunks,
+        ]);
     }
 }

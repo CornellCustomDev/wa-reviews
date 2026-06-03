@@ -1,15 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Prism\Prism\Providers\OpenAI\Handlers;
 
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response as ClientResponse;
 use Illuminate\Support\Arr;
+use Prism\Prism\Concerns\CallsTools;
+use Prism\Prism\Concerns\HandlesStructuredJson;
+use Prism\Prism\Concerns\ManagesStructuredSteps;
+use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Enums\StructuredMode;
 use Prism\Prism\Exceptions\PrismException;
+use Prism\Prism\Providers\OpenAI\Concerns\ExtractsCitations;
 use Prism\Prism\Providers\OpenAI\Concerns\MapsFinishReason;
+use Prism\Prism\Providers\OpenAI\Concerns\ProcessRateLimits;
 use Prism\Prism\Providers\OpenAI\Concerns\ValidatesResponse;
 use Prism\Prism\Providers\OpenAI\Maps\MessageMap;
+use Prism\Prism\Providers\OpenAI\Maps\ToolCallMap;
+use Prism\Prism\Providers\OpenAI\Maps\ToolChoiceMap;
+use Prism\Prism\Providers\OpenAI\Maps\ToolMap;
 use Prism\Prism\Providers\OpenAI\Support\StructuredModeResolver;
 use Prism\Prism\Structured\Request;
 use Prism\Prism\Structured\Response as StructuredResponse;
@@ -17,12 +28,20 @@ use Prism\Prism\Structured\ResponseBuilder;
 use Prism\Prism\Structured\Step;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
+use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\Meta;
+use Prism\Prism\ValueObjects\ProviderTool;
+use Prism\Prism\ValueObjects\ToolResult;
 use Prism\Prism\ValueObjects\Usage;
 
 class Structured
 {
+    use CallsTools;
+    use ExtractsCitations;
+    use HandlesStructuredJson;
+    use ManagesStructuredSteps;
     use MapsFinishReason;
+    use ProcessRateLimits;
     use ValidatesResponse;
 
     protected ResponseBuilder $responseBuilder;
@@ -47,15 +66,53 @@ class Structured
 
         $this->handleRefusal(data_get($data, 'output.{last}.content.0', []));
 
-        $responseMessage = new AssistantMessage(
-            data_get($data, 'output.{last}.content.0.text') ?? '',
+        $toolCalls = ToolCallMap::map(
+            $this->extractFunctionCalls($data),
+            $this->extractReasoningOutput($data),
         );
 
-        $this->responseBuilder->addResponseMessage($responseMessage);
+        $responseMessage = new AssistantMessage(
+            content: data_get($data, 'output.{last}.content.0.text') ?? '',
+            toolCalls: $toolCalls,
+        );
 
         $request->addMessage($responseMessage);
 
-        $this->addStep($data, $request, $response);
+        return match ($finishReason = $this->mapFinishReason($data)) {
+            FinishReason::ToolCalls => $this->handleToolCalls($data, $request, $response),
+            FinishReason::Stop => $this->handleFinalStop($data, $request, $response),
+            FinishReason::Length => throw new PrismException(sprintf(
+                'OpenAI: max tokens exceeded (status: %s, type: %s). If using a reasoning model, increase max_tokens to account for internal reasoning token usage.',
+                data_get($data, 'output.{last}.status', 'n/a'),
+                data_get($data, 'output.{last}.type', 'n/a'),
+            )),
+            default => throw new PrismException(sprintf(
+                'OpenAI: unhandled finish reason "%s" (status: %s, type: %s)',
+                $finishReason->value,
+                data_get($data, 'output.{last}.status', 'n/a'),
+                data_get($data, 'output.{last}.type', 'n/a'),
+            )),
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function handleToolCalls(array $data, Request $request, ClientResponse $clientResponse): StructuredResponse
+    {
+        $toolResults = $this->callTools(
+            $request->tools(),
+            ToolCallMap::map($this->extractFunctionCalls($data)),
+        );
+
+        $request->addMessage(new ToolResultMessage($toolResults));
+        $request->resetToolChoice();
+
+        $this->addStep($data, $request, $clientResponse, $toolResults);
+
+        if ($this->shouldContinue($request)) {
+            return $this->handle($request);
+        }
 
         return $this->responseBuilder->toResponse();
     }
@@ -63,25 +120,78 @@ class Structured
     /**
      * @param  array<string, mixed>  $data
      */
-    protected function addStep(array $data, Request $request, ClientResponse $clientResponse): void
+    protected function handleFinalStop(array $data, Request $request, ClientResponse $clientResponse): StructuredResponse
     {
+        $this->addStep($data, $request, $clientResponse);
+
+        return $this->responseBuilder->toResponse();
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  ToolResult[]  $toolResults
+     */
+    protected function addStep(array $data, Request $request, ClientResponse $clientResponse, array $toolResults = []): void
+    {
+        $finishReason = $this->mapFinishReason($data);
+        $isStructuredStep = $finishReason !== FinishReason::ToolCalls;
+
+        $toolCalls = $finishReason === FinishReason::ToolCalls
+            ? ToolCallMap::map(
+                $this->extractFunctionCalls($data),
+                $this->extractReasoningOutput($data),
+            )
+            : [];
+
         $this->responseBuilder->addStep(new Step(
             text: data_get($data, 'output.{last}.content.0.text') ?? '',
-            finishReason: $this->mapFinishReason($data),
+            finishReason: $finishReason,
             usage: new Usage(
                 promptTokens: data_get($data, 'usage.input_tokens', 0) - data_get($data, 'usage.input_tokens_details.cached_tokens', 0),
                 completionTokens: data_get($data, 'usage.output_tokens'),
                 cacheReadInputTokens: data_get($data, 'usage.input_tokens_details.cached_tokens'),
-                thoughtTokens: data_get($data, 'usage.output_token_details.reasoning_tokens'),
+                thoughtTokens: data_get($data, 'usage.output_tokens_details.reasoning_tokens'),
             ),
             meta: new Meta(
                 id: data_get($data, 'id'),
                 model: data_get($data, 'model'),
+                rateLimits: $this->processRateLimits($clientResponse),
+                serviceTier: data_get($data, 'service_tier'),
             ),
             messages: $request->messages(),
-            additionalContent: [],
             systemPrompts: $request->systemPrompts(),
+            additionalContent: Arr::whereNotNull([
+                'citations' => $this->extractCitations($data),
+            ]),
+            structured: $isStructuredStep ? $this->extractStructuredData(data_get($data, 'output.{last}.content.0.text') ?? '') : [],
+            toolCalls: $toolCalls,
+            toolResults: $toolResults,
+            raw: $data,
         ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractFunctionCalls(array $data): array
+    {
+        return array_filter(
+            data_get($data, 'output', []),
+            fn (array $output): bool => $output['type'] === 'function_call'
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int, array<string, mixed>>
+     */
+    protected function extractReasoningOutput(array $data): array
+    {
+        return array_filter(
+            data_get($data, 'output', []),
+            fn (array $output): bool => $output['type'] === 'reasoning'
+        );
     }
 
     /**
@@ -89,23 +199,32 @@ class Structured
      */
     protected function sendRequest(Request $request, array $responseFormat): ClientResponse
     {
-        return $this->client->post(
+        /** @var ClientResponse $response */
+        $response = $this->client->post(
             'responses',
             array_merge([
                 'model' => $request->model(),
                 'input' => (new MessageMap($request->messages(), $request->systemPrompts()))(),
-                'max_output_tokens' => $request->maxTokens(),
             ], Arr::whereNotNull([
+                'max_output_tokens' => $request->maxTokens(),
                 'temperature' => $request->temperature(),
                 'top_p' => $request->topP(),
                 'metadata' => $request->providerOptions('metadata'),
+                'tools' => $this->buildTools($request),
+                'tool_choice' => ToolChoiceMap::map($request->toolChoice()),
+                'parallel_tool_calls' => $request->providerOptions('parallel_tool_calls') ?? false,
                 'previous_response_id' => $request->providerOptions('previous_response_id'),
+                'service_tier' => $request->providerOptions('service_tier'),
                 'truncation' => $request->providerOptions('truncation'),
+                'reasoning' => $request->providerOptions('reasoning'),
+                'store' => $request->providerOptions('store'),
                 'text' => [
                     'format' => $responseFormat,
                 ],
             ]))
         );
+
+        return $response;
     }
 
     protected function handleAutoMode(Request $request): ClientResponse
@@ -165,5 +284,27 @@ class Structured
             "Respond with JSON that matches the following schema: \n %s",
             json_encode($request->schema()->toArray(), JSON_PRETTY_PRINT)
         )));
+    }
+
+    /**
+     * @return array<int|string,mixed>
+     */
+    protected function buildTools(Request $request): array
+    {
+        $tools = ToolMap::map($request->tools());
+
+        if ($request->providerTools() === []) {
+            return $tools;
+        }
+
+        $providerTools = array_map(
+            fn (ProviderTool $tool): array => [
+                'type' => $tool->type,
+                ...$tool->options,
+            ],
+            $request->providerTools()
+        );
+
+        return array_merge($providerTools, $tools);
     }
 }

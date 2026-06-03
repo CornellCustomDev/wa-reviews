@@ -17,7 +17,7 @@ For other input modalities like audio and images, see their respective documenta
 To add a video to your prompt, use the `withPrompt` method with a `Video` value object:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Media\Video;
 
@@ -36,8 +36,8 @@ $response = Prism::text()
     ->withPrompt(
         "What's in this video?",
         [Video::fromStoragePath(
-            path: '/path/to/video.mp4', 
-            disk: 'my-disk' // optional - omit/null for default disk
+            path: '/path/to/video.mp4',
+            diskName: 'my-disk' // optional - omit/null for default disk
         )]
     )
     ->asText();
@@ -146,7 +146,7 @@ $response = Prism::text()
     ->asText();
 ```
 
-## Transfer mediums 
+## Transfer mediums
 
 Providers are not consistent in their support of sending raw contents, base64 and/or URLs.
 

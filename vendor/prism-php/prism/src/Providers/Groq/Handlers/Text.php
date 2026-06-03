@@ -46,15 +46,6 @@ class Text
 
         $data = $response->json();
 
-        $responseMessage = new AssistantMessage(
-            data_get($data, 'choices.0.message.content') ?? '',
-            $this->mapToolCalls(data_get($data, 'choices.0.message.tool_calls', []) ?? []),
-        );
-
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
-        $request->addMessage($responseMessage);
-
         $finishReason = FinishReasonMap::map(data_get($data, 'choices.0.finish_reason', ''));
 
         return match ($finishReason) {
@@ -66,7 +57,8 @@ class Text
 
     protected function sendRequest(Request $request): ClientResponse
     {
-        return $this->client->post(
+        /** @var ClientResponse $response */
+        $response = $this->client->post(
             'chat/completions',
             Arr::whereNotNull([
                 'model' => $request->model(),
@@ -78,6 +70,8 @@ class Text
                 'tool_choice' => ToolChoiceMap::map($request->toolChoice()),
             ])
         );
+
+        return $response;
     }
 
     /**
@@ -85,14 +79,18 @@ class Text
      */
     protected function handleToolCalls(array $data, Request $request, ClientResponse $clientResponse): TextResponse
     {
-        $toolResults = $this->callTools(
-            $request->tools(),
-            $this->mapToolCalls(data_get($data, 'choices.0.message.tool_calls', []) ?? []),
-        );
+        $toolCalls = $this->mapToolCalls(data_get($data, 'choices.0.message.tool_calls', []) ?? []);
 
-        $request->addMessage(new ToolResultMessage($toolResults));
+        $toolResults = $this->callTools($request->tools(), $toolCalls);
 
         $this->addStep($data, $request, $clientResponse, FinishReason::ToolCalls, $toolResults);
+
+        $request->addMessage(new AssistantMessage(
+            data_get($data, 'choices.0.message.content') ?? '',
+            $toolCalls,
+        ));
+        $request->addMessage(new ToolResultMessage($toolResults));
+        $request->resetToolChoice();
 
         if ($this->shouldContinue($request)) {
             return $this->handle($request);
@@ -127,6 +125,7 @@ class Text
             finishReason: $finishReason,
             toolCalls: $this->mapToolCalls(data_get($data, 'choices.0.message.tool_calls', []) ?? []),
             toolResults: $toolResults,
+            providerToolCalls: [],
             usage: new Usage(
                 data_get($data, 'usage.prompt_tokens'),
                 data_get($data, 'usage.completion_tokens'),
@@ -139,6 +138,7 @@ class Text
             messages: $request->messages(),
             systemPrompts: $request->systemPrompts(),
             additionalContent: [],
+            raw: $data,
         ));
     }
 

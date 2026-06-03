@@ -1,6 +1,9 @@
 <?php
 
+use App\Providers\AppServiceProvider;
+use App\Services\GoogleApi\GoogleApiServiceProvider;
+
 return [
-    App\Providers\AppServiceProvider::class,
-    App\Services\GoogleApi\GoogleApiServiceProvider::class,
+    AppServiceProvider::class,
+    GoogleApiServiceProvider::class,
 ];

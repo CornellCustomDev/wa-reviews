@@ -3,30 +3,45 @@
 namespace Prism\Prism\ValueObjects\Media;
 
 use finfo;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 use Prism\Prism\Concerns\HasProviderOptions;
 
-class Media
+/**
+ * @implements Arrayable<string, mixed>
+ */
+class Media implements Arrayable
 {
     use HasProviderOptions;
+
+    protected ?string $fileId = null;
 
     protected ?string $localPath = null;
 
     protected ?string $storagePath = null;
 
-    protected ?string $url = null;
-
     protected ?string $rawContent = null;
 
-    protected ?string $base64 = null;
+    protected ?string $filename = null;
 
-    protected ?string $mimeType = null;
+    public function __construct(
+        public ?string $url = null,
+        public ?string $base64 = null,
+        public ?string $mimeType = null) {}
 
-    final public function __construct() {}
+    public static function fromFileId(string $fileId): static
+    {
+        /** @phpstan-ignore-next-line */
+        $instance = new static;
+        $instance->fileId = $fileId;
+
+        return $instance;
+    }
 
     /**
      * @deprecated Use `fromLocalPath()` instead.
@@ -36,7 +51,7 @@ class Media
         return self::fromLocalPath($path);
     }
 
-    public static function fromLocalPath(string $path): static
+    public static function fromLocalPath(string $path, ?string $mimeType = null): static
     {
         if (! is_file($path)) {
             throw new InvalidArgumentException("$path is not a file");
@@ -44,16 +59,15 @@ class Media
 
         $content = file_get_contents($path) ?: '';
 
-        if (in_array(trim($content), ['', '0'], true)) {
+        if ($content === '' || $content === '0') {
             throw new InvalidArgumentException("$path is empty");
         }
 
-        $mimeType = File::mimeType($path);
-
-        if ($mimeType === false) {
+        if (! $mimeType && ! ($mimeType = File::mimeType($path))) {
             throw new InvalidArgumentException("Could not determine mime type for {$path}");
         }
 
+        /** @phpstan-ignore-next-line */
         $instance = new static;
 
         $instance->localPath = $path;
@@ -70,22 +84,23 @@ class Media
 
         $diskName ??= 'default';
 
-        if ($disk->exists($path) === false) {
+        if (! $disk->exists($path)) {
             throw new InvalidArgumentException("$path does not exist on the '$diskName' disk");
         }
 
         $content = $disk->get($path);
 
-        if (in_array(trim($content ?? ''), ['', '0'], true)) {
+        if (! $content) {
             throw new InvalidArgumentException("$path on the '$diskName' disk is empty.");
         }
 
         $mimeType = $disk->mimeType($path);
 
-        if ($mimeType === false) {
+        if (! $mimeType) {
             throw new InvalidArgumentException("Could not determine mime type for {$path} on the '$diskName' disk");
         }
 
+        /** @phpstan-ignore-next-line */
         $instance = new static;
 
         $instance->storagePath = $path;
@@ -95,16 +110,20 @@ class Media
         return $instance;
     }
 
-    public static function fromUrl(string $url): static
+    public static function fromUrl(string $url, ?string $mimeType = null): static
     {
+        /** @phpstan-ignore-next-line */
         $instance = new static;
+
         $instance->url = $url;
+        $instance->mimeType = $mimeType;
 
         return $instance;
     }
 
     public static function fromRawContent(string $rawContent, ?string $mimeType = null): static
     {
+        /** @phpstan-ignore-next-line */
         $instance = new static;
 
         $instance->rawContent = $rawContent;
@@ -115,12 +134,30 @@ class Media
 
     public static function fromBase64(string $base64, ?string $mimeType = null): static
     {
+        /** @phpstan-ignore-next-line */
         $instance = new static;
 
         $instance->base64 = $base64;
         $instance->mimeType = $mimeType;
 
         return $instance;
+    }
+
+    public function as(string $name): self
+    {
+        $this->filename = $name;
+
+        return $this;
+    }
+
+    public function filename(): ?string
+    {
+        return $this->filename;
+    }
+
+    public function isFileId(): bool
+    {
+        return $this->fileId !== null;
     }
 
     public function isFile(): bool
@@ -138,6 +175,11 @@ class Media
         return $this->hasRawContent();
     }
 
+    public function hasMimeType(): bool
+    {
+        return $this->mimeType !== null;
+    }
+
     public function hasRawContent(): bool
     {
         if ($this->base64 !== null) {
@@ -151,6 +193,16 @@ class Media
         }
 
         return $this->isUrl();
+    }
+
+    public function hasUrl(): bool
+    {
+        return $this->url !== null;
+    }
+
+    public function fileId(): ?string
+    {
+        return $this->fileId;
     }
 
     public function localPath(): ?string
@@ -209,8 +261,6 @@ class Media
     }
 
     /**
-     * Get a file resource suitable for HTTP multipart uploads
-     *
      * @return resource
      */
     public function resource()
@@ -227,7 +277,7 @@ class Media
         if ($this->url) {
             $this->fetchUrlContent();
 
-            return $this->resource();
+            return $this->createStreamFromContent($this->rawContent());
         }
 
         if ($this->rawContent || $this->base64) {
@@ -243,19 +293,38 @@ class Media
             return;
         }
 
-        $content = Http::get($this->url)->body();
+        /** @var Response */
+        $response = Http::get($this->url);
+        $content = $response->body();
 
-        if (in_array(trim($content), ['', '0'], true)) {
+        if (! $content) {
             throw new InvalidArgumentException("{$this->url} returns no content.");
         }
 
         $mimeType = (new finfo(FILEINFO_MIME_TYPE))->buffer($content);
 
-        if ($mimeType === false) {
+        if (! $mimeType) {
             throw new InvalidArgumentException("Could not determine mime type for {$this->url}.");
         }
 
         $this->rawContent = $content;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    #[\Override]
+    public function toArray(): array
+    {
+        return [
+            'url' => $this->url,
+            'base64' => $this->base64,
+            'mime_type' => $this->mimeType,
+            'file_id' => $this->fileId,
+            'local_path' => $this->localPath,
+            'storage_path' => $this->storagePath,
+            'filename' => $this->filename,
+        ];
     }
 
     /**
@@ -267,9 +336,9 @@ class Media
             throw new InvalidArgumentException('Cannot create stream from null content');
         }
 
-        $stream = fopen('php://temp', 'r+');
+        $stream = fopen('php://memory', 'r+');
         if ($stream === false) {
-            throw new InvalidArgumentException('Cannot create temporary stream');
+            throw new InvalidArgumentException('Cannot create memory stream');
         }
 
         fwrite($stream, $content);

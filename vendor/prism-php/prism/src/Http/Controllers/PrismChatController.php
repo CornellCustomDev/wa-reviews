@@ -5,6 +5,7 @@ namespace Prism\Prism\Http\Controllers;
 use Illuminate\Support\ItemNotFoundException;
 use Prism\Prism\Exceptions\PrismServerException;
 use Prism\Prism\Facades\PrismServer;
+use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Prism\Prism\Text\PendingRequest;
 use Prism\Prism\Text\Response as TextResponse;
 use Prism\Prism\ValueObjects\Media\Image;
@@ -48,26 +49,34 @@ class PrismChatController
             $response = $generator->asStream();
 
             foreach ($response as $chunk) {
+                if (! $chunk instanceof TextDeltaEvent) {
+                    continue;
+                }
+
                 $data = [
-                    'id' => $chunk->meta?->id ?? 'unknown',
+                    'id' => $chunk->id,
                     'object' => 'chat.completion.chunk',
                     'created' => now()->timestamp,
-                    'model' => $chunk->meta?->model ?? 'unknown',
+                    'model' => 'unknown',
                     'choices' => [[
                         'delta' => [
                             'role' => 'assistant',
-                            'content' => $chunk->content ?? $chunk->text,
+                            'content' => $chunk->delta,
                         ],
                     ]],
                 ];
 
                 echo 'data: '.json_encode($data)."\n\n";
-                ob_flush();
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
                 flush();
             }
 
             echo "data: [DONE]\n";
-            ob_flush();
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
             flush();
         }, 200, [
             'Content-Type' => 'text/event-stream',
@@ -118,25 +127,23 @@ class PrismChatController
 
     protected function textFromResponse(TextResponse $response): string
     {
-        return $response->responseMessages
-            ->whereInstanceOf(AssistantMessage::class)
-            ->implode(fn (AssistantMessage $message): string => $message->content);
+        return $response->text;
     }
 
     /**
-     * @param  array<int, mixed>  $messages
+     * @param  array<int, array{role: string, content: mixed}>  $messages
      * @return array<int, UserMessage|AssistantMessage|SystemMessage>
      */
     protected function mapMessages(array $messages): array
     {
         return collect($messages)
-            ->map(fn ($message): UserMessage|AssistantMessage|SystemMessage => match ($message['role']) {
+            ->map(fn (array $message): UserMessage|AssistantMessage|SystemMessage => match ($message['role']) {
                 'user' => $this->mapUserMessage($message),
                 'assistant' => new AssistantMessage($this->extractTextContent($message['content'])),
                 'system' => new SystemMessage($this->extractTextContent($message['content'])),
                 default => throw new PrismServerException("Couldn't map messages to Prism messages")
             })
-            ->toArray();
+            ->all();
     }
 
     /**

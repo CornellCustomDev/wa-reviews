@@ -7,7 +7,7 @@ Generate stunning images from text prompts using AI-powered models. Prism provid
 Creating images with Prism is as simple as describing what you want:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 
 $response = Prism::image()
     ->using('openai', 'dall-e-3')
@@ -23,6 +23,7 @@ echo $image->url; // https://oaidalleapiprodscus.blob.core.windows.net/...
 Currently, Prism supports image generation through:
 
 - **OpenAI**: DALL-E 2, DALL-E 3, and GPT-Image-1 models
+- **Gemini**: Gemini 2.0 Flash Preview Image Generation, Imagen 4, Imagen 3
 
 Additional providers will be added in future releases as the ecosystem evolves.
 
@@ -67,7 +68,7 @@ if ($response->hasImages()) {
         if ($image->hasUrl()) {
             echo "Image: {$image->url}\n";
         }
-        
+
         if ($image->hasBase64()) {
             echo "Base64 Image: " . substr($image->base64, 0, 50) . "...\n";
         }
@@ -84,6 +85,9 @@ if ($response->hasImages()) {
 // Check usage information
 echo "Prompt tokens: {$response->usage->promptTokens}";
 echo "Model used: {$response->meta->model}";
+
+// Access the raw API response data
+$rawResponse = $response->raw;
 ```
 
 ## Provider-Specific Options
@@ -157,12 +161,101 @@ if ($image->hasBase64()) {
 }
 ```
 
+#### Image Editing
+
+OpenAI's `gpt-image-1` model supports editing existing images. Pass your images as the second parameter to `withPrompt()`:
+
+```php
+use Prism\Prism\ValueObjects\Media\Image;
+
+$originalImage = Image::fromLocalPath('photos/landscape.png');
+
+$response = Prism::image()
+    ->using('openai', 'gpt-image-1')
+    ->withPrompt('Add a vaporwave sunset to the background', [$originalImage])
+    ->withProviderOptions([
+        'size' => '1024x1024',
+        'output_format' => 'png',
+        'quality' => 'high',
+    ])
+    ->generate();
+
+// The edited image is returned as base64
+$editedImage = $response->firstImage();
+file_put_contents('edited-landscape.png', base64_decode($editedImage->base64));
+```
+
+You can edit multiple images at once:
+
+```php
+$response = Prism::image()
+    ->using('openai', 'gpt-image-1')
+    ->withPrompt('Make the colors more vibrant', [
+        Image::fromLocalPath('photo1.png'),
+        Image::fromLocalPath('photo2.png')->as('custom-name.png'),
+    ])
+    ->generate();
+```
+
+For precise edits, use a mask to specify which areas to modify:
+
+```php
+$response = Prism::image()
+    ->using('openai', 'gpt-image-1')
+    ->withPrompt('Replace the sky with a starry night', [
+        Image::fromLocalPath('landscape.png'),
+    ])
+    ->withProviderOptions([
+        'mask' => Image::fromLocalPath('sky-mask.png'), // White areas will be edited
+        'size' => '1024x1024',
+        'output_format' => 'png',
+    ])
+    ->generate();
+```
+
+> [!NOTE]
+> The mask should be a PNG image where white pixels indicate areas to edit and transparent pixels indicate areas to preserve.
+
+### Gemini Options
+
+Gemini offers customizations, depending on what model is selected. All Gemini image generation models return base64-encoded images only. They also return `mimeType`.
+
+### Gemini Flash Preview Image Generation
+
+Gemini conversational image generation provides the option to edit images by passing them as the second parameter to `withPrompt()`:
+
+```php
+use Prism\Prism\ValueObjects\Media\Image;
+
+$originalImage = Image::fromLocalPath('image/boots.png');
+
+$response = Prism::image()
+    ->using(Provider::Gemini, 'gemini-2.0-flash-preview-image-generation')
+    ->withPrompt('Actually, could we make those boots red?', [$originalImage])
+    ->generate();
+```
+
+### Imagen Options
+
+```php
+$response = Prism::image()
+    ->using(Provider::Gemini, 'imagen-4.0-generate-001')
+    ->withPrompt('Generate an image of a magnificent building falling into the ocean')
+    ->withProviderOptions([
+        'n' => 3,                               // number of images to generate
+        'size' => '2K',                         // 1K (default), 2K
+        'aspect_ratio' => '16:9',               // 1:1 (default), 3:4, 4:3, 9:16, 16:9
+        'person_generation' => 'dont_allow',    // dont_allow, allow_adult, allow_all
+    ])
+    ->generate();
+```
+
 ## Testing
 
 Prism provides convenient fakes for testing image generation:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\PrismFake;
 
 test('can generate images', function () {
@@ -179,4 +272,4 @@ test('can generate images', function () {
 });
 ```
 
-Need help with a specific provider or use case? Check the [provider documentation](/providers/openai) for detailed configuration options and examples.
+Need help with a specific provider or use case? Check the [openai documentation](/providers/openai) or [gemini documentation](/providers/gemini) for detailed configuration options and examples.

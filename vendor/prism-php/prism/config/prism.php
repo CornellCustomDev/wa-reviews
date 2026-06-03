@@ -6,6 +6,7 @@ return [
         'middleware' => [],
         'enabled' => env('PRISM_SERVER_ENABLED', false),
     ],
+    'request_timeout' => env('PRISM_REQUEST_TIMEOUT', 30), // The timeout for requests in seconds.
     'providers' => [
         'openai' => [
             'url' => env('OPENAI_URL', 'https://api.openai.com/v1'),
@@ -16,6 +17,7 @@ return [
         'anthropic' => [
             'api_key' => env('ANTHROPIC_API_KEY', ''),
             'version' => env('ANTHROPIC_API_VERSION', '2023-06-01'),
+            'url' => env('ANTHROPIC_URL', 'https://api.anthropic.com/v1'),
             'default_thinking_budget' => env('ANTHROPIC_DEFAULT_THINKING_BUDGET', 1024),
             // Include beta strings as a comma separated list.
             'anthropic_beta' => env('ANTHROPIC_BETA', null),
@@ -43,6 +45,10 @@ return [
             'api_key' => env('DEEPSEEK_API_KEY', ''),
             'url' => env('DEEPSEEK_URL', 'https://api.deepseek.com/v1'),
         ],
+        'elevenlabs' => [
+            'api_key' => env('ELEVENLABS_API_KEY', ''),
+            'url' => env('ELEVENLABS_URL', 'https://api.elevenlabs.io/v1/'),
+        ],
         'voyageai' => [
             'api_key' => env('VOYAGEAI_API_KEY', ''),
             'url' => env('VOYAGEAI_URL', 'https://api.voyageai.com/v1'),
@@ -50,6 +56,18 @@ return [
         'openrouter' => [
             'api_key' => env('OPENROUTER_API_KEY', ''),
             'url' => env('OPENROUTER_URL', 'https://openrouter.ai/api/v1'),
+            'site' => [
+                'http_referer' => env('OPENROUTER_SITE_HTTP_REFERER', null),
+                'x_title' => env('OPENROUTER_SITE_X_TITLE', null),
+            ],
+        ],
+        'perplexity' => [
+            'api_key' => env('PERPLEXITY_API_KEY', ''),
+            'url' => env('PERPLEXITY_URL', 'https://api.perplexity.ai'),
+        ],
+        'z' => [
+            'url' => env('Z_URL', 'https://api.z.ai/api/paas/v4'),
+            'api_key' => env('Z_API_KEY', ''),
         ],
     ],
 ];

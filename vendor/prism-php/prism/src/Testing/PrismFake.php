@@ -17,11 +17,23 @@ use Prism\Prism\Embeddings\Response as EmbeddingResponse;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Images\Request as ImageRequest;
 use Prism\Prism\Images\Response as ImageResponse;
+use Prism\Prism\Moderation\Response as ModerationResponse;
+use Prism\Prism\Prism;
 use Prism\Prism\Providers\Provider;
+use Prism\Prism\Streaming\EventID;
+use Prism\Prism\Streaming\Events\StepFinishEvent;
+use Prism\Prism\Streaming\Events\StepStartEvent;
+use Prism\Prism\Streaming\Events\StreamEndEvent;
+use Prism\Prism\Streaming\Events\StreamEvent;
+use Prism\Prism\Streaming\Events\StreamStartEvent;
+use Prism\Prism\Streaming\Events\TextCompleteEvent;
+use Prism\Prism\Streaming\Events\TextDeltaEvent;
+use Prism\Prism\Streaming\Events\TextStartEvent;
+use Prism\Prism\Streaming\Events\ToolCallEvent;
+use Prism\Prism\Streaming\Events\ToolResultEvent;
 use Prism\Prism\Structured\Request as StructuredRequest;
 use Prism\Prism\Structured\Response as StructuredResponse;
 use Prism\Prism\Testing\Concerns\CanGenerateFakeChunksFromTextResponses;
-use Prism\Prism\Text\Chunk;
 use Prism\Prism\Text\Request as TextRequest;
 use Prism\Prism\Text\Response as TextResponse;
 use Prism\Prism\ValueObjects\EmbeddingsUsage;
@@ -43,7 +55,7 @@ class PrismFake extends Provider
     protected array $providerConfig = [];
 
     /**
-     * @param  array<int, TextResponse|StructuredResponse|EmbeddingResponse|ImageResponse|AudioResponse|AudioTextResponse>  $responses
+     * @param  array<int, TextResponse|StructuredResponse|EmbeddingResponse|ImageResponse|AudioResponse|AudioTextResponse|ModerationResponse>  $responses
      */
     public function __construct(protected array $responses = []) {}
 
@@ -54,7 +66,6 @@ class PrismFake extends Provider
 
         return $this->nextTextResponse() ?? new TextResponse(
             steps: collect([]),
-            responseMessages: collect([]),
             text: '',
             finishReason: FinishReason::Stop,
             toolCalls: [],
@@ -85,7 +96,6 @@ class PrismFake extends Provider
 
         return $this->nextStructuredResponse() ?? new StructuredResponse(
             steps: collect([]),
-            responseMessages: collect([]),
             text: '',
             structured: [],
             finishReason: FinishReason::Stop,
@@ -144,13 +154,13 @@ class PrismFake extends Provider
      *
      * Behavior:
      *  1. Records the incoming {@link TextRequest}
-     *  2. Pulls the next fixture from the list supplied to {@see \Prism\Prism\Prism::fake()}.
-     *  3. Yields an appropriate chunk stream.
+     *  2. Pulls the next fixture from the list supplied to {@see Prism::fake()}.
+     *  3. Yields an appropriate stream of events.
      *
      * Supported fixture type:
-     *  • {@link TextResponse} – auto-chunked into a stream.
+     *  • {@link TextResponse} – auto-chunked into stream events.
      *
-     * @return Generator<Chunk>
+     * @return Generator<StreamEvent>
      *
      * @throws Exception if the fixture type is unknown or no fixture remains.
      */
@@ -161,7 +171,6 @@ class PrismFake extends Provider
 
         $fixture = $this->nextTextResponse() ?? new TextResponse(
             steps: collect([]),
-            responseMessages: collect([]),
             text: '',
             finishReason: FinishReason::Stop,
             toolCalls: [],
@@ -172,7 +181,7 @@ class PrismFake extends Provider
             additionalContent: [],
         );
 
-        yield from $this->chunksFromTextResponse($fixture);
+        yield from $this->streamEventsFromTextResponse($fixture, $request);
     }
 
     /**
@@ -224,9 +233,123 @@ class PrismFake extends Provider
         PHPUnit::assertSame($expectedCount, $actualCount, "Expected {$expectedCount} calls, got {$actualCount}");
     }
 
+    /**
+     * @return Generator<StreamEvent>
+     */
+    protected function streamEventsFromTextResponse(TextResponse $response, TextRequest $request): Generator
+    {
+        $messageId = EventID::generate();
+
+        yield new StreamStartEvent(
+            id: EventID::generate(),
+            timestamp: time(),
+            model: $request->model(),
+            provider: 'fake'
+        );
+
+        yield new StepStartEvent(
+            id: EventID::generate(),
+            timestamp: time()
+        );
+
+        if ($response->steps->isNotEmpty()) {
+            $stepIndex = 0;
+            $totalSteps = $response->steps->count();
+
+            foreach ($response->steps as $step) {
+                if ($step->text !== '') {
+                    yield new TextStartEvent(
+                        id: EventID::generate(),
+                        timestamp: time(),
+                        messageId: $messageId
+                    );
+
+                    foreach ($this->convertStringToTextChunkGenerator($step->text, $this->fakeChunkSize) as $chunk) {
+                        yield new TextDeltaEvent(
+                            id: EventID::generate(),
+                            timestamp: time(),
+                            delta: $chunk->text,
+                            messageId: $messageId
+                        );
+                    }
+
+                    yield new TextCompleteEvent(
+                        id: EventID::generate(),
+                        timestamp: time(),
+                        messageId: $messageId
+                    );
+                }
+
+                foreach ($step->toolCalls as $toolCall) {
+                    yield new ToolCallEvent(
+                        id: EventID::generate(),
+                        timestamp: time(),
+                        toolCall: $toolCall,
+                        messageId: $messageId
+                    );
+                }
+
+                foreach ($step->toolResults as $toolResult) {
+                    yield new ToolResultEvent(
+                        id: EventID::generate(),
+                        timestamp: time(),
+                        toolResult: $toolResult,
+                        messageId: $messageId,
+                        success: true
+                    );
+                }
+
+                $stepIndex++;
+
+                // If this step has tool calls/results and there are more steps, end current step and start new one
+                if (($step->toolCalls !== [] || $step->toolResults !== []) && $stepIndex < $totalSteps) {
+                    yield new StepFinishEvent(
+                        id: EventID::generate(),
+                        timestamp: time()
+                    );
+                    yield new StepStartEvent(
+                        id: EventID::generate(),
+                        timestamp: time()
+                    );
+                }
+            }
+        } elseif ($response->text !== '') {
+            yield new TextStartEvent(
+                id: EventID::generate(),
+                timestamp: time(),
+                messageId: $messageId
+            );
+            foreach ($this->convertStringToTextChunkGenerator($response->text, $this->fakeChunkSize) as $chunk) {
+                yield new TextDeltaEvent(
+                    id: EventID::generate(),
+                    timestamp: time(),
+                    delta: $chunk->text,
+                    messageId: $messageId
+                );
+            }
+            yield new TextCompleteEvent(
+                id: EventID::generate(),
+                timestamp: time(),
+                messageId: $messageId
+            );
+        }
+
+        yield new StepFinishEvent(
+            id: EventID::generate(),
+            timestamp: time()
+        );
+
+        yield new StreamEndEvent(
+            id: EventID::generate(),
+            timestamp: time(),
+            finishReason: $response->finishReason,
+            usage: $response->usage
+        );
+    }
+
     protected function nextTextResponse(): ?TextResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 
@@ -245,7 +368,7 @@ class PrismFake extends Provider
 
     protected function nextStructuredResponse(): ?StructuredResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 
@@ -264,7 +387,7 @@ class PrismFake extends Provider
 
     protected function nextEmbeddingResponse(): ?EmbeddingResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 
@@ -283,7 +406,7 @@ class PrismFake extends Provider
 
     protected function nextImageResponse(): ?ImageResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 
@@ -302,7 +425,7 @@ class PrismFake extends Provider
 
     protected function nextAudioResponse(): ?AudioResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 
@@ -321,7 +444,7 @@ class PrismFake extends Provider
 
     protected function nextAudioTextResponse(): ?AudioTextResponse
     {
-        if (! isset($this->responses)) {
+        if ($this->responses === []) {
             return null;
         }
 

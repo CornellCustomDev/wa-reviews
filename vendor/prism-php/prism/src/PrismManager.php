@@ -10,16 +10,18 @@ use InvalidArgumentException;
 use Prism\Prism\Enums\Provider as ProviderEnum;
 use Prism\Prism\Providers\Anthropic\Anthropic;
 use Prism\Prism\Providers\DeepSeek\DeepSeek;
+use Prism\Prism\Providers\ElevenLabs\ElevenLabs;
 use Prism\Prism\Providers\Gemini\Gemini;
 use Prism\Prism\Providers\Groq\Groq;
 use Prism\Prism\Providers\Mistral\Mistral;
 use Prism\Prism\Providers\Ollama\Ollama;
 use Prism\Prism\Providers\OpenAI\OpenAI;
 use Prism\Prism\Providers\OpenRouter\OpenRouter;
+use Prism\Prism\Providers\Perplexity\Perplexity;
 use Prism\Prism\Providers\Provider;
 use Prism\Prism\Providers\VoyageAI\VoyageAI;
 use Prism\Prism\Providers\XAI\XAI;
-use RuntimeException;
+use Prism\Prism\Providers\Z\Z;
 
 class PrismManager
 {
@@ -54,20 +56,11 @@ class PrismManager
         throw new InvalidArgumentException("Provider [{$name}] is not supported.");
     }
 
-    /**
-     * @throws RuntimeException
-     */
     public function extend(string $provider, Closure $callback): self
     {
-        if (($callback = $callback->bindTo($this, $this)) instanceof \Closure) {
-            $this->customCreators[$provider] = $callback;
+        $this->customCreators[$provider] = $callback;
 
-            return $this;
-        }
-
-        throw new RuntimeException(
-            sprintf('Couldn\'t bind %s', $provider)
-        );
+        return $this;
     }
 
     protected function resolveName(ProviderEnum|string $name): string
@@ -120,9 +113,10 @@ class PrismManager
     protected function createAnthropicProvider(array $config): Anthropic
     {
         return new Anthropic(
-            $config['api_key'],
-            $config['version'],
-            $config['anthropic_beta'] ?? null
+            apiKey: $config['api_key'],
+            apiVersion: $config['version'],
+            url: $config['url'] ?? 'https://api.anthropic.com/v1',
+            betaFeatures: $config['anthropic_beta'] ?? null,
         );
     }
 
@@ -149,6 +143,14 @@ class PrismManager
     }
 
     /**
+     * @param  array<string, string|null>  $config
+     */
+    protected function createPerplexityProvider(array $config): Perplexity
+    {
+        return new Perplexity(apiKey: $config['api_key'] ?? '', url: $config['url'] ?? '');
+    }
+
+    /**
      * @param  array<string, mixed>  $config
      */
     protected function callCustomCreator(string $provider, array $config): Provider
@@ -170,8 +172,8 @@ class PrismManager
     protected function createGroqProvider(array $config): Groq
     {
         return new Groq(
-            url: $config['url'],
             apiKey: $config['api_key'],
+            url: $config['url'],
         );
     }
 
@@ -181,8 +183,8 @@ class PrismManager
     protected function createXaiProvider(array $config): XAI
     {
         return new XAI(
-            url: $config['url'],
             apiKey: $config['api_key'],
+            url: $config['url'],
         );
     }
 
@@ -192,19 +194,46 @@ class PrismManager
     protected function createGeminiProvider(array $config): Gemini
     {
         return new Gemini(
-            url: $config['url'],
             apiKey: $config['api_key'],
+            url: $config['url'],
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function createOpenrouterProvider(array $config): OpenRouter
+    {
+        $siteConfig = $config['site'] ?? null;
+        $site = is_array($siteConfig) ? $siteConfig : [];
+
+        return new OpenRouter(
+            apiKey: $config['api_key'] ?? '',
+            url: $config['url'] ?? 'https://openrouter.ai/api/v1',
+            httpReferer: $site['http_referer'] ?? null,
+            xTitle: $site['x_title'] ?? null,
         );
     }
 
     /**
      * @param  array<string, string>  $config
      */
-    protected function createOpenrouterProvider(array $config): OpenRouter
+    protected function createElevenlabsProvider(array $config): ElevenLabs
     {
-        return new OpenRouter(
+        return new ElevenLabs(
             apiKey: $config['api_key'] ?? '',
-            url: $config['url'] ?? 'https://openrouter.ai/api/v1',
+            url: $config['url'] ?? 'https://api.elevenlabs.io/v1/',
+        );
+    }
+
+    /**
+     * @param  array<string, string>  $config
+     */
+    protected function createZProvider(array $config): Z
+    {
+        return new Z(
+            apiKey: $config['api_key'],
+            url: $config['url'],
         );
     }
 }

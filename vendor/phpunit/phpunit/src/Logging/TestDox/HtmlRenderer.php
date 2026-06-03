@@ -18,10 +18,7 @@ use function sprintf;
  */
 final readonly class HtmlRenderer
 {
-    /**
-     * @var string
-     */
-    private const PAGE_HEADER = <<<'EOT'
+    private const string PAGE_HEADER = <<<'EOT'
 <!doctype html>
 <html lang="en">
     <head>
@@ -76,44 +73,32 @@ final readonly class HtmlRenderer
     </head>
     <body>
 EOT;
-
-    /**
-     * @var string
-     */
-    private const CLASS_HEADER = <<<'EOT'
+    private const string CLASS_HEADER = <<<'EOT'
 
         <h2>%s</h2>
         <ul>
 
 EOT;
-
-    /**
-     * @var string
-     */
-    private const CLASS_FOOTER = <<<'EOT'
+    private const string CLASS_FOOTER = <<<'EOT'
         </ul>
 EOT;
-
-    /**
-     * @var string
-     */
-    private const PAGE_FOOTER = <<<'EOT'
+    private const string PAGE_FOOTER = <<<'EOT'
 
     </body>
 </html>
 EOT;
 
     /**
-     * @param array<string, TestResultCollection> $tests
+     * @param array<class-string, TestResultCollection> $tests
      */
     public function render(array $tests): string
     {
         $buffer = self::PAGE_HEADER;
 
-        foreach ($tests as $prettifiedClassName => $_tests) {
+        foreach ($tests as $_tests) {
             $buffer .= sprintf(
                 self::CLASS_HEADER,
-                $prettifiedClassName,
+                $_tests->asArray()[0]->test()->testDox()->prettifiedClassName(),
             );
 
             foreach ($this->reduce($_tests) as $prettifiedMethodName => $outcome) {

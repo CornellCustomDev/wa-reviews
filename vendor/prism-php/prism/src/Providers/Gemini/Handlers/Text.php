@@ -10,8 +10,8 @@ use Illuminate\Support\Arr;
 use Prism\Prism\Concerns\CallsTools;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Exceptions\PrismException;
-use Prism\Prism\Providers\Gemini\Concerns\ExtractSearchGroundings;
 use Prism\Prism\Providers\Gemini\Concerns\ValidatesResponse;
+use Prism\Prism\Providers\Gemini\Maps\CitationMapper;
 use Prism\Prism\Providers\Gemini\Maps\FinishReasonMap;
 use Prism\Prism\Providers\Gemini\Maps\MessageMap;
 use Prism\Prism\Providers\Gemini\Maps\ToolCallMap;
@@ -30,7 +30,7 @@ use Prism\Prism\ValueObjects\Usage;
 
 class Text
 {
-    use CallsTools, ExtractSearchGroundings, ValidatesResponse;
+    use CallsTools, ValidatesResponse;
 
     protected ResponseBuilder $responseBuilder;
 
@@ -49,16 +49,7 @@ class Text
 
         $data = $response->json();
 
-        $isToolCall = ! empty(data_get($data, 'candidates.0.content.parts.0.functionCall'));
-
-        $responseMessage = new AssistantMessage(
-            data_get($data, 'candidates.0.content.parts.0.text') ?? '',
-            $isToolCall ? ToolCallMap::map(data_get($data, 'candidates.0.content.parts', [])) : [],
-        );
-
-        $this->responseBuilder->addResponseMessage($responseMessage);
-
-        $request->addMessage($responseMessage);
+        $isToolCall = $this->hasToolCalls($data);
 
         $finishReason = FinishReasonMap::map(
             data_get($data, 'candidates.0.finishReason'),
@@ -76,15 +67,27 @@ class Text
     {
         $providerOptions = $request->providerOptions();
 
-        $thinkingConfig = Arr::whereNotNull([
-            'thinkingBudget' => $providerOptions['thinkingBudget'] ?? null,
-        ]);
+        $thinkingConfig = $providerOptions['thinkingConfig'] ?? null;
+
+        if (isset($providerOptions['thinkingBudget'])) {
+            $thinkingConfig = Arr::whereNotNull([
+                'thinkingBudget' => $providerOptions['thinkingBudget'],
+                'includeThoughts' => $providerOptions['includeThoughts'] ?? null,
+            ]);
+        }
+
+        if (isset($providerOptions['thinkingLevel'])) {
+            $thinkingConfig = Arr::whereNotNull([
+                'thinkingLevel' => $providerOptions['thinkingLevel'],
+                'includeThoughts' => $providerOptions['includeThoughts'] ?? null,
+            ]);
+        }
 
         $generationConfig = Arr::whereNotNull([
             'temperature' => $request->temperature(),
             'topP' => $request->topP(),
             'maxOutputTokens' => $request->maxTokens(),
-            'thinkingConfig' => $thinkingConfig !== [] ? $thinkingConfig : null,
+            'thinkingConfig' => $thinkingConfig,
         ]);
 
         if ($request->tools() !== [] && $request->providerTools() != []) {
@@ -94,19 +97,20 @@ class Text
         $tools = [];
 
         if ($request->providerTools() !== []) {
-            $tools = [
-                Arr::mapWithKeys(
-                    $request->providerTools(),
-                    fn (ProviderTool $providerTool): array => [$providerTool->type => (object) []]
-                ),
-            ];
+            $tools = array_map(
+                fn (ProviderTool $providerTool): array => [
+                    $providerTool->type => $providerTool->options !== [] ? $providerTool->options : (object) [],
+                ],
+                $request->providerTools()
+            );
         }
 
         if ($request->tools() !== []) {
             $tools['function_declarations'] = ToolMap::map($request->tools());
         }
 
-        return $this->client->post(
+        /** @var ClientResponse $response */
+        $response = $this->client->post(
             "{$request->model()}:generateContent",
             Arr::whereNotNull([
                 ...(new MessageMap($request->messages(), $request->systemPrompts()))(),
@@ -117,6 +121,8 @@ class Text
                 'safetySettings' => $providerOptions['safetySettings'] ?? null,
             ])
         );
+
+        return $response;
     }
 
     /**
@@ -134,14 +140,18 @@ class Text
      */
     protected function handleToolCalls(array $data, Request $request): TextResponse
     {
-        $toolResults = $this->callTools(
-            $request->tools(),
-            ToolCallMap::map(data_get($data, 'candidates.0.content.parts', []))
-        );
+        $toolCalls = ToolCallMap::map(data_get($data, 'candidates.0.content.parts', []));
 
-        $request->addMessage(new ToolResultMessage($toolResults));
+        $toolResults = $this->callTools($request->tools(), $toolCalls);
 
         $this->addStep($data, $request, FinishReason::ToolCalls, $toolResults);
+
+        $request->addMessage(new AssistantMessage(
+            $this->extractTextContent($data),
+            $toolCalls,
+        ));
+        $request->addMessage(new ToolResultMessage($toolResults));
+        $request->resetToolChoice();
 
         if ($this->shouldContinue($request)) {
             return $this->handle($request);
@@ -163,28 +173,89 @@ class Text
     {
         $providerOptions = $request->providerOptions();
 
+        $thoughtSummaries = $this->extractThoughtSummaries($data);
+
         $this->responseBuilder->addStep(new Step(
-            text: data_get($data, 'candidates.0.content.parts.0.text') ?? '',
+            text: $this->extractTextContent($data),
             finishReason: $finishReason,
             toolCalls: $finishReason === FinishReason::ToolCalls ? ToolCallMap::map(data_get($data, 'candidates.0.content.parts', [])) : [],
             toolResults: $toolResults,
+            providerToolCalls: [],
             usage: new Usage(
                 promptTokens: isset($providerOptions['cachedContentName'])
                     ? (data_get($data, 'usageMetadata.promptTokenCount', 0) - data_get($data, 'usageMetadata.cachedContentTokenCount', 0))
                     : data_get($data, 'usageMetadata.promptTokenCount', 0),
                 completionTokens: data_get($data, 'usageMetadata.candidatesTokenCount', 0),
-                cacheReadInputTokens: data_get($data, 'usageMetadata.cachedContentTokenCount', null),
-                thoughtTokens: data_get($data, 'usageMetadata.thoughtsTokenCount', null),
+                cacheReadInputTokens: data_get($data, 'usageMetadata.cachedContentTokenCount'),
+                thoughtTokens: data_get($data, 'usageMetadata.thoughtsTokenCount'),
             ),
             meta: new Meta(
                 id: data_get($data, 'id', ''),
-                model: data_get($data, 'modelVersion'),
+                model: data_get($data, 'modelVersion', ''),
             ),
             messages: $request->messages(),
             systemPrompts: $request->systemPrompts(),
-            additionalContent: [
-                ...$this->extractSearchGroundingContent($data),
-            ],
+            additionalContent: Arr::whereNotNull([
+                'citations' => CitationMapper::mapFromGemini(data_get($data, 'candidates.0', [])) ?: null,
+                'searchEntryPoint' => data_get($data, 'candidates.0.groundingMetadata.searchEntryPoint'),
+                'searchQueries' => data_get($data, 'candidates.0.groundingMetadata.webSearchQueries'),
+                'urlMetadata' => data_get($data, 'candidates.0.urlContextMetadata.urlMetadata'),
+                'thoughtSummaries' => $thoughtSummaries !== [] ? $thoughtSummaries : null,
+            ]),
+            raw: $data,
         ));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function extractTextContent(array $data): string
+    {
+        $parts = data_get($data, 'candidates.0.content.parts', []);
+        $textParts = [];
+
+        foreach ($parts as $part) {
+            // Only include text from parts that are NOT thoughts
+            if (isset($part['text']) && (! isset($part['thought']) || $part['thought'] === false)) {
+                $textParts[] = $part['text'];
+            }
+        }
+
+        return implode('', $textParts);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<int, string>
+     */
+    protected function extractThoughtSummaries(array $data): array
+    {
+        $parts = data_get($data, 'candidates.0.content.parts', []);
+        $thoughtSummaries = [];
+
+        foreach ($parts as $part) {
+            // Collect text from parts marked as thoughts
+            if (isset($part['thought']) && $part['thought'] === true && isset($part['text'])) {
+                $thoughtSummaries[] = $part['text'];
+            }
+        }
+
+        return $thoughtSummaries;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function hasToolCalls(array $data): bool
+    {
+        $parts = data_get($data, 'candidates.0.content.parts', []);
+
+        foreach ($parts as $part) {
+            if (isset($part['functionCall'])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -12,7 +12,7 @@ Here's a quick example of how you can generate text using Prism:
 
 ::: code-group
 ```php [Anthropic]
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -25,7 +25,7 @@ echo $response->text;
 ```
 
 ```php [Mistral]
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -38,7 +38,7 @@ echo $response->text;
 ```
 
 ```php [Ollama]
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -51,7 +51,7 @@ echo $response->text;
 ```
 
 ```php [OpenAI]
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -93,6 +93,7 @@ We currently offer first-party support for these leading AI providers:
 - [Ollama](/providers/ollama.md)
 - [OpenAI](/providers/openai.md)
 - [xAI](/providers/xai.md)
+- [Perplexity](/providers/perplexity.md)
 
 Each provider brings its own strengths to the table, and Prism makes it easy to use them all through a consistent, elegant interface.
 

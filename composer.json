@@ -17,31 +17,32 @@
         "php": "^8.3",
         "ext-dom": "*",
         "ext-libxml": "*",
-        "cornell-custom-dev/laravel-cu-auth": "dev-livewire-auth",
-        "cornell-custom-dev/laravel-ldap": "dev-main",
+        "cornell-custom-dev/laravel-cu-auth": "^1.3",
+        "cornell-custom-dev/laravel-ldap": "^1.0",
         "google/apiclient": "^2.19",
-        "laravel/framework": "^12.56",
-        "laravel/nightwatch": "^1.26",
+        "laravel/framework": "^13.13",
+        "laravel/nightwatch": "^1.27",
         "laravel/pennant": "^1.23",
         "laravel/telescope": "^5.20",
-        "laravel/tinker": "^2.11",
-        "livewire/flux": "^2.13",
-        "livewire/flux-pro": "^2.13",
-        "livewire/livewire": "^3.7",
+        "laravel/tinker": "^3.0",
+        "livewire/flux": "^2.14",
+        "livewire/flux-pro": "^2.14",
+        "livewire/livewire": "^4.3",
         "maatwebsite/excel": "^3.1",
         "maestroerror/laragent": "dev-main#45781ec",
         "openai-php/client": "^0.19",
-        "prism-php/prism": "^0.80",
+        "prism-php/prism": "^0.100",
         "santigarcor/laratrust": "^8.5",
         "symfony/dom-crawler": "^7.4"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",
-        "laravel/boost": "^2.0",
+        "laravel/boost": "^2.4",
+        "laravel/pao": "^1.1",
         "laravel/pint": "^1.29",
         "mockery/mockery": "^1.6",
-        "nunomaduro/collision": "^8.8",
-        "phpunit/phpunit": "^11.5",
+        "nunomaduro/collision": "^8.9",
+        "phpunit/phpunit": "^12.5",
         "spatie/laravel-ignition": "^2.12"
     },
     "autoload": {
@@ -57,13 +58,18 @@
         }
     },
     "scripts": {
+        "test": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test"
+        ],
         "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],
         "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan boost:update --ansi"
         ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
@@ -72,6 +78,9 @@
             "@php artisan key:generate --ansi",
             "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
     },
     "extra": {

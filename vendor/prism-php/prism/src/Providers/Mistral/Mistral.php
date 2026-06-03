@@ -7,6 +7,8 @@ namespace Prism\Prism\Providers\Mistral;
 use Generator;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\RequestException;
+use Prism\Prism\Audio\SpeechToTextRequest;
+use Prism\Prism\Audio\TextResponse as AudioTextResponse;
 use Prism\Prism\Concerns\InitializesClient;
 use Prism\Prism\Embeddings\Request as EmbeddingRequest;
 use Prism\Prism\Embeddings\Response as EmbeddingResponse;
@@ -16,6 +18,7 @@ use Prism\Prism\Exceptions\PrismProviderOverloadedException;
 use Prism\Prism\Exceptions\PrismRateLimitedException;
 use Prism\Prism\Exceptions\PrismRequestTooLargeException;
 use Prism\Prism\Providers\Mistral\Concerns\ProcessRateLimits;
+use Prism\Prism\Providers\Mistral\Handlers\Audio;
 use Prism\Prism\Providers\Mistral\Handlers\Embeddings;
 use Prism\Prism\Providers\Mistral\Handlers\OCR;
 use Prism\Prism\Providers\Mistral\Handlers\Stream;
@@ -106,17 +109,42 @@ class Mistral extends Provider
         return $handler->handle($request);
     }
 
+    #[\Override]
+    public function speechToText(SpeechToTextRequest $request): AudioTextResponse
+    {
+        $handler = new Audio(
+            $this->client(
+                $request->clientOptions(),
+                $request->clientRetry()
+            )
+        );
+
+        return $handler->handleSpeechToText($request);
+    }
+
     public function handleRequestException(string $model, RequestException $e): never
     {
         match ($e->response->getStatusCode()) {
             429 => throw PrismRateLimitedException::make(
-                rateLimits: $this->processRateLimits($e->response),
-                retryAfter: null
+                rateLimits: $this->processRateLimits($e->response)
             ),
-            529 => throw PrismProviderOverloadedException::make(ProviderName::Mistral),
+            503, 529 => throw PrismProviderOverloadedException::make(ProviderName::Mistral),
             413 => throw PrismRequestTooLargeException::make(ProviderName::Mistral),
-            default => throw PrismException::providerRequestError($model, $e),
+            default => $this->handleResponseErrors($e),
         };
+    }
+
+    protected function handleResponseErrors(RequestException $e): never
+    {
+        $data = $e->response->json() ?? [];
+
+        throw PrismException::providerRequestErrorWithDetails(
+            provider: 'Mistral',
+            statusCode: $e->response->getStatusCode(),
+            errorType: data_get($data, 'type') ?? data_get($data, 'object'),
+            errorMessage: data_get($data, 'message'),
+            previous: $e
+        );
     }
 
     /**

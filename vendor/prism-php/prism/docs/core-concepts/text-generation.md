@@ -7,7 +7,7 @@ Prism provides a powerful interface for generating text using Large Language Mod
 At its simplest, you can generate text with just a few lines of code:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -23,7 +23,7 @@ echo $response->text;
 System prompts help set the behavior and context for the AI. They're particularly useful for maintaining consistent responses or giving the LLM a persona:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -36,7 +36,7 @@ $response = Prism::text()
 You can also use Laravel views for complex system prompts:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -53,7 +53,7 @@ You an also pass a View to the `withPrompt` method.
 Prism supports including images, documents, audio, and video files in your prompts for rich multi-modal analysis:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Media\Image;
 use Prism\Prism\ValueObjects\Media\Document;
@@ -109,14 +109,12 @@ $response = Prism::text()
     ->asText();
 ```
 
-For detailed information about supported media types and transfer methods, see the [input modalities documentation](/input-modalities/).
-
 ## Message Chains and Conversations
 
 For interactive conversations, use message chains to maintain context:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
@@ -184,7 +182,7 @@ This allows for complete or partial override of the providers configuration. Thi
 The response object provides rich access to the generation results:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 
 $response = Prism::text()
@@ -202,10 +200,15 @@ echo $response->finishReason->name;
 echo "Prompt tokens: {$response->usage->promptTokens}";
 echo "Completion tokens: {$response->usage->completionTokens}";
 
+// Access the raw API response data
+$rawResponse = $response->raw;
+
 // For multi-step generations, examine each step
 foreach ($response->steps as $step) {
     echo "Step text: {$step->text}";
     echo "Step tokens: {$step->usage->completionTokens}";
+    // Access raw response for individual steps
+    $stepRawResponse = $step->raw;
 }
 
 // Access message history
@@ -216,24 +219,46 @@ foreach ($response->responseMessages as $message) {
 }
 ```
 
-### Finish Reasons
+## Handling Completions with Callbacks
+
+Need to perform actions after text generation completes? Pass a callback directly to `asText()` to handle the response without interrupting the return flow. This is perfect for persisting conversations, tracking analytics, or logging AI interactions.
+
+### Basic Example
 
 ```php
-FinishReason::Stop;
-FinishReason::Length;
-FinishReason::ContentFilter;
-FinishReason::ToolCalls;
-FinishReason::Error;
-FinishReason::Other;
-FinishReason::Unknown;
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Enums\Provider;
+use Prism\Prism\Text\PendingRequest;
+use Prism\Prism\Text\Response;
+
+$response = Prism::text()
+    ->using(Provider::Anthropic, 'claude-3-5-sonnet-20241022')
+    ->withPrompt('Explain Laravel middleware')
+    ->asText(function (PendingRequest $request, Response $response) {
+        // Save the conversation after generation completes
+        ConversationLog::create([
+            'content' => $response->text,
+            'role' => 'assistant',
+            'tool_calls' => $response->toolCalls,
+            'usage' => [
+                'prompt_tokens' => $response->usage->promptTokens,
+                'completion_tokens' => $response->usage->completionTokens,
+            ],
+        ]);
+    });
+
+// Response is still returned normally
+echo $response->text;
 ```
+
+The callback receives the `PendingRequest` and complete `Response` object, giving you access to the full response including text, tool calls, tool results, and usage statistics.
 
 ## Error Handling
 
 Remember to handle potential errors in your generations:
 
 ```php
-use Prism\Prism\Prism;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Enums\Provider;
 use Prism\Prism\Exceptions\PrismException;
 use Throwable;

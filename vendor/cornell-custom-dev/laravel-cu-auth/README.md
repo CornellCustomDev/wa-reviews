@@ -7,6 +7,7 @@ Middleware for authorizing Laravel users.
   - Apache mod_shib integration
 - [AppTesters](#apptesters) - Limit access to users in the `APP_TESTERS` environment variable
 - [Local Login](#local-login) - Allow Laravel users to log in with a local username and password
+- [Livewire Auth](#livewire-auth) - Block unauthenticated Livewire update requests
 
 ## Use Cases
 
@@ -163,4 +164,16 @@ For testing purposes, the environment variable "ALLOW_LOCAL_LOGIN" can be set to
 ```dotenv
 # File: .env
 ALLOW_LOCAL_LOGIN=true
+```
 
+
+## Livewire Auth
+
+Blocks unauthenticated POST requests to `/livewire/update`, preventing anonymous users from interacting with Livewire components.
+
+### Usage
+
+```dotenv
+# File: .env
+REQUIRE_LIVEWIRE_AUTH=true
+```
