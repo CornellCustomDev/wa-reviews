@@ -4,7 +4,6 @@ namespace App\Livewire\Issues;
 
 use App\Enums\Assessment;
 use App\Enums\Impact;
-use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Project;
@@ -13,10 +12,11 @@ use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class CreateProjectIssue extends Component
 {
-    use WithMultipleFileUploads;
+    use WithFileUploads;
 
     public IssueForm $form;
     public Project $project;

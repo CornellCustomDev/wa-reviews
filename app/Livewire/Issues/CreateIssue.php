@@ -4,7 +4,6 @@ namespace App\Livewire\Issues;
 
 use App\Enums\Assessment;
 use App\Enums\Impact;
-use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\IssueForm;
 use App\Models\Issue;
 use App\Models\Scope;
@@ -14,11 +13,12 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.app')]
 class CreateIssue extends Component
 {
-    use WithMultipleFileUploads;
+    use WithFileUploads;
 
     public IssueForm $form;
     public Scope $scope;
