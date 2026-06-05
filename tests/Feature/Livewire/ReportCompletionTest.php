@@ -26,7 +26,7 @@ class ReportCompletionTest extends FeatureTestCase
 
         Livewire::test(Report::class, ['project' => $project])
             ->call('completeReview')
-            ->assertHasErrors(['form.summary']);
+            ->assertForbidden();
 
         $this->assertEquals(ProjectStatus::InProgress, $project->fresh()->status);
     }
@@ -39,7 +39,7 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => null,
+            'summary' => 'Reviewed',
         ]);
         $project->assignToUser($user);
 

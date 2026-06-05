@@ -108,6 +108,20 @@ class ProjectPolicy
         return $user->can('manage-projects', $project->team);
     }
 
+    public function completeReport(User $user, Project $project): bool
+    {
+        if (! $project->isReportReady()) {
+            return false;
+        }
+
+        // Reviewers can complete the report if it is in progress
+        if ($project->isReviewer($user)) {
+            return $user->can('edit-projects', $project->team);
+        }
+
+        return $user->can('manage-projects', $project->team);
+    }
+
     public function updateReportViewers(User $user, Project $project): bool
     {
         // Report viewers cannot be added to projects that haven't started yet

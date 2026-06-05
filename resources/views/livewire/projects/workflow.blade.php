@@ -115,28 +115,30 @@
         </x-forms.field-display>
     </div>
 
-    {{-- Forward-progress CTAs --}}
-    @can('update-status', $project)
-        <div class="mb-4">
-            @if($project->status->isNotStarted() && $project->reviewer)
-                <x-forms.button wire:click="updateStatus('next')">Start Review</x-forms.button>
-            @elseif($project->status->isInProgress())
-                <x-forms.button :href="route('project.report', $project)">Review &amp; Finalize Report</x-forms.button>
-            @elseif($project->status->isReviewComplete())
-                <x-forms.button wire:click="updateStatus('next')">Start Verification</x-forms.button>
-            @elseif($project->status->isInVerification())
-                <x-forms.button wire:click="updateStatus('next')">Complete Verification</x-forms.button>
-            @elseif($project->status->isClosed())
-                <x-forms.button :href="route('project.report', $project)">View Report</x-forms.button>
-            @endif
-        </div>
-    @else
-        @if($project->status->isClosed())
-            <div class="mb-4">
+    <div class="flex">
+        @if($project->status->hasBeenReviewed())
+            <div class="mb-4 mr-2 flex-none">
                 <x-forms.button :href="route('project.report', $project)">View Report</x-forms.button>
             </div>
         @endif
-    @endcan
+
+        {{-- Forward-progress CTAs --}}
+        @can('update-status', $project)
+            <div class="mb-4 flex-1">
+                @if($project->status->isNotStarted() && $project->reviewer)
+                    <x-forms.button wire:click="updateStatus('next')">Start Review</x-forms.button>
+                @elseif($project->status->isInProgress())
+                    <x-forms.button :href="route('project.report', $project)">Review &amp; Finalize Report</x-forms.button>
+                @elseif($project->status->isReviewComplete())
+                    <x-forms.button wire:click="updateStatus('next')">Start Verification</x-forms.button>
+                @elseif($project->status->isInVerification())
+                    <x-forms.button wire:click="updateStatus('next')">Complete Verification</x-forms.button>
+                @elseif($project->status->isClosed())
+                    <x-forms.button :href="route('project.report', $project)">View Report</x-forms.button>
+                @endif
+            </div>
+        @endcan
+    </div>
 
     {{-- Gear modal: backwards actions only --}}
     <flux:modal name="update-status" wire:close="closeUpdateStatus()" class="md:w-96">

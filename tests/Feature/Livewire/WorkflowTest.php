@@ -4,6 +4,7 @@ namespace Tests\Feature\Livewire;
 
 use App\Enums\ProjectStatus;
 use App\Enums\Roles;
+use App\Livewire\Projects\Report;
 use App\Livewire\Projects\Workflow;
 use App\Models\Project;
 use Livewire\Livewire;
@@ -74,8 +75,9 @@ class WorkflowTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::NotStarted,
         ]);
+        $project->assignToUser($user);
 
-        Livewire::test(Workflow::class, ['project' => $project])
+        Livewire::test(Report::class, ['project' => $project])
             ->assertDontSee('Report Viewers');
     }
 
@@ -88,8 +90,9 @@ class WorkflowTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
         ]);
+        $project->assignToUser($user);
 
-        Livewire::test(Workflow::class, ['project' => $project])
+        Livewire::test(Report::class, ['project' => $project])
             ->assertSee('Report Viewers');
     }
 

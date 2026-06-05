@@ -1,5 +1,5 @@
 <div class="mb-4 max-w-225" x-data="{ editReport: false }" x-on:close-edit="editReport = false; $el.scrollIntoView({ behavior: 'smooth' })">
-    @can('update', $project)
+    @can('update-report', $project)
         <x-forms.button icon="pencil-square" class="float-right" x-show="!editReport" x-on:click="editReport = !editReport" title="Edit report" />
         <x-forms.button icon="x-mark" x-cloak class="float-right secondary" x-show="editReport" x-on:click="editReport = !editReport" title="Cancel editing project" />
     @endcan

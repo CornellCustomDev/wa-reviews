@@ -4,23 +4,29 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
         <div class="col-span-1 order-first md:order-last print:hidden">
-            <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
-            <flux:dropdown>
-                <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
-                <x-forms.menu>
-                    <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
-                        Google Sheet (requires login)
-                    </x-forms.menu.item>
-                    <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
-                        Raw (for copy/paste)
-                    </x-forms.menu.item>
-                </x-forms.menu>
-            </flux:dropdown>
-            @can('update-status', $project)
-                <div class="my-4 pt-4 border-t border-cds-gray-200">
-                    <x-forms.button wire:click="completeReview">Complete Review</x-forms.button>
-                </div>
-            @endcan
+            <div class="mb-4">
+                <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
+                <flux:dropdown>
+                    <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
+                    <x-forms.menu>
+                        <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
+                            Google Sheet (requires login)
+                        </x-forms.menu.item>
+                        <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
+                            Raw (for copy/paste)
+                        </x-forms.menu.item>
+                    </x-forms.menu>
+                </flux:dropdown>
+            </div>
+
+            @if($project->isInProgress())
+                @can('complete-report', $project)
+                    <div class="mb-4 pt-4 border-t border-cds-gray-200">
+                        <x-forms.button wire:click="completeReview" :disabled="! $project->isReportReady()" >Complete Review</x-forms.button>
+                    </div>
+                @endcan
+            @endif
+
             {{-- Report Viewers (visible from InProgress onward) --}}
             @unless($project->status->isNotStarted())
                 @can('update-report-viewers', $project)
