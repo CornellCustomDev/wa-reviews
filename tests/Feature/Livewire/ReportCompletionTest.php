@@ -60,6 +60,7 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
+            'summary' => 'Reviewed',
         ]);
         $project->assignToUser($otherUser);
 

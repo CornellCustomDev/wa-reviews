@@ -48,7 +48,7 @@
                 <tr>
                     <th>Site</th>
                     <td>
-                        <div class="break-words max-w-[500px]">
+                        <div class="wrap-break-word max-w-125">
                             {{ $project->name }} ({{ $project->site_url }})
                         </div>
                     </td>
@@ -69,14 +69,14 @@
                     <th>Link to review</th>
                     <td>
                         <a href="{{ route('project.show', $project->id) }}">{{ $project->name }} Review</a>
-                        [{{ route('project.show', $project->id) }}]d
+                        [{{ route('project.show', $project->id) }}]
                     </td>
                 </tr>
             </table>
         </div>
     </div>
 
-<div class="max-w-[900px]">
+<div class="max-w-225">
     <p class="italic">
         Please note: This summary document is not comprehensive of all accessibility issues.
         It represents the major issues that should be prioritized but there are likely additional

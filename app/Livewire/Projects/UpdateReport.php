@@ -19,7 +19,7 @@ class UpdateReport extends Component
 
     public function save()
     {
-        $this->authorize('update', $this->form->project);
+        $this->authorize('update-report', $this->form->project);
         $this->form->update();
 
         $this->dispatch('close-edit');
