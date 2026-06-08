@@ -19,7 +19,9 @@ class Report extends Component
     #[Computed]
     public function issues()
     {
-        return $this->project->getReportableIssues()
+        $report = $this->project->getReviewReport();
+
+        return $report->reportableIssues()
             ->groupBy('scope_id')
             ->sortKeys();
     }
@@ -38,9 +40,10 @@ class Report extends Component
 
     public function completeReview(): void
     {
-        $this->authorize('complete-report', $this->project);
-
         $report = $this->project->getReviewReport();
+
+        $this->authorize('complete-report', $report);
+
         $report->addIssuesToReport();
         $report->update([
             'completed_by' => auth()->id(),
@@ -73,7 +76,9 @@ class Report extends Component
     {
         $this->authorize('view', $this->project);
 
-        return view('livewire.projects.report')
+        $report = $this->project->getReviewReport();
+
+        return view('livewire.projects.report', ['report' => $report])
             ->layout('components.layouts.app', [
                 'breadcrumbs' => $this->getBreadcrumbs(),
             ]);

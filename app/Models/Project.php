@@ -7,7 +7,6 @@ use App\Enums\ReportType;
 use App\Events\ProjectChanged;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,10 +36,6 @@ class Project extends Model
         'contact_netid',
         'audience',
         'site_purpose',
-        'urls_included',
-        'urls_excluded',
-        'review_procedure',
-        'summary',
     ];
 
     protected $casts = [
@@ -51,6 +46,13 @@ class Project extends Model
     protected $with = [
         'team:id,name',
     ];
+
+    protected static function booted(): void
+    {
+        static::created(function (Project $project) {
+            $project->reports()->create(['type' => ReportType::Review]);
+        });
+    }
 
     public function team(): BelongsTo
     {
@@ -240,21 +242,12 @@ class Project extends Model
         return $this->status->isClosed();
     }
 
-    public function getReviewReport(): ?Report
+    public function getReviewReport(): Report
     {
         /** @var Report $report */
-        $report = $this->reports()->firstWhere('type', ReportType::Review)
-            ?: $this->reports()->create([
-                'type' => ReportType::Review,
-            ]);
+        $report = $this->reports()->firstWhere('type', ReportType::Review);
 
         return $report;
-    }
-
-    public function isReportReady(): bool
-    {
-        // Require the project to be inProgress and the summary to be validated
-        return $this->isInProgress() && ! blank($this->summary);
     }
 
     public function addReportViewer(User $user): void
@@ -368,16 +361,6 @@ class Project extends Model
             ->withReviewer()
             ->withVerifier()
             ->select('projects.*');
-    }
-
-    public function getReportableIssues(): Collection
-    {
-        return $this->issues()
-            ->whereNotNull('guideline_id')
-            ->with(['scope', 'guideline:id,number,name,criterion_id', 'guideline.criterion:id,number,name,level'])
-            ->get()
-            ->filter(fn ($issue) => $issue->isAiAccepted() || ! $issue->isAiGenerated())
-            ->sort(fn ($a, $b) => $a->guideline_id <=> $b->guideline_id);
     }
 
     public function updateSiteimprove(): void

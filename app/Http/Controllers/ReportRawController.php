@@ -8,9 +8,11 @@ class ReportRawController extends Controller
 {
     public function __invoke(Project $project)
     {
+        $report = $project->getReviewReport();
+
         return view('exports.project-report', [
             'project' => $project,
-            'issues' => $project->getReportableIssues(),
+            'issues' => $report->reportableIssues(),
             'format' => 'raw',
         ]);
     }

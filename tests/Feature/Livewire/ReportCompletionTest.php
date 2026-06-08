@@ -28,6 +28,35 @@ class ReportCompletionTest extends FeatureTestCase
 
 
     #[Test]
+    public function creating_a_project_automatically_creates_a_review_report(): void
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $project = Project::factory()->create(['team_id' => $user->teams()->first()->id]);
+
+        $report = $project->reports()->where('type', 'review')->first();
+
+        $this->assertNotNull($report, 'A review report should be created when a project is created.');
+    }
+
+    #[Test]
+    public function is_report_ready_returns_false_when_review_report_has_no_summary(): void
+    {
+        $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
+
+        $this->assertFalse($project->getReviewReport()->isReady());
+    }
+
+    #[Test]
+    public function is_report_ready_returns_true_when_in_progress_and_report_has_summary(): void
+    {
+        $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
+        $report = $project->getReviewReport();
+        $report->update(['summary' => 'Some findings']);
+
+        $this->assertTrue($report->isReady());
+    }
+
+    #[Test]
     public function complete_review_requires_summary(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
@@ -35,7 +64,6 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => null,
         ]);
         $project->assignToUser($user);
 
@@ -54,8 +82,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Reviewed',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Reviewed']);
         $project->assignToUser($user);
 
         Livewire::test(Report::class, ['project' => $project])
@@ -75,8 +103,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Reviewed',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Reviewed']);
         $project->assignToUser($otherUser);
 
         Livewire::test(Report::class, ['project' => $project])
@@ -91,8 +119,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Test summary',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project, ['status' => null]);
         $project->refresh();
@@ -113,8 +141,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Test summary',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project, ['status' => IssueStatus::WontFix]);
 
@@ -134,8 +162,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Test summary',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project);
         $this->assertNull($issue->report_id);
@@ -144,7 +172,7 @@ class ReportCompletionTest extends FeatureTestCase
             ->call('completeReview');
 
         $report = $project->refresh()->getReviewReport();
-        $this->assertNotNull($report, 'A report record should be created on review completion.');
+        $this->assertNotNull($report, 'A report record should exist on review completion.');
         $this->assertSame($report->id, $issue->fresh()->report_id);
     }
 
@@ -155,8 +183,8 @@ class ReportCompletionTest extends FeatureTestCase
         $project = Project::factory()->create([
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
-            'summary' => 'Test summary',
         ]);
+        $project->getReviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $scope = Scope::factory()->create(['project_id' => $project->id]);
         $issues = Issue::factory()->count(3)->create([
@@ -168,7 +196,7 @@ class ReportCompletionTest extends FeatureTestCase
             ->call('completeReview');
 
         $report = $project->refresh()->getReviewReport();
-        $this->assertNotNull($report, 'A report record should be created on review completion.');
+        $this->assertNotNull($report, 'A report record should exist on review completion.');
 
         $this->assertCount(3, $report->issues, 'All project issues should be associated with the review report.');
     }
