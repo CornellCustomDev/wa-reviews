@@ -45,6 +45,7 @@ class Issue extends Model
         'agent_id',
         'status',
         'needs_mitigation',
+        'report_id',
     ];
 
     protected $casts = [
@@ -90,6 +91,11 @@ class Issue extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(Report::class);
     }
 
     public function scope(): BelongsTo

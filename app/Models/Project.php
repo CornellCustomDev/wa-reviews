@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProjectStatus;
+use App\Enums\ReportType;
 use App\Events\ProjectChanged;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Builder;
@@ -100,6 +101,11 @@ class Project extends Model
     public function items(): HasManyThrough
     {
         return $this->hasManyThrough(Item::class, Issue::class);
+    }
+
+    public function reports(): HasMany
+    {
+        return $this->hasMany(Report::class);
     }
 
     public function reportViewers(): BelongsToMany
@@ -232,6 +238,17 @@ class Project extends Model
     public function isClosed(): bool
     {
         return $this->status->isClosed();
+    }
+
+    public function getReviewReport(): ?Report
+    {
+        /** @var Report $report */
+        $report = $this->reports()->firstWhere('type', ReportType::Review)
+            ?: $this->reports()->create([
+                'type' => ReportType::Review,
+            ]);
+
+        return $report;
     }
 
     public function isReportReady(): bool

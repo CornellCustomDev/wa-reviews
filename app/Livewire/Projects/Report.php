@@ -40,6 +40,13 @@ class Report extends Component
     {
         $this->authorize('complete-report', $this->project);
 
+        $report = $this->project->getReviewReport();
+        $report->addIssuesToReport();
+        $report->update([
+            'completed_by' => auth()->id(),
+            'completed_at' => now(),
+        ]);
+
         $this->project->update([
             'status' => ProjectStatus::ReviewComplete,
             'completed_at' => $this->project->completed_at ?? now(),
