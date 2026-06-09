@@ -9,7 +9,6 @@ use App\Livewire\Projects\Report;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Scope;
-use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Feature\FeatureTestCase;

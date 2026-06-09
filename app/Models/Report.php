@@ -63,6 +63,11 @@ class Report extends Model
         return ! empty($this->summary);
     }
 
+    public function isCompleted(): bool
+    {
+        return ! empty($this->completed_at);
+    }
+
     /**
      * Associate all unreported issues with this report and mark them as reviewed
      */
@@ -88,5 +93,14 @@ class Report extends Model
         $this->issues()->attach($reportIssues->mapWithKeys(fn (Issue $issue) => [
             $issue->id => ['status' => $issue->status]
         ]));
+    }
+
+    public function completeReport(): void
+    {
+        $this->addIssuesToReport();
+        $this->update([
+            'completed_by' => auth()->id(),
+            'completed_at' => now(),
+        ]);
     }
 }

@@ -20,7 +20,7 @@
             </div>
 
             @if($project->isInProgress())
-                @can('complete-report', $report)
+                @can('update', $report)
                     <div class="mb-4 pt-4 border-t border-cds-gray-200">
                         <x-forms.button wire:click="completeReview" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
                     </div>

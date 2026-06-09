@@ -10,7 +10,10 @@ return new class extends Migration
     {
         $completedStatuses = ['review_complete', 'verification_review', 'closed'];
 
-        $projects = DB::table('projects')->whereNull('deleted_at')->get();
+        $projects = DB::table('projects')
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->lazyById();
 
         foreach ($projects as $project) {
             $isCompleted = in_array($project->status, $completedStatuses);
@@ -30,13 +33,21 @@ return new class extends Migration
                 'summary'          => $project->summary,
                 'completed_at'     => $isCompleted ? $project->completed_at : null,
                 'completed_by'     => $isCompleted && $reviewer ? $reviewer->user_id : null,
+                // Keep this null for now so we can attach issues before the report is considered completed.
                 'created_at'       => $isCompleted ? $project->completed_at : now(),
                 'updated_at'       => $isCompleted ? $project->completed_at : now(),
             ]);
 
+            $report = Report::findOrFail($reportId);
+
             if ($isCompleted) {
-                $report = Report::find($reportId);
                 $report->addIssuesToReport();
+
+                DB::table('reports')->where('id', $reportId)->update([
+                    'completed_at' => $project->completed_at,
+                    'completed_by' => $reviewer?->user_id,
+                    'updated_at'   => $project->completed_at,
+                ]);
             }
         }
     }

@@ -12,12 +12,12 @@ class UpdateReport extends Component
 {
     public ReportForm $form;
 
-    public function mount(Report $report)
+    public function mount(Report $report): void
     {
         $this->form->setModel($report);
     }
 
-    public function save()
+    public function save(): void
     {
         $this->authorize('update', $this->form->report);
         $this->form->update();
