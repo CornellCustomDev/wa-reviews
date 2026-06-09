@@ -31,11 +31,11 @@ return new class extends Migration
                 'urls_excluded'    => $project->urls_excluded,
                 'review_procedure' => $project->review_procedure,
                 'summary'          => $project->summary,
-                'completed_at'     => $isCompleted ? $project->completed_at : null,
-                'completed_by'     => $isCompleted && $reviewer ? $reviewer->user_id : null,
                 // Keep this null for now so we can attach issues before the report is considered completed.
-                'created_at'       => $isCompleted ? $project->completed_at : now(),
-                'updated_at'       => $isCompleted ? $project->completed_at : now(),
+                'completed_at'     => null,
+                'completed_by'     => null,
+                'created_at'       => $project->created_at,
+                'updated_at'       => $project->created_at,
             ]);
 
             $report = Report::findOrFail($reportId);

@@ -81,18 +81,26 @@ class Report extends Model
 
         // Mark any new issues as first reviewed on this report
         Issue::whereIn('id', $reportableIssues->pluck('id'))
-            ->whereNull('status')
+            ->whereNull('report_id')
             ->update([
                 'report_id' => $this->id,
+            ]);
+
+        // Mark any issues without a review status as reviewed
+        Issue::whereIn('id', $reportableIssues->pluck('id'))
+            ->whereNull('status')
+            ->update([
                 'status' => IssueStatus::Reviewed,
             ]);
 
+        // Now return all the current values
         $reportIssues = $reportableIssues->fresh()->where('report_id', $this->id);
 
-        // Attach each issue to the report->issues pivot table, with the status of that issue
-        $this->issues()->attach($reportIssues->mapWithKeys(fn (Issue $issue) => [
-            $issue->id => ['status' => $issue->status]
-        ]));
+        // Sync the issues to the report->issues pivot table, with the status of each issue
+        $reportIssueUpdates = $reportIssues->mapWithKeys(fn(Issue $issue) => [
+            $issue->id => ['status' => $issue->status->value]
+        ]);
+        $this->issues()->sync($reportIssueUpdates);
     }
 
     public function completeReport(): void
@@ -101,6 +109,28 @@ class Report extends Model
         $this->update([
             'completed_by' => auth()->id(),
             'completed_at' => now(),
+        ]);
+    }
+
+    public function rollbackReport(): void
+    {
+        if (! $this->completed_at) {
+            return;
+        }
+
+        // Detach all issues from the report
+        $this->issues()->detach();
+
+        // Unset all issues that were first reviewed on this report
+        Issue::where('report_id', $this->id)
+            ->update([
+                'report_id' => null,
+                'status' => null,
+            ]);
+
+        $this->update([
+            'completed_by' => null,
+            'completed_at' => null,
         ]);
     }
 }

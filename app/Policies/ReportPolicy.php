@@ -24,7 +24,7 @@ class ReportPolicy
 
     public function update(User $user, Report $report): bool
     {
-        if (! $report->isCompleted()) {
+        if ($report->isCompleted()) {
             return false;
         }
 

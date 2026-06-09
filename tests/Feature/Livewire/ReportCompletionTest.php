@@ -141,9 +141,9 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project, ['status' => IssueStatus::WontFix]);
+        $project->getReviewReport()->update(['summary' => 'Test summary']);
 
         Livewire::test(Report::class, ['project' => $project])
             ->call('completeReview');
@@ -151,7 +151,7 @@ class ReportCompletionTest extends FeatureTestCase
         $this->assertSame(IssueStatus::WontFix, $issue->fresh()->status);
 
         $report = $project->refresh()->getReviewReport();
-        $this->assertCount(0, $report->issues);
+        $this->assertCount(1, $report->issues);
     }
 
     #[Test]
