@@ -14,7 +14,8 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Feature::flushCache();
+        Feature::activate('verification-reviews');
+        Feature::activate('comments');
     }
 
     protected static function fixture(string $name, bool $json = false): array|string

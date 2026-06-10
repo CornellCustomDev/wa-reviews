@@ -30,7 +30,5 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="PENNANT_STORE" value="array"/>
-        <env name="FEATURE_COMMENTS" value="true"/>
-        <env name="FEATURE_VERIFICATION_REVIEWS" value="true"/>
     </php>
 </phpunit>
