@@ -2,17 +2,17 @@
 
 namespace App\Livewire\Items;
 
-use App\Livewire\Features\SupportFileUploads\WithMultipleFileUploads;
 use App\Livewire\Forms\ItemForm;
 use App\Models\Issue;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.app', ['sidebar' => true])]
 class CreateItem extends Component
 {
-    use WithMultipleFileUploads;
+    use WithFileUploads;
 
     public ItemForm $form;
     public Issue $issue;
