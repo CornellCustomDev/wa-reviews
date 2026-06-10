@@ -118,7 +118,9 @@
     <div class="flex">
         @if($project->status->hasBeenReviewed())
             <div class="mb-4 mr-2 flex-none">
-                <x-forms.button :href="route('project.report', $project)">View Report</x-forms.button>
+                <x-forms.button :href="route('project.report', $project)">
+                    {{ $project->status->isInVerification() ? 'View Verification Report' : 'View Report' }}
+                </x-forms.button>
             </div>
         @endif
 
@@ -134,7 +136,9 @@
                 @elseif($project->status->isInVerification())
                     <x-forms.button wire:click="updateStatus('next')">Complete Verification</x-forms.button>
                 @elseif($project->status->isClosed())
-                    <x-forms.button :href="route('project.report', $project)">View Report</x-forms.button>
+                    <x-forms.button :href="route('project.report', $project)">
+                        {{ $project->getVerificationReport() ? 'View Verification Report' : 'View Report' }}
+                    </x-forms.button>
                 @endif
             </div>
         @endcan
