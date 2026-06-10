@@ -58,7 +58,7 @@ enum ProjectStatus: string
     {
         if (! Feature::active('verification-reviews')) {
             if ($this->isInProgress()) {
-                return "If the work is finished, mark it as completed in order to make it available in a read-only view.";
+                return 'If the work is finished, mark it as completed in order to make it available in a read-only view.';
             }
             if ($this->hasBeenReviewed() || $this->isClosed()) {
                 return 'The review is complete, but you can re-open it if you need to make changes.';
@@ -130,6 +130,10 @@ enum ProjectStatus: string
 
     public function hasBeenReviewed(): bool
     {
+        if (! Feature::active('verification-reviews')) {
+            return $this === self::Closed;
+        }
+
         return in_array($this, self::reviewedCases());
     }
 
