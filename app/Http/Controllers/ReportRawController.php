@@ -12,6 +12,7 @@ class ReportRawController extends Controller
 
         return view('exports.project-report', [
             'project' => $project,
+            'report' => $report,
             'issues' => $report->reportableIssues(),
             'format' => 'raw',
         ]);

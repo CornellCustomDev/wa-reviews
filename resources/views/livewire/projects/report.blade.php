@@ -22,7 +22,7 @@
             @if($project->isInProgress())
                 @can('update', $report)
                     <div class="mb-4 pt-4 border-t border-cds-gray-200">
-                        <x-forms.button wire:click="completeReview" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
+                        <x-forms.button wire:click="completeReport" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
                     </div>
                 @endcan
             @endif
@@ -43,7 +43,7 @@
                 </tr>
                 <tr>
                     <th>Date review completed</th>
-                    <td>{{ $project->completed_at?->format('F j, Y') }}</td>
+                    <td>{{ $report->completed_at?->format('F j, Y') }}</td>
                 </tr>
                 <tr>
                     <th>Site</th>
