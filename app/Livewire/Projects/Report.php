@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Projects;
 
-use App\Enums\ProjectStatus;
-use App\Events\ProjectChanged;
 use App\Models\Project;
+use App\Models\Report as ReportModel;
 use App\Models\Scope;
+use App\Services\ProjectWorkflowService;
 use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
@@ -17,11 +17,19 @@ class Report extends Component
     public ?string $selectedImage = null;
 
     #[Computed]
+    public function report(): ReportModel
+    {
+        if ($this->project->status->isInVerification() || $this->project->status->isClosed()) {
+            return $this->project->getVerificationReport() ?? $this->project->getReviewReport();
+        }
+
+        return $this->project->getReviewReport();
+    }
+
+    #[Computed]
     public function issues()
     {
-        $report = $this->project->getReviewReport();
-
-        return $report->reportableIssues()
+        return $this->report->reportableIssues()
             ->groupBy('scope_id')
             ->sortKeys();
     }
@@ -38,20 +46,14 @@ class Report extends Component
         $this->project->refresh();
     }
 
-    public function completeReview(): void
+    public function completeReport(ProjectWorkflowService $projectWorkflow): void
     {
-        $report = $this->project->getReviewReport();
+        $reviewReport = $this->project->getReviewReport();
 
-        $this->authorize('complete-report', $report);
+        $this->authorize('complete-report', $reviewReport);
 
-        $report->completeReport();
-
-        $this->project->update([
-            'status' => ProjectStatus::ReviewComplete,
-            'completed_at' => $this->project->completed_at ?? now(),
-        ]);
-
-        event(new ProjectChanged($this->project, 'status changed'));
+        $reviewReport->completeReport();
+        $projectWorkflow->completeReview($this->project);
 
         $this->redirect(route('project.show', $this->project), navigate: true);
     }
@@ -72,9 +74,7 @@ class Report extends Component
     {
         $this->authorize('view', $this->project);
 
-        $report = $this->project->getReviewReport();
-
-        return view('livewire.projects.report', ['report' => $report])
+        return view('livewire.projects.report', ['report' => $this->report])
             ->layout('components.layouts.app', [
                 'breadcrumbs' => $this->getBreadcrumbs(),
             ]);
