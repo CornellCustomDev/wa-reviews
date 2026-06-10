@@ -42,12 +42,7 @@ class ReportPolicy
             return false;
         }
 
-        $project = $report->project;
-        if ($project->isReviewer($user)) {
-            return $user->can('edit-projects', $project->team);
-        }
-
-        return $user->can('manage-projects', $project->team);
+        return $user->can('update', $report);
     }
 
     public function delete(User $user, Report $report): bool
