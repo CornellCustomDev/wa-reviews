@@ -2,18 +2,20 @@
 
 namespace Tests;
 
-use App\Enums\ProjectStatus;
-use App\Enums\Roles;
-use App\Models\Project;
-use App\Models\Team;
-use App\Models\User;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use InvalidArgumentException;
+use Laravel\Pennant\Feature;
 
 abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication;
     use WithFakeSiteimproveService;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Feature::flushCache();
+    }
 
     protected static function fixture(string $name, bool $json = false): array|string
     {
@@ -21,7 +23,7 @@ abstract class TestCase extends BaseTestCase
             filename: base_path("tests/Fixtures/$name"),
         );
 
-        if(!$contents) {
+        if (! $contents) {
             throw new InvalidArgumentException(
                 message: "Cannot find fixture: tests/Fixtures/$name",
             );
