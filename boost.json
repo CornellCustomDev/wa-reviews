@@ -1,19 +1,23 @@
 {
     "agents": [
-        "junie",
         "copilot",
         "claude_code"
     ],
     "cloud": false,
     "guidelines": true,
     "mcp": true,
-    "nightwatch": true,
+    "nightwatch": false,
+    "packages": [
+        "prism-php/prism"
+    ],
     "sail": false,
     "skills": [
         "laravel-best-practices",
         "configure-nightwatch",
         "pennant-development",
         "fluxui-development",
-        "livewire-development"
+        "livewire-development",
+        "tailwindcss-development",
+        "developing-with-prism"
     ]
 }

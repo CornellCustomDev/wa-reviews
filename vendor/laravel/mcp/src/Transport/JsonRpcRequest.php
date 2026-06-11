@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Laravel\Mcp\Server\Transport;
+namespace Laravel\Mcp\Transport;
 
+use Laravel\Mcp\Exceptions\JsonRpcException;
 use Laravel\Mcp\Request;
-use Laravel\Mcp\Server\Exceptions\JsonRpcException;
 
 class JsonRpcRequest
 {
@@ -71,5 +71,23 @@ class JsonRpcRequest
     public function toRequest(): Request
     {
         return new Request($this->params['arguments'] ?? [], $this->sessionId, $this->meta());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'jsonrpc' => '2.0',
+            'id' => $this->id,
+            'method' => $this->method,
+            ...$this->params === [] ? [] : ['params' => $this->params],
+        ];
+    }
+
+    public function toJson(int $options = 0): string
+    {
+        return json_encode($this->toArray(), $options | JSON_UNESCAPED_UNICODE) ?: '';
     }
 }
