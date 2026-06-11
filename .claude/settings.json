@@ -1,8 +1,15 @@
 {
   "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git diff*)"
+    ],
     "deny": [
-        "Read(./.env)",
-        "Bash(*\\.env*)"
+      "Edit(.env*)",
+      "Read(.env*)",
+      "Bash(*\\.env*)",
+      "Bash(rm -rf*)",
+      "Bash(git push*)"
     ]
   }
 }
