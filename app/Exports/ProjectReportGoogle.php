@@ -28,7 +28,7 @@ class ProjectReportGoogle
 
         // Get the report data first, in case there are issues.
         $updates = [Sheet::setTitle('Final Checklist')];
-        $updates = [...$updates, ...static::getIntroFieldUpdates($project)];
+        $updates = [...$updates, ...static::getIntroFieldUpdates($project, $report)];
         $updates = [...$updates, ...static::getIssuesHeader()];
         $updates = [...$updates, ...static::getIssueValues($report)];
 
@@ -53,7 +53,7 @@ class ProjectReportGoogle
         return $spreadsheet->spreadsheetId;
     }
 
-    private static function getIntroFieldUpdates(Project $project): array
+    private static function getIntroFieldUpdates(Project $project, Report $report): array
     {
         $updates = [];
 
@@ -83,7 +83,7 @@ class ProjectReportGoogle
 
         $updates[] = Sheet::updateCells('A4',
             Sheet::applyFormats(
-                Sheet::value('Date review completed: ' . ($project->completed_at?->format('F j, Y') ?? '')),
+                Sheet::value('Date review completed: ' . ($report->completed_at?->format('F j, Y') ?? '')),
                 Sheet::textFormat(italic: true),
             )
         );

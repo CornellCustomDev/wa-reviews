@@ -250,6 +250,21 @@ class Project extends Model
         return $report;
     }
 
+    public function getVerificationReport(): ?Report
+    {
+        /** @var Report|null $report */
+        $report = $this->reports()->latest()->firstWhere('type', ReportType::Verification);
+
+        return $report;
+    }
+
+    public function createVerificationReportIfNeeded(): void
+    {
+        if ($this->getVerificationReport() === null) {
+            $this->reports()->create(['type' => ReportType::Verification]);
+        }
+    }
+
     public function addReportViewer(User $user): void
     {
         // if the user is already a viewer, do nothing

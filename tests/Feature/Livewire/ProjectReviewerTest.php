@@ -113,63 +113,30 @@ class ProjectReviewerTest extends FeatureTestCase
     }
 
     #[Test]
-    public function completed_at_is_set_on_review_complete_and_preserved_through_post_review_phases(): void
+    public function completed_at_is_set_on_closed_and_cleared_on_rollback_from_closed(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
         $project = Project::factory()->create([
             'team_id' => $team->id,
-            'status' => ProjectStatus::InProgress,
+            'status' => ProjectStatus::VerificationReview,
         ]);
         $project->assignToUser($user);
 
-        // InProgress → ReviewComplete: should set completed_at
-        Livewire::test(Workflow::class, ['project' => $project])
-            ->call('updateStatus', 'next');
-
-        $project->refresh();
-        $this->assertEquals(ProjectStatus::ReviewComplete, $project->status);
-        $this->assertNotNull($project->completed_at);
-        $completedAt = $project->completed_at;
-
-        // ReviewComplete → VerificationReview: should preserve completed_at
-        Livewire::test(Workflow::class, ['project' => $project])
-            ->call('updateStatus', 'next');
-
-        $project->refresh();
-        $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
-        $this->assertEquals($completedAt, $project->completed_at);
-
-        // VerificationReview -> Closed: should preserve completed_at
+        // VerificationReview → Closed: should set completed_at
         Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'next');
 
         $project->refresh();
         $this->assertEquals(ProjectStatus::Closed, $project->status);
-        $this->assertEquals($completedAt, $project->completed_at);
+        $this->assertNotNull($project->completed_at);
 
-        // Closed -> VerificationReview: should preserve completed_at
+        // Closed → VerificationReview: should clear completed_at
         Livewire::test(Workflow::class, ['project' => $project])
             ->call('updateStatus', 'previous');
 
         $project->refresh();
         $this->assertEquals(ProjectStatus::VerificationReview, $project->status);
-        $this->assertEquals($completedAt, $project->completed_at);
-
-        // VerificationReview → ReviewComplete: should preserve completed_at
-        Livewire::test(Workflow::class, ['project' => $project])
-            ->call('updateStatus', 'previous');
-
-        $project->refresh();
-        $this->assertEquals(ProjectStatus::ReviewComplete, $project->status);
-        $this->assertEquals($completedAt, $project->completed_at);
-
-        // ReviewComplete → InProgress: should clear completed_at
-        Livewire::test(Workflow::class, ['project' => $project])
-            ->call('updateStatus', 'previous');
-
-        $project->refresh();
-        $this->assertEquals(ProjectStatus::InProgress, $project->status);
         $this->assertNull($project->completed_at);
     }
 
