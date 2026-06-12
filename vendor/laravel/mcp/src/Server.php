@@ -6,15 +6,18 @@ namespace Laravel\Mcp;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Str;
+use Laravel\Mcp\Enums\ProtocolVersion;
 use Laravel\Mcp\Events\SessionInitialized;
+use Laravel\Mcp\Exceptions\JsonRpcException;
+use Laravel\Mcp\Schema\Icon;
+use Laravel\Mcp\Schema\Implementation;
 use Laravel\Mcp\Server\AppResource;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
-use Laravel\Mcp\Server\Concerns\ReadsAttributes;
+use Laravel\Mcp\Server\Concerns\HasIcons;
 use Laravel\Mcp\Server\Contracts\Method;
 use Laravel\Mcp\Server\Contracts\Transport;
-use Laravel\Mcp\Server\Exceptions\JsonRpcException;
 use Laravel\Mcp\Server\Methods\CallTool;
 use Laravel\Mcp\Server\Methods\CompletionComplete;
 use Laravel\Mcp\Server\Methods\GetPrompt;
@@ -31,9 +34,9 @@ use Laravel\Mcp\Server\ServerContext;
 use Laravel\Mcp\Server\Testing\PendingTestResponse;
 use Laravel\Mcp\Server\Testing\TestResponse;
 use Laravel\Mcp\Server\Tool;
-use Laravel\Mcp\Server\Transport\JsonRpcNotification;
-use Laravel\Mcp\Server\Transport\JsonRpcRequest;
-use Laravel\Mcp\Server\Transport\JsonRpcResponse;
+use Laravel\Mcp\Transport\JsonRpcNotification;
+use Laravel\Mcp\Transport\JsonRpcRequest;
+use Laravel\Mcp\Transport\JsonRpcResponse;
 use stdClass;
 use Throwable;
 
@@ -42,7 +45,7 @@ use Throwable;
  */
 abstract class Server
 {
-    use ReadsAttributes;
+    use HasIcons;
 
     public const CAPABILITY_TOOLS = 'tools';
 
@@ -65,12 +68,7 @@ abstract class Server
     /**
      * @var array<int, string>
      */
-    protected array $supportedProtocolVersion = [
-        '2025-11-25',
-        '2025-06-18',
-        '2025-03-26',
-        '2024-11-05',
-    ];
+    protected array $supportedProtocolVersion = [];
 
     /**
      * @var array<string, array<string, bool>|stdClass|string>
@@ -238,10 +236,13 @@ abstract class Server
         $instructions = $this->resolveAttribute(Instructions::class);
 
         return new ServerContext(
-            supportedProtocolVersions: $this->supportedProtocolVersion,
+            supportedProtocolVersions: $this->supportedProtocolVersion ?: ProtocolVersion::supported(),
             serverCapabilities: $this->capabilities,
-            serverName: $name !== null ? $name->value : $this->name,
-            serverVersion: $version !== null ? $version->value : $this->version,
+            implementation: new Implementation(
+                name: $name !== null ? $name->value : $this->name,
+                version: $version !== null ? $version->value : $this->version,
+                icons: $this->resolvedIcons(),
+            ),
             instructions: $instructions !== null ? $instructions->value : $this->instructions,
             maxPaginationLength: $this->maxPaginationLength,
             defaultPaginationLength: $this->defaultPaginationLength,
@@ -249,6 +250,14 @@ abstract class Server
             resources: $this->resources,
             prompts: $this->prompts,
         );
+    }
+
+    /**
+     * @return list<Icon>
+     */
+    protected function icons(): array
+    {
+        return [];
     }
 
     /**
