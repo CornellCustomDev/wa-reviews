@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace Laravel\Mcp\Server;
 
+use Closure;
 use Illuminate\Container\Container;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
 use Illuminate\Support\Str;
+use Illuminate\Support\Traits\Macroable;
+use Laravel\Mcp\Client;
+use Laravel\Mcp\Client\ClientManager;
+use Laravel\Mcp\Client\OAuth\OAuthRouteRegistrar;
+use Laravel\Mcp\Client\OAuth\TokenSet;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Contracts\Transport;
 use Laravel\Mcp\Server\Http\Controllers\OAuthRegisterController;
@@ -20,6 +26,8 @@ use Laravel\Passport\Passport;
 
 class Registrar
 {
+    use Macroable;
+
     /** @var array<string, callable> */
     protected array $localServers = [];
 
@@ -63,6 +71,33 @@ class Registrar
         $this->localServers[$handle] = fn (): mixed => static::startServer($serverClass, fn (): StdioTransport => new StdioTransport(
             Str::uuid()->toString(),
         ));
+    }
+
+    /**
+     * @param  Closure(): Client  $factory
+     */
+    public function registerClient(string $name, Closure $factory): void
+    {
+        $this->clientManager()->registerClient($name, $factory);
+    }
+
+    public function client(string $name): Client
+    {
+        return $this->clientManager()->client($name);
+    }
+
+    /**
+     * @param  Closure(string, TokenSet): mixed|array{0: class-string, 1: string}  $handler
+     * @param  array<int, string>|string  $middleware
+     */
+    public function oAuthRoutesFor(
+        string $client,
+        Closure|array $handler,
+        array|string $middleware = 'web',
+        ?string $connectUri = null,
+        ?string $callbackUri = null,
+    ): void {
+        (new OAuthRouteRegistrar)->register($client, $handler, $middleware, $connectUri, $callbackUri);
     }
 
     public function getLocalServer(string $handle): ?callable
@@ -170,6 +205,11 @@ class Registrar
         }
 
         return $current;
+    }
+
+    protected function clientManager(): ClientManager
+    {
+        return Container::getInstance()->make(ClientManager::class);
     }
 
     /**

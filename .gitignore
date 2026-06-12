@@ -29,15 +29,7 @@ bun.lock
 *.sql
 *.gz
 
-# No need to commit AI config that is built by Laravel boost
-/.agents
-/.claude
-/.codex
-/.github/skills
-/.junie
-/.mcp.json
-/AGENTS.md
-/CLAUDE.md
+# Local dev tools
 /.superpowers
 /docs/superpowers/plans
 /.worktrees
