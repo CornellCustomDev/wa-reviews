@@ -1,24 +1,41 @@
-<div class="max-w-[900px]">
+<div>
     <h1>Report: {{ $project->name }}</h1>
 
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
         <div class="col-span-1 order-first md:order-last print:hidden">
-            <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
-            <flux:dropdown>
-                <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
-                <x-forms.menu>
-                    <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
-                        Google Sheet (requires login)
-                    </x-forms.menu.item>
-                    <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
-                        Raw (for copy/paste)
-                    </x-forms.menu.item>
-                </x-forms.menu>
-            </flux:dropdown>
+            <div class="mb-4">
+                <x-forms.button icon="printer" x-on:click="window.print()">Print</x-forms.button>
+                <flux:dropdown>
+                    <x-forms.button icon="arrow-down-tray" size="xs" class="text-sm! px-3 h-8">Export...</x-forms.button>
+                    <x-forms.menu>
+                        <x-forms.menu.item icon="arrow-top-right-on-square" href="{{ route('project.report.google', $project) }}" target="_blank">
+                            Google Sheet (requires login)
+                        </x-forms.menu.item>
+                        <x-forms.menu.item icon="clipboard-document" href="{{ route('project.report.raw', $project) }}" target="_blank">
+                            Raw (for copy/paste)
+                        </x-forms.menu.item>
+                    </x-forms.menu>
+                </flux:dropdown>
+            </div>
+
+            @if($project->isInProgress())
+                @can('complete-report', $project)
+                    <div class="mb-4 pt-4 border-t border-cds-gray-200">
+                        <x-forms.button wire:click="completeReview" :disabled="! $project->isReportReady()" >Complete Review</x-forms.button>
+                    </div>
+                @endcan
+            @endif
+
+            {{-- Report Viewers (visible from InProgress onward) --}}
+            @unless($project->status->isNotStarted())
+                @can('update-report-viewers', $project)
+                    <livewire:projects.report-viewers :project="$project"/>
+                @endcan
+            @endunless
         </div>
 
-        <div class="col-span-3 max-w-[675px]">
+        <div class="col-span-2">
             <table class="table bordered">
                 <tr>
                     <th style="width: 200px">Prepared by</th>
@@ -31,7 +48,7 @@
                 <tr>
                     <th>Site</th>
                     <td>
-                        <div class="break-words max-w-[500px]">
+                        <div class="wrap-break-word max-w-125">
                             {{ $project->name }} ({{ $project->site_url }})
                         </div>
                     </td>
@@ -48,42 +65,29 @@
                     <th>Audience</th>
                     <td>{{ $project->audience }}</td>
                 </tr>
+                <tr>
+                    <th>Link to review</th>
+                    <td>
+                        <a href="{{ route('project.show', $project->id) }}">{{ $project->name }} Review</a>
+                        [{{ route('project.show', $project->id) }}]
+                    </td>
+                </tr>
             </table>
         </div>
     </div>
 
-
+<div class="max-w-225">
     <p class="italic">
         Please note: This summary document is not comprehensive of all accessibility issues.
         It represents the major issues that should be prioritized but there are likely additional
         items that will need to be addressed as well. Please continue to utilize
-        <a href="https://it.cornell.edu/siteimprove">Cornell’s Siteimprove tool</a>
+        <a href="https://it.cornell.edu/siteimprove">Cornell's Siteimprove tool</a>
         as well as other
         <a href="https://it.cornell.edu/accessibility/recommended-web-accessibility-testing-plan">manual testing techniques</a>
         to identify and address WCAG 2 AA compliance issues.
     </p>
 
-    <h3>What is the purpose of the site?</h3>
-    {!! $project->site_purpose !!}
-
-    <h3>URLs included in review</h3>
-    {!! $project->urls_included !!}
-
-    <h3>URLs excluded from review</h3>
-    {!! $project->urls_excluded !!}
-
-    <h3>Link to review and any supporting documents</h3>
-    <p>
-        <a href="{{ route('project.show', $project->id) }}">{{ $project->name }} Review</a><br>
-        [{{ route('project.show', $project->id) }}]
-    </p>
-
-    <h3>Testing notes and procedure</h3>
-    {!! $project->review_procedure !!}
-
-
-    <h2>Overview of findings</h2>
-    {!! $project->summary !!}
+    <livewire:projects.report-data :$project />
 
     <h2>List of Issues Found</h2>
 
@@ -208,4 +212,5 @@
             </div>
         @endif
     </flux:modal>
+</div>
 </div>

@@ -2,10 +2,13 @@
 
 namespace App\Livewire\Projects;
 
+use App\Enums\ProjectStatus;
+use App\Events\ProjectChanged;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
 class Report extends Component
@@ -25,6 +28,26 @@ class Report extends Component
     public function siteimproveUrl(Scope $scope): string
     {
         return SiteimproveService::getPageReportUrlForScope($scope);
+    }
+
+    #[On('report-updated')]
+    public function refreshProject(): void
+    {
+        $this->project->refresh();
+    }
+
+    public function completeReview(): void
+    {
+        $this->authorize('complete-report', $this->project);
+
+        $this->project->update([
+            'status' => ProjectStatus::ReviewComplete,
+            'completed_at' => $this->project->completed_at ?? now(),
+        ]);
+
+        event(new ProjectChanged($this->project, 'status changed'));
+
+        $this->redirect(route('project.show', $this->project), navigate: true);
     }
 
     public function viewImage(string $imageUrl): void
@@ -54,7 +77,6 @@ class Report extends Component
         return [
             'Projects' => route('projects'),
             $this->project->name => route('project.show', $this->project),
-
             'Report' => 'active',
         ];
     }

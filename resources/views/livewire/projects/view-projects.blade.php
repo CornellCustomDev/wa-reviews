@@ -23,10 +23,20 @@
 
     <h1>Projects</h1>
 
+    <div class="flex items-center gap-3 mb-4">
+        <flux:input
+            wire:model.live.debounce.300ms="search"
+            placeholder="Search projects…"
+            icon="magnifying-glass"
+            clearable
+            class="max-w-sm"
+        />
+    </div>
+
     <div class="mb-8 w-full max-[992px]:overflow-x-auto">
         <flux:tab.group>
             <flux:tabs wire:model.live="tab">
-                @if($this->myProjects->total() > 0)
+                @if($this->hasMyProjects())
                     <flux:tab name="mine">My Projects ({{ $this->myProjects->total() }})</flux:tab>
                 @endif
                 <flux:tab name="active">Active ({{ $this->activeProjects->total() }})</flux:tab>
@@ -36,7 +46,7 @@
                 <flux:tab name="completed">Completed ({{ $this->completedProjects->total() }})</flux:tab>
             </flux:tabs>
 
-            @if($this->myProjects->total() > 0)
+            @if($this->hasMyProjects())
                 <flux:tab.panel name="mine">
                     @include('livewire.projects.projects-list', ['projects' => $this->myProjects, 'pageName' => 'my-page'])
                 </flux:tab.panel>

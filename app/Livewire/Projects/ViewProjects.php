@@ -22,13 +22,16 @@ class ViewProjects extends Component
     #[Url]
     public string $tab = 'active';
 
+    public string $search = '';
+
     #[Computed]
     public function activeProjects(): LengthAwarePaginator
     {
         $pageName = 'active-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
         $query = Project::activeProjects(auth()->user())
-            ->with(['reviewer']);
+            ->with(['reviewer'])
+            ->when($this->search, fn ($q) => $q->where('projects.name', 'like', "%$this->search%"));
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
@@ -40,7 +43,8 @@ class ViewProjects extends Component
         $pageName = 'my-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
         $query = Project::myProjects(auth()->user())
-            ->with(['reviewer', 'verifier']);
+            ->with(['reviewer', 'verifier'])
+            ->when($this->search, fn ($q) => $q->where('projects.name', 'like', "%$this->search%"));
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
@@ -52,7 +56,8 @@ class ViewProjects extends Component
         $pageName = 'reviewed-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
         $query = Project::reviewedProjects(auth()->user())
-            ->with(['reviewer', 'verifier']);
+            ->with(['reviewer', 'verifier'])
+            ->when($this->search, fn ($q) => $q->where('projects.name', 'like', "%$this->search%"));
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
@@ -64,10 +69,17 @@ class ViewProjects extends Component
         $pageName = 'completed-page';
         $this->setSortDefaults($pageName, 'created_at', 'desc');
         $query = Project::closedProjects(auth()->user())
-            ->with(['reviewer', 'verifier']);
+            ->with(['reviewer', 'verifier'])
+            ->when($this->search, fn ($q) => $q->where('projects.name', 'like', "%$this->search%"));
 
         return $this->sortQuery($query, $pageName)
             ->paginate(10, pageName: $pageName);
+    }
+
+    #[Computed]
+    public function hasMyProjects(): bool
+    {
+        return Project::myProjects(auth()->user())->exists();
     }
 
     #[Computed]

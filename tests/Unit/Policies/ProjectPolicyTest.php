@@ -274,9 +274,9 @@ class ProjectPolicyTest extends TestCase
             [Roles::Reviewer, true, true, true, ProjectStatus::ReviewComplete, true, 'Reviewer can update report viewers of ReviewComplete project'],
             [Roles::Reviewer, true, false, true, ProjectStatus::ReviewComplete, false, 'Team member cannot update report viewers of ReviewComplete project'],
 
-            [Roles::SiteAdmin, false, false, true, ProjectStatus::InProgress, false, 'Site admin cannot update report viewers of in-progress project'],
-            [Roles::TeamAdmin, true, false, true, ProjectStatus::InProgress, false, 'Team admin cannot update report viewers of in-progress project'],
-            [Roles::Reviewer, true, true, true, ProjectStatus::InProgress, false, 'Reviewer cannot update report viewers of in-progress project'],
+            [Roles::SiteAdmin, false, false, true, ProjectStatus::InProgress, true, 'Site admin can update report viewers of in-progress project'],
+            [Roles::TeamAdmin, true, false, true, ProjectStatus::InProgress, true, 'Team admin can update report viewers of in-progress project'],
+            [Roles::Reviewer, true, true, true, ProjectStatus::InProgress, true, 'Reviewer can update report viewers of in-progress project'],
             [Roles::Reviewer, true, false, true, ProjectStatus::InProgress, false, 'Team member cannot update report viewers of in-progress project'],
 
             [Roles::SiteAdmin, false, false, true, ProjectStatus::NotStarted, false, 'Site admin cannot update report viewers of not-started project'],

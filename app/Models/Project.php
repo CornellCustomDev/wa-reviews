@@ -234,6 +234,12 @@ class Project extends Model
         return $this->status->isClosed();
     }
 
+    public function isReportReady(): bool
+    {
+        // Require the project to be inProgress and the summary to be validated
+        return $this->isInProgress() && ! blank($this->summary);
+    }
+
     public function addReportViewer(User $user): void
     {
         // if the user is already a viewer, do nothing
