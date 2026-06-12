@@ -5,21 +5,17 @@ declare(strict_types=1);
 namespace Laravel\Mcp\Server\Methods;
 
 use Generator;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\AuthenticationException;
 use Illuminate\Container\Container;
-use Illuminate\Validation\ValidationException;
+use Laravel\Mcp\Exceptions\JsonRpcException;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Contracts\Errable;
 use Laravel\Mcp\Server\Contracts\Method;
-use Laravel\Mcp\Server\Exceptions\JsonRpcException;
 use Laravel\Mcp\Server\Methods\Concerns\InteractsWithResponses;
 use Laravel\Mcp\Server\ServerContext;
 use Laravel\Mcp\Server\Tool;
-use Laravel\Mcp\Server\Transport\JsonRpcRequest;
-use Laravel\Mcp\Server\Transport\JsonRpcResponse;
-use Laravel\Mcp\Support\ValidationMessages;
+use Laravel\Mcp\Transport\JsonRpcRequest;
+use Laravel\Mcp\Transport\JsonRpcResponse;
 
 class CallTool implements Errable, Method
 {
@@ -50,14 +46,8 @@ class CallTool implements Errable, Method
                     $request->id,
                 ));
 
-        try {
-            // @phpstan-ignore-next-line
-            $response = Container::getInstance()->call([$tool, 'handle']);
-        } catch (AuthenticationException|AuthorizationException $authException) {
-            $response = Response::error($authException->getMessage());
-        } catch (ValidationException $validationException) {
-            $response = Response::error(ValidationMessages::from($validationException));
-        }
+        // @phpstan-ignore-next-line
+        $response = $this->callHandler(fn (): mixed => Container::getInstance()->call([$tool, 'handle']), $request);
 
         return is_iterable($response)
             ? $this->toJsonRpcStreamedResponse($request, $response, $this->serializable($tool))
