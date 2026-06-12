@@ -73,19 +73,23 @@ class Workflow extends Component
 
         $this->dispatch('close-update-status');
 
+        $currentStatus = $this->project->status;
         switch ($direction) {
             case 'next':
                 $this->project->update([
-                    'status' => $this->project->status->nextStatus(),
-                    'completed_at' => $this->project->status->nextStatus()->isReviewComplete()
+                    'status' => $currentStatus->nextStatus(),
+                    'completed_at' => $currentStatus->nextStatus()->isReviewComplete()
                         ? now()
                         : $this->project->completed_at,
                 ]);
                 break;
             case 'previous':
+                if ($currentStatus->isReviewComplete()) {
+                    $this->project->getReviewReport()->rollbackReport();
+                }
                 $this->project->update([
-                    'status' => $this->project->status->previousStatus(),
-                    'completed_at' => ($this->project->status->previousStatus()->isInProgress())
+                    'status' => $currentStatus->previousStatus(),
+                    'completed_at' => ($currentStatus->previousStatus()->isInProgress())
                         ? null
                         : $this->project->completed_at,
                 ]);

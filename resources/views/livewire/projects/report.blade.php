@@ -20,9 +20,9 @@
             </div>
 
             @if($project->isInProgress())
-                @can('complete-report', $project)
+                @can('update', $report)
                     <div class="mb-4 pt-4 border-t border-cds-gray-200">
-                        <x-forms.button wire:click="completeReview" :disabled="! $project->isReportReady()" >Complete Review</x-forms.button>
+                        <x-forms.button wire:click="completeReview" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
                     </div>
                 @endcan
             @endif
@@ -87,7 +87,7 @@
         to identify and address WCAG 2 AA compliance issues.
     </p>
 
-    <livewire:projects.report-data :$project />
+    <livewire:projects.report-data :$report />
 
     <h2>List of Issues Found</h2>
 
