@@ -4,22 +4,23 @@ declare(strict_types=1);
 
 namespace Laravel\Mcp\Server\Methods;
 
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
+use Laravel\Mcp\Exceptions\JsonRpcException;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Completions\CompletionResponse;
 use Laravel\Mcp\Server\Contracts\Completable;
 use Laravel\Mcp\Server\Contracts\HasUriTemplate;
 use Laravel\Mcp\Server\Contracts\Method;
-use Laravel\Mcp\Server\Exceptions\JsonRpcException;
 use Laravel\Mcp\Server\Methods\Concerns\ResolvesPrompts;
 use Laravel\Mcp\Server\Methods\Concerns\ResolvesResources;
 use Laravel\Mcp\Server\Prompt;
 use Laravel\Mcp\Server\Resource;
 use Laravel\Mcp\Server\ServerContext;
-use Laravel\Mcp\Server\Transport\JsonRpcRequest;
-use Laravel\Mcp\Server\Transport\JsonRpcResponse;
+use Laravel\Mcp\Transport\JsonRpcRequest;
+use Laravel\Mcp\Transport\JsonRpcResponse;
 
 class CompletionComplete implements Method
 {
@@ -74,7 +75,11 @@ class CompletionComplete implements Method
 
         $contextArguments = Arr::get($request->get('context'), 'arguments', []);
 
-        $result = $this->invokeCompletion($primitive, $argumentName, $argumentValue, $contextArguments);
+        try {
+            $result = $this->invokeCompletion($primitive, $argumentName, $argumentValue, $contextArguments);
+        } catch (Exception) {
+            $result = CompletionResponse::empty();
+        }
 
         return JsonRpcResponse::result($request->id, [
             'completion' => $result->toArray(),
