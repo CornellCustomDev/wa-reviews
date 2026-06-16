@@ -71,7 +71,7 @@ class Workflow extends Component
 
     public function startVerification(ProjectWorkflowService $projectWorkflow): void
     {
-        if ($this->project->hasBeenReviewed() && ! $this->project->isInVerification()) {
+        if ($this->project->isReadyForVerification()) {
             $this->updateStatus('next', $projectWorkflow);
         }
     }
