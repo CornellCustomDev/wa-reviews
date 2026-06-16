@@ -46,7 +46,7 @@
     </flux:modal>
 
     {{-- Verifier (VerificationReview phase) --}}
-    @if($project->isInVerification())
+    @if($project->hasBeenReviewed() && ! $project->isClosed())
         <div class="mb-2">
             @if($project->verifier)
                 @can('update-verifier', [$project, auth()->user()])
@@ -135,15 +135,15 @@
         @can('update-status', $project)
             <div class="mb-4 flex-1">
                 @if($project->isNotStarted() && $project->reviewer)
-                    <x-forms.button wire:click="updateStatus('next')">Start Review</x-forms.button>
+                    <x-forms.button wire:click="startReview()">Start Review</x-forms.button>
                 @elseif($project->isInProgress())
                     <x-forms.button :href="route('report.show', $project->reviewReport)">Review &amp; Finalize Report</x-forms.button>
-                @elseif($project->hasBeenReviewed() && $project->verifier)
-                    <x-forms.button wire:click="updateStatus('next')">Start Verification</x-forms.button>
+                @elseif($project->isReadyForVerification())
+                    <x-forms.button wire:click="startVerification()">Start Verification</x-forms.button>
                 @elseif($project->isInVerification())
                     <x-forms.button :href="route('report.show', $project->getVerificationReport())">Review Verification Report</x-forms.button>
                 @elseif($project->hasBeenVerified())
-                    <x-forms.button wire:click="updateStatus('next')">Close Project</x-forms.button>
+                    <x-forms.button wire:click="closeProject()">Close Project</x-forms.button>
                 @endif
             </div>
         @endcan

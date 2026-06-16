@@ -62,6 +62,27 @@ class Workflow extends Component
         $this->dispatch('refresh-project');
     }
 
+    public function startReview(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->isNotStarted()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
+    public function startVerification(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->hasBeenReviewed() && ! $this->project->isInVerification()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
+    public function closeProject(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->isInVerification() && $this->project->getVerificationReport()?->isCompleted()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
     public function updateStatus(string $direction, ProjectWorkflowService $projectWorkflow): void
     {
         $this->authorize('update-status', $this->project);

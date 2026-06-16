@@ -244,6 +244,14 @@ class Project extends Model
         return $this->reviewReport->isCompleted();
     }
 
+    public function isReadyForVerification(): bool
+    {
+        return $this->hasBeenReviewed()
+            && $this->verifier
+            && ! $this->isInVerification()
+            && ! $this->isClosed();
+    }
+
     public function isInVerification(): bool
     {
         return $this->status->isInVerification();
