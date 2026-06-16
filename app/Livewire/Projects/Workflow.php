@@ -4,7 +4,6 @@ namespace App\Livewire\Projects;
 
 use App\Models\Project;
 use App\Services\ProjectWorkflowService;
-use Laravel\Pennant\Feature;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;

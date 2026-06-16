@@ -21,7 +21,9 @@
 
             @can('update', $report)
                 <div class="mb-4 pt-4 border-t border-cds-gray-200">
-                    <x-forms.button wire:click="completeReport" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
+                    <x-forms.button wire:click="completeReport" :disabled="! $report->isReady()" >
+                        {{ $report->isVerification() ? 'Complete Verification' : 'Complete Review' }}
+                    </x-forms.button>
                 </div>
             @endcan
 

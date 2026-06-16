@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use Illuminate\Support\Str;
-use Laravel\Pennant\Feature;
 
 enum ProjectStatus: string
 {

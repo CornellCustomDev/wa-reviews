@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Exports\ProjectReportGoogle;
-use App\Models\Project;
 use App\Models\Report;
 use App\Services\GoogleApi\GoogleService;
 use Exception;

@@ -46,6 +46,11 @@ class Report extends Model
             ->withPivot(['status']);
     }
 
+    public function isVerification(): bool
+    {
+        return $this->type == ReportType::Verification;
+    }
+
     public function reportableIssues(): Collection
     {
         $query = $this->completed_at

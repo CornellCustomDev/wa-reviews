@@ -73,7 +73,7 @@ Route::group(['middleware' => [AppTesters::class]], function () {
 
         Route::prefix('report/{report}')->name('report.')->group(function () {
             Route::get('', ShowReport::class)->name('show')->can('view', 'report');
-            Route::group(['middleware' => 'can:view,project'], function () {
+            Route::group(['middleware' => 'can:view,report'], function () {
                 Route::get('/raw', ReportRawController::class)->name('raw');
                 Route::get('/google', ReportGoogleController::class)->name('google');
             });

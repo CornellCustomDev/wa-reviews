@@ -17,8 +17,8 @@ class ReportPolicy
         $project = $report->project;
         if ($report->isCompleted()) {
             return $project->team->isTeamMember($user)
-            || $user->can('manage-projects', $project->team)
-            || $project->isReportViewer($user);
+                || $user->can('manage-projects', $project->team)
+                || $project->isReportViewer($user);
         }
 
         return $user->can('update', $report);
