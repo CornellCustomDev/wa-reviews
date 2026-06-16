@@ -37,8 +37,8 @@ class IssuePolicy
     {
         $project = $issue->project;
 
-        // Only reviewed projects
-        if (! $project->hasBeenReviewed()) {
+        // Only open, reviewed projects
+        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
             return false;
         }
 
@@ -57,8 +57,8 @@ class IssuePolicy
     {
         $project = $issue->project;
 
-        // Only reviewed projects
-        if (! $project->hasBeenReviewed()) {
+        // Only open, reviewed projects
+        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
             return false;
         }
 

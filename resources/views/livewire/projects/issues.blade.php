@@ -7,7 +7,7 @@
             <th>Target</th>
             <th>Issue</th>
             <th>Assessment</th>
-            @if($project->hasBeenReviewed() || $project->isClosed())
+            @if($project->hasBeenReviewed())
                 <th>Remediation</th>
             @endif
             <th>Actions</th>
@@ -51,7 +51,7 @@
                 <td>
                     @include('livewire.issues.assessment', ['issue' => $issue])
                 </td>
-                @if($project->hasBeenReviewed() || $project->isClosed())
+                @if($project->hasBeenReviewed())
                     <td class="text-nowrap">
                         {!! $issue->status?->description() !!}
                         @if($issue->needs_mitigation)

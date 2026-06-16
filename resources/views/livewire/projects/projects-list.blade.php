@@ -58,7 +58,7 @@
                     @endif
                 </flux:table.cell>
                 <flux:table.cell>
-                    @if($project->hasBeenReviewed() || $project->isClosed())
+                    @if($project->hasBeenReviewed())
                         @if($project->verifier && $project->reviewer)
                             Reviewer: {{ $project->reviewer->name }}
                             <br>
