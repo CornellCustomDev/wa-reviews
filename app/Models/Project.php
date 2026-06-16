@@ -247,6 +247,13 @@ class Project extends Model
         return $this->status->isInVerification();
     }
 
+    public function hasBeenVerified(): bool
+    {
+        $verificationReport = $this->getVerificationReport();
+
+        return $verificationReport?->isCompleted() ?? false;
+    }
+
     public function isClosed(): bool
     {
         return $this->status->isClosed();
