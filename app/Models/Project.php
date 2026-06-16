@@ -47,6 +47,8 @@ class Project extends Model
         'team:id,name',
     ];
 
+    private ?Report $verificationReport = null;
+
     protected static function booted(): void
     {
         static::created(function (Project $project) {
@@ -261,10 +263,9 @@ class Project extends Model
 
     public function getVerificationReport(): ?Report
     {
-        /** @var Report|null $report */
-        $report = $this->reports()->latest()->firstWhere('type', ReportType::Verification);
+        $this->verificationReport ??= $this->verificationReports()->first();
 
-        return $report;
+        return $this->verificationReport;
     }
 
     public function createVerificationReportIfNeeded(): void
