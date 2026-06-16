@@ -52,6 +52,11 @@ class Report extends Model
             ? $this->issues()
             : $this->project->issues()->isReportable();
 
+        // If this is a verification report, only include outstanding issues
+        if ($this->type === ReportType::Verification) {
+            $query->whereIn('status', IssueStatus::forReport($this->type));
+        }
+
         return $query
             ->with(['scope', 'guideline:id,number,name,criterion_id', 'guideline.criterion:id,number,name,level'])
             ->get()

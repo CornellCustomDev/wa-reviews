@@ -47,6 +47,16 @@ enum IssueStatus: string
             ->toArray();
     }
 
+    public static function forReport(ReportType $reportType): array
+    {
+        $cases = match ($reportType) {
+            ReportType::Verification => [self::Reviewed, self::NewIssue, self::NotFixed, self::FalsePositive, self::WontFix],
+            default => self::cases(),
+        };
+
+        return array_map(fn (self $status) => $status->value(), $cases);
+    }
+
     public function description(): string
     {
         return match ($this) {
