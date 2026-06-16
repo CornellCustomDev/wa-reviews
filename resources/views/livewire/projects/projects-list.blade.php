@@ -75,7 +75,7 @@
                 <flux:table.cell class="whitespace-nowrap">
                     {{ $project->created_at->toFormattedDateString() }}
                 </flux:table.cell>
-                <flux:table.cell>{{ $project->status?->label() }}</flux:table.cell>
+                <flux:table.cell>{{ $project->statusLabel() }}</flux:table.cell>
                 <flux:table.cell>
                     <x-forms.button.view
                         title="View project {{ $project->id }}"

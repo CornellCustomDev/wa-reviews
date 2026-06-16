@@ -207,6 +207,11 @@ class Project extends Model
         return $user->id === $this->verifier?->id;
     }
 
+    public function statusLabel(): string
+    {
+        return $this->status?->label() ?? ProjectStatus::NotStarted->label();
+    }
+
     public function isNotStarted(): bool
     {
         return $this->status->isNotStarted();

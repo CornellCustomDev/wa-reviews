@@ -111,7 +111,7 @@
             @endif
         @endcan
         <x-forms.field-display label="Status" class="mb-0!">
-            {{ $project->status?->label() ?? \App\Enums\ProjectStatus::NotStarted->label() }}
+            {{ $project->statusLabel() }}
         </x-forms.field-display>
     </div>
 

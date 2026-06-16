@@ -28,7 +28,7 @@
             @endif
 
             {{-- Report Viewers (visible from InProgress onward) --}}
-            @unless($project->status->isNotStarted())
+            @unless($project->isNotStarted())
                 @can('update-report-viewers', $project)
                     <livewire:projects.report-viewers :project="$project"/>
                 @endcan
