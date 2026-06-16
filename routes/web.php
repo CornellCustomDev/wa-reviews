@@ -14,7 +14,6 @@ use App\Livewire\Guidelines\ViewGuidelines;
 use App\Livewire\Issues\CreateProjectIssue;
 use App\Livewire\Issues\CreateSiteimproveIssue;
 use App\Livewire\Projects\CreateProject;
-use App\Livewire\Projects\Report;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\UpdateProject;
 use App\Livewire\Projects\ViewProjects;
@@ -23,8 +22,7 @@ use App\Livewire\Items\UpdateItem;
 use App\Livewire\Issues\CreateIssue;
 use App\Livewire\Issues\ShowIssue;
 use App\Livewire\Issues\UpdateIssue;
-use App\Livewire\ActRules\ShowRule;
-use App\Livewire\ActRules\ViewRules;
+use App\Livewire\Reports\ShowReport;
 use App\Livewire\Scopes\CreateScope;
 use App\Livewire\Scopes\ShowScope;
 use App\Livewire\Scopes\UpdateScope;
@@ -35,7 +33,6 @@ use App\Livewire\Teams\Manage;
 use App\Livewire\Teams\ShowTeam;
 use App\Models\Project;
 use App\Models\Team;
-use App\Services\GoogleApi\GoogleService;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\AppTesters;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use Illuminate\Support\Facades\Route;
@@ -58,11 +55,6 @@ Route::group(['middleware' => [AppTesters::class]], function () {
             Route::get('/{project}/edit', UpdateProject::class)->name('edit')->can('update', 'project');
             Route::get('/{project}/scope/create', CreateScope::class)->name('scope.create')->can('update', 'project');
             Route::get('/{project}/issue/create', CreateProjectIssue::class)->name('issue.create')->can('update', 'project');
-            Route::group(['middleware' => 'can:view,project'], function () {
-                Route::get('/{project}/report', Report::class)->name('report');
-                Route::get('/{project}/report/raw', ReportRawController::class)->name('report.raw');
-                Route::get('/{project}/report/google', ReportGoogleController::class)->name('report.google');
-            });
         });
 
         Route::prefix('scope/{scope}')->name('scope.')->group(function () {
@@ -77,6 +69,14 @@ Route::group(['middleware' => [AppTesters::class]], function () {
             Route::get('/edit', UpdateIssue::class)->name('edit')->can('update', 'issue');
             Route::get('/item/create', CreateItem::class)->name('item.create')->can('update', 'issue');
             Route::get('/item/{item}/edit', UpdateItem::class)->name('item.edit')->can('update', 'issue');
+        });
+
+        Route::prefix('report/{report}')->name('report.')->group(function () {
+            Route::get('', ShowReport::class)->name('show')->can('view', 'report');
+            Route::group(['middleware' => 'can:view,project'], function () {
+                Route::get('/raw', ReportRawController::class)->name('raw');
+                Route::get('/google', ReportGoogleController::class)->name('google');
+            });
         });
 
         Route::prefix('teams')->name('teams.')->group(function () {

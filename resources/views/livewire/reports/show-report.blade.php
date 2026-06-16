@@ -1,5 +1,5 @@
 <div>
-    <h1>Report: {{ $project->name }}</h1>
+    <h1>Report: {{ $this->project()->name }}</h1>
 
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
 
@@ -19,18 +19,16 @@
                 </flux:dropdown>
             </div>
 
-            @if($project->isInProgress())
-                @can('update', $report)
-                    <div class="mb-4 pt-4 border-t border-cds-gray-200">
-                        <x-forms.button wire:click="completeReport" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
-                    </div>
-                @endcan
-            @endif
+            @can('update', $report)
+                <div class="mb-4 pt-4 border-t border-cds-gray-200">
+                    <x-forms.button wire:click="completeReport" :disabled="! $report->isReady()" >Complete Review</x-forms.button>
+                </div>
+            @endcan
 
             {{-- Report Viewers (visible from InProgress onward) --}}
-            @unless($project->status->isNotStarted())
-                @can('update-report-viewers', $project)
-                    <livewire:projects.report-viewers :project="$project"/>
+            @unless($this->project->status->isNotStarted())
+                @can('update-report-viewers', $this->project)
+                    <livewire:projects.report-viewers :project="$this->project"/>
                 @endcan
             @endunless
         </div>
@@ -39,7 +37,7 @@
             <table class="table bordered">
                 <tr>
                     <th style="width: 200px">Prepared by</th>
-                    <td>{{ $project->reviewer->name }} ({{ $project->reviewer->email }})</td>
+                    <td>{{ $report->completedBy?->name }} ({{ $report->completedBy?->email }})</td>
                 </tr>
                 <tr>
                     <th>Date review completed</th>
@@ -49,27 +47,27 @@
                     <th>Site</th>
                     <td>
                         <div class="wrap-break-word max-w-125">
-                            {{ $project->name }} ({{ $project->site_url }})
+                            {{ $this->project->name }} ({{ $this->project->site_url }})
                         </div>
                     </td>
                 </tr>
                 <tr>
                     <th>Responsible unit at Cornell</th>
-                    <td>{{ $project->responsible_unit }}</td>
+                    <td>{{ $this->project->responsible_unit }}</td>
                 </tr>
                 <tr>
                     <th>Point of contact</th>
-                    <td>{{ $project->contact_name }} ({{ $project->contact_netid }})</td>
+                    <td>{{ $this->project->contact_name }} ({{ $this->project->contact_netid }})</td>
                 </tr>
                 <tr>
                     <th>Audience</th>
-                    <td>{{ $project->audience }}</td>
+                    <td>{{ $this->project->audience }}</td>
                 </tr>
                 <tr>
                     <th>Link to review</th>
                     <td>
-                        <a href="{{ route('project.show', $project->id) }}">{{ $project->name }} Review</a>
-                        [{{ route('project.show', $project->id) }}]
+                        <a href="{{ route('project.show', $this->project) }}">{{ $this->project->name }} Review</a>
+                        [{{ route('project.show', $this->project) }}]
                     </td>
                 </tr>
             </table>

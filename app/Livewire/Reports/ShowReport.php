@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Livewire\Projects;
+namespace App\Livewire\Reports;
 
 use App\Models\Project;
-use App\Models\Report as ReportModel;
+use App\Models\Report;
 use App\Models\Scope;
 use App\Services\ProjectWorkflowService;
 use App\Services\SiteImprove\SiteimproveService;
@@ -11,19 +11,15 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
 
-class Report extends Component
+class ShowReport extends Component
 {
-    public Project $project;
+    public Report $report;
     public ?string $selectedImage = null;
 
     #[Computed]
-    public function report(): ReportModel
+    public function project(): Project
     {
-        if ($this->project->status->isInVerification() || $this->project->status->isClosed()) {
-            return $this->project->getVerificationReport() ?? $this->project->getReviewReport();
-        }
-
-        return $this->project->getReviewReport();
+        return $this->report->project;
     }
 
     #[Computed]
@@ -48,11 +44,9 @@ class Report extends Component
 
     public function completeReport(ProjectWorkflowService $projectWorkflow): void
     {
-        $reviewReport = $this->project->getReviewReport();
+        $this->authorize('complete-report', $this->report);
 
-        $this->authorize('complete-report', $reviewReport);
-
-        $reviewReport->completeReport();
+        $this->report->completeReport();
         $projectWorkflow->completeReview($this->project);
 
         $this->redirect(route('project.show', $this->project), navigate: true);
@@ -72,9 +66,9 @@ class Report extends Component
 
     public function render()
     {
-        $this->authorize('view', $this->project);
+        $this->authorize('view', $this->report);
 
-        return view('livewire.projects.report', ['report' => $this->report])
+        return view('livewire.reports.show-report')
             ->layout('components.layouts.app', [
                 'breadcrumbs' => $this->getBreadcrumbs(),
             ]);

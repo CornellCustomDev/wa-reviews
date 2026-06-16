@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exports\ProjectReportGoogle;
 use App\Models\Project;
+use App\Models\Report;
 use App\Services\GoogleApi\GoogleService;
 use Exception;
 use Illuminate\Http\Request;
@@ -13,10 +14,8 @@ class ReportGoogleController extends Controller
     /**
      * @throws Exception
      */
-    public function __invoke(Request $request, GoogleService $googleService, Project $project)
+    public function __invoke(Request $request, GoogleService $googleService, Report $report)
     {
-        $report = $project->getReviewReport();
-
         if (!$googleService->ensureAuthorized()) {
             return redirect()->away($googleService->getAuthUrl($request->fullUrl()));
         }
