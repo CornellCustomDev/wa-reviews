@@ -95,15 +95,6 @@ enum ProjectStatus: string
         return $this === self::ReviewComplete;
     }
 
-    public function hasBeenReviewed(): bool
-    {
-        if (! Feature::active('verification-reviews')) {
-            return $this === self::Closed;
-        }
-
-        return in_array($this, self::reviewedCases());
-    }
-
     public function isInVerification(): bool
     {
         return $this === self::VerificationReview;

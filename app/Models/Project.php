@@ -110,6 +110,16 @@ class Project extends Model
         return $this->hasMany(Report::class);
     }
 
+    public function reviewReport(): HasOne
+    {
+        return $this->hasOne(Report::class)->where('type', ReportType::Review);
+    }
+
+    public function verificationReports(): HasMany
+    {
+        return $this->hasMany(Report::class)->where('type', ReportType::Verification);
+    }
+
     public function reportViewers(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -227,14 +237,9 @@ class Project extends Model
         return $this->status->isActive();
     }
 
-    public function isReviewComplete(): bool
-    {
-        return $this->status->isReviewComplete();
-    }
-
     public function hasBeenReviewed(): bool
     {
-        return $this->status->hasBeenReviewed();
+        return $this->reviewReport->isCompleted();
     }
 
     public function isInVerification(): bool
@@ -245,14 +250,6 @@ class Project extends Model
     public function isClosed(): bool
     {
         return $this->status->isClosed();
-    }
-
-    public function getReviewReport(): Report
-    {
-        /** @var Report $report */
-        $report = $this->reports()->firstWhere('type', ReportType::Review);
-
-        return $report;
     }
 
     public function getVerificationReport(): ?Report
@@ -369,6 +366,7 @@ class Project extends Model
     {
         return static::query()->visibleTo($user)
             ->whereIn('status', ProjectStatus::reviewedCases())
+            ->whereNotIn('status', ProjectStatus::closedCases())
             ->withReviewer()
             ->withVerifier()
             ->select('projects.*');

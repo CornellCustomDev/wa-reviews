@@ -29,7 +29,7 @@ class ProjectWorkflowService
         $currentStatus = $project->status;
 
         if ($currentStatus->isReviewComplete()) {
-            $project->getReviewReport()->rollbackReport();
+            $project->reviewReport->rollbackReport();
         }
 
         $project->update([
