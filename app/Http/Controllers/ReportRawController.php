@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Project;
+use App\Models\Report;
 
 class ReportRawController extends Controller
 {
-    public function __invoke(Project $project)
+    public function __invoke(Report $report)
     {
-        $report = $project->getReviewReport();
-
         return view('exports.project-report', [
-            'project' => $project,
+            'project' => $report->project,
+            'report' => $report,
             'issues' => $report->reportableIssues(),
             'format' => 'raw',
         ]);

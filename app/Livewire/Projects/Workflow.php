@@ -2,9 +2,8 @@
 
 namespace App\Livewire\Projects;
 
-use App\Events\ProjectChanged;
 use App\Models\Project;
-use Laravel\Pennant\Feature;
+use App\Services\ProjectWorkflowService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -18,10 +17,6 @@ class Workflow extends Component
     {
         if ($this->project->isNotStarted() && $this->project->reviewer) {
             return "Are you ready to have {$this->project->reviewer->name} start work on the project?";
-        }
-
-        if (! Feature::active('verification-reviews') && $this->project->isReviewComplete()) {
-            return "The review is complete, but you can re-open it if you need to make changes.";
         }
 
         return $this->project->status->description();
@@ -67,38 +62,38 @@ class Workflow extends Component
         $this->dispatch('refresh-project');
     }
 
-    public function updateStatus(string $direction): void
+    public function startReview(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->isNotStarted()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
+    public function startVerification(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->isReadyForVerification()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
+    public function closeProject(ProjectWorkflowService $projectWorkflow): void
+    {
+        if ($this->project->isInVerification() && $this->project->getVerificationReport()?->isCompleted()) {
+            $this->updateStatus('next', $projectWorkflow);
+        }
+    }
+
+    public function updateStatus(string $direction, ProjectWorkflowService $projectWorkflow): void
     {
         $this->authorize('update-status', $this->project);
 
         $this->dispatch('close-update-status');
 
-        $currentStatus = $this->project->status;
-        switch ($direction) {
-            case 'next':
-                $this->project->update([
-                    'status' => $currentStatus->nextStatus(),
-                    'completed_at' => $currentStatus->nextStatus()->isReviewComplete()
-                        ? now()
-                        : $this->project->completed_at,
-                ]);
-                break;
-            case 'previous':
-                if ($currentStatus->isReviewComplete()) {
-                    $this->project->getReviewReport()->rollbackReport();
-                }
-                $this->project->update([
-                    'status' => $currentStatus->previousStatus(),
-                    'completed_at' => ($currentStatus->previousStatus()->isInProgress())
-                        ? null
-                        : $this->project->completed_at,
-                ]);
-                break;
-            default:
-                throw new \InvalidArgumentException("Invalid direction: $direction");
-        }
-
-        event(new ProjectChanged($this->project, 'status changed'));
+        match ($direction) {
+            'next' => $projectWorkflow->advance($this->project),
+            'previous' => $projectWorkflow->rollback($this->project),
+            default => throw new \InvalidArgumentException("Invalid direction: $direction"),
+        };
 
         $this->dispatch('refresh-project');
     }

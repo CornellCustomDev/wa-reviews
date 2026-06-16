@@ -28,6 +28,7 @@ class ProjectVerifierTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::ReviewComplete,
         ]);
+        $project->reviewReport()->update(['completed_at' => now()]);
 
         $updateVerifier = Livewire::test(UpdateVerifier::class, ['project' => $project]);
 

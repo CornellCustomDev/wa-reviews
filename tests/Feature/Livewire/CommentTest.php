@@ -21,7 +21,11 @@ class CommentTest extends FeatureTestCase
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::ReviewComplete,
+        ]);
+        $project->reviewReport()->update(['completed_at' => now()]);
         $project->assignToUser($user);
         $issue = Issue::factory()->create(['project_id' => $project->id]);
 
@@ -48,6 +52,7 @@ class CommentTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::ReviewComplete,
         ]);
+        $project->reviewReport()->update(['completed_at' => now()]);
         $project->addReportViewer($viewer);
         $issue = Issue::factory()->create(['project_id' => $project->id]);
 
@@ -140,7 +145,11 @@ class CommentTest extends FeatureTestCase
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $team = $user->teams()->first();
-        $project = Project::factory()->create(['team_id' => $team->id, 'status' => ProjectStatus::ReviewComplete]);
+        $project = Project::factory()->create([
+            'team_id' => $team->id,
+            'status' => ProjectStatus::ReviewComplete,
+        ]);
+        $project->reviewReport()->update(['completed_at' => now()]);
         $project->assignToUser($user);
         $scope = Scope::factory()->create(['project_id' => $project->id]);
 

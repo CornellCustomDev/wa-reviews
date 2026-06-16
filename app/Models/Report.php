@@ -46,11 +46,21 @@ class Report extends Model
             ->withPivot(['status']);
     }
 
+    public function isVerification(): bool
+    {
+        return $this->type == ReportType::Verification;
+    }
+
     public function reportableIssues(): Collection
     {
         $query = $this->completed_at
             ? $this->issues()
             : $this->project->issues()->isReportable();
+
+        // If this is a verification report, only include outstanding issues
+        if ($this->type === ReportType::Verification) {
+            $query->whereIn('status', IssueStatus::forReport($this->type));
+        }
 
         return $query
             ->with(['scope', 'guideline:id,number,name,criterion_id', 'guideline.criterion:id,number,name,level'])

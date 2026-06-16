@@ -24,7 +24,7 @@ class ProjectPolicy
     {
         return $project->team->isTeamMember($user)
             || $user->can('manage-projects', $project->team)
-            || ($project->isReportViewer($user) && ($project->hasBeenReviewed() || $project->isClosed()));
+            || ($project->isReportViewer($user) && $project->hasBeenReviewed());
     }
 
     public function create(User $user, Team $team): bool
@@ -68,8 +68,8 @@ class ProjectPolicy
 
     public function updateVerifier(User $user, Project $project, ?User $verifier = null): bool
     {
-        // Only projects in review can update the verifier
-        if (! $project->hasBeenReviewed()) {
+        // Only open projects in review can update the verifier
+        if ($project->isActive() || $project->isClosed()) {
             return false;
         }
 

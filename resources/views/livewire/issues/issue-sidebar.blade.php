@@ -10,14 +10,12 @@
                 <span x-show="$wire.showAnalyzer">Hide </span> Analyze
             </x-forms.button>
         @endcan
-        @feature('comments')
-            <x-forms.button wire:click="clickComments()" icon="chat-bubble-oval-left" @class(['secondary' => $showComments])>
-                <span x-show="$wire.showComments">Hide </span> Comments
-                @if($this->commentsCount > 0)
-                    <x-forms.button.badge>{{ $this->commentsCount }}</x-forms.button.badge>
-                @endif
-            </x-forms.button>
-        @endfeature
+        <x-forms.button wire:click="clickComments()" icon="chat-bubble-oval-left" @class(['secondary' => $showComments])>
+            <span x-show="$wire.showComments">Hide </span> Comments
+            @if($this->commentsCount > 0)
+                <x-forms.button.badge>{{ $this->commentsCount }}</x-forms.button.badge>
+            @endif
+        </x-forms.button>
     </div>
 
     <div x-show="$wire.showChat" x-cloak>
@@ -30,10 +28,8 @@
         <livewire:issues.issue-analyzer :$issue />
     </div>
 
-    @feature('comments')
-        <div x-show="$wire.showComments" x-cloak>
-            <hr>
-            <livewire:comments.comments :commentable="$issue" />
-        </div>
-    @endfeature
+    <div x-show="$wire.showComments" x-cloak>
+        <hr>
+        <livewire:comments.comments :commentable="$issue" />
+    </div>
 </div>

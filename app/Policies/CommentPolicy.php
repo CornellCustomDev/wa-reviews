@@ -14,8 +14,8 @@ class CommentPolicy
     {
         $project = $commentable->project;
 
-        // Projects can only be commented on if they are open and have been reviewed
-        if ($project->isClosed() || ! $project->hasBeenReviewed()) {
+        // Projects can only be commented on after the initial review
+        if ($project->isActive() || $project->isClosed()) {
             return false;
         }
 

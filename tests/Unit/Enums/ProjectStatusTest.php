@@ -95,16 +95,6 @@ class ProjectStatusTest extends TestCase
     }
 
     #[Test]
-    public function is_reviewed_returns_true_for_review_phases_only(): void
-    {
-        $this->assertFalse(ProjectStatus::NotStarted->hasBeenReviewed());
-        $this->assertFalse(ProjectStatus::InProgress->hasBeenReviewed());
-        $this->assertTrue(ProjectStatus::ReviewComplete->hasBeenReviewed());
-        $this->assertTrue(ProjectStatus::VerificationReview->hasBeenReviewed());
-        $this->assertFalse(ProjectStatus::Closed->hasBeenReviewed());
-    }
-
-    #[Test]
     public function is_review_complete(): void
     {
         $this->assertTrue(ProjectStatus::ReviewComplete->isReviewComplete());

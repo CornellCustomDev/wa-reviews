@@ -47,6 +47,8 @@ class Project extends Model
         'team:id,name',
     ];
 
+    private ?Report $verificationReport = null;
+
     protected static function booted(): void
     {
         static::created(function (Project $project) {
@@ -108,6 +110,16 @@ class Project extends Model
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);
+    }
+
+    public function reviewReport(): HasOne
+    {
+        return $this->hasOne(Report::class)->where('type', ReportType::Review);
+    }
+
+    public function verificationReports(): HasMany
+    {
+        return $this->hasMany(Report::class)->where('type', ReportType::Verification);
     }
 
     public function reportViewers(): BelongsToMany
@@ -207,6 +219,11 @@ class Project extends Model
         return $user->id === $this->verifier?->id;
     }
 
+    public function statusLabel(): string
+    {
+        return $this->status?->label() ?? ProjectStatus::NotStarted->label();
+    }
+
     public function isNotStarted(): bool
     {
         return $this->status->isNotStarted();
@@ -222,14 +239,17 @@ class Project extends Model
         return $this->status->isActive();
     }
 
-    public function isReviewComplete(): bool
-    {
-        return $this->status->isReviewComplete();
-    }
-
     public function hasBeenReviewed(): bool
     {
-        return $this->status->hasBeenReviewed();
+        return $this->reviewReport->isCompleted();
+    }
+
+    public function isReadyForVerification(): bool
+    {
+        return $this->hasBeenReviewed()
+            && $this->verifier
+            && ! $this->isInVerification()
+            && ! $this->isClosed();
     }
 
     public function isInVerification(): bool
@@ -237,17 +257,28 @@ class Project extends Model
         return $this->status->isInVerification();
     }
 
+    public function hasBeenVerified(): bool
+    {
+        return $this->getVerificationReport()?->isCompleted() ?? false;
+    }
+
     public function isClosed(): bool
     {
         return $this->status->isClosed();
     }
 
-    public function getReviewReport(): Report
+    public function getVerificationReport(): ?Report
     {
-        /** @var Report $report */
-        $report = $this->reports()->firstWhere('type', ReportType::Review);
+        $this->verificationReport ??= $this->verificationReports()->first();
 
-        return $report;
+        return $this->verificationReport;
+    }
+
+    public function createVerificationReportIfNeeded(): void
+    {
+        if ($this->getVerificationReport() === null) {
+            $this->reports()->create(['type' => ReportType::Verification]);
+        }
     }
 
     public function addReportViewer(User $user): void
@@ -349,6 +380,7 @@ class Project extends Model
     {
         return static::query()->visibleTo($user)
             ->whereIn('status', ProjectStatus::reviewedCases())
+            ->whereNotIn('status', ProjectStatus::closedCases())
             ->withReviewer()
             ->withVerifier()
             ->select('projects.*');

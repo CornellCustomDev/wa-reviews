@@ -14,7 +14,14 @@ class ReportPolicy
 
     public function view(User $user, Report $report): bool
     {
-        return false;
+        $project = $report->project;
+        if ($report->isCompleted()) {
+            return $project->team->isTeamMember($user)
+                || $user->can('manage-projects', $project->team)
+                || $project->isReportViewer($user);
+        }
+
+        return $user->can('update', $report);
     }
 
     public function create(User $user): bool
