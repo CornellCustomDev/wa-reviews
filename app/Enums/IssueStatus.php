@@ -31,7 +31,6 @@ enum IssueStatus: string
             ProjectStatus::ReviewComplete => [
                 self::Reviewed,
                 self::Fixed,
-                ! Feature::active('verification-reviews') ? self::Verified : null,
                 self::FalsePositive,
                 self::WontFix
             ],

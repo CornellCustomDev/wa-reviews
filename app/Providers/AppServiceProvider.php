@@ -64,8 +64,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Feature::resolveScopeUsing(fn () => null);
-        Feature::define('comments', false);
-        Feature::define('verification-reviews', false);
 
         $this->app['prism-manager']->extend('cornell', function ($app, $config) {
             return new CornellApi(

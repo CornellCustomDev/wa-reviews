@@ -13,20 +13,9 @@
             Project
         </flux:table.column>
         <flux:table.column>Site</flux:table.column>
-        @feature('verification-reviews')
-            <flux:table.column>
-                Reviewers
-            </flux:table.column>
-        @else
-            <flux:table.column
-                sortable
-                :sorted="$this->isSorted('reviewer.name', $pageName)"
-                :direction="$this->sortDirection($pageName)"
-                wire:click="sortBy('reviewer.name', '{{ $pageName }}', 'asc')"
-            >
-                Reviewer
-            </flux:table.column>
-        @endfeature
+        <flux:table.column>
+            Reviewers
+        </flux:table.column>
         <flux:table.column
             class="w-[150px]"
             sortable

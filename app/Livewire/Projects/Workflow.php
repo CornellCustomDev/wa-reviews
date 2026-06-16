@@ -20,10 +20,6 @@ class Workflow extends Component
             return "Are you ready to have {$this->project->reviewer->name} start work on the project?";
         }
 
-        if (! Feature::active('verification-reviews') && $this->project->isReviewComplete()) {
-            return "The review is complete, but you can re-open it if you need to make changes.";
-        }
-
         return $this->project->status->description();
     }
 
