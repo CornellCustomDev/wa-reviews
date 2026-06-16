@@ -121,6 +121,7 @@ class ProjectReviewerTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::VerificationReview,
         ]);
+        $project->createVerificationReportIfNeeded();
         $project->assignToUser($user);
 
         // VerificationReview → Closed: should set completed_at

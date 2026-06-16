@@ -175,8 +175,7 @@ class ProjectWorkflowServiceTest extends FeatureTestCase
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::ReviewComplete,
         ]);
-        $report = $project->getReviewReport();
-        $report->update([
+        $project->reviewReport()->update([
             'completed_at' => now(),
             'completed_by' => $user->id,
             'summary' => 'Test summary',
@@ -184,8 +183,10 @@ class ProjectWorkflowServiceTest extends FeatureTestCase
 
         $this->service->rollback($project);
 
-        $this->assertNull($report->fresh()->completed_at);
-        $this->assertNull($report->fresh()->completed_by);
+        $report = $project->reviewReport;
+
+        $this->assertNull($report->completed_at);
+        $this->assertNull($report->completed_by);
     }
 
     #[Test]

@@ -5,9 +5,9 @@ namespace Tests\Feature\Livewire;
 use App\Enums\ProjectStatus;
 use App\Enums\ReportType;
 use App\Enums\Roles;
-use App\Livewire\Projects\Report;
 use App\Livewire\Projects\ShowProject;
 use App\Livewire\Projects\Workflow;
+use App\Livewire\Reports\ShowReport;
 use App\Models\Project;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -63,6 +63,7 @@ class WorkflowTest extends FeatureTestCase
             'status' => ProjectStatus::Closed,
         ]);
         $project->assignToUser($user);
+        $project->reviewReport()->update(['completed_at' => now()]);
 
         Livewire::test(Workflow::class, ['project' => $project])
             ->assertSee('View Report');
@@ -79,7 +80,7 @@ class WorkflowTest extends FeatureTestCase
         ]);
         $project->assignToUser($user);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->assertDontSee('Report Viewers');
     }
 
@@ -94,7 +95,7 @@ class WorkflowTest extends FeatureTestCase
         ]);
         $project->assignToUser($user);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->assertSee('Report Viewers');
     }
 
@@ -110,31 +111,19 @@ class WorkflowTest extends FeatureTestCase
     }
 
     #[Test]
-    public function view_report_button_label_is_view_verification_report_when_in_verification_review(): void
+    public function review_verification_report_button_is_visible_in_verification_review(): void
     {
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $project = Project::factory()->create([
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::VerificationReview,
         ]);
+        $project->assignToUser($user);
+        $project->reviewReport()->update(['completed_at' => now()]);
+        $project->reports()->create(['type' => ReportType::Verification]);
 
         Livewire::test(Workflow::class, ['project' => $project])
-            ->assertSee('View Verification Report')
-            ->assertDontSee('View Report');
-    }
-
-    #[Test]
-    public function view_report_button_label_is_view_report_when_in_review_complete(): void
-    {
-        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
-        $project = Project::factory()->create([
-            'team_id' => $user->teams()->first()->id,
-            'status' => ProjectStatus::ReviewComplete,
-        ]);
-
-        Livewire::test(Workflow::class, ['project' => $project])
-            ->assertSee('View Report')
-            ->assertDontSee('View Verification Report');
+            ->assertSee('Review Verification Report');
     }
 
     #[Test]
@@ -146,7 +135,11 @@ class WorkflowTest extends FeatureTestCase
             'status' => ProjectStatus::Closed,
         ]);
         $project->assignToUser($user);
-        $project->reports()->create(['type' => ReportType::Verification]);
+        $project->reviewReport()->update(['completed_at' => now()]);
+        $project->reports()->create([
+            'type' => ReportType::Verification,
+            'completed_at' => now(),
+        ]);
 
         Livewire::test(Workflow::class, ['project' => $project])
             ->assertSee('View Verification Report');
@@ -161,6 +154,7 @@ class WorkflowTest extends FeatureTestCase
             'status' => ProjectStatus::Closed,
         ]);
         $project->assignToUser($user);
+        $project->reviewReport()->update(['completed_at' => now()]);
 
         Livewire::test(Workflow::class, ['project' => $project])
             ->assertSee('View Report')

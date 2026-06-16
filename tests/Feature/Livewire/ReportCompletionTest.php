@@ -4,9 +4,8 @@ namespace Tests\Feature\Livewire;
 
 use App\Enums\IssueStatus;
 use App\Enums\ProjectStatus;
-use App\Enums\ReportType;
 use App\Enums\Roles;
-use App\Livewire\Projects\Report;
+use App\Livewire\Reports\ShowReport;
 use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Scope;
@@ -33,7 +32,7 @@ class ReportCompletionTest extends FeatureTestCase
         $user = $this->getLoggedInTestUser([Roles::Reviewer]);
         $project = Project::factory()->create(['team_id' => $user->teams()->first()->id]);
 
-        $report = $project->reports()->where('type', 'review')->first();
+        $report = $project->reviewReport;
 
         $this->assertNotNull($report, 'A review report should be created when a project is created.');
     }
@@ -43,15 +42,15 @@ class ReportCompletionTest extends FeatureTestCase
     {
         $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
 
-        $this->assertFalse($project->getReviewReport()->isReady());
+        $this->assertFalse($project->reviewReport->isReady());
     }
 
     #[Test]
     public function is_report_ready_returns_true_when_in_progress_and_report_has_summary(): void
     {
         $project = Project::factory()->create(['status' => ProjectStatus::InProgress]);
-        $report = $project->getReviewReport();
-        $report->update(['summary' => 'Some findings']);
+        $project->reviewReport()->update(['summary' => 'Some findings']);
+        $report = $project->reviewReport;
 
         $this->assertTrue($report->isReady());
     }
@@ -67,7 +66,7 @@ class ReportCompletionTest extends FeatureTestCase
         ]);
         $project->assignToUser($user);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport')
             ->assertForbidden();
 
@@ -83,10 +82,10 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Reviewed']);
+        $project->reviewReport()->update(['summary' => 'Reviewed']);
         $project->assignToUser($user);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport')
             ->assertHasNoErrors()
             ->assertRedirect(route('project.show', $project));
@@ -104,11 +103,10 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $team->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Reviewed']);
+        $project->reviewReport()->update(['summary' => 'Reviewed']);
         $project->assignToUser($otherUser);
 
-        Livewire::test(Report::class, ['project' => $project])
-            ->call('completeReport')
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->assertForbidden();
     }
 
@@ -120,15 +118,15 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Test summary']);
+        $project->reviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project, ['status' => null]);
         $project->refresh();
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport');
 
-        $report = $project->refresh()->getReviewReport();
+        $report = $project->refresh()->reviewReport;
 
         $this->assertSame(IssueStatus::Reviewed, $issue->fresh()->status);
         $this->assertSame(IssueStatus::Reviewed, $report->issues()->first()->status);
@@ -144,14 +142,14 @@ class ReportCompletionTest extends FeatureTestCase
         ]);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project, ['status' => IssueStatus::WontFix]);
-        $project->getReviewReport()->update(['summary' => 'Test summary']);
+        $project->reviewReport()->update(['summary' => 'Test summary']);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport');
 
         $this->assertSame(IssueStatus::WontFix, $issue->fresh()->status);
 
-        $report = $project->refresh()->getReviewReport();
+        $report = $project->refresh()->reviewReport;
         $this->assertCount(1, $report->issues);
     }
 
@@ -163,15 +161,15 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Test summary']);
+        $project->reviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $issue = $this->makeIssueForProject($project);
         $this->assertNull($issue->report_id);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport');
 
-        $report = $project->refresh()->getReviewReport();
+        $report = $project->refresh()->reviewReport;
         $this->assertNotNull($report, 'A report record should exist on review completion.');
         $this->assertSame($report->id, $issue->fresh()->report_id);
     }
@@ -184,7 +182,7 @@ class ReportCompletionTest extends FeatureTestCase
             'team_id' => $user->teams()->first()->id,
             'status' => ProjectStatus::InProgress,
         ]);
-        $project->getReviewReport()->update(['summary' => 'Test summary']);
+        $project->reviewReport()->update(['summary' => 'Test summary']);
         $project->assignToUser($user);
         $scope = Scope::factory()->create(['project_id' => $project->id]);
         $issues = Issue::factory()->count(3)->create([
@@ -192,61 +190,12 @@ class ReportCompletionTest extends FeatureTestCase
             'scope_id' => $scope->id,
         ]);
 
-        Livewire::test(Report::class, ['project' => $project])
+        Livewire::test(ShowReport::class, ['report' => $project->reviewReport])
             ->call('completeReport');
 
-        $report = $project->refresh()->getReviewReport();
+        $report = $project->refresh()->reviewReport;
         $this->assertNotNull($report, 'A report record should exist on review completion.');
 
         $this->assertCount(3, $report->issues, 'All project issues should be associated with the review report.');
-    }
-
-    #[Test]
-    public function report_page_shows_verification_report_when_project_is_in_verification_review(): void
-    {
-        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
-        $project = Project::factory()->create([
-            'team_id' => $user->teams()->first()->id,
-            'status' => ProjectStatus::VerificationReview,
-        ]);
-        $project->assignToUser($user);
-        $project->reports()->create(['type' => ReportType::Verification]);
-
-        $verificationReport = $project->getVerificationReport();
-
-        $component = Livewire::test(Report::class, ['project' => $project]);
-        $this->assertEquals($verificationReport->id, $component->instance()->report->id);
-    }
-
-    #[Test]
-    public function report_page_shows_review_report_when_project_is_in_progress(): void
-    {
-        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
-        $project = Project::factory()->create([
-            'team_id' => $user->teams()->first()->id,
-            'status' => ProjectStatus::InProgress,
-        ]);
-        $project->assignToUser($user);
-
-        $reviewReport = $project->getReviewReport();
-
-        $component = Livewire::test(Report::class, ['project' => $project]);
-        $this->assertEquals($reviewReport->id, $component->instance()->report->id);
-    }
-
-    #[Test]
-    public function report_page_falls_back_to_review_report_when_closed_with_no_verification_report(): void
-    {
-        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
-        $project = Project::factory()->create([
-            'team_id' => $user->teams()->first()->id,
-            'status' => ProjectStatus::Closed,
-        ]);
-        $project->assignToUser($user);
-
-        $reviewReport = $project->getReviewReport();
-
-        $component = Livewire::test(Report::class, ['project' => $project]);
-        $this->assertEquals($reviewReport->id, $component->instance()->report->id);
     }
 }
