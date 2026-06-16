@@ -2,13 +2,13 @@
 
 namespace App\Livewire\Forms;
 
-use App\Models\Project;
+use App\Models\Report;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
 class ReportForm extends Form
 {
-    public ?Project $project;
+    public ?Report $report;
 
     #[Validate('nullable|string', as: 'Site purpose')]
     public string $site_purpose = '';
@@ -21,19 +21,25 @@ class ReportForm extends Form
     #[Validate('nullable|string', as: 'Summary')]
     public string $summary = '';
 
-    public function setModel(Project $project): void
+    public function setModel(Report $report): void
     {
-        $this->project = $project;
-        $this->site_purpose = $project->site_purpose ?? '';
-        $this->urls_included = $project->urls_included ?? '';
-        $this->urls_excluded = $project->urls_excluded ?? '';
-        $this->review_procedure = $project->review_procedure ?? '';
-        $this->summary = $project->summary ?? '';
+        $this->report = $report;
+        $this->site_purpose = $report->project->site_purpose ?? '';
+        $this->urls_included = $report->urls_included ?? '';
+        $this->urls_excluded = $report->urls_excluded ?? '';
+        $this->review_procedure = $report->review_procedure ?? '';
+        $this->summary = $report->summary ?? '';
     }
 
     public function update(): void
     {
         $this->validate();
-        $this->project->update($this->all());
+        $this->report->project->update(['site_purpose' => $this->site_purpose]);
+        $this->report->update([
+            'urls_included'    => $this->urls_included,
+            'urls_excluded'    => $this->urls_excluded,
+            'review_procedure' => $this->review_procedure,
+            'summary'          => $this->summary,
+        ]);
     }
 }

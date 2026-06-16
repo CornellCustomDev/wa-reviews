@@ -53,12 +53,17 @@ trait TestDatabase
         bool $isVerifier = false,
         bool $hasVerifier = false,
         bool $isReportViewer = false,
-        ?ProjectStatus $status = null
+        ProjectStatus $status = ProjectStatus::NotStarted
     ): Project {
         $project = Project::factory()->create([
             'team_id' => $projectTeam->id,
-            'status' => $status ?? ProjectStatus::NotStarted,
+            'status' => $status,
         ]);
+
+        if (! $status->isActive()) {
+            $project->reviewReport->update(['completed_at' => now()]);
+        }
+
         if ($isReviewer) {
             $project->assignment()->create([
                 'user_id' => $user->id,

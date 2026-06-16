@@ -23,7 +23,7 @@
                     @endif
                 </td>
                 <td>{{ $project->created_at->toFormattedDateString() }}</td>
-                <td>{{ $project->status->label() }}</td>
+                <td>{{ $project->statusLabel() }}</td>
                 <td>
                     <x-forms.button.view
                         title="View project {{ $project->id }}"

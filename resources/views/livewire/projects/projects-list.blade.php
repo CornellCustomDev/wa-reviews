@@ -13,20 +13,9 @@
             Project
         </flux:table.column>
         <flux:table.column>Site</flux:table.column>
-        @feature('verification-reviews')
-            <flux:table.column>
-                Reviewers
-            </flux:table.column>
-        @else
-            <flux:table.column
-                sortable
-                :sorted="$this->isSorted('reviewer.name', $pageName)"
-                :direction="$this->sortDirection($pageName)"
-                wire:click="sortBy('reviewer.name', '{{ $pageName }}', 'asc')"
-            >
-                Reviewer
-            </flux:table.column>
-        @endfeature
+        <flux:table.column>
+            Reviewers
+        </flux:table.column>
         <flux:table.column
             class="w-[150px]"
             sortable
@@ -69,7 +58,7 @@
                     @endif
                 </flux:table.cell>
                 <flux:table.cell>
-                    @if($project->hasBeenReviewed() || $project->isClosed())
+                    @if($project->hasBeenReviewed())
                         @if($project->verifier && $project->reviewer)
                             Reviewer: {{ $project->reviewer->name }}
                             <br>
@@ -86,7 +75,7 @@
                 <flux:table.cell class="whitespace-nowrap">
                     {{ $project->created_at->toFormattedDateString() }}
                 </flux:table.cell>
-                <flux:table.cell>{{ $project->status?->label() }}</flux:table.cell>
+                <flux:table.cell>{{ $project->statusLabel() }}</flux:table.cell>
                 <flux:table.cell>
                     <x-forms.button.view
                         title="View project {{ $project->id }}"

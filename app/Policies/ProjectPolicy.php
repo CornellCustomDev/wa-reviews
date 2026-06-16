@@ -24,7 +24,7 @@ class ProjectPolicy
     {
         return $project->team->isTeamMember($user)
             || $user->can('manage-projects', $project->team)
-            || ($project->isReportViewer($user) && ($project->hasBeenReviewed() || $project->isClosed()));
+            || ($project->isReportViewer($user) && $project->hasBeenReviewed());
     }
 
     public function create(User $user, Team $team): bool
@@ -68,8 +68,8 @@ class ProjectPolicy
 
     public function updateVerifier(User $user, Project $project, ?User $verifier = null): bool
     {
-        // Only projects in review can update the verifier
-        if (! $project->hasBeenReviewed()) {
+        // Only open projects in review can update the verifier
+        if ($project->isActive() || $project->isClosed()) {
             return false;
         }
 
@@ -92,30 +92,6 @@ class ProjectPolicy
     {
         // If this is the user's project, they can update the status if it's in progress
         if ($project->isReviewer($user) || $project->isVerifier($user)) {
-            return $user->can('edit-projects', $project->team);
-        }
-
-        return $user->can('manage-projects', $project->team);
-    }
-
-    public function updateReport(User $user, Project $project): bool
-    {
-        // Reviewers can update the report if it is in progress
-        if ($project->isReviewer($user) && $project->isInProgress()) {
-            return $user->can('edit-projects', $project->team);
-        }
-
-        return $user->can('manage-projects', $project->team);
-    }
-
-    public function completeReport(User $user, Project $project): bool
-    {
-        if (! $project->isReportReady()) {
-            return false;
-        }
-
-        // Reviewers can complete the report if it is in progress
-        if ($project->isReviewer($user)) {
             return $user->can('edit-projects', $project->team);
         }
 

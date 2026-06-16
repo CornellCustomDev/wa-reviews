@@ -3,7 +3,6 @@
 namespace App\Enums;
 
 use Illuminate\Support\Str;
-use Laravel\Pennant\Feature;
 
 enum ProjectStatus: string
 {
@@ -17,19 +16,11 @@ enum ProjectStatus: string
 
     public function label(): string
     {
-        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
-            return 'Completed';
-        }
-
         return Str::of($this->value())->replace('_', ' ')->ucfirst();
     }
 
     public function nextStatus(): ProjectStatus
     {
-        if (! Feature::active('verification-reviews') && ($this->isInProgress() || $this->hasBeenReviewed() || $this->isClosed())) {
-            return self::Closed;
-        }
-
         return match ($this) {
             self::NotStarted => self::InProgress,
             self::InProgress => self::ReviewComplete,
@@ -41,10 +32,6 @@ enum ProjectStatus: string
 
     public function previousStatus(): ProjectStatus
     {
-        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
-            return self::InProgress;
-        }
-
         return match ($this) {
             self::NotStarted,
             self::InProgress => self::NotStarted,
@@ -56,15 +43,6 @@ enum ProjectStatus: string
 
     public function description(): string
     {
-        if (! Feature::active('verification-reviews')) {
-            if ($this->isInProgress()) {
-                return 'If the work is finished, mark it as completed in order to make it available in a read-only view.';
-            }
-            if ($this->hasBeenReviewed() || $this->isClosed()) {
-                return 'The review is complete, but you can re-open it if you need to make changes.';
-            }
-        }
-
         return match ($this) {
             self::NotStarted => 'No reviewer has been assigned to this project. Are you sure you want to start the review?',
             self::InProgress => 'When the review is finished, mark it as complete.',
@@ -76,10 +54,6 @@ enum ProjectStatus: string
 
     public function nextActionLabel(): ?string
     {
-        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
-            return null;
-        }
-
         return match ($this) {
             self::NotStarted => 'Start Review',
             self::InProgress => 'Complete Review',
@@ -91,10 +65,6 @@ enum ProjectStatus: string
 
     public function previousActionLabel(): ?string
     {
-        if (! Feature::active('verification-reviews') && ($this->hasBeenReviewed() || $this->isClosed())) {
-            return 'Re-open Review';
-        }
-
         return match ($this) {
             self::NotStarted => null,
             self::InProgress => 'Stop Review',
@@ -121,20 +91,7 @@ enum ProjectStatus: string
 
     public function isReviewComplete(): bool
     {
-        if (! Feature::active('verification-reviews')) {
-            return $this === self::Closed;
-        }
-
         return $this === self::ReviewComplete;
-    }
-
-    public function hasBeenReviewed(): bool
-    {
-        if (! Feature::active('verification-reviews')) {
-            return $this === self::Closed;
-        }
-
-        return in_array($this, self::reviewedCases());
     }
 
     public function isInVerification(): bool
@@ -159,10 +116,6 @@ enum ProjectStatus: string
 
     public static function closedCases(): array
     {
-        if (! Feature::active('verification-reviews')) {
-            return [...self::reviewedCases(), self::Closed];
-        }
-
         return [self::Closed];
     }
 }
