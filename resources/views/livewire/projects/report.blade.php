@@ -97,7 +97,7 @@
                         href="{{ route('guidelines.show', $issue->guideline) }}"
                         title="View Guideline {{ $issue->guideline->number }}"
                         data-cds-button-assessment
-                        class="{{ Str::of($issue->assessment->value())->lower()->replace('/', '') }}"
+                        class="{{ Str::of(($issue->assessment ?? \App\Enums\Assessment::Warn)->value())->lower()->replace('/', '') }}"
                         size="xs"
                     >{{ $issue->getGuidelineInstanceNumber() }}</x-forms.button>
 
@@ -111,7 +111,7 @@
                 @endif
                 <h5>WCAG 2 Success Criterion: {{ $issue->guideline->criterion->getLongName() }}</h5>
                 <x-forms.field-display label="Assessment" variation="inline" @class(['mb-0!' => $issue->impact])>
-                    {{ $issue->assessment->getDescription() }}
+                    {{ ($issue->assessment  ?? \App\Enums\Assessment::Warn)->getDescription() }}
                 </x-forms.field-display>
 
                 @if($issue->impact)

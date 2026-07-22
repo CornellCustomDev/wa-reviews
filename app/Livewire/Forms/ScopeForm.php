@@ -22,9 +22,9 @@ class ScopeForm extends Form
     public function setModel(Scope $scope): void
     {
         $this->scope = $scope;
-        $this->title = $scope->title;
-        $this->url = $scope->url;
-        $this->notes = $scope->notes;
+        $this->title = $scope->title ?? '';
+        $this->url = $scope->url ?? '';
+        $this->notes = $scope->notes ?? '';
     }
 
     public function getModel(): Scope
