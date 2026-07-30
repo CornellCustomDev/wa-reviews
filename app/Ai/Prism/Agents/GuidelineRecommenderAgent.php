@@ -88,7 +88,7 @@ class GuidelineRecommenderAgent extends PendingTextRequest
     public function storeResponse(?Response $response): void
     {
         if ($response) {
-            $messageMap = new MessageMap($response->responseMessages->toArray(), []);
+            $messageMap = new MessageMap($response->messages->all(), []);
             $messages = $messageMap();
         } else {
             $messages = [];

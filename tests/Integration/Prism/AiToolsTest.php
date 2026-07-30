@@ -5,8 +5,12 @@ namespace Tests\Integration\Prism;
 use App\Ai\Prism\PrismAction;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Prism\Prism\Facades\Prism;
 use Prism\Prism\Facades\Tool;
-use Prism\Prism\Prism;
+use Prism\Prism\Providers\OpenAI\Maps\MessageMap;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
+use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
+use Prism\Prism\ValueObjects\Messages\UserMessage;
 use Tests\TestCase;
 
 class AiToolsTest extends TestCase
@@ -57,13 +61,34 @@ class AiToolsTest extends TestCase
             $finalResponse = $streamedResponse;
         }
 
-        $text = $finalResponse?->text ?? '';
+        $response = $finalResponse?->toResponse();
+        $text = $response->text ?? '';
 
         $this->assertStringContainsString('Paris', $text);
         $this->assertStringContainsString('sunny', $text);
         $this->assertStringContainsString('72', $text);
 
-        // $toolResults = $response->toolResults;
+        // The full conversation must survive the tool call step, since the
+        // response messages are what get persisted to the chat history
+        $messageClasses = $response->messages->map(fn ($message) => $message::class)->all();
+
+        $this->assertSame([
+            UserMessage::class,
+            AssistantMessage::class,
+            ToolResultMessage::class,
+            AssistantMessage::class,
+        ], $messageClasses);
+
+        // Message objects, not arrays, must reach the provider MessageMap, so
+        // the messages have to be pulled off the collection with all()
+        $mapped = (new MessageMap($response->messages->all(), []))();
+
+        $mappedKinds = array_map(fn (array $message) => $message['role'] ?? $message['type'], $mapped);
+
+        $this->assertSame(
+            ['user', 'function_call', 'function_call_output', 'assistant'],
+            $mappedKinds,
+        );
     }
 
     private function getWeatherTool(): \Prism\Prism\Tool
