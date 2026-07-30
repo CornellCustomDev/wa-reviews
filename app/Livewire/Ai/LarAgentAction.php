@@ -21,6 +21,17 @@ trait LarAgentAction
 
     public function initiateAction(): void
     {
+        if ($this->streaming) {
+            return;
+        }
+
+        if (blank($this->userMessage)) {
+            $this->feedback = '**Error:** Enter a message before sending.';
+            $this->showFeedback = true;
+
+            return;
+        }
+
         // Reset state for a new action
         $this->feedback = '';
         $this->showFeedback = false;
@@ -39,12 +50,20 @@ trait LarAgentAction
 
     public function streamResponse(): void
     {
+        if (blank($this->userMessage)) {
+            $this->streaming = false;
+            $this->feedback = '**Error:** Enter a message before sending.';
+            $this->showFeedback = true;
+
+            return;
+        }
+
         $this->stream('streamedResponse', 'Retrieving response...');
         $start = microtime(true);
 
         try {
             $agent = $this->getAgent();
-            $stream = $agent->respondStreamed($this->userMessage);
+            $stream = $agent->message($this->userMessage)->respondStreamed();
             foreach ($stream as $chunk) {
                 $elapsed = round(microtime(true) - $start, 1);
                 if ($chunk instanceof ToolCallMessage) {

@@ -79,6 +79,18 @@ trait LarAgentChat
 
     public function sendUserMessage(): void
     {
+        if ($this->streaming) {
+            $this->showErrorFeedback('A response is already in progress.');
+
+            return;
+        }
+
+        if (blank($this->userMessage)) {
+            $this->showErrorFeedback('Enter a message before sending.');
+
+            return;
+        }
+
         $this->feedback = '';
         $this->showFeedback = false;
         $this->toolsCalled = [];
@@ -89,12 +101,20 @@ trait LarAgentChat
 
     public function streamUserMessage(): void
     {
+        if (blank($this->userMessage)) {
+            $this->streaming = false;
+            $this->showErrorFeedback('Enter a message before sending.');
+
+            return;
+        }
+
         $this->stream('streamedResponse', 'Retrieving response...');
         $start = microtime(true);
+        $agent = null;
 
         try {
             $agent = $this->getAgent();
-            $stream = $agent->respondStreamed($this->userMessage);
+            $stream = $agent->message($this->userMessage)->respondStreamed();
             foreach ($stream as $chunk) {
                 $elapsed = round(microtime(true) - $start, 1);
                 if ($chunk instanceof ToolCallMessage) {
@@ -138,5 +158,16 @@ trait LarAgentChat
     {
         unset($this->chats);
         unset($this->chatMessages);
+    }
+
+    /**
+     * Surface a refused send in the feedback panel. Every path that declines to
+     * call the agent must report why, so the chat never appears to silently
+     * ignore the user.
+     */
+    protected function showErrorFeedback(string $message): void
+    {
+        $this->feedback = "**Error:** {$message}";
+        $this->showFeedback = true;
     }
 }
