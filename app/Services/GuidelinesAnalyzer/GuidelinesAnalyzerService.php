@@ -190,7 +190,7 @@ class GuidelinesAnalyzerService implements GuidelinesAnalyzerServiceInterface
     public static function getScopeIssuesContext(Scope $scope): string
     {
 
-        $issues = $scope->issues()->with('guideline')->get()
+        $issues = $scope->issues()->with('guideline')->whereNotNull('guideline_id')->get()
             ->map(fn (Issue $issue) => self::mapIssueToSchema($issue))
             ->each(fn ($issue) => $issue['url'] = route('guidelines.show', $issue['number']));
 
