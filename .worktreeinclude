@@ -1,0 +1,6 @@
+.config/
+.claude/
+.env
+.mcp.json
+CLAUDE.md
+auth.json

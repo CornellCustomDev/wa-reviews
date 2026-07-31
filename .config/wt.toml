@@ -1,0 +1,39 @@
+# Copy .env from primary, then generate a worktree-specific lando config.
+# .worktreeinclude limits copy-ignored to only .env (not .lando.local.yml).
+[[pre-start]]
+copy = "wt step copy-ignored"
+
+[[pre-start]]
+env = "sed -i '' 's|^APP_URL=.*|APP_URL=https://wa-reviews-{{ branch | sanitize }}.lndo.site|' {{ worktree_path }}/.env"
+lando-config = """
+cat > .lando.local.yml <<'YAML'
+name: wa-reviews-{{ branch | sanitize }}
+services:
+  appserver:
+    scanner: false
+YAML
+"""
+db-dump = "cd {{ primary_worktree_path }} && lando db-export {{ branch | sanitize }}.sql"
+
+[[pre-start]]
+db-move = "mv {{ primary_worktree_path }}/{{ branch | sanitize }}.sql.gz {{ worktree_path }}/"
+
+[[pre-start]]
+lando-start = "lando start"
+
+[[pre-start]]
+db-import = "lando db-import {{ branch | sanitize }}.sql.gz"
+
+[[pre-start]]
+db-migrate = "lando artisan migrate"
+
+[[pre-start]]
+phpunit = "lando artisan test"
+
+# Show each worktree's lando URL in wt list
+[list]
+url = "https://wa-reviews-{{ branch | sanitize }}.lndo.site"
+
+# Destroy lando environment when removing a worktree
+[[pre-remove]]
+lando-destroy = "lando destroy --yes 2>/dev/null || true"
