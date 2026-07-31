@@ -19,7 +19,7 @@ final class ServiceProvider extends LaravelServiceProvider
 {
     public function boot(): void
     {
-        if (isset($_SERVER['PAO_DISABLE'])) {
+        if (filter_var($_SERVER['PAO_DISABLE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 
@@ -31,7 +31,7 @@ final class ServiceProvider extends LaravelServiceProvider
             return;
         }
 
-        if (! AgentDetector::detect()->isAgent && ! isset($_SERVER['PAO_FORCE'])) {
+        if (! AgentDetector::detect()->isAgent && ! filter_var($_SERVER['PAO_FORCE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 

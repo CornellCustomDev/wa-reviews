@@ -54,6 +54,8 @@ if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wir
             <div {{ $header->attributes->class('col-span-3 flex items-center gap-1 mb-2') }}>
                 {{ $header }}
             </div>
+        <?php else: ?>
+            <div class="col-span-3 hidden"></div>
         <?php endif; ?>
 
         <div class="col-span-4 [[inline]_&]:col-span-2 [[inline]_&]:col-start-2">
@@ -84,6 +86,8 @@ if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wir
             <div {{ $footer->attributes->class('col-span-4 flex items-center gap-1') }}>
                 {{ $footer }}
             </div>
+        <?php else: ?>
+            <div class="col-span-4 hidden"></div>
         <?php endif; ?>
     </ui-composer>
 </flux:with-field>

@@ -141,7 +141,7 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
      * If no arguments are passed, the default password rule configuration will be returned.
      *
      * @param  static|callable|null  $callback
-     * @return static|void
+     * @return ($callback is null ? static : void)
      *
      * @throws \InvalidArgumentException
      */
@@ -467,7 +467,7 @@ class Password implements DataAwareRule, ImplicitRule, IteratorAggregate, Rule, 
     /**
      * Get an iterator for the password validation rules.
      *
-     * @return \ArrayIterator<TKey, TValue>
+     * @return \ArrayIterator<int, mixed>
      */
     public function getIterator(): Traversable
     {

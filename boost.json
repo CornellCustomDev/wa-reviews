@@ -6,7 +6,7 @@
     "cloud": false,
     "guidelines": true,
     "mcp": true,
-    "nightwatch": false,
+    "nightwatch": true,
     "packages": [
         "prism-php/prism"
     ],

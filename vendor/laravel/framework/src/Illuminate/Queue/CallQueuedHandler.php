@@ -139,12 +139,12 @@ class CallQueuedHandler
         return (new Pipeline($this->container))->send($command)
             ->through(array_merge(method_exists($command, 'middleware') ? $command->middleware() : [], $command->middleware ?? []))
             ->finally(function ($command) use (&$lockReleased) {
-                if (! $lockReleased && $this->commandShouldBeUniqueUntilProcessing($command) && ! $command->job->isReleased() && $command->job->attempts() <= 1) {
+                if (! $lockReleased && $this->commandShouldBeUniqueUntilProcessing($command) && ! $command->job->isReleased()) {
                     $this->ensureUniqueJobLockIsReleased($command);
                 }
             })
             ->then(function ($command) use ($job, &$lockReleased) {
-                if ($this->commandShouldBeUniqueUntilProcessing($command) && $job->attempts() <= 1) {
+                if ($this->commandShouldBeUniqueUntilProcessing($command)) {
                     $this->ensureUniqueJobLockIsReleased($command);
 
                     $lockReleased = true;
@@ -251,12 +251,14 @@ class CallQueuedHandler
 
         $lock = new DebounceLock($this->container->make(Cache::class));
 
+        $currentOwner = $lock->getCurrentOwner($command);
+
         // Fail-open: if the lock no longer exists (cache eviction, TTL expiry), let the job execute...
-        if (! $lock->lockExists($command)) {
+        if (is_null($currentOwner)) {
             return false;
         }
 
-        return ! $lock->isCurrentOwner($command, $owner);
+        return $currentOwner !== $owner;
     }
 
     /**

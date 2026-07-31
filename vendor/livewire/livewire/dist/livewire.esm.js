@@ -9304,6 +9304,22 @@ function dataSet(object, key, value) {
 function isNumeric(subject) {
   return !isNaN(parseInt(subject));
 }
+function dataDelete(object, key) {
+  let segments = parsePathSegments(key);
+  if (segments.length === 1) {
+    if (Array.isArray(object)) {
+      object.splice(segments[0], 1);
+    } else {
+      delete object[segments[0]];
+    }
+    return;
+  }
+  let firstSegment = segments.shift();
+  let restOfSegments = segments.join(".");
+  if (object[firstSegment] !== void 0) {
+    dataDelete(object[firstSegment], restOfSegments);
+  }
+}
 function diff(left, right, diffs = {}, path = "") {
   if (left === right)
     return diffs;
@@ -9579,7 +9595,7 @@ function handleFileUpload(el, property, component, cleanup) {
     }
   };
   el.addEventListener("change", eventHandler);
-  component.$wire.$watch(property, (value) => {
+  let unwatch = component.$wire.$watch(property, (value) => {
     if (!el.isConnected)
       return;
     if (value === null || value === "") {
@@ -9597,6 +9613,8 @@ function handleFileUpload(el, property, component, cleanup) {
   cleanup(() => {
     el.removeEventListener("change", eventHandler);
     el.removeEventListener("click", clearFileInputValue);
+    el.removeEventListener("livewire-upload-cancel", clearFileInputValue);
+    unwatch();
   });
 }
 var UploadManager = class {
@@ -9964,10 +9982,12 @@ function coordinateNetworkInteractions(messageBus2) {
       if (Array.from(message.actions).every((action2) => action2.metadata.type === "poll")) {
         return message.cancel();
       }
-      if (Array.from(message.actions).every((action2) => action2.metadata.type === "model.live")) {
-        if (action.metadata.type === "model.live") {
+      let bothAreModelLive = action.metadata.type === "model.live" && Array.from(message.actions).every((action2) => action2.metadata.type === "model.live");
+      if (bothAreModelLive) {
+        let incomingHasBoundChildren = componentHasBoundChildren(action.component);
+        let outgoingHasBoundChildren = Array.from(message.actions).some((activeAction) => componentHasBoundChildren(activeAction.component));
+        if (!incomingHasBoundChildren && !outgoingHasBoundChildren)
           return;
-        }
       }
       action.defer();
       message.addInterceptor(({ onFinish }) => {
@@ -9975,6 +9995,13 @@ function coordinateNetworkInteractions(messageBus2) {
       });
     }
   });
+}
+function componentHasBoundChildren(component) {
+  let hasBoundChildren = false;
+  component.getDeepChildrenWithBindings(() => {
+    hasBoundChildren = true;
+  });
+  return hasBoundChildren;
 }
 
 // js/request/request.js
@@ -10495,8 +10522,14 @@ var Message = class {
         onRender: (callback) => interceptor.onRender = callback
       });
     });
-    this.pendingReturns = this.responsePayload.effects["returns"] || [];
-    this.pendingReturnsMeta = this.responsePayload.effects["returnsMeta"] || {};
+    this.pendingReturns = [];
+    this.pendingReturnsMeta = {};
+    if (Object.prototype.hasOwnProperty.call(this.responsePayload.effects, "returns") && this.responsePayload.effects["returns"]) {
+      this.pendingReturns = this.responsePayload.effects["returns"];
+    }
+    if (Object.prototype.hasOwnProperty.call(this.responsePayload.effects, "returnsMeta") && this.responsePayload.effects["returnsMeta"]) {
+      this.pendingReturnsMeta = this.responsePayload.effects["returnsMeta"];
+    }
   }
   invokeOnSync() {
     this.interceptors.forEach((interceptor) => interceptor.onSync());
@@ -11167,6 +11200,8 @@ async function sendRequest(request, handlers) {
   }
   if (response.redirected) {
     handlers.redirect(response.url);
+    handlers.finish();
+    return;
   }
   if (contentIsFromDump(responseBody)) {
     let dump;
@@ -11599,7 +11634,10 @@ function dirtyTargets(el) {
 // js/features/supportJsModules.js
 var pendingComponentAssets = /* @__PURE__ */ new WeakMap();
 on("effect", ({ component, effects }) => {
-  let scriptModuleHash = effects.scriptModule;
+  let scriptModuleHash;
+  if (Object.prototype.hasOwnProperty.call(effects, "scriptModule")) {
+    scriptModuleHash = effects.scriptModule;
+  }
   if (scriptModuleHash) {
     let encodedName = component.name.replace(/\./g, "--").replace(/::/g, "---").replace(/:/g, "----");
     let path = `${getModuleUrl()}/js/${encodedName}.js?v=${scriptModuleHash}`;
@@ -11831,8 +11869,11 @@ wireProperty("$watch", (component) => (path, callback) => {
     return dataGet(component.reactive, path);
   };
   let unwatch = import_alpinejs3.default.watch(getter, callback);
-  component.addCleanup(unwatch);
-  return unwatch;
+  let removeCleanup = component.addCleanup(unwatch);
+  return () => {
+    removeCleanup();
+    unwatch();
+  };
 });
 wireProperty("$effect", (component) => (callback) => {
   let effect = import_alpinejs3.default.effect(callback);
@@ -12061,11 +12102,14 @@ var Component = class {
   inscribeSnapshotAndEffectsOnElement() {
     let el = this.el;
     el.setAttribute("wire:snapshot", this.snapshotEncoded);
-    let effects = this.originalEffects.listeners ? { listeners: this.originalEffects.listeners } : {};
-    if (this.originalEffects.url) {
+    let effects = {};
+    if (Object.prototype.hasOwnProperty.call(this.originalEffects, "listeners") && this.originalEffects.listeners) {
+      effects.listeners = this.originalEffects.listeners;
+    }
+    if (Object.prototype.hasOwnProperty.call(this.originalEffects, "url") && this.originalEffects.url) {
       effects.url = this.originalEffects.url;
     }
-    if (this.originalEffects.scripts) {
+    if (Object.prototype.hasOwnProperty.call(this.originalEffects, "scripts") && this.originalEffects.scripts) {
       effects.scripts = this.originalEffects.scripts;
     }
     el.setAttribute("wire:effects", JSON.stringify(effects));
@@ -12097,6 +12141,12 @@ var Component = class {
   }
   addCleanup(cleanup) {
     this.cleanups.push(cleanup);
+    return () => {
+      let index = this.cleanups.indexOf(cleanup);
+      if (index === -1)
+        return;
+      this.cleanups.splice(index, 1);
+    };
   }
   cleanup() {
     delete this.el.__livewire;
@@ -12518,7 +12568,7 @@ var HistoryCoordinator = class {
     });
   }
   writeToHistory(method, url, callback) {
-    let state = window.history.state || {};
+    let state = window.history.state ? { ...window.history.state } : {};
     if (!state.alpine)
       state.alpine = {};
     state = callback(state);
@@ -12647,16 +12697,22 @@ function whenThisLinkIsPressed(el, callback) {
   let isNotPlainEnterKey = (e) => e.which !== 13 || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey;
   el.addEventListener("click", (e) => {
     if (isProgrammaticClick(e)) {
+      if (linkShouldBeHandledNatively(el))
+        return;
       e.preventDefault();
       callback((whenReleased) => whenReleased());
       return;
     }
     if (isNotPlainLeftClick(e))
       return;
+    if (linkShouldBeHandledNatively(el))
+      return;
     e.preventDefault();
   });
   el.addEventListener("mousedown", (e) => {
     if (isNotPlainLeftClick(e))
+      return;
+    if (linkShouldBeHandledNatively(el))
       return;
     e.preventDefault();
     callback((whenReleased) => {
@@ -12672,6 +12728,8 @@ function whenThisLinkIsPressed(el, callback) {
   });
   el.addEventListener("keydown", (e) => {
     if (isNotPlainEnterKey(e))
+      return;
+    if (linkShouldBeHandledNatively(el))
       return;
     e.preventDefault();
     callback((whenReleased) => whenReleased());
@@ -12694,6 +12752,20 @@ function extractDestinationFromLink(linkEl) {
 }
 function createUrlObjectFromString2(urlString) {
   return urlString !== null && new URL(urlString, document.baseURI);
+}
+function linkShouldBeHandledNatively(linkEl, destination = extractDestinationFromLink(linkEl)) {
+  if (!destination)
+    return true;
+  if (!["http:", "https:"].includes(destination.protocol))
+    return true;
+  if (destination.origin !== window.location.origin)
+    return true;
+  if (linkEl.hasAttribute("download"))
+    return true;
+  let target = linkEl.getAttribute("target")?.trim().toLowerCase();
+  if (target && target !== "_self")
+    return true;
+  return false;
 }
 function getUriStringFromUrlObject(urlObject) {
   return urlObject.pathname + urlObject.search + urlObject.hash;
@@ -13153,7 +13225,6 @@ function ignoreAttributes(subject, attributesToRemove) {
 var enablePersist = true;
 var showProgressBar = true;
 var restoreScroll = true;
-var autofocus = false;
 function navigate_default(Alpine25) {
   Alpine25.navigate = (url, options = {}) => {
     let { preserveScroll = false } = options;
@@ -13176,7 +13247,7 @@ function navigate_default(Alpine25) {
     let preserveScroll = modifiers.includes("preserve-scroll");
     shouldPrefetchOnHover && whenThisLinkIsHoveredFor(el, 60, () => {
       let destination = extractDestinationFromLink(el);
-      if (!destination)
+      if (linkShouldBeHandledNatively(el, destination))
         return;
       prefetchHtml(destination, (html, finalDestination) => {
         storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination, finalDestination);
@@ -13186,8 +13257,6 @@ function navigate_default(Alpine25) {
     });
     whenThisLinkIsPressed(el, (whenItIsReleased) => {
       let destination = extractDestinationFromLink(el);
-      if (!destination)
-        return;
       prefetchHtml(destination, (html, finalDestination) => {
         storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination, finalDestination);
       }, () => {
@@ -13235,10 +13304,8 @@ function navigate_default(Alpine25) {
           swapCallbacks.forEach((callback) => callback());
           afterNewScriptsAreDoneLoading(() => {
             andAfterAllThis(() => {
-              setTimeout(() => {
-                autofocus && autofocusElementsWithTheAutofocusAttribute();
-              });
               nowInitializeAlpineOnTheNewPage(Alpine25);
+              autofocusElementsWithTheAutofocusAttribute();
               fireEventForOtherLibrariesToHookInto("alpine:navigated");
               showProgressBar && finishAndHideProgressBar();
             });
@@ -13277,6 +13344,7 @@ function navigate_default(Alpine25) {
       fireEventForOtherLibrariesToHookInto("alpine:navigating", {
         onSwap: (callback) => swapCallbacks.push(callback)
       });
+      cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
       updateCurrentPageHtmlInSnapshotCacheForLaterBackButtonClicks(currentPageKey, currentPageUrl);
       preventAlpineFromPickingUpDomChanges(Alpine25, (andAfterAllThis) => {
         enablePersist && storePersistantElementsForLater((persistedEl) => {
@@ -13293,8 +13361,8 @@ function navigate_default(Alpine25) {
           restoreScrollPositionOrScrollToTop();
           swapCallbacks.forEach((callback) => callback());
           andAfterAllThis(() => {
-            autofocus && autofocusElementsWithTheAutofocusAttribute();
             nowInitializeAlpineOnTheNewPage(Alpine25);
+            autofocusElementsWithTheAutofocusAttribute();
             fireEventForOtherLibrariesToHookInto("alpine:navigated");
           });
         });
@@ -13459,24 +13527,24 @@ function queryStringUtils() {
       if (!search)
         return false;
       let data = fromQueryString(search, key);
-      return Object.keys(data).includes(key);
+      return dataGet(data, key) !== void 0;
     },
     get(url, key) {
       let search = url.search;
       if (!search)
         return false;
       let data = fromQueryString(search, key);
-      return data[key];
+      return dataGet(data, key);
     },
     set(url, key, value) {
       let data = fromQueryString(url.search, key);
-      data[key] = stripNulls(unwrap(value));
+      dataSet(data, key, stripNulls(unwrap(value)));
       url.search = toQueryString(data);
       return url;
     },
     remove(url, key) {
       let data = fromQueryString(url.search, key);
-      delete data[key];
+      dataDelete(data, key);
       url.search = toQueryString(data);
       return url;
     }
@@ -13517,10 +13585,12 @@ function fromQueryString(search, queryKey) {
     return {};
   let insertDotNotatedValueIntoData = (key, value, data2) => {
     let [first2, second, ...rest] = key.split(".");
+    if (first2 === "__proto__" || first2 === "constructor" || first2 === "prototype")
+      return;
     if (!second)
       return data2[key] = value;
-    if (data2[first2] === void 0) {
-      data2[first2] = isNaN(second) ? {} : [];
+    if (!Object.prototype.hasOwnProperty.call(data2, first2)) {
+      data2[first2] = isNaN(second) ? /* @__PURE__ */ Object.create(null) : [];
     }
     insertDotNotatedValueIntoData([second, ...rest].join("."), value, data2[first2]);
   };
@@ -13531,11 +13601,11 @@ function fromQueryString(search, queryKey) {
       return;
     value = decodeURIComponent(value.replaceAll("+", "%20"));
     let decodedKey = decodeURIComponent(key);
-    let shouldBeHandledAsArray = decodedKey.includes("[") && decodedKey.startsWith(queryKey);
+    let dotNotatedKey = decodedKey.replaceAll("[", ".").replaceAll("]", "");
+    let shouldBeHandledAsArray = decodedKey.includes("[") && (dotNotatedKey === queryKey || dotNotatedKey.startsWith(`${queryKey}.`));
     if (!shouldBeHandledAsArray) {
       data[key] = value;
     } else {
-      let dotNotatedKey = decodedKey.replaceAll("[", ".").replaceAll("]", "");
       insertDotNotatedValueIntoData(dotNotatedKey, value, data);
     }
   });
@@ -13635,7 +13705,11 @@ var import_alpinejs23 = __toESM(require_module_cjs());
 
 // js/features/supportListeners.js
 on("effect", ({ component, effects }) => {
-  registerListeners(component, effects.listeners || []);
+  let listeners2 = [];
+  if (Object.prototype.hasOwnProperty.call(effects, "listeners") && effects.listeners) {
+    listeners2 = effects.listeners;
+  }
+  registerListeners(component, listeners2);
 });
 function registerListeners(component, listeners2) {
   listeners2.forEach((name) => {
@@ -13755,7 +13829,10 @@ on("component.init", ({ component }) => {
   }
 });
 on("effect", ({ component, effects }) => {
-  let scripts = effects.scripts;
+  let scripts;
+  if (Object.prototype.hasOwnProperty.call(effects, "scripts")) {
+    scripts = effects.scripts;
+  }
   if (scripts) {
     Object.entries(scripts).forEach(([key, content]) => {
       onlyIfScriptHasntBeenRunAlreadyForThisComponent(component, key, () => {
@@ -13838,8 +13915,14 @@ import_alpinejs9.default.magic("js", (el) => {
   return component.$wire.js;
 });
 on("effect", ({ component, effects }) => {
-  let js = effects.js;
-  let xjs = effects.xjs;
+  let js;
+  let xjs;
+  if (Object.prototype.hasOwnProperty.call(effects, "js")) {
+    js = effects.js;
+  }
+  if (Object.prototype.hasOwnProperty.call(effects, "xjs")) {
+    xjs = effects.xjs;
+  }
   if (js) {
     Object.entries(js).forEach(([method, body]) => {
       overrideMethod(component, method, () => {
@@ -13977,7 +14060,10 @@ async function morph2(component, el, html) {
       child.replaceWith(existingComponent.cloneNode(true));
     }
   });
-  let transitionOptions = component.effects.transition || {};
+  let transitionOptions = {};
+  if (Object.prototype.hasOwnProperty.call(component.effects, "transition") && component.effects.transition) {
+    transitionOptions = component.effects.transition;
+  }
   await transitionDomMutation(el, to, () => {
     import_alpinejs10.default.morph(el, to, getMorphConfig(component));
   }, transitionOptions);
@@ -14002,7 +14088,10 @@ async function morphFragment(component, startNode, endNode, toHTML) {
     parentProviderWrapper.__livewire = parentComponent;
   }
   trigger("island.morph", { startNode, endNode, component });
-  let transitionOptions = component.effects.transition || {};
+  let transitionOptions = {};
+  if (Object.prototype.hasOwnProperty.call(component.effects, "transition") && component.effects.transition) {
+    transitionOptions = component.effects.transition;
+  }
   let islandHasTransition = false;
   let node = startNode.nextSibling;
   while (node && node !== endNode) {
@@ -14100,7 +14189,10 @@ function getTagName(el) {
 interceptMessage(({ message, onSuccess }) => {
   onSuccess(({ payload, onMorph }) => {
     onMorph(async () => {
-      let html = payload.effects.html;
+      let html;
+      if (Object.prototype.hasOwnProperty.call(payload.effects, "html")) {
+        html = payload.effects.html;
+      }
       if (!html)
         return;
       await morph2(message.component, message.component.el, html);
@@ -14113,7 +14205,11 @@ on("effect", ({ component, effects }) => {
   queueMicrotask(() => {
     queueMicrotask(() => {
       queueMicrotask(() => {
-        dispatchEvents(component, effects.dispatches || []);
+        let dispatches = [];
+        if (Object.prototype.hasOwnProperty.call(effects, "dispatches") && effects.dispatches) {
+          dispatches = effects.dispatches;
+        }
+        dispatchEvents(component, dispatches);
       });
     });
   });
@@ -14210,7 +14306,10 @@ function markReadOnly(el) {
 // js/features/supportFileDownloads.js
 on("commit", ({ succeed }) => {
   succeed(({ effects }) => {
-    let download = effects.download;
+    let download;
+    if (Object.prototype.hasOwnProperty.call(effects, "download")) {
+      download = effects.download;
+    }
     if (!download)
       return;
     let urlObject = window.webkitURL || window.URL;
@@ -14248,7 +14347,10 @@ function base64toBlob(b64Data, contentType = "", sliceSize = 512) {
 // js/features/supportQueryString.js
 var import_alpinejs12 = __toESM(require_module_cjs());
 on("effect", ({ component, effects, cleanup }) => {
-  let queryString = effects["url"];
+  let queryString;
+  if (Object.prototype.hasOwnProperty.call(effects, "url")) {
+    queryString = effects["url"];
+  }
   if (!queryString)
     return;
   Object.entries(queryString).forEach(([key, value]) => {
@@ -14315,7 +14417,10 @@ on("request", ({ options }) => {
   }
 });
 on("effect", ({ component, effects }) => {
-  let listeners2 = effects.listeners || [];
+  let listeners2 = [];
+  if (Object.prototype.hasOwnProperty.call(effects, "listeners") && effects.listeners) {
+    listeners2 = effects.listeners;
+  }
   listeners2.forEach((event) => {
     if (event.startsWith("echo")) {
       if (typeof window.Echo === "undefined") {
@@ -14419,7 +14524,10 @@ function forwardEvent(name, original) {
   }
 }
 function shouldRedirectUsingNavigateOr(effects, url, or) {
-  let forceNavigate = effects.redirectUsingNavigate;
+  let forceNavigate;
+  if (Object.prototype.hasOwnProperty.call(effects, "redirectUsingNavigate")) {
+    forceNavigate = effects.redirectUsingNavigate;
+  }
   if (forceNavigate) {
     Alpine.navigate(url);
   } else {
@@ -14436,7 +14544,7 @@ function shouldHideProgressBar() {
 
 // js/features/supportRedirects.js
 on("effect", ({ effects, request }) => {
-  if (!effects["redirect"])
+  if (!Object.prototype.hasOwnProperty.call(effects, "redirect") || !effects["redirect"])
     return;
   let preventDefault = false;
   request.invokeOnRedirect({ url: effects["redirect"], preventDefault: () => preventDefault = true });
@@ -14488,7 +14596,10 @@ interceptMessage(({ message, onSuccess, onStream }) => {
   });
   onSuccess(({ payload, onMorph }) => {
     onMorph(async () => {
-      let fragments = payload.effects.islandFragments || [];
+      let fragments = [];
+      if (Object.prototype.hasOwnProperty.call(payload.effects, "islandFragments") && payload.effects.islandFragments) {
+        fragments = payload.effects.islandFragments;
+      }
       fragments.forEach(async (fragmentHtml) => {
         await renderIsland(message.component, fragmentHtml);
       });
@@ -14528,7 +14639,10 @@ async function renderIsland(component, islandHtml) {
 interceptMessage(({ message, onSuccess, onStream }) => {
   onSuccess(({ payload, onMorph }) => {
     onMorph(async () => {
-      let fragments = payload.effects.slotFragments || [];
+      let fragments = [];
+      if (Object.prototype.hasOwnProperty.call(payload.effects, "slotFragments") && payload.effects.slotFragments) {
+        fragments = payload.effects.slotFragments;
+      }
       fragments.forEach(async (fragmentHtml) => {
         await renderSlot(message.component, fragmentHtml);
       });
@@ -14798,7 +14912,7 @@ import_alpinejs16.default.interceptInit((el) => {
 // js/features/supportCssModules.js
 var loadedStyles = /* @__PURE__ */ new Set();
 on("effect", ({ component, effects }) => {
-  if (effects.styleModule) {
+  if (Object.prototype.hasOwnProperty.call(effects, "styleModule") && effects.styleModule) {
     let encodedName = component.name.replace(/\./g, "--").replace(/::/g, "---").replace(/:/g, "----");
     let path = `${getModuleUrl()}/css/${encodedName}.css?v=${effects.styleModule}`;
     if (!loadedStyles.has(path)) {
@@ -14806,7 +14920,7 @@ on("effect", ({ component, effects }) => {
       injectStylesheet(path);
     }
   }
-  if (effects.globalStyleModule) {
+  if (Object.prototype.hasOwnProperty.call(effects, "globalStyleModule") && effects.globalStyleModule) {
     let encodedName = component.name.replace(/\./g, "--").replace(/::/g, "---").replace(/:/g, "----");
     let path = `${getModuleUrl()}/css/${encodedName}.global.css?v=${effects.globalStyleModule}`;
     if (!loadedStyles.has(path)) {
@@ -15143,6 +15257,7 @@ var import_alpinejs19 = __toESM(require_module_cjs());
 directive("model", ({ el, directive: directive2, component, cleanup }) => {
   component = findComponentByEl(el);
   let { expression, modifiers } = directive2;
+  modifiers = modifiers.filter((m) => m !== "renderless");
   if (!expression) {
     return console.warn("Livewire: [wire:model] is missing a value.", el);
   }
@@ -15193,7 +15308,14 @@ directive("model", ({ el, directive: directive2, component, cleanup }) => {
   }
   let bindings = {};
   if (shouldSendNetwork && networkOnBlur) {
-    bindings["@blur"] = () => update();
+    bindings["@blur"] = () => {
+      queueMicrotask(() => {
+        let target = expression.startsWith("$parent") ? component.parent : component;
+        if (target && !checkDirty(target))
+          return;
+        update();
+      });
+    };
   }
   if (shouldSendNetwork && networkOnChange) {
     bindings["@change"] = () => update();

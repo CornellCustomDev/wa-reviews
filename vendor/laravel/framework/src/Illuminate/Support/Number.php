@@ -205,6 +205,10 @@ class Number
      */
     public static function fileSize(int|float $bytes, int $precision = 0, ?int $maxPrecision = null)
     {
+        if (! is_finite($bytes)) {
+            return sprintf('%s B', static::format($bytes, $precision, $maxPrecision));
+        }
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
         $unitCount = count($units);
@@ -263,9 +267,15 @@ class Number
      * @param  int|null  $maxPrecision
      * @param  array<int, string>  $units
      * @return string|false
+     *
+     * @phpstan-return ($number is INF ? '∞' : ($number is NAN ? 'NaN' : ($number is 0 ? ($precision is non-positive-int ? '0' : non-empty-string|false) : non-empty-string|false)))
      */
     protected static function summarize(int|float $number, int $precision = 0, ?int $maxPrecision = null, array $units = [])
     {
+        if (! is_finite($number)) {
+            return static::format($number, $precision, $maxPrecision);
+        }
+
         if (empty($units)) {
             $units = [
                 3 => 'K',
@@ -280,14 +290,19 @@ class Number
             case (float) $number === 0.0:
                 return $precision > 0 ? static::format(0, $precision, $maxPrecision) : '0';
             case $number < 0:
-                return sprintf('-%s', static::summarize(abs($number), $precision, $maxPrecision, $units));
+                $summary = static::summarize(abs($number), $precision, $maxPrecision, $units);
+
+                // Avoid a spurious "-0" when the magnitude rounds down to zero at the given precision...
+                return $summary === static::summarize(0, $precision, $maxPrecision, $units)
+                    ? $summary
+                    : sprintf('-%s', $summary);
             case $number >= 1e15:
                 return sprintf('%s'.end($units), static::summarize($number / 1e15, $precision, $maxPrecision, $units));
         }
 
         $numberExponent = floor(log10($number));
-        $displayExponent = $numberExponent - ($numberExponent % 3);
-        $number /= pow(10, $displayExponent);
+        $displayExponent = max(0, $numberExponent - ($numberExponent % 3));
+        $number /= 10 ** $displayExponent;
 
         $formatted = static::format($number, $precision, $maxPrecision);
 

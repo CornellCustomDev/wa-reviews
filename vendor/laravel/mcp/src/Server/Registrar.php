@@ -28,6 +28,8 @@ class Registrar
 {
     use Macroable;
 
+    public const OAUTH_SCOPE = 'mcp:use';
+
     /** @var array<string, callable> */
     protected array $localServers = [];
 
@@ -137,7 +139,11 @@ class Registrar
                 ->name('mcp.oauth.authorization-server');
         }
 
-        Router::get('/.well-known/oauth-protected-resource/{path}', static fn (string $path) => response()->json(static::protectedResourceMetadata($path)))
+        Router::get('/.well-known/oauth-protected-resource/{path}', static function (Route $route) {
+            $path = $route->parameter('path');
+
+            return response()->json(static::protectedResourceMetadata(is_string($path) ? $path : ''));
+        })
             ->where('path', '.*')
             ->name('mcp.oauth.protected-resource.nested');
 
@@ -160,7 +166,7 @@ class Registrar
             'registration_endpoint' => url($oauthPrefix.'/register'),
             'response_types_supported' => ['code'],
             'code_challenge_methods_supported' => ['S256'],
-            'scopes_supported' => ['mcp:use'],
+            'scopes_supported' => [self::OAUTH_SCOPE],
             'grant_types_supported' => ['authorization_code', 'refresh_token'],
         ];
     }
@@ -173,7 +179,7 @@ class Registrar
         return [
             'resource' => url('/'.$path),
             'authorization_servers' => [config('mcp.authorization_server') ?? url('/')],
-            'scopes_supported' => ['mcp:use'],
+            'scopes_supported' => [self::OAUTH_SCOPE],
         ];
     }
 
@@ -199,8 +205,8 @@ class Registrar
 
         $current = Passport::$scopes ?? [];
 
-        if (! array_key_exists('mcp:use', $current)) {
-            $current['mcp:use'] = 'Use MCP server';
+        if (! array_key_exists(self::OAUTH_SCOPE, $current)) {
+            $current[self::OAUTH_SCOPE] = 'Use MCP server';
             Passport::tokensCan($current);
         }
 

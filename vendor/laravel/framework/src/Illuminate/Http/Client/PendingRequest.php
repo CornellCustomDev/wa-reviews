@@ -30,6 +30,7 @@ use InvalidArgumentException;
 use JsonSerializable;
 use Psr\Http\Message\MessageInterface;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\StreamInterface;
 use Symfony\Component\VarDumper\VarDumper;
 use Throwable;
 
@@ -304,6 +305,10 @@ class PendingRequest
     {
         $this->bodyFormat('body');
 
+        $content = $this->normalizeRequestOptionValue($content);
+
+        $this->ensureValidRequestBody($content);
+
         $this->pendingBody = $content;
 
         $this->contentType($contentType);
@@ -486,7 +491,7 @@ class PendingRequest
      * @param  string  $password
      * @return $this
      */
-    public function withBasicAuth(string $username, string $password)
+    public function withBasicAuth(string $username, #[\SensitiveParameter] string $password)
     {
         $this->options['auth'] = [$username, $password];
 
@@ -500,7 +505,7 @@ class PendingRequest
      * @param  string  $password
      * @return $this
      */
-    public function withDigestAuth($username, $password)
+    public function withDigestAuth($username, #[\SensitiveParameter] $password)
     {
         $this->options['auth'] = [$username, $password, 'digest'];
 
@@ -514,7 +519,7 @@ class PendingRequest
      * @param  string  $password
      * @return $this
      */
-    public function withNtlmAuth($username, $password)
+    public function withNtlmAuth($username, #[\SensitiveParameter] $password)
     {
         $this->options['auth'] = [$username, $password, 'ntlm'];
 
@@ -528,7 +533,7 @@ class PendingRequest
      * @param  string  $type
      * @return $this
      */
-    public function withToken($token, $type = 'Bearer')
+    public function withToken(#[\SensitiveParameter] $token, $type = 'Bearer')
     {
         $this->options['headers']['Authorization'] = trim($type.' '.$token);
 
@@ -756,7 +761,7 @@ class PendingRequest
     /**
      * Add a new callback to execute after the response is built.
      *
-     * @param  (callable(\Illuminate\Http\Client\Response, \Illuminate\Http\Client\Request): \Illuminate\Http\Client\Response|null)  $callback
+     * @param  callable(\Illuminate\Http\Client\Response, \Illuminate\Http\Client\Request): (\Illuminate\Http\Client\Response|null)  $callback
      * @return $this
      */
     public function afterResponse(callable $callback)
@@ -872,6 +877,24 @@ class PendingRequest
     {
         return $this->send('HEAD', $url, func_num_args() === 1 ? [] : [
             'query' => $query,
+        ]);
+    }
+
+    /**
+     * Issue a QUERY request to the given URL.
+     *
+     * @param  string  $url
+     * @param  array|\JsonSerializable|\Illuminate\Contracts\Support\Arrayable  $data
+     * @return \Illuminate\Http\Client\Response|\GuzzleHttp\Promise\PromiseInterface
+     *
+     * @phpstan-return (TAsync is false ?  \Illuminate\Http\Client\Response : \GuzzleHttp\Promise\PromiseInterface)
+     *
+     * @throws \Illuminate\Http\Client\ConnectionException
+     */
+    public function query(string $url, $data = [])
+    {
+        return $this->send('QUERY', $url, [
+            $this->bodyFormat => $data,
         ]);
     }
 
@@ -1389,8 +1412,24 @@ class PendingRequest
                 continue;
             }
 
+            if (($key === 'query' || $key === 'form_params') && is_array($value)) {
+                $options[$key] = $this->normalizeNonFiniteFloatValues(
+                    $this->normalizeRequestOptionValue($value)
+                );
+
+                continue;
+            }
+
             if ($key === 'multipart' && is_array($value)) {
                 $options[$key] = $this->normalizeMultipartOption($value);
+
+                continue;
+            }
+
+            if ($key === 'body') {
+                $options[$key] = $this->normalizeRequestOptionValue($value);
+
+                $this->ensureValidRequestBody($options[$key]);
 
                 continue;
             }
@@ -1421,6 +1460,8 @@ class PendingRequest
      *
      * @param  mixed  $value
      * @return string|array
+     *
+     * @throws \InvalidArgumentException
      */
     protected function normalizeHeaderValue($value): string|array
     {
@@ -1432,7 +1473,7 @@ class PendingRequest
             foreach ($value as $key => $item) {
                 $value[$key] = match (true) {
                     $item === null => '',
-                    is_scalar($item) => (string) $item,
+                    is_scalar($item) => $this->normalizeScalarString($item),
                     $item instanceof Stringable => $item->toString(),
                     default => throw new InvalidArgumentException('HTTP header values must be scalar, null, Laravel Stringable, or arrays of scalar, null, or Laravel Stringable values.'),
                 };
@@ -1443,10 +1484,29 @@ class PendingRequest
 
         return match (true) {
             $value === null => '',
-            is_scalar($value) => (string) $value,
+            is_scalar($value) => $this->normalizeScalarString($value),
             $value instanceof Stringable => $value->toString(),
             default => throw new InvalidArgumentException('HTTP header values must be scalar, null, Laravel Stringable, or arrays of scalar, null, or Laravel Stringable values.'),
         };
+    }
+
+    /**
+     * Normalize non-finite floats within a nested array.
+     *
+     * @param  array  $values
+     * @return array
+     */
+    protected function normalizeNonFiniteFloatValues(array $values): array
+    {
+        foreach ($values as $key => $value) {
+            if (is_array($value)) {
+                $values[$key] = $this->normalizeNonFiniteFloatValues($value);
+            } elseif (is_float($value) && ! is_finite($value)) {
+                $values[$key] = $this->normalizeScalarString($value);
+            }
+        }
+
+        return $values;
     }
 
     /**
@@ -1470,6 +1530,14 @@ class PendingRequest
                 }
 
                 $part[$key] = $this->normalizeRequestOptionValue($value);
+
+                if ($key === 'contents') {
+                    if (is_array($part[$key])) {
+                        $part[$key] = $this->normalizeNonFiniteFloatValues($part[$key]);
+                    } elseif (is_float($part[$key]) && ! is_finite($part[$key])) {
+                        $part[$key] = $this->normalizeScalarString($part[$key]);
+                    }
+                }
             }
 
             $multipart[$index] = $part;
@@ -1483,6 +1551,8 @@ class PendingRequest
      *
      * @param  array  $multipart
      * @return array
+     *
+     * @throws \InvalidArgumentException
      */
     protected function normalizeMultipartHeaders(array $multipart): array
     {
@@ -1492,7 +1562,7 @@ class PendingRequest
                     $multipart[$index]['headers'][$name] = match (true) {
                         $value === [] => '',
                         $value === null => '',
-                        is_scalar($value) => (string) $value,
+                        is_scalar($value) => $this->normalizeScalarString($value),
                         $value instanceof Stringable => $value->toString(),
                         default => throw new InvalidArgumentException('Multipart header values must be scalar, null, or Laravel Stringable.'),
                     };
@@ -1516,6 +1586,40 @@ class PendingRequest
             $value instanceof Stringable => $value->toString(),
             default => $value,
         };
+    }
+
+    /**
+     * Normalize a scalar to a string without triggering PHP 8.5 non-finite float warnings.
+     *
+     * @param  scalar  $value
+     * @return string
+     */
+    protected function normalizeScalarString($value): string
+    {
+        if (is_float($value) && ! is_finite($value)) {
+            return match (true) {
+                is_nan($value) => 'NAN',
+                $value > 0 => 'INF',
+                default => '-INF',
+            };
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * Ensure the given request body can be passed to Guzzle.
+     *
+     * @param  mixed  $body
+     * @return void
+     *
+     * @throws \InvalidArgumentException
+     */
+    protected function ensureValidRequestBody($body): void
+    {
+        if (! is_string($body) && ! is_null($body) && ! is_resource($body) && ! $body instanceof StreamInterface) {
+            throw new InvalidArgumentException('HTTP request body must be a string, resource, Psr\Http\Message\StreamInterface, or null.');
+        }
     }
 
     /**
@@ -1650,7 +1754,7 @@ class PendingRequest
      *
      * @return \Closure
      *
-     * @throws \Illuminate\Http\Client\Exceptions\StrayRequestException
+     * @throws \Illuminate\Http\Client\StrayRequestException
      */
     public function buildStubHandler()
     {
@@ -1842,13 +1946,7 @@ class PendingRequest
             return true;
         }
 
-        foreach ($this->allowedStrayRequestUrls as $pattern) {
-            if (Str::is($pattern, $url)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->allowedStrayRequestUrls, fn ($pattern) => Str::is($pattern, $url));
     }
 
     /**

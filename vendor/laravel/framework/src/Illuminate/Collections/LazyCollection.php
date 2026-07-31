@@ -90,7 +90,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
      * @param  int  $from
      * @param  int  $to
      * @param  int  $step
-     * @return ($step is zero ? never : static<int, int>)
+     * @return ($step is 0 ? never : static<int, int>)
      *
      * @throws \InvalidArgumentException
      */
@@ -1031,7 +1031,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
      *
      * @param  int|null  $number
      * @param  bool  $preserveKeys
-     * @return static<int, TValue>|TValue
+     * @return ($number is null ? TValue : static<int, TValue>)
      *
      * @throws \InvalidArgumentException
      */

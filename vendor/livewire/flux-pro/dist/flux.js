@@ -1935,6 +1935,27 @@ ${useLayer ? "}" : ""}
   function getLocale() {
     return navigator?.language || document.documentElement.lang || "en-US";
   }
+  function renderTemplate(template, callback) {
+    if (!template) return;
+    let cleanup = () => {
+      let sibling = template.nextElementSibling;
+      while (sibling && sibling.__hydrated__ === true) {
+        let toRemove = sibling;
+        sibling = sibling.nextElementSibling;
+        toRemove.remove();
+      }
+    };
+    cleanup();
+    let hydrated = callback((slotsAndAttributes = { slots: {}, attrs: {} }) => {
+      return hydrateTemplate(template, slotsAndAttributes);
+    });
+    hydrated = Array.isArray(hydrated) ? hydrated : [hydrated];
+    hydrated.reverse().forEach((node) => {
+      node.__hydrated__ = true;
+      template.after(node);
+    });
+    return { cleanup };
+  }
   function hydrateTemplate(template, slotsAndAttributes = { slots: {}, attrs: {} }) {
     let { slots = {}, attrs = {} } = slotsAndAttributes;
     let clone = template.content.cloneNode(true).firstElementChild;
@@ -5982,7 +6003,7 @@ ${useLayer ? "}" : ""}
     weekTemplate && renderDates(weekTemplate, config, viewState, metadata);
   }
   function renderHeading(template, config, viewState) {
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return hydrate({
         slots: {
           default: new Intl.DateTimeFormat(config.locale, {
@@ -6012,7 +6033,7 @@ ${useLayer ? "}" : ""}
       let date = new Date(2024, 0, adjustedIdx + 7);
       return format(date);
     });
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return weekdays.map((weekday) => hydrate({ slots: { default: weekday } }));
     });
   }
@@ -6060,7 +6081,7 @@ ${useLayer ? "}" : ""}
     );
     let displayWeeks = splitIntoWeeks(displayDates);
     let actualWeeks = splitIntoWeeks(actualDates);
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return displayWeeks.map((week, weekIdx) => {
         let weekEl = hydrate();
         let actualWeekDates = actualWeeks[weekIdx];
@@ -6068,11 +6089,11 @@ ${useLayer ? "}" : ""}
         if (numberTemplate) {
           let fourthDayIdx = (4 - config.startDay + 7) % 7;
           let weekNumber = DateValue.fromIsoDateString(actualWeekDates[fourthDayIdx]).getWeekNumber();
-          renderTemplate(numberTemplate, (hydrate2) => {
+          renderTemplate2(numberTemplate, (hydrate2) => {
             return hydrate2({ slots: { default: weekNumber } });
           });
         }
-        renderTemplate(weekEl.querySelector('template[name="day"]'), (hydrate2) => {
+        renderTemplate2(weekEl.querySelector('template[name="day"]'), (hydrate2) => {
           return week.map((day, dayIdx) => {
             if (day === 0) {
               let weekDate = DateValue.fromIsoDateString(actualWeekDates[dayIdx]);
@@ -6095,11 +6116,11 @@ ${useLayer ? "}" : ""}
             }
             if (![false, null, void 0].includes(subtext)) {
               let template2 = dayEl.querySelector('template[name="subtext"]');
-              template2 && renderTemplate(template2, (hydrate3) => hydrate3({ slots: { default: subtext } }));
+              template2 && renderTemplate2(template2, (hydrate3) => hydrate3({ slots: { default: subtext } }));
             }
             if (![false, null, void 0].includes(details)) {
               let template2 = dayEl.querySelector('template[name="details"]');
-              template2 && renderTemplate(template2, (hydrate3) => hydrate3({ slots: { default: details } }));
+              template2 && renderTemplate2(template2, (hydrate3) => hydrate3({ slots: { default: details } }));
             }
             return dayEl;
           });
@@ -6150,7 +6171,7 @@ ${useLayer ? "}" : ""}
       }
     });
   }
-  function renderTemplate(template, callback) {
+  function renderTemplate2(template, callback) {
     if (!template) return;
     let cleanup = () => {
       let sibling = template.nextElementSibling;
@@ -7045,13 +7066,13 @@ ${useLayer ? "}" : ""}
       this.templates.placeholder?.clearPlaceholder?.();
       this.templates.time?.clearTime?.();
       if (picker.selectable.hasSelection()) {
-        let { cleanup } = renderTemplate(this.templates.time, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.time, (hydrate) => {
           return hydrate({ slots: { default: picker.selectable.display(picker.config.locale) } });
         });
         this.templates.time.clearTime = cleanup;
       } else {
         if (!this.templates.placeholder) return;
-        let { cleanup } = renderTemplate(this.templates.placeholder, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.placeholder, (hydrate) => {
           return hydrate({ slots: {} });
         });
         this.templates.placeholder.clearPlaceholder = cleanup;
@@ -7076,7 +7097,7 @@ ${useLayer ? "}" : ""}
     render() {
       let template = this.querySelector('template[name="option"]');
       if (!template) return;
-      renderTemplate(template, (hydrate) => {
+      renderTemplate2(template, (hydrate) => {
         let times = generateTimes(this.picker.config);
         return times.map(({ value: value3, label }) => {
           let isDisabled = this.picker.config.unavailable.some((unavailableTime) => timesAreOverlapping(value3, unavailableTime));
@@ -9046,7 +9067,7 @@ ${useLayer ? "}" : ""}
           label: new Intl.DateTimeFormat(this.config.locale, { month: display, timeZone: "UTC" }).format(new DateValue(2024, month).getDate())
         };
       }).filter(Boolean);
-      renderTemplate(select.querySelector("template"), (hydrate) => {
+      renderTemplate2(select.querySelector("template"), (hydrate) => {
         if (renderableMonths.length === 0) {
           let month = this.viewState.month;
           let label = new Intl.DateTimeFormat(this.config.locale, { month: display, timeZone: "UTC" }).format(new DateValue(2024, month).getDate());
@@ -9134,7 +9155,7 @@ ${useLayer ? "}" : ""}
         if (this.config.max && yearStart.isAfter(this.config.max)) return null;
         return year;
       }).filter(Boolean);
-      renderTemplate(select.querySelector("template"), (hydrate) => {
+      renderTemplate2(select.querySelector("template"), (hydrate) => {
         if (renderableYears.length === 0) {
           let year = this.viewState.year;
           return hydrate({ slots: { default: year } });
@@ -9177,7 +9198,7 @@ ${useLayer ? "}" : ""}
     }
     renderMonths() {
       let template = this.querySelector('template:not([name]), template[name="month"]');
-      renderTemplate(template, (hydrate) => {
+      renderTemplate2(template, (hydrate) => {
         let monthOffsetTemplate = Array.from({ length: this.config.months }).map((_, idx) => idx);
         this.monthEls = monthOffsetTemplate.map((offset3) => {
           let offsetState = this.viewState.generateOffsetState(offset3);
@@ -9209,7 +9230,7 @@ ${useLayer ? "}" : ""}
         }
       });
       let template = this.querySelector("template");
-      template && renderTemplate(template, (hydrate) => {
+      template && renderTemplate2(template, (hydrate) => {
         return hydrate({ slots: { default: DateValue.today().getDay() } });
       });
     }
@@ -9298,6 +9319,7 @@ ${useLayer ? "}" : ""}
       this.config = calendar.config;
       this.viewState = calendar.viewState;
       this.offsetState = this.viewState.generateOffsetState(this.offset);
+      if (this.querySelector("ui-date-picker-trigger")) return;
       let [firstInput, secondInput] = this.querySelectorAll("input");
       if (this.config.mode === CalendarModes.RANGE) {
         syncInputStateWithRangeSelectionState(firstInput, secondInput, calendar);
@@ -10101,13 +10123,13 @@ ${useLayer ? "}" : ""}
       this.templates.placeholder?.clearPlaceholder?.();
       this.templates.date?.clearDate?.();
       if (picker.selectable.hasSelection()) {
-        let { cleanup } = renderTemplate(this.templates.date, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.date, (hydrate) => {
           return hydrate({ slots: { default: picker.selectable.display(this.picker.calendar.config.locale) } });
         });
         this.templates.date.clearDate = cleanup;
       } else {
         if (!this.templates.placeholder) return;
-        let { cleanup } = renderTemplate(this.templates.placeholder, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.placeholder, (hydrate) => {
           return hydrate({ slots: {} });
         });
         this.templates.placeholder.clearPlaceholder = cleanup;
@@ -10996,6 +11018,12 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           removeInterest = result.remove;
         }
       });
+      this.onUnmount(() => {
+        if (removeInterest) {
+          removeInterest();
+          removeInterest = null;
+        }
+      });
       let observer = new MutationObserver(() => {
         if (this.getAttribute("draggable") === "true") {
           overlay._popoverable.setState(false);
@@ -11106,14 +11134,17 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         }
         this.updateDataAttributes(this);
       });
-      new ViewportResizeObserver(this.observable, this.config);
-      document.addEventListener("flux-sidebar-toggle", () => {
+      let viewportObserver = new ViewportResizeObserver(this.observable, this.config);
+      this.onUnmount(() => viewportObserver.disconnect());
+      let onSidebarToggle = () => {
         if (this.state.viewportDesktop) {
           this.state.collapsedDesktop ? this.observable.notify(EVENTS.DESKTOP_EXPANDED) : this.observable.notify(EVENTS.DESKTOP_COLLAPSED);
         } else {
           this.state.collapsedMobile ? this.observable.notify(EVENTS.MOBILE_EXPANDED) : this.observable.notify(EVENTS.MOBILE_COLLAPSED);
         }
-      });
+      };
+      document.addEventListener("flux-sidebar-toggle", onSidebarToggle);
+      this.onUnmount(() => document.removeEventListener("flux-sidebar-toggle", onSidebarToggle));
       this.addEventListener("click", (e) => {
         if (!(e.target === this)) return;
         if (!this.state.collapsedDesktop) return;
@@ -11184,11 +11215,15 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
     watchForViewportChanges() {
       let breakpoint = typeof this.breakpoint === "number" ? `${this.breakpoint}px` : this.breakpoint;
-      let viewport = matchMedia(`(min-width: ${breakpoint})`);
-      viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
-      viewport.addEventListener("change", () => {
-        viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
-      });
+      this.viewport = matchMedia(`(min-width: ${breakpoint})`);
+      this.onViewportChange = () => {
+        this.viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
+      };
+      this.onViewportChange();
+      this.viewport.addEventListener("change", this.onViewportChange);
+    }
+    disconnect() {
+      this.viewport.removeEventListener("change", this.onViewportChange);
     }
   };
   var UISidebarToggle = class extends UIElement {
@@ -11618,12 +11653,365 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   }
   element("slider", UISlider);
 
+  // js/carousel.js
+  var UICarousel = class extends UIElement {
+    mount() {
+      this.track = null;
+      this.slides = [];
+      this.indicators = this.indicators || [];
+      this.state = { current: 0, atStart: true, atEnd: false };
+      this.updateFrame = null;
+      this.autoplayTimeout = null;
+      this.autoplayPauseLocks = /* @__PURE__ */ new Set();
+      this.observer = null;
+      this.resizeObserver = null;
+      this._disableable = new Disableable(this);
+      this.syncElementsAndState();
+      if (!this.track || this.slides.length === 0) return;
+      this._disableable.onInitAndChange((disabled) => this.syncDisabledState(disabled));
+      requestAnimationFrame(() => {
+        setAttribute2(this, "data-ready", "");
+      });
+      this.onUnmount(
+        on(this.track, "scroll", () => this.queueStateUpdate(), { passive: true }).off
+      );
+      this.observer = new MutationObserver(() => this.syncElementsAndState());
+      this.observer.observe(this.track, { childList: true });
+      this.onUnmount(() => this.observer.disconnect());
+      this.resizeObserver = new ResizeObserver(() => this.queueStateUpdate());
+      this.resizeObserver.observe(this.track);
+      this.onUnmount(() => this.resizeObserver.disconnect());
+      this.setupAutoplay();
+    }
+    unmount() {
+      if (this.updateFrame) cancelAnimationFrame(this.updateFrame);
+      this.clearAutoplayTimeout();
+    }
+    next() {
+      this.goTo(this.calculateTargetIndex(1));
+    }
+    previous() {
+      this.goTo(this.calculateTargetIndex(-1));
+    }
+    goTo(index) {
+      if (!this.track || this.slides.length === 0) return;
+      if (this.disabled) return;
+      index = clamp3(index, 0, this.slides.length - 1);
+      this.track.scrollBy({
+        left: this.scrollDistanceTo(this.slides[index]),
+        behavior: this.scrollBehavior()
+      });
+      this.updateState();
+      this.syncDisabledState(this.disabled);
+    }
+    syncElementsAndState() {
+      this.refreshElements();
+      if (!this.track) return;
+      this.setupAccessibility();
+      this.indicators.forEach((indicator) => {
+        indicator.carousel = indicator.carousel || this;
+        indicator.render();
+      });
+      this.updateState();
+      this.syncDisabledState(this.disabled);
+    }
+    refreshElements() {
+      this.track = this.querySelector("[data-flux-carousel-track]");
+      this.slides = Array.from(this.track?.querySelectorAll(":scope > ui-carousel-slide") || []);
+      this.indicators = Array.from(/* @__PURE__ */ new Set([
+        ...this.indicators,
+        ...this.querySelectorAll("ui-carousel-indicators")
+      ]));
+    }
+    setupAccessibility() {
+      setDefaultAttribute(this, "role", "group");
+      setDefaultAttribute(this, "aria-roledescription", "carousel");
+      setDefaultAttribute(this.track, "aria-live", "polite");
+      setDefaultAttribute(this.track, "aria-atomic", "false");
+      this.slides.forEach((slide, index) => {
+        setDefaultAttribute(slide, "role", "group");
+        setDefaultAttribute(slide, "aria-roledescription", "slide");
+        setDefaultAttribute(slide, "aria-label", `${index + 1} of ${this.slides.length}`);
+      });
+    }
+    queueStateUpdate() {
+      if (this.updateFrame) return;
+      this.updateFrame = requestAnimationFrame(() => {
+        this.updateFrame = null;
+        this.updateState();
+      });
+    }
+    updateState() {
+      this.state = this.readState();
+      this.reflectState();
+    }
+    readState() {
+      return {
+        current: this.calculateCurrentIndex(),
+        atStart: this.isSlideVisible(this.slides[0]),
+        atEnd: this.isSlideVisible(this.slides[this.slides.length - 1])
+      };
+    }
+    reflectState() {
+      this.reflectEdgeState();
+      this.reflectScrollPercentage();
+      this.reflectSelectedSlide();
+    }
+    reflectEdgeState() {
+      this.state.atStart ? setAttribute2(this, "data-at-start", "") : removeAttribute(this, "data-at-start");
+      this.state.atEnd ? setAttribute2(this, "data-at-end", "") : removeAttribute(this, "data-at-end");
+      this.controlElements("ui-carousel-button").forEach((button) => {
+        this.state.atStart ? setAttribute2(button, "data-at-start", "") : removeAttribute(button, "data-at-start");
+        this.state.atEnd ? setAttribute2(button, "data-at-end", "") : removeAttribute(button, "data-at-end");
+      });
+      this.syncButtonDisabledStates();
+    }
+    reflectScrollPercentage() {
+      let scrollableWidth = this.track.scrollWidth - this.track.clientWidth;
+      let percentage = scrollableWidth > 0 ? Math.abs(this.track.scrollLeft) / scrollableWidth * 100 : 0;
+      this.track.style.setProperty("--flux-carousel-scroll-percentage", percentage + "%");
+      if (scrollableWidth <= 0) {
+        this.track.style.setProperty("--flux-carousel-fade-left", "100%");
+        this.track.style.setProperty("--flux-carousel-fade-right", "100%");
+        return;
+      }
+      let fade = "calc(100% - var(--flux-carousel-fade-size))";
+      let scrolled = percentage + "%";
+      let remaining = `calc(100% - ${percentage}%)`;
+      this.track.style.setProperty(
+        "--flux-carousel-fade-left",
+        isRTL(this) ? `max(${fade}, ${scrolled})` : `max(${fade}, ${remaining})`
+      );
+      this.track.style.setProperty(
+        "--flux-carousel-fade-right",
+        isRTL(this) ? `max(${fade}, ${remaining})` : `max(${fade}, ${scrolled})`
+      );
+    }
+    reflectSelectedSlide() {
+      this.slides.forEach((slide, index) => {
+        index === this.state.current ? setAttribute2(slide, "data-selected", "") : removeAttribute(slide, "data-selected");
+      });
+      this.indicators.forEach((indicator) => indicator.update(this.state.current));
+    }
+    syncDisabledState(disabled) {
+      disabled ? setAttribute2(this, "aria-disabled", "true") : removeAttribute(this, "aria-disabled");
+      this.controlElements().forEach((control) => {
+        disabled ? setAttribute2(control, "data-disabled", "") : removeAttribute(control, "data-disabled");
+        removeAttribute(control, "aria-disabled");
+      });
+      this.syncButtonDisabledStates();
+      this.syncAutoplay();
+    }
+    setupAutoplay() {
+      if (!this.hasAttribute("autoplay")) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      this.onUnmount(on(this, "mouseenter", () => this.pauseAutoplay("hover")).off);
+      this.onUnmount(on(this, "mouseleave", () => this.resumeAutoplay("hover")).off);
+      this.onUnmount(on(this, "focusin", () => this.pauseAutoplay("focus")).off);
+      this.onUnmount(on(this, "focusout", (event) => {
+        if (!this.contains(event.relatedTarget)) this.resumeAutoplay("focus");
+      }).off);
+      this.onUnmount(on(this.track, "pointerdown", () => this.pauseAutoplay("manual")).off);
+      this.onUnmount(on(this.track, "wheel", () => this.pauseAutoplay("manual"), { passive: true }).off);
+      this.onUnmount(on(this.track, "touchstart", () => this.pauseAutoplay("manual"), { passive: true }).off);
+      this.controlElements().filter((control) => !this.contains(control)).forEach((control) => {
+        this.onUnmount(on(control, "mouseenter", () => this.pauseAutoplay("hover")).off);
+        this.onUnmount(on(control, "mouseleave", () => this.resumeAutoplay("hover")).off);
+        this.onUnmount(on(control, "focusin", () => this.pauseAutoplay("focus")).off);
+        this.onUnmount(on(control, "focusout", (event) => {
+          if (!control.contains(event.relatedTarget)) this.resumeAutoplay("focus");
+        }).off);
+      });
+      this.scheduleAutoplay();
+    }
+    syncAutoplay() {
+      if (!this.hasAttribute("autoplay")) return;
+      this.disabled ? this.clearAutoplayTimeout() : this.scheduleAutoplay();
+    }
+    scheduleAutoplay() {
+      this.clearAutoplayTimeout();
+      if (!this.hasAttribute("autoplay")) return;
+      if (this.disabled) return;
+      if (this.autoplayPauseLocks.size > 0) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      this.autoplayTimeout = setTimeout(() => {
+        this.autoplayTimeout = null;
+        this.advanceAutoplay();
+        this.scheduleAutoplay();
+      }, this.autoplayInterval());
+    }
+    clearAutoplayTimeout() {
+      if (!this.autoplayTimeout) return;
+      clearTimeout(this.autoplayTimeout);
+      this.autoplayTimeout = null;
+    }
+    pauseAutoplay(reason = "manual") {
+      if (!this.hasAttribute("autoplay")) return;
+      this.autoplayPauseLocks.add(reason);
+      this.clearAutoplayTimeout();
+    }
+    resumeAutoplay(reason) {
+      if (!this.hasAttribute("autoplay")) return;
+      this.autoplayPauseLocks.delete(reason);
+      this.scheduleAutoplay();
+    }
+    advanceAutoplay() {
+      this.state.atEnd ? this.goTo(0) : this.next();
+    }
+    autoplayInterval() {
+      let interval = Number(this.getAttribute("autoplay-interval") || 5e3);
+      return Number.isFinite(interval) ? Math.max(1e3, interval) : 5e3;
+    }
+    syncButtonDisabledStates() {
+      this.controlElements().forEach((control) => {
+        control.querySelectorAll("button").forEach((button) => {
+          this.buttonIsDisabled(control) ? setAttribute2(button, "disabled", "") : removeAttribute(button, "disabled");
+        });
+      });
+    }
+    buttonIsDisabled(control) {
+      if (this.disabled) return true;
+      if (!control.matches("ui-carousel-button")) return false;
+      return control.getAttribute("direction") === "previous" ? this.state.atStart : this.state.atEnd;
+    }
+    controlElements(selector = "ui-carousel-button, ui-carousel-indicators") {
+      let controls = Array.from(this.querySelectorAll(selector));
+      if (this.hasAttribute("name")) {
+        controls.push(...document.querySelectorAll(
+          selector.split(",").map((selector2) => `${selector2.trim()}[name="${CSS.escape(this.getAttribute("name"))}"]`).join(", ")
+        ));
+      }
+      return Array.from(new Set(controls));
+    }
+    calculateTargetIndex(direction) {
+      let current = this.calculateCurrentIndex();
+      if (this.getAttribute("advance") !== "page") return current + direction;
+      return current + this.visibleSlideCount() * direction;
+    }
+    visibleSlideCount() {
+      return Math.max(1, this.slides.filter((slide) => this.isSlideVisible(slide)).length);
+    }
+    calculateCurrentIndex() {
+      let current = 0;
+      let distance = Infinity;
+      let trackRect = this.track.getBoundingClientRect();
+      this.slides.forEach((slide, index) => {
+        let slideRect = slide.getBoundingClientRect();
+        let slideDistance = isRTL(this) ? Math.abs(trackRect.right - slideRect.right) : Math.abs(trackRect.left - slideRect.left);
+        if (slideDistance < distance) {
+          current = index;
+          distance = slideDistance;
+        }
+      });
+      return current;
+    }
+    isSlideVisible(slide) {
+      if (!slide) return false;
+      let trackRect = this.track.getBoundingClientRect();
+      let slideRect = slide.getBoundingClientRect();
+      return Math.floor(slideRect.left) >= Math.floor(trackRect.left) && Math.ceil(slideRect.right) <= Math.ceil(trackRect.right);
+    }
+    scrollDistanceTo(slide) {
+      let trackRect = this.track.getBoundingClientRect();
+      let slideRect = slide.getBoundingClientRect();
+      return isRTL(this) ? slideRect.right - trackRect.right : slideRect.left - trackRect.left;
+    }
+    scrollBehavior() {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return "instant";
+      return this.getAttribute("scroll") === "instant" ? "instant" : "smooth";
+    }
+  };
+  var UICarouselIndicators = class extends UIElement {
+    boot() {
+      this.buttons = [];
+      this.buttonCleanups = [];
+    }
+    mount() {
+      this.carousel = this.findCarousel();
+      if (!this.carousel) return;
+      this.carousel.indicators = this.carousel.indicators || [];
+      this.render();
+      if (!this.carousel.indicators.includes(this)) this.carousel.indicators.push(this);
+      this.update(this.carousel.calculateCurrentIndex());
+      this.onUnmount(() => {
+        this.cleanupButtonListeners();
+        this.carousel.indicators = this.carousel.indicators.filter((indicator) => indicator !== this);
+      });
+    }
+    render() {
+      this.cleanupButtonListeners();
+      let buttons = [];
+      this.rendered = renderTemplate(this.querySelector("template"), (hydrate) => {
+        return this.carousel.slides.map((slide, index) => {
+          let button = hydrate({ attrs: { "aria-label": `Show slide ${index + 1}` } });
+          this.buttonCleanups.push(
+            on(button, "click", () => {
+              this.carousel.pauseAutoplay();
+              this.carousel.goTo(index);
+            }).off
+          );
+          buttons.push(button);
+          return button;
+        });
+      });
+      this.buttons = buttons;
+    }
+    cleanupButtonListeners() {
+      this.buttonCleanups.forEach((cleanup) => cleanup());
+      this.buttonCleanups = [];
+    }
+    update(current) {
+      this.buttons.forEach((button, index) => {
+        if (index === current) {
+          setAttribute2(button, "data-selected", "");
+          setAttribute2(button, "aria-current", "true");
+        } else {
+          removeAttribute(button, "data-selected");
+          removeAttribute(button, "aria-current");
+        }
+      });
+    }
+    findCarousel() {
+      if (this.hasAttribute("name")) {
+        return document.querySelector(`ui-carousel[name="${CSS.escape(this.getAttribute("name"))}"]`);
+      }
+      return this.closest("ui-carousel");
+    }
+  };
+  var UICarouselButton = class extends UIElement {
+    mount() {
+      this.onUnmount(
+        on(this, "click", (event) => {
+          let carousel = this.carousel();
+          if (!carousel) return;
+          carousel.pauseAutoplay();
+          this.getAttribute("direction") === "previous" ? carousel.previous() : carousel.next();
+          event.preventDefault();
+        }).off
+      );
+    }
+    carousel() {
+      if (this.hasAttribute("name")) {
+        return document.querySelector(`ui-carousel[name="${CSS.escape(this.getAttribute("name"))}"]`);
+      }
+      return this.closest("ui-carousel");
+    }
+  };
+  function setDefaultAttribute(el, name, value3) {
+    if (!el.hasAttribute(name)) setAttribute2(el, name, value3);
+  }
+  function clamp3(value3, min2, max2) {
+    return Math.min(Math.max(value3, min2), max2);
+  }
+  element("carousel", UICarousel);
+  element("carousel-indicators", UICarouselIndicators);
+  element("carousel-button", UICarouselButton);
+
   // js/color-picker.js
   var UIColorPicker = class extends UIControl {
     // Lifecycle
     boot() {
       this.listeners = [];
-      this.syncingValueAttribute = false;
       this.scrollLocked = false;
       this.pointerCleanup = null;
       this.previewEls = [];
@@ -11711,8 +12099,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             return;
           }
           if (mutation.attributeName === "value") {
-            if (this.syncingValueAttribute) return;
-            this.setValue(this.getAttribute("value"), { dispatch: false });
+            let attrValue = this.getAttribute("value");
+            let stateValue = this.committedState.empty ? null : this.committedState.value;
+            if ((attrValue ?? null) === stateValue) {
+              this.syncUI();
+              return;
+            }
+            this.setValue(attrValue, { dispatch: false });
             return;
           }
           if (mutation.attributeName === "format") {
@@ -11778,22 +12171,22 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (this.state.empty) {
         nextState = {
           hsv: {
-            h: clamp3(partial.h ?? 0, 0, 360),
-            s: clamp3(partial.s ?? 0, 0, 100),
-            v: clamp3(partial.v ?? 0, 0, 100)
+            h: clamp4(partial.h ?? 0, 0, 360),
+            s: clamp4(partial.s ?? 0, 0, 100),
+            v: clamp4(partial.v ?? 0, 0, 100)
           },
-          alpha: clamp3(options.alpha ?? 1, 0, 1),
+          alpha: clamp4(options.alpha ?? 1, 0, 1),
           empty: false
         };
       } else {
         nextState = {
           ...this.state,
           hsv: {
-            h: clamp3(partial.h ?? this.state.hsv.h, 0, 360),
-            s: clamp3(partial.s ?? this.state.hsv.s, 0, 100),
-            v: clamp3(partial.v ?? this.state.hsv.v, 0, 100)
+            h: clamp4(partial.h ?? this.state.hsv.h, 0, 360),
+            s: clamp4(partial.s ?? this.state.hsv.s, 0, 100),
+            v: clamp4(partial.v ?? this.state.hsv.v, 0, 100)
           },
-          alpha: clamp3(options.alpha ?? this.state.alpha, 0, 1),
+          alpha: clamp4(options.alpha ?? this.state.alpha, 0, 1),
           empty: false
         };
       }
@@ -11852,7 +12245,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (state.empty) return null;
       let rgb = hsvToRgb(state.hsv.h, state.hsv.s, state.hsv.v);
       let hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-      let alpha = clamp3(state.alpha, 0, 1);
+      let alpha = clamp4(state.alpha, 0, 1);
       switch (this.getFormat()) {
         case "hexa":
           return `${rgbToHex(rgb.r, rgb.g, rgb.b)}${alphaToHex(alpha)}`;
@@ -11869,15 +12262,11 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       }
     }
     syncValueAttribute() {
-      this.syncingValueAttribute = true;
       if (this.committedState.empty || !this.committedState.value) {
         removeAttribute(this, "value");
       } else {
         setAttribute2(this, "value", this.committedState.value);
       }
-      queueMicrotask(() => {
-        this.syncingValueAttribute = false;
-      });
     }
     // Interaction
     toggle() {
@@ -12013,13 +12402,14 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       on(this.areaEl, "keydown", (event) => {
         if (this._disableable.isDisabled()) return;
         let step = event.shiftKey ? 10 : 2;
+        let horizontalStep = isRTL(this) ? -step : step;
         let { s, v } = this.state.hsv;
         switch (event.key) {
           case "ArrowRight":
-            s += step;
+            s += horizontalStep;
             break;
           case "ArrowLeft":
-            s -= step;
+            s -= horizontalStep;
             break;
           case "ArrowUp":
             v += step;
@@ -12048,8 +12438,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
     setAreaFromPointer(event) {
       let rect = this.areaEl.getBoundingClientRect();
-      let saturation = clamp3((event.clientX - rect.left) / rect.width * 100, 0, 100);
-      let value3 = clamp3((1 - (event.clientY - rect.top) / rect.height) * 100, 0, 100);
+      let horizontalRatio = isRTL(this) ? (rect.right - event.clientX) / rect.width : (event.clientX - rect.left) / rect.width;
+      let saturation = clamp4(horizontalRatio * 100, 0, 100);
+      let value3 = clamp4((1 - (event.clientY - rect.top) / rect.height) * 100, 0, 100);
       this.setSaturationValue(saturation, value3, { dispatch: false });
       this.dispatchEvent(new Event("input", { bubbles: false }));
     }
@@ -12229,7 +12620,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (!this.areaThumb) return;
       let saturation = Math.round(this.state.hsv.s);
       let brightness = Math.round(this.state.hsv.v);
-      this.areaThumb.style.left = `${this.state.hsv.s}%`;
+      this.areaThumb.style.insetInlineStart = `${this.state.hsv.s}%`;
       this.areaThumb.style.top = `${100 - this.state.hsv.v}%`;
       setAttribute2(this.areaThumb, "aria-valuenow", saturation);
       setAttribute2(this.areaThumb, "aria-valuetext", `Saturation ${saturation}%, brightness ${brightness}%`);
@@ -12344,7 +12735,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     nextState.value = nextState.empty ? null : picker.formatValue(nextState);
     return nextState;
   }
-  function clamp3(value3, min2, max2) {
+  function clamp4(value3, min2, max2) {
     return Math.min(Math.max(value3, min2), max2);
   }
   function normalizeHue(value3) {
@@ -15111,11 +15502,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     mount() {
       if (!this.closest("ui-toast-group")) {
         setAttribute2(this, "role", "status");
-        document.addEventListener("keydown", (e) => {
+        let onKeydown = (e) => {
           if (e.key === "Escape") {
             this.hideToast();
           }
-        });
+        };
+        document.addEventListener("keydown", onKeydown);
+        this.onUnmount(() => document.removeEventListener("keydown", onKeydown));
         this.defaultPosition = this.getAttribute("position") || "bottom end";
       }
     }
@@ -15176,6 +15569,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     prepareToastTemplate(options) {
       let slots = options.slots || {};
       let dataset = options.dataset || {};
+      let link = options.link || null;
       let templateEl = this.template();
       if (!templateEl) {
         return console.warn("ui-toast: no template element found", this);
@@ -15191,8 +15585,34 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       Object.entries(dataset).forEach(([key, value3]) => {
         template.dataset[key] = value3;
       });
+      this.hydrateLinkTemplate(template, link);
       template.querySelectorAll("slot").forEach((slot) => slot.remove());
       return template;
+    }
+    hydrateLinkTemplate(template, link) {
+      let linkTemplate = template.querySelector('template[name="link"]');
+      if (!linkTemplate) return;
+      if (!link) {
+        linkTemplate.remove();
+        return;
+      }
+      let linkEl = linkTemplate.content.cloneNode(true).firstElementChild;
+      Object.entries(link).forEach(([key, value3]) => {
+        if ([null, void 0, false].includes(value3)) return;
+        if (key === "text") return;
+        if (key === "navigate" && value3) {
+          return linkEl.setAttribute("wire:navigate", "");
+        }
+        if (!["href", "target", "rel", "download"].includes(key)) return;
+        if (key === "download" && value3 === true) {
+          return linkEl.setAttribute(key, "");
+        }
+        linkEl.setAttribute(key, value3);
+      });
+      linkEl.querySelectorAll('slot[name="text"]').forEach(
+        (slot) => slot.replaceWith(document.createTextNode(link.text || ""))
+      );
+      linkTemplate.replaceWith(linkEl);
     }
   };
   element("toast-group", UIToastGroup);
@@ -15741,6 +16161,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         if (options.heading) detail.slots.heading = options.heading;
         if (options.variant) detail.dataset.variant = options.variant;
         if (options.position) detail.dataset.position = options.position;
+        if (options.link) detail.link = options.link;
         if (options.duration !== void 0) detail.duration = options.duration;
         document.dispatchEvent(new CustomEvent("toast-show", { detail }));
       },

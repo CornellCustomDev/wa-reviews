@@ -263,7 +263,13 @@ trait CapturesState
                     $this->ingest->writeNow($this->sensor->fatalError($e));
                 }
             } else {
-                [$record, $resolver] = $this->sensor->exception($e, $handled);
+                $exception = $this->sensor->exception($e, $handled);
+
+                if ($exception === null) {
+                    return;
+                }
+
+                [$record, $resolver] = $exception;
 
                 foreach ($this->redactExceptionCallbacks as $callback) {
                     $this->ignore(static fn () => ($callback)($record));
@@ -719,7 +725,7 @@ trait CapturesState
     /**
      * @internal
      */
-    public function prepareForNextRequest(): void
+    public function prepareForRequest(Request $request): void
     {
         /** @var Core<RequestState> $this */
         $this->flush();
@@ -731,7 +737,9 @@ trait CapturesState
         $this->executionState->timestamp = $timestamp;
         $this->executionState->currentExecutionStageStartedAtMicrotime = $timestamp;
 
-        $trace = $this->uuid->make();
+        $trace = Compatibility::$isLaravelCloud
+            ? ($request->headers->get('Cloud-Request-ID') ?? $this->uuid->make())
+            : $this->uuid->make();
         $this->executionState->trace = $trace;
         $this->executionState->setId($trace);
         Compatibility::addTraceIdToContext($trace);

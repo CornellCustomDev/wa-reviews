@@ -1,16 +1,20 @@
 {
-    "mcpServers": {
-        "laravel-boost": {
-            "command": "lando",
-            "args": [
-                "php",
-                "artisan",
-                "boost:mcp"
-            ]
-        },
-        "nightwatch": {
-            "type": "http",
-            "url": "https://nightwatch.laravel.com/mcp"
-        }
+  "mcpServers": {
+    "laravel-boost": {
+      "command": "lando",
+      "args": [
+        "php",
+        "artisan",
+        "boost:mcp"
+      ]
+    },
+    "nightwatch": {
+      "type": "http",
+      "url": "https://nightwatch.laravel.com/mcp"
+    },
+    "phpstorm": {
+      "url": "http://127.0.0.1:64442/stream",
+      "type": "http"
     }
+  }
 }

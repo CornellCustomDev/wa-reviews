@@ -15,13 +15,13 @@ if (! is_array($argv) || $argv === []) {
     return;
 }
 
-if (isset($_SERVER['PAO_DISABLE'])) {
+if (filter_var($_SERVER['PAO_DISABLE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
     return;
 }
 
 $agent = AgentDetector::detect();
 
-if (! $agent->isAgent && ! isset($_SERVER['PAO_FORCE'])) {
+if (! $agent->isAgent && ! filter_var($_SERVER['PAO_FORCE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
     return;
 }
 

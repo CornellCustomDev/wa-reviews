@@ -63,7 +63,7 @@ $inputClasses = Flux::classes()
         <?php if ($clearable): ?>
             <flux:button
                 as="div"
-                class="cursor-pointer [ui-date-picker[data-empty]_&]:hidden [ui-date-picker:has([disabled])_&]:hidden"
+                class="cursor-pointer [ui-date-picker[data-empty]_&]:hidden [ui-date-picker[disabled]_&]:hidden"
                 variant="subtle"
                 :size="$size === 'sm' || $size === 'xs' ? 'xs' : 'sm'"
                 square

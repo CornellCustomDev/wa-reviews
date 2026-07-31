@@ -1,7 +1,10 @@
-@blaze(fold: true)
+@blaze(fold: true, unsafe: ['icon:variant'])
+
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'icon' => 'document',
+    'iconVariant' => null,
     'invalid' => false,
     'actions' => null,
     'heading' => null,
@@ -52,7 +55,7 @@ if ($size) {
     }
 }
 
-$iconVariant = $text ? 'solid' : 'micro';
+$iconVariant ??= $text ? 'solid' : 'micro';
 @endphp
 
 <div {{ $attributes->class($classes) }} data-flux-file-item>

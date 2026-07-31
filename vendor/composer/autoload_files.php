@@ -49,6 +49,7 @@ return array(
     'fe7fc89e061451aaaf6b63aa0d9cca67' => $vendorDir . '/laravel/nightwatch/agent/helpers.php',
     '309cd39bb536ff667b25a3a76938cb83' => $vendorDir . '/laravel/pao/src/Autoload.php',
     'e96c55aecadfc85c136575ccd5393db0' => $vendorDir . '/laravel/pennant/src/helpers.php',
+    '631703397377534731ea5f91035f5b5e' => $vendorDir . '/laravel/pennant/src/functions.php',
     '7574a4dc8fe5e660478870e55ff04aab' => $vendorDir . '/livewire/flux-pro/src/helpers.php',
     'c72349b1fe8d0deeedd3a52e8aa814d8' => $vendorDir . '/mockery/mockery/library/helpers.php',
     'ce9671a430e4846b44e1c68c7611f9f5' => $vendorDir . '/mockery/mockery/library/Mockery.php',

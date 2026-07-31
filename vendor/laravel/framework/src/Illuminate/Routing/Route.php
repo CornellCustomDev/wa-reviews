@@ -8,6 +8,7 @@ use Illuminate\Container\Container;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Attributes\Controllers\Middleware as MiddlewareAttribute;
+use Illuminate\Routing\Attributes\Controllers\WithoutMiddleware;
 use Illuminate\Routing\Contracts\CallableDispatcher;
 use Illuminate\Routing\Contracts\ControllerDispatcher as ControllerDispatcherContract;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -766,7 +767,7 @@ class Route
      * Get or set the domain for the route.
      *
      * @param  \BackedEnum|string|null  $domain
-     * @return $this|string|null
+     * @return ($domain is null ? string|null : $this)
      *
      * @throws \InvalidArgumentException
      */
@@ -922,13 +923,7 @@ class Route
             return false;
         }
 
-        foreach ($patterns as $pattern) {
-            if (Str::is($pattern, $routeName)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($patterns, fn ($pattern) => Str::is($pattern, $routeName));
     }
 
     /**
@@ -1221,6 +1216,71 @@ class Route
     }
 
     /**
+     * Get the excluded middleware for the route's controller.
+     *
+     * @return array
+     */
+    public function excludedControllerMiddleware()
+    {
+        if (! $this->isControllerAction()) {
+            return [];
+        }
+
+        [$controllerClass, $controllerMethod] = [
+            $this->getControllerClass(),
+            $this->getControllerMethod(),
+        ];
+
+        return $this->attributeProvidedControllerMiddlewareExclusions($controllerClass, $controllerMethod);
+    }
+
+    /**
+     * Get the attribute provided excluded controller middleware for the given class and method.
+     *
+     * @param  string  $class
+     * @param  string  $method
+     * @return array
+     */
+    protected function attributeProvidedControllerMiddlewareExclusions(string $class, string $method): array
+    {
+        try {
+            $reflectionClass = new ReflectionClass($class);
+            $reflectionMethod = $reflectionClass->getMethod($method);
+        } catch (ReflectionException) {
+            return [];
+        }
+
+        $attributes = new Collection;
+
+        $current = $reflectionClass;
+
+        while ($current) {
+            $classAttributes = array_reverse($current->getAttributes(
+                WithoutMiddleware::class, ReflectionAttribute::IS_INSTANCEOF
+            ));
+
+            foreach ($classAttributes as $attribute) {
+                $attributes->prepend($attribute);
+            }
+
+            $current = $current->getParentClass();
+        }
+
+        return $attributes->merge(
+            $reflectionMethod->getAttributes(WithoutMiddleware::class, ReflectionAttribute::IS_INSTANCEOF)
+        )->map(function (ReflectionAttribute $attribute) use ($method) {
+            $instance = $attribute->newInstance();
+
+            return static::methodExcludedByOptions(
+                $method, ['only' => $instance->only, 'except' => $instance->except],
+            ) ? null : $instance->middleware;
+        })
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Specify middleware that should be removed from the given route.
      *
      * @param  array|string  $middleware
@@ -1242,7 +1302,10 @@ class Route
      */
     public function excludedMiddleware()
     {
-        return (array) ($this->action['excluded_middleware'] ?? []);
+        return array_merge(
+            (array) ($this->action['excluded_middleware'] ?? []),
+            $this->excludedControllerMiddleware(),
+        );
     }
 
     /**
@@ -1332,6 +1395,49 @@ class Route
     public function waitsFor()
     {
         return $this->waitSeconds;
+    }
+
+    /**
+     * Add metadata to the route.
+     *
+     * @param  array  $metadata
+     * @return $this
+     */
+    public function metadata(array $metadata)
+    {
+        $this->action['metadata'] = RouteGroup::mergeMetadata(
+            $this->action['metadata'] ?? [],
+            $metadata
+        );
+
+        return $this;
+    }
+
+    /**
+     * Get metadata for the route.
+     *
+     * @param  string|null  $key
+     * @param  mixed  $default
+     * @return ($key is null ? array<array-key, mixed> : mixed)
+     */
+    public function getMetadata($key = null, $default = null)
+    {
+        $metadata = $this->action['metadata'] ?? [];
+
+        return is_null($key) ? $metadata : Arr::get($metadata, $key, $default);
+    }
+
+    /**
+     * Set the metadata for the route, replacing any existing metadata.
+     *
+     * @param  array  $metadata
+     * @return $this
+     */
+    public function setMetadata(array $metadata)
+    {
+        $this->action['metadata'] = $metadata;
+
+        return $this;
     }
 
     /**

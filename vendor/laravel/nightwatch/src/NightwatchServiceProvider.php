@@ -132,6 +132,8 @@ final class NightwatchServiceProvider extends ServiceProvider
 
     private ?Throwable $registerException = null;
 
+    private static ?string $initialTrace = null;
+
     public function register(): void
     {
         try {
@@ -242,7 +244,10 @@ final class NightwatchServiceProvider extends ServiceProvider
     {
         $clock = new Clock;
         $uuid = new Uuid(static fn () => BaseUuid::uuid4()->toString());
-        $executionState = $this->executionState($uuid->make());
+        $trace = self::$initialTrace ??= $this->isRequest && Compatibility::$isLaravelCloud
+            ? ($_SERVER['HTTP_CLOUD_REQUEST_ID'] ?? $uuid->make())
+            : $uuid->make();
+        $executionState = $this->executionState($trace);
         $tokenHash = substr(hash('xxh128', $this->nightwatchConfig['token'] ?? ''), 0, 7);
 
         $this->app->instance(Core::class, $this->core = new Core(
@@ -267,7 +272,7 @@ final class NightwatchServiceProvider extends ServiceProvider
                 captureRequestPayload: (bool) ($this->nightwatchConfig['capture_request_payload'] ?? false),
                 redactPayloadFields: $this->nightwatchConfig['redact_payload_fields'] ?? ['_token', 'password', 'password_confirmation'],
                 redactHeaders: $this->nightwatchConfig['redact_headers'] ?? ['Authorization', 'Cookie', 'Proxy-Authorization', 'X-XSRF-TOKEN'],
-                config: $this->config,
+                container: $this->app,
             ),
             executionState: $executionState,
             clock: $clock,
@@ -568,5 +573,10 @@ final class NightwatchServiceProvider extends ServiceProvider
             fn () => $this->core->userDetailsResolver,
             fn () => $this->core->report(...),
         );
+    }
+
+    public static function flushState(): void
+    {
+        self::$initialTrace = null;
     }
 }
