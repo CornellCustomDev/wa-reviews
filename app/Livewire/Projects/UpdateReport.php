@@ -3,7 +3,7 @@
 namespace App\Livewire\Projects;
 
 use App\Livewire\Forms\ReportForm;
-use App\Models\Project;
+use App\Models\Report;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -12,16 +12,17 @@ class UpdateReport extends Component
 {
     public ReportForm $form;
 
-    public function mount(Project $project)
+    public function mount(Report $report): void
     {
-        $this->form->setModel($project);
+        $this->form->setModel($report);
     }
 
-    public function save()
+    public function save(): void
     {
-        $this->authorize('update', $this->form->project);
+        $this->authorize('update', $this->form->report);
         $this->form->update();
 
-        return redirect()->route('project.show', ['project' => $this->form->project, 'tab' => 'report']);
+        $this->dispatch('close-edit');
+        $this->dispatch('report-updated');
     }
 }

@@ -1,22 +1,31 @@
 <?php
 
-namespace App\Livewire\Projects;
+namespace App\Livewire\Reports;
 
 use App\Models\Project;
+use App\Models\Report;
 use App\Models\Scope;
+use App\Services\ProjectWorkflowService;
 use App\Services\SiteImprove\SiteimproveService;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\On;
 use Livewire\Component;
 
-class Report extends Component
+class ShowReport extends Component
 {
-    public Project $project;
+    public Report $report;
     public ?string $selectedImage = null;
+
+    #[Computed]
+    public function project(): Project
+    {
+        return $this->report->project;
+    }
 
     #[Computed]
     public function issues()
     {
-        return $this->project->getReportableIssues()
+        return $this->report->reportableIssues()
             ->groupBy('scope_id')
             ->sortKeys();
     }
@@ -25,6 +34,22 @@ class Report extends Component
     public function siteimproveUrl(Scope $scope): string
     {
         return SiteimproveService::getPageReportUrlForScope($scope);
+    }
+
+    #[On('report-updated')]
+    public function refreshProject(): void
+    {
+        $this->project->refresh();
+    }
+
+    public function completeReport(ProjectWorkflowService $projectWorkflow): void
+    {
+        $this->authorize('complete-report', $this->report);
+
+        $this->report->completeReport();
+        $projectWorkflow->completeReview($this->project);
+
+        $this->redirect(route('project.show', $this->project), navigate: true);
     }
 
     public function viewImage(string $imageUrl): void
@@ -41,9 +66,9 @@ class Report extends Component
 
     public function render()
     {
-        $this->authorize('view', $this->project);
+        $this->authorize('view', $this->report);
 
-        return view('livewire.projects.report')
+        return view('livewire.reports.show-report')
             ->layout('components.layouts.app', [
                 'breadcrumbs' => $this->getBreadcrumbs(),
             ]);
@@ -54,7 +79,6 @@ class Report extends Component
         return [
             'Projects' => route('projects'),
             $this->project->name => route('project.show', $this->project),
-
             'Report' => 'active',
         ];
     }

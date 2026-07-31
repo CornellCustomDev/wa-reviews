@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Enums\Assessment;
 use App\Models\Issue;
 use App\Models\Project;
+use App\Models\Report;
 use App\Models\Scope;
 use App\Services\GoogleApi\Helpers\Sheet;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
@@ -21,13 +22,15 @@ class ProjectReportGoogle
     /**
      * @throws Exception
      */
-    public static function export(Project $project, GoogleSheets $sheetsService, GoogleDrive $driveService): string
+    public static function export(Report $report, GoogleSheets $sheetsService, GoogleDrive $driveService): string
     {
+        $project = $report->project;
+
         // Get the report data first, in case there are issues.
         $updates = [Sheet::setTitle('Final Checklist')];
-        $updates = [...$updates, ...static::getIntroFieldUpdates($project)];
+        $updates = [...$updates, ...static::getIntroFieldUpdates($project, $report)];
         $updates = [...$updates, ...static::getIssuesHeader()];
-        $updates = [...$updates, ...static::getIssueValues($project)];
+        $updates = [...$updates, ...static::getIssueValues($report)];
 
         // Get the scope data
         $scopeSheet = Sheet::make('Scope');
@@ -50,7 +53,7 @@ class ProjectReportGoogle
         return $spreadsheet->spreadsheetId;
     }
 
-    private static function getIntroFieldUpdates(Project $project): array
+    private static function getIntroFieldUpdates(Project $project, Report $report): array
     {
         $updates = [];
 
@@ -80,7 +83,7 @@ class ProjectReportGoogle
 
         $updates[] = Sheet::updateCells('A4',
             Sheet::applyFormats(
-                Sheet::value('Date review completed: ' . ($project->completed_at?->format('F j, Y') ?? '')),
+                Sheet::value('Date review completed: ' . ($report->completed_at?->format('F j, Y') ?? '')),
                 Sheet::textFormat(italic: true),
             )
         );
@@ -153,11 +156,11 @@ class ProjectReportGoogle
         return $updates;
     }
 
-    private static function getIssueValues(Project $project): array
+    private static function getIssueValues(Report $report): array
     {
         $updates = [];
 
-        $issues = $project->getReportableIssues();
+        $issues = $report->reportableIssues();
         $index = 0;
         /** @var Issue $issue */
         foreach ($issues as $issue) {

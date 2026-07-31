@@ -25,7 +25,7 @@
     </tr>
     <tr>
         <td colspan="4" style="font-style: italic">
-            Date review completed: {{ $project->completed_at?->format('F j, Y') }}
+            Date review completed: {{ $report->completed_at?->format('F j, Y') }}
         </td>
     </tr>
     <tr></tr>

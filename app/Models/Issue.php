@@ -9,6 +9,7 @@ use App\Enums\Impact;
 use App\Enums\IssueStatus;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\AsHtmlString;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,6 +46,7 @@ class Issue extends Model
         'agent_id',
         'status',
         'needs_mitigation',
+        'report_id',
     ];
 
     protected $casts = [
@@ -92,6 +94,11 @@ class Issue extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function report(): BelongsTo
+    {
+        return $this->belongsTo(Report::class);
+    }
+
     public function scope(): BelongsTo
     {
         return $this->belongsTo(Scope::class);
@@ -123,6 +130,19 @@ class Issue extends Model
     {
         return $this->belongsTo(Guideline::class);
     }
+
+    /**
+     * This issue does not have rules preventing it from being included in a report
+     */
+    public function scopeIsReportable(Builder $query): void
+    {
+        $query->whereNotNull('guideline_id')
+            ->where(fn (Builder $q) => $q
+                ->whereNull('ai_status')
+                ->orWhereNotIn('ai_status', [AIStatus::Generated, AIStatus::Rejected])
+            );
+    }
+
 
     /**
      * @throws InvalidArgumentException

@@ -6,9 +6,10 @@
         @if($project->reportViewers()->count() > 0)
             <ul>
             @foreach($project->reportViewers as $viewer)
-                <li>
+                <li class="flex">
+                    <div class="flex-1">{{ $viewer->name }} (<a href="mailto:{{ $viewer->email }}">{{ $viewer->email }}</a>)</div>
                     @can('update-report-viewers', $project)
-                        <div class="float-right">
+                        <div class="flex-none">
                             <x-forms.button.delete
                                 title="Remove {{ $viewer->name }} as a report viewer"
                                 size="xs"
@@ -17,12 +18,9 @@
                             />
                         </div>
                     @endcan
-                    <div class="inline-block">{{ $viewer->name }} (<a href="mailto:{{ $viewer->email }}">{{ $viewer->email }}</a>)</div>
                 </li>
             @endforeach
             </ul>
-        @else
-            <div class="text-gray-500 mb-4">No additional report viewers. Only {{ $project->team->name }} team members can view this project.</div>
         @endif
         @can('update-report-viewers', $project)
             <flux:modal.trigger name="add-report-viewer">
