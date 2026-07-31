@@ -146,6 +146,12 @@ trait PrismAction
                         $data['text'] .= $event->delta;
                         yield $lastStreamMessage => $pendingResponse;
                         break;
+                    case StreamEventType::Error:
+                        $data['text'] = $event->message;
+                        $data['finish'] = FinishReason::Error;
+                        $lastStreamMessage = "Error: $event->message";
+                        yield $lastStreamMessage => $pendingResponse;
+                        break;
                 }
             }
 
