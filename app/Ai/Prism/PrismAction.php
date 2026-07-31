@@ -6,8 +6,9 @@ use Exception;
 use Generator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Prism\Prism\Enums\ChunkType;
 use Prism\Prism\Enums\FinishReason;
+use Prism\Prism\Enums\StreamEventType;
+use Prism\Prism\Streaming\Events\StreamEvent;
 use Prism\Prism\Text\Request;
 use Prism\Prism\Text\ResponseBuilder;
 use Prism\Prism\Text\Step;
@@ -82,7 +83,7 @@ trait PrismAction
             Log::error('PrismAction streamResponse error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'streamedResponse' => $finalResponse?->responseMessages,
+                'stepsCollected' => $finalResponse?->steps->count(),
             ]);
             $this->feedback = "**Error:** {$e->getMessage()}";
         }
@@ -100,80 +101,70 @@ trait PrismAction
         // Start the response with the user message
         $userMessage = Arr::last($request->messages());
         $data['messages'][] = $userMessage;
-        $pendingResponse->addResponseMessage($userMessage);
 
         try {
             $lastStreamMessage = 'Awaiting response';
-            foreach ($stream as $chunk) {
-                switch ($chunk->chunkType) {
-                    case ChunkType::ToolCall:
-                        foreach ($chunk->toolCalls as $toolCall) {
-                            $data['toolCalls'][] = $toolCall;
-                            $toolCalled = $toolCall->name;
-                            $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
-                        }
-                        // Add tool call message
-                        $toolCallsMessage = new AssistantMessage($data['text'], $chunk->toolCalls);
-                        $data['messages'][] = $toolCallsMessage;
-                        $pendingResponse->addResponseMessage($toolCallsMessage);
+            /** @var StreamEvent $event */
+            foreach ($stream as $event) {
+                switch ($event->type()) {
+                    case StreamEventType::ToolCall:
+                        // One tool call per event now, rather than an array per chunk
+                        $data['toolCalls'][] = $event->toolCall;
+                        $toolCalled = $event->toolCall->name;
+                        $lastStreamMessage = $toolCalled === 'scratch_pad' ? 'Thinking' : "Using '$toolCalled'";
                         yield $lastStreamMessage => $pendingResponse;
                         break;
-                    case ChunkType::ToolResult:
-                        foreach ($chunk->toolResults as $toolResult) {
-                            $data['toolResults'][] = $toolResult;
-                        }
-                        if ($data['finish'] === FinishReason::ToolCalls) {
-                            // Add tool result message
-                            $toolResultsMessage = new ToolResultMessage($chunk->toolResults);
-                            $data['messages'][] = $toolResultsMessage;
-                            $pendingResponse->addResponseMessage($toolResultsMessage);
-                            // Add the step and reset the accumulator
+                    case StreamEventType::ToolResult:
+                        // One tool result per event now, rather than an array per chunk
+                        $data['toolResults'][] = $event->toolResult;
+                        break;
+                    case StreamEventType::StepFinish:
+                        // Finish reasons only arrive on StreamEnd now, so tool call steps
+                        // are closed out here instead of on the tool result
+                        if ($data['toolCalls']) {
+                            $data['finish'] = FinishReason::ToolCalls;
+                            // Add the tool call and tool result messages
+                            $data['messages'][] = new AssistantMessage($data['text'], $data['toolCalls']);
+                            $data['messages'][] = new ToolResultMessage($data['toolResults']);
+                            // Add the step and reset the accumulator, carrying the
+                            // messages forward so the final step holds the full
+                            // conversation, which is what toResponse() reads
                             $this->addStreamedStep($data, $pendingResponse);
+                            $messages = $data['messages'];
                             $data = $this->getStreamAccumulator($request);
+                            $data['messages'] = $messages;
                         }
                         break;
-                    case ChunkType::Meta:
-                        $data['meta'] = $chunk->meta ?? $data['meta'];
-                        $data['usage'] = $chunk->usage ?? $data['usage'];
-
-                        // If we already have a finish reason and we have usage, add the step
-                        if ($data['finish'] === FinishReason::Stop && $data['usage']) {
-                            // Add the text message
-                            $message = new AssistantMessage($data['text']);
-                            $data['messages'][] = $message;
-                            $pendingResponse->addResponseMessage($message);
-                            $lastStreamMessage = 'Retrieving response';
-                            yield $lastStreamMessage => $pendingResponse;
-
-                            // Add the step and reset the accumulator
-                            $this->addStreamedStep($data, $pendingResponse);
-                            $data = $this->getStreamAccumulator($request);
-                        }
-                        break;
-                    default:
-                        $data['text'] .= $chunk->text ?? '';
+                    case StreamEventType::StreamEnd:
+                        // Usage and the finish reason arrive here rather than on a meta chunk
+                        $data['usage'] = $event->usage ?? $data['usage'];
+                        $data['finish'] = $event->finishReason;
+                        $lastStreamMessage = 'Retrieving response';
                         yield $lastStreamMessage => $pendingResponse;
-                }
-
-                if ($chunk->finishReason) {
-                    $data['finish'] = $chunk->finishReason;
+                        break;
+                    case StreamEventType::TextDelta:
+                        $data['text'] .= $event->delta;
+                        yield $lastStreamMessage => $pendingResponse;
+                        break;
+                    case StreamEventType::Error:
+                        $data['text'] = $event->message;
+                        $data['finish'] = FinishReason::Error;
+                        $lastStreamMessage = "Error: $event->message";
+                        yield $lastStreamMessage => $pendingResponse;
+                        break;
                 }
             }
 
             // In case the stream ends without storing a step
             if ($data['finish']) {
-                // Add the text message
-                $message = new AssistantMessage($data['text'] ?? '');
-                $data['messages'][] = $message;
-                $pendingResponse->addResponseMessage($message);
-                // Add the step
+                // toResponse() appends the final assistant message itself now
                 $this->addStreamedStep($data, $pendingResponse);
             }
         } catch (Throwable $e) {
             Log::error('PrismAction collectStream error', [
                 'message' => $e->getMessage(),
-                'chunkType' => $chunk->chunkType ?? null,
-                'chunk' => $chunk ?? null,
+                'eventType' => isset($event) ? $event->type() : null,
+                'event' => $event ?? null,
                 'trace' => $e->getTraceAsString(),
             ]);
             $data['text'] = $e->getMessage();
@@ -192,6 +183,7 @@ trait PrismAction
                 finishReason: $current['finish'],
                 toolCalls: $current['toolCalls'],
                 toolResults: $current['toolResults'],
+                providerToolCalls: $current['providerToolCalls'],
                 usage: $current['usage'],
                 meta: $current['meta'],
                 messages: $current['messages'],
@@ -206,6 +198,7 @@ trait PrismAction
             'text' => '',
             'toolCalls' => [],
             'toolResults' => [],
+            'providerToolCalls' => [],
             'meta' => new Meta($request->provider(), $request->model()),
             'finish' => null,
             'usage' => new Usage(0, 0),

@@ -11,6 +11,7 @@ use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Providers\OpenAI\Maps\MessageMap;
 use Prism\Prism\Structured\PendingRequest;
 use Prism\Prism\Structured\Response;
+use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 
 class StructuredOutputAgent extends PendingRequest
 {
@@ -70,6 +71,11 @@ INSTRUCTIONS;
 
     private function mapMessages(Response $response): array
     {
-        return (new MessageMap($response->responseMessages->toArray(), []))();
+        // Structured responses have no messages collection, so the conversation
+        // comes from the final step, with the assistant response appended
+        $messages = $response->steps->last()?->messages ?? [];
+        $messages[] = new AssistantMessage($response->text);
+
+        return (new MessageMap($messages, []))();
     }
 }
