@@ -81,13 +81,11 @@ trait LarAgentChat
     {
         if ($this->streaming) {
             $this->showErrorFeedback('A response is already in progress.');
-
             return;
         }
 
         if (blank($this->userMessage)) {
             $this->showErrorFeedback('Enter a message before sending.');
-
             return;
         }
 
@@ -104,7 +102,6 @@ trait LarAgentChat
         if (blank($this->userMessage)) {
             $this->streaming = false;
             $this->showErrorFeedback('Enter a message before sending.');
-
             return;
         }
 
@@ -134,8 +131,7 @@ trait LarAgentChat
             $agent->updateChatName();
             $this->afterAgentResponse($agent);
         } catch (Throwable $e) {
-            $this->feedback = "**Error:** {$e->getMessage()}";
-            $this->showFeedback = true;
+            $this->showErrorFeedback($e->getMessage());
 
             Log::error('LarAgentChat streamResponse error', [
                 'message' => $e->getMessage(),
@@ -145,7 +141,7 @@ trait LarAgentChat
             Log::channel('slack')->error('LarAgentChat streamResponse error', [
                 'message' => $e->getMessage(),
                 //'trace' => $e->getTraceAsString(),
-                'last message' => $agent->chatHistory()->getLastMessage() ?? '',
+                'last message' => $agent?->chatHistory()->getLastMessage() ?? '',
             ]);
         }
 
