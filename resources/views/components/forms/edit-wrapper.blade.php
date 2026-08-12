@@ -23,7 +23,7 @@
         </div>
     @endif
 
-    <div x-show="showView">
+    <div x-show="showView" data-cds-view-content>
         {{ $view }}
     </div>
 </div>

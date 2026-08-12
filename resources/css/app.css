@@ -438,12 +438,18 @@ div.expander {
 /*    @apply inline-block;*/
 /*}*/
 
-[data-cds-chat] {
+[data-cds-chat],[data-cds-view-content],[data-cds-field-display] {
     ul > li {
         @apply list-disc ml-6;
     }
     ol > li {
         @apply list-decimal ml-6;
+    }
+    li > p {
+        @apply mb-0;
+    }
+    a:hover, a:focus {
+        @apply underline;
     }
 }
 

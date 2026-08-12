@@ -64,7 +64,7 @@
             @endif
 
             @if(!empty($issue->image_links))
-                <div class="flex flex-wrap gap-1 mt-1">
+                <div class="flex flex-wrap gap-1 mt-1 mb-4">
                     @foreach(Arr::wrap($issue->image_links) as $imagePath)
                         @if(!Str::contains($imagePath, config('app.url')))
                             <flux:subheading class="items-center">
