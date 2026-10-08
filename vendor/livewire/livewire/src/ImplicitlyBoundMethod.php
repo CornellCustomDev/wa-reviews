@@ -3,8 +3,10 @@
 namespace Livewire;
 
 use Illuminate\Container\BoundMethod;
+use Illuminate\Contracts\Container\ContextualAttribute;
 use Illuminate\Contracts\Routing\UrlRoutable as ImplicitlyBindable;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionNamedType;
 
@@ -12,16 +14,47 @@ class ImplicitlyBoundMethod extends BoundMethod
 {
     protected static function getMethodDependencies($container, $callback, array $parameters = [])
     {
-        $dependencies = [];
+        return static::resolveMethodDependencies($container, $callback, $parameters)['positional'];
+    }
+
+    public static function resolveMethodDependencies($container, $callback, array $parameters = [])
+    {
+        $positional = [];
+        $named = [];
         $paramIndex = 0;
 
         foreach (static::getCallReflector($callback)->getParameters() as $parameter) {
-            static::substituteNameBindingForCallParameter($parameter, $parameters, $paramIndex);
-            static::substituteImplicitBindingForCallParameter($container, $parameter, $parameters);
-            static::addDependencyForCallParameter($container, $parameter, $parameters, $dependencies);
+            $parameterPosition = count($positional);
+
+            if (static::isResolvedByAttribute($parameter)) {
+                unset($parameters[$parameter->getName()]);
+            } else {
+                static::substituteNameBindingForCallParameter($parameter, $parameters, $paramIndex);
+                static::substituteImplicitBindingForCallParameter($container, $parameter, $parameters);
+            }
+
+            static::addDependencyForCallParameter($container, $parameter, $parameters, $positional);
+
+            $parameterDependencies = array_slice($positional, $parameterPosition);
+
+            if ($parameterDependencies) {
+                $named[$parameter->getName()] = $parameter->isVariadic()
+                    ? $parameterDependencies
+                    : $parameterDependencies[0];
+            }
         }
 
-        return array_values(array_merge($dependencies, $parameters));
+        return [
+            'positional' => array_values(array_merge($positional, $parameters)),
+            'named' => $named,
+        ];
+    }
+
+    protected static function isResolvedByAttribute($parameter)
+    {
+        if (! interface_exists(ContextualAttribute::class)) return false;
+
+        return count($parameter->getAttributes(ContextualAttribute::class, ReflectionAttribute::IS_INSTANCEOF)) > 0;
     }
 
     protected static function substituteNameBindingForCallParameter($parameter, array &$parameters, int &$paramIndex)

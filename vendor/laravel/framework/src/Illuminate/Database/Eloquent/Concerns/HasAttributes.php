@@ -246,7 +246,7 @@ trait HasAttributes
         // as these attributes are not really in the attributes array, but are run
         // when we need to array or JSON the model for convenience to the coder.
         foreach ($this->getArrayableAppends() as $key) {
-            $attributes[$key] = $this->mutateAttributeForArray($key, null);
+            $attributes[$key] = $this->mutateAttributeForArray($key, $this->getAttributeFromArray($key));
         }
 
         return $attributes;
@@ -520,11 +520,13 @@ trait HasAttributes
         if ($this->exists &&
             ! $this->wasRecentlyCreated &&
             static::preventsAccessingMissingAttributes()) {
+            $exception = new MissingAttributeException($this, $key);
+
             if (isset(static::$missingAttributeViolationCallback)) {
-                return call_user_func(static::$missingAttributeViolationCallback, $this, $key);
+                return call_user_func(static::$missingAttributeViolationCallback, $this, $key, $exception);
             }
 
-            throw new MissingAttributeException($this, $key);
+            throw $exception;
         }
 
         return null;
@@ -613,15 +615,19 @@ trait HasAttributes
      */
     protected function handleLazyLoadingViolation($key)
     {
+        $exception = new LazyLoadingViolationException($this, $key);
+
         if (isset(static::$lazyLoadingViolationCallback)) {
-            return call_user_func(static::$lazyLoadingViolationCallback, $this, $key);
+            return call_user_func(
+                static::$lazyLoadingViolationCallback, $this, $key, $exception
+            );
         }
 
         if (! $this->exists || $this->wasRecentlyCreated) {
             return;
         }
 
-        throw new LazyLoadingViolationException($this, $key);
+        throw $exception;
     }
 
     /**
@@ -634,7 +640,7 @@ trait HasAttributes
      */
     protected function getRelationshipFromMethod($method)
     {
-        $relation = $this->$method();
+        $relation = Relation::withConstraintsForNestedRelation(fn () => $this->$method());
 
         if (! $relation instanceof Relation) {
             if (is_null($relation)) {
@@ -1240,13 +1246,17 @@ trait HasAttributes
     {
         [$key, $path] = explode('->', $key, 2);
 
+        $this->mergeAttributeFromCachedCasts($key);
+
         $value = $this->asJson($this->getArrayAttributeWithValue(
             $path, $key, $value
         ), $this->getJsonCastFlags($key));
 
-        $this->attributes[$key] = $this->isEncryptedCastable($key)
-            ? $this->castAttributeAsEncryptedString($key, $value)
-            : $value;
+        $this->attributes[$key] = match (true) {
+            $this->isEncryptedCastable($key) => $this->castAttributeAsEncryptedString($key, $value),
+            $this->isEncryptedClassCastable($key) => Crypt::encryptString($value),
+            default => $value,
+        };
 
         if ($this->isClassCastable($key)) {
             unset($this->classCastCache[$key]);
@@ -1363,11 +1373,11 @@ trait HasAttributes
             return [];
         }
 
-        return $this->fromJson(
-            $this->isEncryptedCastable($key)
-                ? $this->fromEncryptedString($this->attributes[$key])
-                : $this->attributes[$key]
-        );
+        return $this->fromJson(match (true) {
+            $this->isEncryptedCastable($key) => $this->fromEncryptedString($this->attributes[$key]),
+            $this->isEncryptedClassCastable($key) => Crypt::decryptString($this->attributes[$key]),
+            default => $this->attributes[$key],
+        });
     }
 
     /**
@@ -1730,6 +1740,20 @@ trait HasAttributes
     }
 
     /**
+     * Merge the default values into the model's attributes.
+     *
+     * @return void
+     */
+    protected function mergeDefaultAttributes()
+    {
+        if (! in_array(HasDefaultAttributes::class, class_uses_recursive(static::class), true)) {
+            return;
+        }
+
+        $this->attributes = array_merge($this->attributes, $this->defaults());
+    }
+
+    /**
      * Determine whether a value is Date / DateTime castable for inbound manipulation.
      *
      * @param  string  $key
@@ -1771,6 +1795,18 @@ trait HasAttributes
     protected function isEncryptedCastable($key)
     {
         return $this->hasCast($key, ['encrypted', 'encrypted:array', 'encrypted:collection', 'encrypted:json', 'encrypted:object']);
+    }
+
+    /**
+     * Determine whether a value is an encrypted class castable for inbound manipulation.
+     *
+     * @param  string  $key
+     * @return bool
+     */
+    protected function isEncryptedClassCastable($key)
+    {
+        return $this->isClassCastable($key) &&
+            Str::startsWith($this->getCasts()[$key], [AsEncryptedArrayObject::class, AsEncryptedCollection::class]);
     }
 
     /**
@@ -2084,7 +2120,7 @@ trait HasAttributes
     public function getOriginal($key = null, $default = null)
     {
         return (new static)->setRawAttributes(
-            $this->original, $sync = true
+            $this->original, sync: true
         )->getOriginalWithoutRewindingModel($key, $default);
     }
 

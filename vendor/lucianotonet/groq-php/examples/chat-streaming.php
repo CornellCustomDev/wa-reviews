@@ -1,6 +1,9 @@
 <div>
 <?php
-require __DIR__ . '/_input.php';
+
+use LucianoTonet\GroqPHP\GroqException;
+
+require __DIR__.'/_input.php';
 ob_start();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -10,31 +13,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $response = $groq->chat()->completions()->create([
-            'model' => 'llama-3.1-8b-instant',
+            'model' => 'openai/gpt-oss-20b',
             'messages' => [
                 [
                     'role' => 'user',
-                    'content' => $message
-                ]
+                    'content' => $message,
+                ],
             ],
-            'stream' => true
+            'stream' => true,
         ]);
 
         foreach ($response->chunks() as $chunk) {
             if (isset($chunk['choices'][0]['delta']['role'])) {
-                echo "<strong>" . $chunk['choices'][0]['delta']['role'] . ":</strong> ";
+                echo '<strong>'.$chunk['choices'][0]['delta']['role'].':</strong> ';
             }
 
             if (isset($chunk['choices'][0]['delta']['content'])) {
                 echo $chunk['choices'][0]['delta']['content'];
             }
 
-            // Chame ob_flush() e flush() na ordem correta
-            ob_flush(); // Limpa o buffer de saída
-            flush(); // Envia os dados para o cliente
+            // Call ob_flush() and flush() in the correct order
+            ob_flush(); // Clears the output buffer
+            flush(); // Sends data to the client
         }
-    } catch (\LucianoTonet\GroqPHP\GroqException $err) {
-        echo "<strong>assistant:</strong><br>Desculpe, ocorreu um erro: " . $err->getMessage() . "<br>";
+    } catch (GroqException $err) {
+        echo '<strong>assistant:</strong><br>Sorry, an error occurred: '.$err->getMessage().'<br>';
     }
 }
 ?>

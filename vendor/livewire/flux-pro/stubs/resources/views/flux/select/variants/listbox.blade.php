@@ -1,10 +1,16 @@
 @blaze
 
+@php $optionsClass ??= $attributes->pluck('options:class'); @endphp
+
 @props([
     'selectedSuffix' => null,
+    'optionsClass' => null,
+    'position' => 'bottom',
     'placeholder' => null,
+    'prefix' => null,
     'searchable' => null,
     'clearable' => null,
+    'align' => 'start',
     'invalid' => null,
     'button' => null, // Deprecated...
     'trigger' => null,
@@ -28,7 +34,7 @@ if (! isset($name)) {
 $invalid ??= ($name && $errors->has($name));
 
 $class = Flux::classes()
-    ->add('w-full')
+    ->add('[:where(&)]:w-full min-w-0') // Allow the host to shrink without clipping the trigger surface...
     // The below reverts styles added by Tailwind Forms plugin
     ->add('border-0 p-0 bg-transparent')
     ;
@@ -37,6 +43,7 @@ $trigger ??= $button;
 @endphp
 
 <ui-select
+    position="{{ $position }} {{ $align }}"
     clear="{{ $clear ?? 'close esc select' }}"
     @if ($close) close="{{ $close }}" @endif
     {{ $attributes->class($class)->merge(['filter' => true]) }}
@@ -45,10 +52,10 @@ $trigger ??= $button;
     data-flux-select
 >
     <?php if ($trigger): ?> {{ $trigger }} <?php else: ?>
-        <flux:select.button :$placeholder :$invalid :$size :$clearable :suffix="$selectedSuffix" />
+        <flux:select.button :$placeholder :$prefix :$invalid :$size :$clearable :suffix="$selectedSuffix" />
     <?php endif; ?>
 
-    <flux:select.options :$search :$searchable :$empty>
+    <flux:select.options :class="$optionsClass" :$search :$searchable :$empty>
         {{ $slot }}
     </flux:select.options>
 </ui-select>

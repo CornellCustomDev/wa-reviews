@@ -1,7 +1,10 @@
-@blaze(fold: true)
+@blaze(fold: true, unsafe: ['icon:variant'])
+
+@php $iconVariant ??= $attributes->pluck('icon:variant'); @endphp
 
 @props([
     'icon' => 'cloud-arrow-up',
+    'iconVariant' => 'solid',
     'withProgress' => false,
     'inline' => false,
     'heading' => null,
@@ -40,7 +43,7 @@ $loadingClasses = Flux::classes()
     <div class="relative {{ $inline ? 'me-4' : 'mb-4' }}">
         <flux:icon
             name="{{ $icon }}"
-            variant="solid"
+            :variant="$iconVariant"
             class="{{ $iconClasses }}"
         />
 

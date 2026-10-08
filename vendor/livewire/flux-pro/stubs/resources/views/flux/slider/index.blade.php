@@ -1,4 +1,5 @@
 @blaze(fold: true, unsafe: [
+    'tick:position',
     // flux:with-field props
     'name', 'label', 'badge',
     'description', 'description:trailing',
@@ -9,6 +10,8 @@
 @props(['range' => false])
 
 @php
+$tickPosition = $attributes->pluck('tick:position', 'below');
+
 $classes = Flux::classes()
     ->add('flex flex-col justify-center w-full [:where(&)]:min-h-4 isolate select-none [&[disabled]]:opacity-50 touch-none')
     ;
@@ -30,10 +33,18 @@ $thumbClasses = Flux::classes()
     ->add('absolute top-1/2 [:where(&)]:size-4 rounded-full bg-white ring ring-black/15 shadow-[0px_1px_2px_0px_rgba(0,0,0,.05),0px_2px_4px_0px_rgba(0,0,0,.1)] select-none -translate-y-1/2 -translate-x-1/2 dark:ring-black/30 rtl:translate-x-1/2 has-focus-visible:outline-2 has-focus-visible:outline-[-webkit-focus-ring-color]')
     ->add($attributes->pluck('thumb:class'))
     ;
+
+$tickPositionClasses = Flux::classes()
+    ->add('grid *:col-start-1 *:row-start-1 select-none cursor-default')
+    ->add(match ($tickPosition) {
+        'inside' => 'absolute inset-0',
+        default => 'relative mt-2 has-data-flux-slider-tick-line:mt-1',
+    })
+    ;
 @endphp
 
 <flux:with-field :$attributes>
-    <ui-slider 
+    <ui-slider
         {{ $attributes->class($classes) }}
         @if ($range) range @endif
         data-flux-control
@@ -47,7 +58,16 @@ $thumbClasses = Flux::classes()
                 <div class="{{ $indicatorWrapperClasses }}">
                     <div data-flux-slider-indicator class="{{ $indicatorClasses }}" wire:ignore></div>
                 </div>
-                
+
+                <?php if ($tickPosition === 'inside' && $slot->isNotEmpty()): ?>
+                    <div
+                        data-flux-slider-tick-position="inside"
+                        class="{{ $tickPositionClasses }}"
+                    >
+                        {{ $slot }}
+                    </div>
+                <?php endif; ?>
+
                 <div data-flux-slider-thumb class="{{ $thumbClasses }}" wire:ignore>
                     <input type="range" class="sr-only" {{ $attributes->only(['min', 'max', 'step']) }} />
                 </div>
@@ -58,10 +78,10 @@ $thumbClasses = Flux::classes()
                     </div>
                 @endif
             </div>
-            
+
             {{-- Step marks --}}
-            <?php if ($slot->isNotEmpty()): ?>
-                <div class="relative grid *:col-start-1 *:row-start-1 select-none cursor-default">
+            <?php if ($tickPosition !== 'inside' && $slot->isNotEmpty()): ?>
+                <div data-flux-slider-tick-position="below" class="{{ $tickPositionClasses }}">
                     {{ $slot }}
                 </div>
             <?php endif; ?>

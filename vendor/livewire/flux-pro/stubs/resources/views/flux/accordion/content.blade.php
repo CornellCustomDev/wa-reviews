@@ -14,9 +14,8 @@ $classes = Flux::classes()
 @endphp
 
 <div
-    x-show="open"
-    @if ($transition) x-collapse @endif
-    @if (! $expanded) x-cloak @endif
+    @if ($transition) x-show="open" x-collapse.min.0px @endif
+    @if (! $expanded) hidden="until-found" @endif
     data-flux-accordion-content
 >
     <div {{ $attributes->class($classes) }}>

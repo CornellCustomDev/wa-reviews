@@ -1,5 +1,9 @@
 @blaze(fold: true)
 
-<ui-tab-group {{ $attributes->class('block') }} data-flux-tab-group>
+@props([
+    'findable' => false,
+])
+
+<ui-tab-group {{ $attributes->class('block') }} @if ($findable) findable @endif data-flux-tab-group>
     {{ $slot }}
 </ui-tab-group>

@@ -32,7 +32,8 @@ if ($multiple) {
 $invalid ??= ($name && $errors->has($name));
 
 $class = Flux::classes()
-    ->add('w-full');
+    ->add('w-full min-w-0') // Allow the host to shrink without clipping the trigger surface...
+    ;
 @endphp
 
 <ui-select autocomplete="strict" clear="esc" {{ $attributes->class($class)->merge(['filter' => true]) }} @if($showName) name="{{ $name }}" @endif data-flux-control data-flux-select>

@@ -9,7 +9,6 @@ use Illuminate\Container\Container;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as Router;
-use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use Laravel\Mcp\Client;
 use Laravel\Mcp\Client\ClientManager;
@@ -20,6 +19,7 @@ use Laravel\Mcp\Server\Contracts\Transport;
 use Laravel\Mcp\Server\Http\Controllers\OAuthRegisterController;
 use Laravel\Mcp\Server\Middleware\AddWwwAuthenticateHeader;
 use Laravel\Mcp\Server\Middleware\ReorderJsonAccept;
+use Laravel\Mcp\Server\Middleware\ValidateMcpHeaders;
 use Laravel\Mcp\Server\Transport\HttpTransport;
 use Laravel\Mcp\Server\Transport\StdioTransport;
 use Laravel\Passport\Passport;
@@ -27,6 +27,8 @@ use Laravel\Passport\Passport;
 class Registrar
 {
     use Macroable;
+
+    public const OAUTH_SCOPE = 'mcp:use';
 
     /** @var array<string, callable> */
     protected array $localServers = [];
@@ -46,13 +48,10 @@ class Registrar
 
         $route = Router::post($route, static fn (): mixed => static::startServer(
             $serverClass,
-            static fn (): HttpTransport => new HttpTransport(
-                $request = request(),
-                // @phpstan-ignore-next-line
-                (string) $request->header('MCP-Session-Id')
-            ),
+            static fn (): HttpTransport => new HttpTransport(request()),
         ))->middleware([
             ReorderJsonAccept::class,
+            ValidateMcpHeaders::class,
             AddWwwAuthenticateHeader::class,
         ]);
 
@@ -68,9 +67,7 @@ class Registrar
      */
     public function local(string $handle, string $serverClass): void
     {
-        $this->localServers[$handle] = fn (): mixed => static::startServer($serverClass, fn (): StdioTransport => new StdioTransport(
-            Str::uuid()->toString(),
-        ));
+        $this->localServers[$handle] = fn (): mixed => static::startServer($serverClass, fn (): StdioTransport => new StdioTransport);
     }
 
     /**
@@ -89,6 +86,7 @@ class Registrar
     /**
      * @param  Closure(string, TokenSet): mixed|array{0: class-string, 1: string}  $handler
      * @param  array<int, string>|string  $middleware
+     * @param  array<string, mixed>  $clientMetadata
      */
     public function oAuthRoutesFor(
         string $client,
@@ -96,8 +94,10 @@ class Registrar
         array|string $middleware = 'web',
         ?string $connectUri = null,
         ?string $callbackUri = null,
+        ?string $clientMetadataUri = null,
+        array $clientMetadata = [],
     ): void {
-        (new OAuthRouteRegistrar)->register($client, $handler, $middleware, $connectUri, $callbackUri);
+        (new OAuthRouteRegistrar)->register($client, $handler, $middleware, $connectUri, $callbackUri, $clientMetadataUri, $clientMetadata);
     }
 
     public function getLocalServer(string $handle): ?callable
@@ -137,7 +137,11 @@ class Registrar
                 ->name('mcp.oauth.authorization-server');
         }
 
-        Router::get('/.well-known/oauth-protected-resource/{path}', static fn (string $path) => response()->json(static::protectedResourceMetadata($path)))
+        Router::get('/.well-known/oauth-protected-resource/{path}', static function (Route $route) {
+            $path = $route->parameter('path');
+
+            return response()->json(static::protectedResourceMetadata(is_string($path) ? $path : ''));
+        })
             ->where('path', '.*')
             ->name('mcp.oauth.protected-resource.nested');
 
@@ -160,7 +164,7 @@ class Registrar
             'registration_endpoint' => url($oauthPrefix.'/register'),
             'response_types_supported' => ['code'],
             'code_challenge_methods_supported' => ['S256'],
-            'scopes_supported' => ['mcp:use'],
+            'scopes_supported' => [self::OAUTH_SCOPE],
             'grant_types_supported' => ['authorization_code', 'refresh_token'],
         ];
     }
@@ -173,7 +177,7 @@ class Registrar
         return [
             'resource' => url('/'.$path),
             'authorization_servers' => [config('mcp.authorization_server') ?? url('/')],
-            'scopes_supported' => ['mcp:use'],
+            'scopes_supported' => [self::OAUTH_SCOPE],
         ];
     }
 
@@ -199,8 +203,8 @@ class Registrar
 
         $current = Passport::$scopes ?? [];
 
-        if (! array_key_exists('mcp:use', $current)) {
-            $current['mcp:use'] = 'Use MCP server';
+        if (! array_key_exists(self::OAUTH_SCOPE, $current)) {
+            $current[self::OAUTH_SCOPE] = 'Use MCP server';
             Passport::tokensCan($current);
         }
 

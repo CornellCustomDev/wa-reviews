@@ -616,7 +616,7 @@ class Mailable implements MailableContract, Renderable
      */
     public function priority($level = 3)
     {
-        $this->callbacks[] = function ($message) use ($level) {
+        $this->callbacks[] = static function ($message) use ($level) {
             $message->priority($level);
         };
 
@@ -1548,8 +1548,6 @@ class Mailable implements MailableContract, Renderable
     /**
      * Assert the mailable has the given attachment.
      *
-     * @param  string|\Illuminate\Contracts\Mail\Attachable|\Illuminate\Mail\Attachment  $file
-     * @param  array  $options
      * @return $this
      */
     public function assertHasNoAttachments()
@@ -1757,7 +1755,7 @@ class Mailable implements MailableContract, Renderable
 
         $headers = $this->headers();
 
-        $this->withSymfonyMessage(function ($message) use ($headers) {
+        $this->withSymfonyMessage(static function ($message) use ($headers) {
             if ($headers->messageId) {
                 $message->getHeaders()->addIdHeader('Message-Id', $headers->messageId);
             }

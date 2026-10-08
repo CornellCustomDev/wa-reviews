@@ -6,6 +6,7 @@ namespace Laravel\Boost\Install;
 
 use FilesystemIterator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Laravel\Boost\Concerns\RendersBladeGuidelines;
 use Laravel\Boost\Contracts\SupportsSkills;
 use RecursiveDirectoryIterator;
@@ -31,7 +32,7 @@ class SkillWriter
 
     public function write(Skill $skill): int
     {
-        if (! $this->isValidSkillName($skill->name)) {
+        if (! self::isValidSkillName($skill->name)) {
             throw new RuntimeException("Invalid skill name: {$skill->name}");
         }
 
@@ -98,9 +99,15 @@ class SkillWriter
      */
     public function writeAll(Collection $skills): array
     {
-        return $skills
-            ->mapWithKeys(fn (Skill $skill): array => [$skill->name => $this->write($skill)])
-            ->all();
+        [$valid, $invalid] = $skills->partition(fn (Skill $skill): bool => self::isValidSkillName($skill->name));
+
+        $written = $valid->mapWithKeys(fn (Skill $skill): array => [$skill->name => $this->write($skill)])->all();
+
+        if ($invalid->isNotEmpty()) {
+            throw new RuntimeException('Invalid skill name: '.$invalid->implode('name', ', '));
+        }
+
+        return $written;
     }
 
     /**
@@ -110,20 +117,15 @@ class SkillWriter
      */
     public function sync(Collection $skills, array $previouslyTrackedSkills = []): array
     {
-        $written = $this->writeAll($skills);
+        $removals = $this->removeStale(array_values(array_diff($previouslyTrackedSkills, $skills->keys()->all())));
+        $failedRemovals = array_fill_keys(array_keys($removals, false, true), self::FAILED);
 
-        $newSkillNames = $skills->keys()->all();
-
-        $staleSkillNames = array_values(array_diff($previouslyTrackedSkills, $newSkillNames));
-
-        $this->removeStale($staleSkillNames);
-
-        return $written;
+        return [...$failedRemovals, ...$this->writeAll($skills)];
     }
 
     public function remove(string $skillName): bool
     {
-        if (! $this->isValidSkillName($skillName)) {
+        if (! self::isValidSkillName($skillName)) {
             return false;
         }
 
@@ -243,21 +245,24 @@ class SkillWriter
                 $replacedTargetFile = substr($targetFile, 0, -10).'.md';
             }
 
-            return file_put_contents($replacedTargetFile, $this->ensureTrailingNewline($content)) !== false;
+            return file_put_contents($replacedTargetFile, Str::finish($content, "\n")) !== false;
         }
 
         if ($isMarkdownFile) {
             $content = MarkdownFormatter::format(trim(file_get_contents($file->getRealPath())));
 
-            return file_put_contents($targetFile, $this->ensureTrailingNewline($content)) !== false;
+            return file_put_contents($targetFile, Str::finish($content, "\n")) !== false;
         }
 
-        return @copy($file->getRealPath(), $targetFile);
-    }
+        if (! @copy($file->getRealPath(), $targetFile)) {
+            return false;
+        }
 
-    protected function ensureTrailingNewline(string $content): string
-    {
-        return str_ends_with($content, "\n") ? $content : $content."\n";
+        if (PHP_OS_FAMILY !== 'Windows') {
+            @chmod($targetFile, $file->getPerms() & 0777 & ~umask());
+        }
+
+        return true;
     }
 
     protected function ensureDirectoryExists(string $path): bool
@@ -337,10 +342,13 @@ class SkillWriter
         return false;
     }
 
-    protected function isValidSkillName(string $name): bool
+    public static function isValidSkillName(string $name): bool
     {
-        $hasPathTraversal = str_contains($name, '..') || str_contains($name, '/') || str_contains($name, '\\');
+        if (str_contains($name, '..') || str_contains($name, '/') || str_contains($name, '\\') || str_contains($name, "\0")) {
+            return false;
+        }
 
-        return ! $hasPathTraversal && trim($name) !== '';
+        // A name of only dots and whitespace resolves to the skills directory itself.
+        return trim($name, ". \t\n\r\0\x0B") !== '';
     }
 }

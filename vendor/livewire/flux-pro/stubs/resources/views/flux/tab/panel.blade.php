@@ -1,5 +1,9 @@
 @blaze(fold: true)
 
+@aware([
+    'findable' => false,
+])
+
 @props([
     'selected' => false,
     'name' => null,
@@ -7,7 +11,8 @@
 
 @php
 $classes = Flux::classes()
-    ->add('[&:not([data-selected])]:hidden [:where(&)]:pt-8')
+    ->add('[:where(&)]:pt-8')
+    ->add('[&[hidden=until-found]]:absolute [&[hidden=until-found]]:opacity-0 [&[hidden=until-found]]:pointer-events-none')
 ;
 
 if ($name) {
@@ -18,6 +23,6 @@ if ($name) {
 }
 @endphp
 
-<div {{ $attributes->class($classes)->merge(['data-selected' => $selected]) }} data-flux-tab-panel>
+<div {{ $attributes->class($classes)->merge(['data-selected' => $selected, 'hidden' => $selected ? false : ($findable ? 'until-found' : true)]) }} data-flux-tab-panel>
     {{ $slot }}
 </div>

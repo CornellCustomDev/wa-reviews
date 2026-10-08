@@ -15,24 +15,30 @@ if (! is_array($argv) || $argv === []) {
     return;
 }
 
-if (isset($_SERVER['PAO_DISABLE'])) {
+if (filter_var($_SERVER['PAO_DISABLE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
     return;
 }
 
 $agent = AgentDetector::detect();
 
-if (! $agent->isAgent && ! isset($_SERVER['PAO_FORCE'])) {
+if (! $agent->isAgent && ! filter_var($_SERVER['PAO_FORCE'] ?? false, FILTER_VALIDATE_BOOLEAN)) {
     return;
 }
 
-if (array_intersect($argv, ['--version', '--help', '-h', 'worker'])) {
+if (array_intersect($argv, ['--version', '-V', '--help', '-h', 'worker'])) {
     return;
 }
 
 unset($_SERVER['COLLISION_PRINTER']);
 $_SERVER['PEST_PARALLEL_NO_OUTPUT'] = '1';
 
-register_shutdown_function(function (): void {
+$pid = getmypid();
+
+register_shutdown_function(function () use ($pid): void {
+    if (getmypid() !== $pid) {
+        return;
+    }
+
     if (! Execution::running()) {
         return;
     }

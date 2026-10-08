@@ -16,9 +16,13 @@ use Laravel\Boost\Install\GuidelineAssist;
 use Laravel\Boost\Install\GuidelineConfig;
 use Laravel\Boost\Mcp\Boost;
 use Laravel\Boost\Middleware\InjectBoost;
+use Laravel\Boost\Rules\RuleRepository;
 use Laravel\Boost\Services\BrowserLogger;
+use Laravel\Boost\Support\Config;
+use Laravel\Boost\Support\RenderFailures;
+use Laravel\Boost\Support\SkillParseFailures;
 use Laravel\Mcp\Facades\Mcp;
-use Laravel\Roster\Roster;
+use Laravel\Roster\ProjectManager;
 
 class BoostServiceProvider extends ServiceProvider
 {
@@ -29,18 +33,28 @@ class BoostServiceProvider extends ServiceProvider
             'boost'
         );
 
+        $this->app->singleton(RenderFailures::class, fn (): RenderFailures => new RenderFailures);
+        $this->app->singleton(SkillParseFailures::class, fn (): SkillParseFailures => new SkillParseFailures);
+
         if (! $this->shouldRun()) {
             return;
         }
 
         $this->app->singleton(BoostManager::class, fn (): BoostManager => new BoostManager);
 
-        $this->app->singleton(Roster::class, fn (): Roster => Roster::scan(base_path()));
+        $this->app->singleton(ProjectManager::class, fn (): ProjectManager => new ProjectManager);
 
-        $this->app->singleton(GuidelineConfig::class, fn (): GuidelineConfig => new GuidelineConfig);
+        $this->app->singleton(GuidelineConfig::class, function (): GuidelineConfig {
+            $config = new GuidelineConfig;
+            $config->usesSail = (new Config)->getSail();
+
+            return $config;
+        });
+
+        $this->app->singleton(RuleRepository::class, fn (): RuleRepository => new RuleRepository(base_path('.ai/rules')));
 
         $this->app->singleton(GuidelineAssist::class, fn ($app): GuidelineAssist => new GuidelineAssist(
-            $app->make(Roster::class),
+            $app->make(ProjectManager::class),
             $app->make(GuidelineConfig::class)
         ));
     }
@@ -55,9 +69,9 @@ class BoostServiceProvider extends ServiceProvider
 
         $this->registerPublishing();
         $this->registerCommands();
-        $this->registerRoutes();
 
         if (config('boost.browser_logs_watcher', true)) {
+            $this->registerRoutes();
             $this->registerBrowserLogger();
             $this->callAfterResolving('blade.compiler', $this->registerBladeDirectives(...));
             $this->hookIntoResponses($router);

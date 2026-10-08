@@ -4,6 +4,7 @@
 
 @props([
     'placeholder' => null,
+    'prefix' => null,
     'clearable' => null,
     'invalid' => false,
     'suffix' => null,
@@ -39,6 +40,10 @@ $classes = Flux::classes()
     <?php if ($slot->isNotEmpty()): ?>
         {{ $slot }}
     <?php else: ?>
+        <?php if ($prefix): ?>
+            <span class="shrink-0 max-w-1/2 truncate me-1 text-zinc-500 [[disabled]_&]:text-zinc-400 dark:text-zinc-400 dark:[[disabled]_&]:text-zinc-500" data-flux-select-prefix>{{ $prefix }}</span>
+        <?php endif; ?>
+
         <flux:select.selected :$placeholder :$max :$suffix />
     <?php endif; ?>
 

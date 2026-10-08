@@ -61,10 +61,14 @@ class DatabaseEntriesRepository implements Contract, ClearableRepository, Prunab
      */
     public function find($id): EntryResult
     {
-        $entry = EntryModel::on($this->connection)->whereUuid($id)->firstOrFail();
+        $entry = EntryModel::on($this->connection)
+                        ->when(strlen((string) $id) < 36 && ctype_xdigit((string) $id),
+                            fn ($query) => $query->where('uuid', 'like', $id.'%')->orderByDesc('sequence'),
+                            fn ($query) => $query->whereUuid($id))
+                        ->firstOrFail();
 
         $tags = $this->table('telescope_entries_tags')
-                        ->where('entry_uuid', $id)
+                        ->where('entry_uuid', $entry->uuid)
                         ->pluck('tag')
                         ->all();
 
@@ -376,7 +380,8 @@ class DatabaseEntriesRepository implements Contract, ClearableRepository, Prunab
     public function prune(DateTimeInterface $before, $keepExceptions)
     {
         $query = $this->table('telescope_entries')
-                ->where('created_at', '<', $before);
+                ->where('created_at', '<', $before)
+                ->orderBy('sequence');
 
         if ($keepExceptions) {
             $query->where('type', '!=', 'exception');
@@ -401,11 +406,11 @@ class DatabaseEntriesRepository implements Contract, ClearableRepository, Prunab
     public function clear()
     {
         do {
-            $deleted = $this->table('telescope_entries')->take($this->chunkSize)->delete();
+            $deleted = $this->table('telescope_entries')->orderBy('sequence')->take($this->chunkSize)->delete();
         } while ($deleted !== 0);
 
         do {
-            $deleted = $this->table('telescope_monitoring')->take($this->chunkSize)->delete();
+            $deleted = $this->table('telescope_monitoring')->orderBy('tag')->take($this->chunkSize)->delete();
         } while ($deleted !== 0);
     }
 

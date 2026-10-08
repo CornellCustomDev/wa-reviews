@@ -2,10 +2,10 @@
 
 namespace Illuminate\Validation;
 
-use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Traits\Macroable;
 use Illuminate\Validation\Rules\AnyOf;
+use Illuminate\Validation\Rules\ArrayKeys;
 use Illuminate\Validation\Rules\ArrayRule;
 use Illuminate\Validation\Rules\Can;
 use Illuminate\Validation\Rules\Date;
@@ -81,6 +81,17 @@ class Rule
     }
 
     /**
+     * Get an array keys rule builder instance.
+     *
+     * @param  \Illuminate\Contracts\Support\Arrayable|array|string  $keys
+     * @return \Illuminate\Validation\Rules\ArrayKeys
+     */
+    public static function arrayKeys($keys)
+    {
+        return new ArrayKeys(...func_get_args());
+    }
+
+    /**
      * Create a new nested rule set.
      *
      * @param  callable  $callback
@@ -123,11 +134,7 @@ class Rule
      */
     public static function in($values)
     {
-        if ($values instanceof Arrayable) {
-            $values = $values->toArray();
-        }
-
-        return new In(is_array($values) ? $values : func_get_args());
+        return new In(...func_get_args());
     }
 
     /**
@@ -138,11 +145,7 @@ class Rule
      */
     public static function notIn($values)
     {
-        if ($values instanceof Arrayable) {
-            $values = $values->toArray();
-        }
-
-        return new NotIn(is_array($values) ? $values : func_get_args());
+        return new NotIn(...func_get_args());
     }
 
     /**
@@ -168,7 +171,7 @@ class Rule
     }
 
     /**
-     * Get a exclude_if rule builder instance.
+     * Get an exclude_if rule builder instance.
      *
      * @param  (\Closure(): bool)|bool  $callback
      * @return \Illuminate\Validation\Rules\ExcludeIf
@@ -179,7 +182,7 @@ class Rule
     }
 
     /**
-     * Get a exclude_unless rule builder instance.
+     * Get an exclude_unless rule builder instance.
      *
      * @param  (\Closure(): bool)|bool  $callback
      * @return \Illuminate\Validation\Rules\ExcludeUnless
@@ -323,11 +326,7 @@ class Rule
      */
     public static function contains($values)
     {
-        if ($values instanceof Arrayable) {
-            $values = $values->toArray();
-        }
-
-        return new Rules\Contains(is_array($values) ? $values : func_get_args());
+        return new Rules\Contains(...func_get_args());
     }
 
     /**
@@ -338,11 +337,7 @@ class Rule
      */
     public static function doesntContain($values)
     {
-        if ($values instanceof Arrayable) {
-            $values = $values->toArray();
-        }
-
-        return new Rules\DoesntContain(is_array($values) ? $values : func_get_args());
+        return new Rules\DoesntContain(...func_get_args());
     }
 
     /**

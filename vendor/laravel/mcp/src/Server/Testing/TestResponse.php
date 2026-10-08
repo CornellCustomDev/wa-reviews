@@ -107,12 +107,16 @@ class TestResponse
     }
 
     /**
-     * @param  array<string, mixed>|Closure(AssertableJson): bool  $structuredContent
+     * @param  array<string, mixed>|Closure(AssertableJson): mixed  $structuredContent
      */
     public function assertStructuredContent(Closure|array $structuredContent): static
     {
+        $actual = $this->structuredContent();
+
         if ($structuredContent instanceof Closure) {
-            $assertableJson = AssertableJson::fromArray($this->response->toArray()['result']['structuredContent'] ?? null);
+            Assert::assertNotNull($actual, 'The response does not contain any structured content.');
+
+            $assertableJson = AssertableJson::fromArray($actual);
 
             $structuredContent($assertableJson);
 
@@ -122,8 +126,8 @@ class TestResponse
         }
 
         Assert::assertSame(
-            $structuredContent,
-            $this->response->toArray()['result']['structuredContent'] ?? null,
+            $this->toJsonRepresentation($structuredContent),
+            $actual,
             'The expected structured content does not match the actual structured content.'
         );
 
@@ -145,7 +149,7 @@ class TestResponse
         foreach ($this->notifications as $notification) {
             $content = $notification->toArray();
 
-            if ($content['method'] === $method && (is_array($params) === false || $content['params'] === $params)) {
+            if ($content['method'] === $method && (is_array($params) === false || $this->toJsonRepresentation($content['params']) === $this->toJsonRepresentation($params))) {
                 Assert::assertTrue(true); // @phpstan-ignore-line
 
                 return $this;
@@ -193,9 +197,26 @@ class TestResponse
         return $this->assertHasNoErrors();
     }
 
+    public function assertNotRegistered(): static
+    {
+        [$primitiveType, $primitiveIdentifier] = match (true) {
+            $this->primitive instanceof Tool => ['tool', $this->primitive->name()],
+            $this->primitive instanceof Prompt => ['prompt', $this->primitive->name()],
+            $this->primitive instanceof Resource => ['resource', $this->primitive->uri()],
+            default => throw new RuntimeException('This primitive type is not supported.'),
+        };
+
+        Assert::assertTrue(
+            count(array_filter($this->errors(), fn (string $error): bool => str_contains($error, ucfirst($primitiveType).' ['.$primitiveIdentifier.'] not found.'))) > 0,
+            'The '.$primitiveType.' ['.$this->primitive::class.'] is registered.',
+        );
+
+        return $this;
+    }
+
     public function assertHasNoErrors(): static
     {
-        Assert::assertEmpty($this->errors());
+        Assert::assertSame([], $this->errors(), 'The response has errors.');
 
         return $this;
     }
@@ -373,5 +394,31 @@ class TestResponse
         $response = $this->response->toArray();
 
         return $response['result']['completion']['values'] ?? [];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function structuredContent(): ?array
+    {
+        $structuredContent = $this->response->toArray()['result']['structuredContent'] ?? null;
+
+        if (is_array($structuredContent) === false) {
+            return null;
+        }
+
+        /** @var array<string, mixed> $decoded */
+        $decoded = $this->toJsonRepresentation($structuredContent);
+
+        return $decoded;
+    }
+
+    protected function toJsonRepresentation(mixed $value): mixed
+    {
+        return json_decode(
+            json_encode($value, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            associative: true,
+            flags: JSON_THROW_ON_ERROR,
+        );
     }
 }

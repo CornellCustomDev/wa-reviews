@@ -12,9 +12,12 @@
     ],
     "sail": false,
     "skills": [
+        "infer-conventions",
         "laravel-best-practices",
+        "testing-best-practices",
         "configure-nightwatch",
         "pennant-development",
+        "telescope-debugging",
         "fluxui-development",
         "livewire-development",
         "tailwindcss-development",

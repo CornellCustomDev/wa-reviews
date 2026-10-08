@@ -14,17 +14,20 @@
         <option value="text">text</option>
     </select>
 
-    <label for="prompt" class="text-sm mt-4">Prompt (opcional):</label>
-    <textarea id="prompt" name="prompt" placeholder="Prompt (opcional)" class="border border-black p-2 w-96" rows="4"></textarea>   
+    <label for="prompt" class="text-sm mt-4">Prompt (optional):</label>
+    <textarea id="prompt" name="prompt" placeholder="Prompt (optional)" class="border border-black p-2 w-96" rows="4"></textarea>   
 
     <button type="submit" class="bg-black text-white p-2 mt-4 w-96">Traduzir</button>
 </form>
 
 <?php
+
+use LucianoTonet\GroqPHP\GroqException;
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $originalFileName = $_FILES['audio']['name'];
     $tmpFilePath = $_FILES['audio']['tmp_name'];
-    $newFilePath = sys_get_temp_dir() . '/' . $originalFileName;
+    $newFilePath = sys_get_temp_dir().'/'.$originalFileName;
 
     try {
         move_uploaded_file($tmpFilePath, $newFilePath);
@@ -43,12 +46,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $translation = $groq->audio()->translations()->create($translationParams);
 
         if ($translationParams['response_format'] === 'text') {
-            echo $translation; // Retorna a resposta em texto diretamente
+            echo $translation; // Returns the response as plain text directly
         } else {
-            echo json_encode($translation, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT); // Retorna a resposta em JSON
+            echo json_encode($translation, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT); // Returns the response as JSON
         }
-    } catch (LucianoTonet\GroqPHP\GroqException $e) {
-        echo "<strong>Error:</strong> <br><pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
+    } catch (GroqException $e) {
+        echo '<strong>Error:</strong> <br><pre>'.htmlspecialchars($e->getMessage()).'</pre>';
     } finally {
         if (file_exists($newFilePath)) {
             unlink($newFilePath);

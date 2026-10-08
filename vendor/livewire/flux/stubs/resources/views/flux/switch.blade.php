@@ -22,6 +22,7 @@ $classes = Flux::classes()
     ->add('rounded-full')
     ->add('transition')
     ->add('bg-zinc-800/15 [&[disabled]]:opacity-50 dark:bg-transparent dark:border dark:border-white/20 dark:[&[disabled]]:border-white/10')
+    ->add('data-loading:opacity-50 data-loading:pointer-events-none dark:data-loading:border-white/10')
     ->add('[print-color-adjust:exact]')
     ->add([
         'data-checked:bg-(--color-accent)',
@@ -43,16 +44,16 @@ $indicatorClasses = Flux::classes()
     ]);
 @endphp
 
-@if ($align === 'left' || $align === 'start')
+<?php if ($align === 'left' || $align === 'start'): ?>
     <flux:with-inline-field :$attributes>
         <ui-switch {{ $attributes->class($classes) }} @if($showName) name="{{ $name }}" @endif @if($checked) checked data-checked @endif data-flux-control data-flux-switch>
             <span class="{{ \Illuminate\Support\Arr::toCssClasses($indicatorClasses) }}"></span>
         </ui-switch>
     </flux:with-inline-field>
-@else
+<?php else: ?>
     <flux:with-reversed-inline-field :$attributes>
         <ui-switch {{ $attributes->class($classes) }} @if($showName) name="{{ $name }}" @endif @if($checked) checked data-checked @endif data-flux-control data-flux-switch>
             <span class="{{ \Illuminate\Support\Arr::toCssClasses($indicatorClasses) }}"></span>
         </ui-switch>
     </flux:with-reversed-inline-field>
-@endif
+<?php endif; ?>

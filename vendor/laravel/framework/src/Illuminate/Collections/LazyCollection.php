@@ -15,6 +15,7 @@ use InvalidArgumentException;
 use IteratorAggregate;
 use stdClass;
 use Traversable;
+use ValueError;
 
 /**
  * @template TKey of array-key
@@ -90,7 +91,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
      * @param  int  $from
      * @param  int  $to
      * @param  int  $step
-     * @return ($step is zero ? never : static<int, int>)
+     * @return ($step is 0 ? never : static<int, int>)
      *
      * @throws \InvalidArgumentException
      */
@@ -279,7 +280,9 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
         }
 
         if ($this->useAsCallable($key)) {
-            return ! is_null($this->first($key));
+            $placeholder = new stdClass;
+
+            return $this->first($key, $placeholder) !== $placeholder;
         }
 
         foreach ($this as $item) {
@@ -517,7 +520,9 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
     {
         return new static(function () {
             foreach ($this as $key => $value) {
-                yield $value => $key;
+                if (is_string($value) || is_int($value)) {
+                    yield $value => $key;
+                }
             }
         });
     }
@@ -571,7 +576,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
                     $resolvedKey = enum_value($resolvedKey);
                 }
 
-                if (is_object($resolvedKey)) {
+                if (is_object($resolvedKey) || is_null($resolvedKey)) {
                     $resolvedKey = (string) $resolvedKey;
                 }
 
@@ -886,9 +891,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
 
             foreach ($this as $key) {
                 if (! $values->valid()) {
-                    trigger_error($errorMessage, E_USER_WARNING);
-
-                    break;
+                    throw new ValueError($errorMessage);
                 }
 
                 yield $key => $values->current();
@@ -897,7 +900,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
             }
 
             if ($values->valid()) {
-                trigger_error($errorMessage, E_USER_WARNING);
+                throw new ValueError($errorMessage);
             }
         });
     }
@@ -1031,7 +1034,7 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
      *
      * @param  int|null  $number
      * @param  bool  $preserveKeys
-     * @return static<int, TValue>|TValue
+     * @return ($number is null ? TValue : static<int, TValue>)
      *
      * @throws \InvalidArgumentException
      */
@@ -1570,8 +1573,10 @@ class LazyCollection implements CanBeEscapedWhenCastToString, Enumerable
                     $position = ($position + 1) % $limit;
                 }
 
-                for ($i = 0, $end = min($limit, count($ringBuffer)); $i < $end; $i++) {
-                    $pointer = ($position + $i) % $limit;
+                $ringBufferCount = count($ringBuffer);
+
+                for ($i = 0, $end = min($limit, $ringBufferCount); $i < $end; $i++) {
+                    $pointer = $ringBufferCount < $limit ? $i : ($position + $i) % $limit;
                     yield $ringBuffer[$pointer][0] => $ringBuffer[$pointer][1];
                 }
             });

@@ -32,7 +32,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Lottery;
 use Illuminate\Support\Reflector;
-use Illuminate\Support\Str;
+use Illuminate\Support\Stringable;
 use Illuminate\Support\Traits\ReflectsClosures;
 use Illuminate\Support\ViewErrorBag;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +77,20 @@ class Handler implements ExceptionHandlerContract
      * @var array
      */
     protected $dontReportCallbacks = [];
+
+    /**
+     * A list of the exception types that should stop job retries.
+     *
+     * @var array<int, class-string<\Throwable>>
+     */
+    protected $dontRetry = [];
+
+    /**
+     * The callbacks that inspect exceptions to determine if they should stop job retries.
+     *
+     * @var array
+     */
+    protected $dontRetryCallbacks = [];
 
     /**
      * The callbacks that should be used during reporting.
@@ -325,6 +339,53 @@ class Handler implements ExceptionHandlerContract
     }
 
     /**
+     * Indicate that the given exception type should stop job retries.
+     *
+     * @param  array|string  $exceptions
+     * @return $this
+     */
+    public function dontRetry(array|string $exceptions)
+    {
+        $exceptions = Arr::wrap($exceptions);
+
+        $this->dontRetry = array_values(array_unique(array_merge($this->dontRetry, $exceptions)));
+
+        return $this;
+    }
+
+    /**
+     * Register a callback to determine if an exception should stop job retries.
+     *
+     * @param  (callable(\Throwable): bool)  $dontRetryWhen
+     * @return $this
+     */
+    public function dontRetryWhen(callable $dontRetryWhen)
+    {
+        if (! $dontRetryWhen instanceof Closure) {
+            $dontRetryWhen = Closure::fromCallable($dontRetryWhen);
+        }
+
+        $this->dontRetryCallbacks[] = $dontRetryWhen;
+
+        return $this;
+    }
+
+    /**
+     * Determine if the exception should stop job retries.
+     *
+     * @param  \Throwable  $e
+     * @return bool
+     */
+    public function shouldStopRetries(Throwable $e)
+    {
+        if (! is_null(Arr::first($this->dontRetry, fn ($type) => $e instanceof $type))) {
+            return true;
+        }
+
+        return array_any($this->dontRetryCallbacks, fn ($dontRetryCallback) => $dontRetryCallback($e) === true);
+    }
+
+    /**
      * Indicate that the given attributes should never be flashed to the session on validation errors.
      *
      * @param  array|string  $attributes
@@ -534,16 +595,27 @@ class Handler implements ExceptionHandlerContract
         $exceptions = Arr::wrap($exceptions);
 
         $this->dontReport = (new Collection($this->dontReport))
-            ->reject(fn ($ignored) => in_array($ignored, $exceptions))
+            ->diff($exceptions)
             ->values()
             ->all();
 
         $this->internalDontReport = (new Collection($this->internalDontReport))
-            ->reject(fn ($ignored) => in_array($ignored, $exceptions))
+            ->diff($exceptions)
             ->values()
             ->all();
 
         return $this;
+    }
+
+    /**
+     * Create the context array for logging the given exception.
+     *
+     * @param  \Throwable  $e
+     * @return array
+     */
+    public function contextForException(Throwable $e)
+    {
+        return $this->buildExceptionContext($e);
     }
 
     /**
@@ -1084,7 +1156,7 @@ class Handler implements ExceptionHandlerContract
     public function renderForConsole($output, Throwable $e)
     {
         if ($e instanceof CommandNotFoundException) {
-            $message = Str::of($e->getMessage())->explode('.')->first();
+            $message = (new Stringable($e->getMessage()))->explode('.')->first();
 
             if (! empty($alternatives = $e->getAlternatives())) {
                 $message .= '. Did you mean one of these?';

@@ -11,13 +11,13 @@
 @php
 
 $classes = Flux::classes()
-    ->add('w-full border rounded-lg block group disabled:shadow-none dark:shadow-none')
+    ->add('w-full border block group disabled:shadow-none dark:shadow-none')
     ->add('px-3 flex items-center')
     ->add('tabular-nums cursor-default select-none')
     ->add(match ($size) {
-        default => 'text-base sm:text-sm py-2 h-10 leading-[1.375rem]', // This makes the height of the input 40px (same as buttons and such...)
-        'sm' => 'text-sm py-1.5 h-8 leading-[1.125rem]',
-        'xs' => 'text-xs py-1.5 h-6 leading-[1.125rem]',
+        default => 'text-base sm:text-sm rounded-lg py-2 h-10 leading-[1.375rem]', // This makes the height of the input 40px (same as buttons and such...)
+        'sm' => 'text-sm rounded-md py-1.5 h-8 leading-[1.125rem]',
+        'xs' => 'text-xs rounded-md py-1.5 h-6 leading-[1.125rem]',
     })
     ->add(match ($variant) { // Background...
         'outline' => 'bg-white dark:bg-white/10 dark:disabled:bg-white/[7%]',
@@ -46,7 +46,7 @@ $inputClasses = Flux::classes()
 @endphp
 
 
-<div {{ $attributes->class($classes) }}>
+<div {{ $attributes->class($classes) }} @if ($invalid) data-invalid @endif data-flux-group-target>
     <flux:icon.clock variant="mini" class="me-2 shrink-0 text-zinc-400/75 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[disabled]_&]:text-white/40!" />
 
     <div class="-ml-px flex items-center min-w-0 overflow-hidden" dir="ltr" wire:ignore>

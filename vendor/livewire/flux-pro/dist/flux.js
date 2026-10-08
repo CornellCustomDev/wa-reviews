@@ -1935,6 +1935,26 @@ ${useLayer ? "}" : ""}
   function getLocale() {
     return navigator?.language || document.documentElement.lang || "en-US";
   }
+  function renderTemplate(template, callback) {
+    if (!template) return;
+    let cleanup = () => {
+      let sibling = template.nextElementSibling;
+      while (sibling && sibling.hasAttribute("data-appended")) {
+        let toRemove = sibling;
+        sibling = sibling.nextElementSibling;
+        toRemove.remove();
+      }
+    };
+    cleanup();
+    let hydrated = callback((slotsAndAttributes = { slots: {}, attrs: {} }) => {
+      return hydrateTemplate(template, slotsAndAttributes);
+    });
+    hydrated = Array.isArray(hydrated) ? hydrated : [hydrated];
+    hydrated.reverse().forEach((node) => {
+      template.after(node);
+    });
+    return { cleanup };
+  }
   function hydrateTemplate(template, slotsAndAttributes = { slots: {}, attrs: {} }) {
     let { slots = {}, attrs = {} } = slotsAndAttributes;
     let clone = template.content.cloneNode(true).firstElementChild;
@@ -2147,6 +2167,7 @@ ${useLayer ? "}" : ""}
     boot({ options }) {
       options({
         clickOutside: true,
+        escape: true,
         triggers: []
       });
       this.onChanges = [];
@@ -2170,6 +2191,17 @@ ${useLayer ? "}" : ""}
             e.preventDefault();
             e.stopPropagation();
           }
+        });
+      }
+      if (!this.options().escape) {
+        setAttribute2(this.el, "closedby", "none");
+        this.el.addEventListener("keydown", (e) => {
+          if (e.key !== "Escape" && e.key !== "Esc") return;
+          e.preventDefault();
+        });
+        this.el.addEventListener("cancel", (e) => {
+          if (!e.isTrusted) return;
+          e.preventDefault();
         });
       }
       if (this.el.hasAttribute("open")) {
@@ -2255,7 +2287,8 @@ ${useLayer ? "}" : ""}
       let dialog = this.dialog();
       if (!dialog) return;
       dialog._dialogable = new Dialogable(dialog, {
-        clickOutside: !this.hasAttribute("disable-click-outside")
+        clickOutside: !this.hasAttribute("disable-click-outside"),
+        escape: !this.hasAttribute("disable-escape")
       });
       dialog._closeable = new Closeable(dialog);
       dialog._closeable.onClose(() => dialog._dialogable.hide());
@@ -2465,7 +2498,7 @@ ${useLayer ? "}" : ""}
       this.lastSearch = search2;
     }
     matches(el, search2) {
-      return this.normalize(el.textContent).includes(this.normalize(search2));
+      return this.normalize(el.textContent).includes(this.normalize(search2)) || this.normalize(el.getAttribute("keywords")).includes(this.normalize(search2));
     }
     // This function normalizes the value to remove diacritics (accents) and convert to lowercase
     // to ensure that the search is case-insensitive and diacritic-insensitive...
@@ -2524,7 +2557,7 @@ ${useLayer ? "}" : ""}
           this.el.addEventListener("beforetoggle", (e2) => {
             if (e2.newState === "closed") {
               controller.abort();
-              activeElement?.focus();
+              activeElement?.focus({ preventScroll: true });
             }
           }, { signal: controller.signal });
         }
@@ -2654,6 +2687,7 @@ ${useLayer ? "}" : ""}
   };
 
   // node_modules/@floating-ui/utils/dist/floating-ui.utils.mjs
+  var sides = ["top", "right", "bottom", "left"];
   var min = Math.min;
   var max = Math.max;
   var round = Math.round;
@@ -3079,6 +3113,66 @@ ${useLayer ? "}" : ""}
           }
         }
         return {};
+      }
+    };
+  };
+  function getSideOffsets(overflow, rect) {
+    return {
+      top: overflow.top - rect.height,
+      right: overflow.right - rect.width,
+      bottom: overflow.bottom - rect.height,
+      left: overflow.left - rect.width
+    };
+  }
+  function isAnySideFullyClipped(overflow) {
+    return sides.some((side) => overflow[side] >= 0);
+  }
+  var hide = function(options) {
+    if (options === void 0) {
+      options = {};
+    }
+    return {
+      name: "hide",
+      options,
+      async fn(state) {
+        const {
+          rects
+        } = state;
+        const {
+          strategy = "referenceHidden",
+          ...detectOverflowOptions
+        } = evaluate(options, state);
+        switch (strategy) {
+          case "referenceHidden": {
+            const overflow = await detectOverflow(state, {
+              ...detectOverflowOptions,
+              elementContext: "reference"
+            });
+            const offsets = getSideOffsets(overflow, rects.reference);
+            return {
+              data: {
+                referenceHiddenOffsets: offsets,
+                referenceHidden: isAnySideFullyClipped(offsets)
+              }
+            };
+          }
+          case "escaped": {
+            const overflow = await detectOverflow(state, {
+              ...detectOverflowOptions,
+              altBoundary: true
+            });
+            const offsets = getSideOffsets(overflow, rects.floating);
+            return {
+              data: {
+                escapedOffsets: offsets,
+                escaped: isAnySideFullyClipped(offsets)
+              }
+            };
+          }
+          default: {
+            return {};
+          }
+        }
       }
     };
   };
@@ -4023,6 +4117,7 @@ ${useLayer ? "}" : ""}
   var shift2 = shift;
   var flip2 = flip;
   var size2 = size;
+  var hide2 = hide;
   var computePosition2 = (reference, floating, options) => {
     const cache = /* @__PURE__ */ new Map();
     const mergedOptions = {
@@ -4051,7 +4146,8 @@ ${useLayer ? "}" : ""}
         offset: "0",
         matchWidth: false,
         crossAxis: false,
-        scrollY: true
+        scrollY: true,
+        onReferenceHidden: null
       });
       if (this.options().reference === null) return;
       if (this.options().position === null) return;
@@ -4062,7 +4158,8 @@ ${useLayer ? "}" : ""}
         offset: this.options().offset,
         matchWidth: this.options().matchWidth,
         crossAxis: this.options().crossAxis,
-        scrollY: this.options().scrollY
+        scrollY: this.options().scrollY,
+        onReferenceHidden: this.options().onReferenceHidden
       });
       let cleanupAutoUpdate = () => {
       };
@@ -4079,7 +4176,7 @@ ${useLayer ? "}" : ""}
       };
     }
   };
-  function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis, scrollY }) {
+  function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis, scrollY, onReferenceHidden }) {
     let elMaxHeight = window.getComputedStyle(target).maxHeight;
     elMaxHeight = elMaxHeight === "none" ? null : parseFloat(elMaxHeight);
     return (event, forceX, forceY) => {
@@ -4109,9 +4206,14 @@ ${useLayer ? "}" : ""}
               }
               elements.floating.style.maxHeight = availableHeight > maxHeight ? "" : `${availableHeight}px`;
             }
-          })
+          }),
+          ...onReferenceHidden ? [hide2({ strategy: "referenceHidden" })] : []
         ]
-      }).then(({ x, y }) => {
+      }).then(({ x, y, middlewareData }) => {
+        if (middlewareData.hide?.referenceHidden) {
+          onReferenceHidden();
+          return;
+        }
         setPosition(forceX || x, forceY || y);
       });
     };
@@ -5744,21 +5846,15 @@ ${useLayer ? "}" : ""}
   element("option", UIOption);
   element("option-empty", UIOptionEmpty);
   element("empty", UIEmpty);
-  function normalizeScopedSelector(selector) {
-    if (!CSS.supports("selector(&)")) {
-      return selector.replace("&", ":scope");
-    }
-    return selector;
-  }
   function displayEmptyAndCreateOptions(list, input, filterable) {
-    let empty = list.querySelector(normalizeScopedSelector("& > ui-option-empty, & > ui-empty"));
-    let create = list.querySelector(normalizeScopedSelector("& > ui-option-create"));
+    let empty = Array.from(list.children).find((element2) => element2.matches("ui-option-empty, ui-empty"));
+    let create = Array.from(list.children).find((element2) => element2.matches("ui-option-create"));
     let minLength = create?.hasAttribute("min-length") ? parseInt(create.getAttribute("min-length")) : void 0;
     setAttribute2(empty, "data-hidden", "");
     if (create) setAttribute2(create, "data-hidden", "");
     let isHidden = (el) => el.hasAttribute("data-hidden");
     let isUnique = (el) => el.textContent.toLowerCase().trim() !== input.value.toLowerCase().trim();
-    let getItems = () => Array.from(list.querySelectorAll(normalizeScopedSelector("& > ui-option")));
+    let getItems = () => Array.from(list.querySelectorAll("ui-option")).filter((option) => option.closest("ui-options") === list);
     let showLoading = () => {
       if (empty.hasAttribute("when-loading")) {
         let emptyContent = empty.textContent;
@@ -5842,7 +5938,7 @@ ${useLayer ? "}" : ""}
         });
       }
     }
-    refresh();
+    queueMicrotask(() => refresh());
   }
 
   // js/calendar/date.js
@@ -5982,7 +6078,7 @@ ${useLayer ? "}" : ""}
     weekTemplate && renderDates(weekTemplate, config, viewState, metadata);
   }
   function renderHeading(template, config, viewState) {
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return hydrate({
         slots: {
           default: new Intl.DateTimeFormat(config.locale, {
@@ -6012,7 +6108,7 @@ ${useLayer ? "}" : ""}
       let date = new Date(2024, 0, adjustedIdx + 7);
       return format(date);
     });
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return weekdays.map((weekday) => hydrate({ slots: { default: weekday } }));
     });
   }
@@ -6060,7 +6156,7 @@ ${useLayer ? "}" : ""}
     );
     let displayWeeks = splitIntoWeeks(displayDates);
     let actualWeeks = splitIntoWeeks(actualDates);
-    renderTemplate(template, (hydrate) => {
+    renderTemplate2(template, (hydrate) => {
       return displayWeeks.map((week, weekIdx) => {
         let weekEl = hydrate();
         let actualWeekDates = actualWeeks[weekIdx];
@@ -6068,11 +6164,11 @@ ${useLayer ? "}" : ""}
         if (numberTemplate) {
           let fourthDayIdx = (4 - config.startDay + 7) % 7;
           let weekNumber = DateValue.fromIsoDateString(actualWeekDates[fourthDayIdx]).getWeekNumber();
-          renderTemplate(numberTemplate, (hydrate2) => {
+          renderTemplate2(numberTemplate, (hydrate2) => {
             return hydrate2({ slots: { default: weekNumber } });
           });
         }
-        renderTemplate(weekEl.querySelector('template[name="day"]'), (hydrate2) => {
+        renderTemplate2(weekEl.querySelector('template[name="day"]'), (hydrate2) => {
           return week.map((day, dayIdx) => {
             if (day === 0) {
               let weekDate = DateValue.fromIsoDateString(actualWeekDates[dayIdx]);
@@ -6095,11 +6191,11 @@ ${useLayer ? "}" : ""}
             }
             if (![false, null, void 0].includes(subtext)) {
               let template2 = dayEl.querySelector('template[name="subtext"]');
-              template2 && renderTemplate(template2, (hydrate3) => hydrate3({ slots: { default: subtext } }));
+              template2 && renderTemplate2(template2, (hydrate3) => hydrate3({ slots: { default: subtext } }));
             }
             if (![false, null, void 0].includes(details)) {
               let template2 = dayEl.querySelector('template[name="details"]');
-              template2 && renderTemplate(template2, (hydrate3) => hydrate3({ slots: { default: details } }));
+              template2 && renderTemplate2(template2, (hydrate3) => hydrate3({ slots: { default: details } }));
             }
             return dayEl;
           });
@@ -6150,7 +6246,7 @@ ${useLayer ? "}" : ""}
       }
     });
   }
-  function renderTemplate(template, callback) {
+  function renderTemplate2(template, callback) {
     if (!template) return;
     let cleanup = () => {
       let sibling = template.nextElementSibling;
@@ -6433,7 +6529,7 @@ ${useLayer ? "}" : ""}
       });
       this.minuteInput.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft") return this.hourInput.focus();
-        if (e.key === "ArrowRight") return this.meridiemInput?.focus();
+        if (e.key === "ArrowRight") return this.meridiemInputForTimeFormat()?.focus();
       });
       this.meridiemInput?.addEventListener("keydown", (e) => {
         if (e.key === "ArrowLeft") return this.minuteInput.focus();
@@ -6470,14 +6566,19 @@ ${useLayer ? "}" : ""}
       if (this.picker.config.timeFormat === "12-hour") return false;
       return localeIs24HourFormat(this.picker.config.locale);
     }
+    meridiemInputForTimeFormat() {
+      if (this.use24HourFormat()) return null;
+      return this.meridiemInput;
+    }
     processTime() {
+      let meridiemInput = this.meridiemInputForTimeFormat();
       if (this.hourInput.value === "" || this.minuteInput.value === "") return;
-      if (this.meridiemInput && this.meridiemInput.value === "") return;
+      if (meridiemInput && meridiemInput.value === "") return;
       let meridiem = null;
-      if (this.meridiemInput?.value) {
+      if (meridiemInput?.value) {
         let locale = this.picker.config.locale;
         let am = getLocalisedMeridiem(0, locale);
-        meridiem = this.meridiemInput.value === am ? "AM" : "PM";
+        meridiem = meridiemInput.value === am ? "AM" : "PM";
       }
       let time = getTime(
         this.hourInput.value,
@@ -6501,13 +6602,14 @@ ${useLayer ? "}" : ""}
     updateHourDisplay(hours, { forceMeridiem = false } = {}) {
       hours = parseInt(hours);
       if (isNaN(hours)) return;
-      if (this.meridiemInput) {
-        let hasExistingMeridiem = this.meridiemInput.value && !("showingPlaceholder" in this.meridiemInput.dataset);
+      let meridiemInput = this.meridiemInputForTimeFormat();
+      if (meridiemInput) {
+        let hasExistingMeridiem = meridiemInput.value && !("showingPlaceholder" in meridiemInput.dataset);
         if (forceMeridiem || !hasExistingMeridiem || hours > 12 || hours === 0) {
           let meridiem = getLocalisedMeridiem(hours, this.picker.config.locale);
-          this.meridiemInput.value = meridiem;
-          this.meridiemInput.style.color = "";
-          delete this.meridiemInput.dataset.showingPlaceholder;
+          meridiemInput.value = meridiem;
+          meridiemInput.style.color = "";
+          delete meridiemInput.dataset.showingPlaceholder;
         }
         if (hours > 12) {
           hours = hours - 12;
@@ -6525,7 +6627,8 @@ ${useLayer ? "}" : ""}
       removeAttribute(this.picker, "data-empty");
       let [hours, minutes] = time.split(":");
       let meridiem = null;
-      if (this.meridiemInput) {
+      let meridiemInput = this.meridiemInputForTimeFormat();
+      if (meridiemInput) {
         hours = parseInt(hours);
         meridiem = getLocalisedMeridiem(hours, this.picker.config.locale);
         if (hours > 12) {
@@ -6541,10 +6644,10 @@ ${useLayer ? "}" : ""}
       this.minuteInput.value = minutes.padStart(2, "0");
       this.minuteInput.style.color = "";
       this.minuteInput.classList.remove("font-mono");
-      if (this.meridiemInput) {
-        this.meridiemInput.value = meridiem;
-        this.meridiemInput.style.color = "";
-        delete this.meridiemInput.dataset.showingPlaceholder;
+      if (meridiemInput) {
+        meridiemInput.value = meridiem;
+        meridiemInput.style.color = "";
+        delete meridiemInput.dataset.showingPlaceholder;
       }
     }
     clearInputs() {
@@ -6578,8 +6681,9 @@ ${useLayer ? "}" : ""}
         e.preventDefault();
         e.stopPropagation();
         let hours = parseInt(this.hourInput.value);
-        if (!isNaN(hours) && this.meridiemInput && this.meridiemInput.value && !("showingPlaceholder" in this.meridiemInput.dataset)) {
-          let isPM = this.meridiemInput.value === getLocalisedMeridiem(12, this.picker.config.locale);
+        let meridiemInput = this.meridiemInputForTimeFormat();
+        if (!isNaN(hours) && meridiemInput && meridiemInput.value && !("showingPlaceholder" in meridiemInput.dataset)) {
+          let isPM = meridiemInput.value === getLocalisedMeridiem(12, this.picker.config.locale);
           if (isPM && hours !== 12) hours += 12;
           if (!isPM && hours === 12) hours = 0;
         }
@@ -6680,19 +6784,19 @@ ${useLayer ? "}" : ""}
           this.minuteInput.style.color = "";
           this.minuteInput.classList.remove("font-mono");
           this.processTime();
-          number > 5 ? this.meridiemInput?.focus() : highlightInputContents(this.minuteInput);
+          number > 5 ? this.meridiemInputForTimeFormat()?.focus() : highlightInputContents(this.minuteInput);
           return;
         }
         let existingNumber = parseInt(this.minuteInput.value);
         if (existingNumber <= 5) {
           this.minuteInput.value = `${existingNumber}${number}`;
           this.processTime();
-          this.meridiemInput?.focus();
+          this.meridiemInputForTimeFormat()?.focus();
           return;
         }
         this.minuteInput.value = `0${number}`;
         this.processTime();
-        number > 5 ? this.meridiemInput?.focus() : highlightInputContents(this.minuteInput);
+        number > 5 ? this.meridiemInputForTimeFormat()?.focus() : highlightInputContents(this.minuteInput);
       });
       this.minuteInput.addEventListener("blur", (e) => {
         isEditing = false;
@@ -7045,13 +7149,13 @@ ${useLayer ? "}" : ""}
       this.templates.placeholder?.clearPlaceholder?.();
       this.templates.time?.clearTime?.();
       if (picker.selectable.hasSelection()) {
-        let { cleanup } = renderTemplate(this.templates.time, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.time, (hydrate) => {
           return hydrate({ slots: { default: picker.selectable.display(picker.config.locale) } });
         });
         this.templates.time.clearTime = cleanup;
       } else {
         if (!this.templates.placeholder) return;
-        let { cleanup } = renderTemplate(this.templates.placeholder, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.placeholder, (hydrate) => {
           return hydrate({ slots: {} });
         });
         this.templates.placeholder.clearPlaceholder = cleanup;
@@ -7076,7 +7180,7 @@ ${useLayer ? "}" : ""}
     render() {
       let template = this.querySelector('template[name="option"]');
       if (!template) return;
-      renderTemplate(template, (hydrate) => {
+      renderTemplate2(template, (hydrate) => {
         let times = generateTimes(this.picker.config);
         return times.map(({ value: value3, label }) => {
           let isDisabled = this.picker.config.unavailable.some((unavailableTime) => timesAreOverlapping(value3, unavailableTime));
@@ -7322,8 +7426,6 @@ ${useLayer ? "}" : ""}
       let details = this.details();
       if (!button) {
         return console.warn("ui-disclosure: no trigger element found", this);
-      } else if (!details) {
-        return console.warn("ui-disclosure: no panel element found", this);
       }
       this._disableable = new Disableable(this);
       this._disableable.onInitAndChange((disabled) => {
@@ -7337,6 +7439,7 @@ ${useLayer ? "}" : ""}
           }
         }
       });
+      if (!details) return;
       this._controllable = new Controllable(this, { disabled: this.disabled });
       details._disclosable = new Disclosable(details);
       this._controllable.initial((initial) => initial && details._disclosable.setState(true));
@@ -7346,19 +7449,34 @@ ${useLayer ? "}" : ""}
         this.dispatchEvent(new CustomEvent("lofi-disclosable-change", { bubbles: true }));
         this._controllable.dispatch();
       });
-      let refresh = () => {
+      let transitions = details.getAttributeNames().some((name) => {
+        return name === "x-collapse" || name.startsWith("x-collapse.");
+      });
+      let refresh = (initial = false) => {
         if (details._disclosable.getState()) {
           setAttribute2(this, "data-open", "");
           setAttribute2(button, "data-open", "");
           setAttribute2(details, "data-open", "");
+          removeAttribute(details, "hidden");
         } else {
           removeAttribute(this, "data-open");
           removeAttribute(button, "data-open");
           removeAttribute(details, "data-open");
+          if (!transitions || initial) setAttribute2(details, "hidden", "until-found");
         }
       };
       details._disclosable.onChange(() => refresh());
-      refresh();
+      refresh(true);
+      if (transitions) {
+        on(details, "transitionend", (e) => {
+          if (e.target !== details || e.propertyName !== "height") return;
+          if (details._disclosable.getState()) return;
+          setAttribute2(details, "hidden", "until-found");
+        });
+      }
+      on(details, "beforematch", () => {
+        details._disclosable.setState(true);
+      });
       on(button, "click", (e) => {
         if (!this.disabled) {
           details._disclosable.setState(!details._disclosable.getState());
@@ -7378,7 +7496,8 @@ ${useLayer ? "}" : ""}
       return this.querySelector("button,ui-button");
     }
     details() {
-      return this.lastElementChild;
+      let details = this.lastElementChild;
+      return details === this.button() ? null : details;
     }
   };
   var UIDisclosureGroup = class _UIDisclosureGroup extends UIElement {
@@ -7685,6 +7804,7 @@ ${useLayer ? "}" : ""}
     boot() {
       let trigger = this.trigger();
       let overlay = this.overlay();
+      let isTooltip = this.hasAttribute("data-flux-tooltip");
       if (!trigger) {
         return console.warn("ui-dropdown: no trigger element found", this);
       } else if (!overlay) {
@@ -7697,12 +7817,14 @@ ${useLayer ? "}" : ""}
         reference: trigger,
         position: this.hasAttribute("position") ? this.getAttribute("position") : void 0,
         gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
-        offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
+        offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0,
+        onReferenceHidden: isTooltip ? () => overlay._popoverable.hide() : null
       });
       overlay._popoverable.onChange(() => {
         overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
       });
-      if (!this.hasAttribute("hover")) {
+      this._locksScroll = !this.hasAttribute("hover") && !isTooltip;
+      if (this._locksScroll) {
         let { lock, unlock } = lockScroll(overlay._popoverable.el);
         overlay._popoverable.onChange(() => {
           overlay._popoverable.getState() ? lock() : unlock();
@@ -7718,6 +7840,7 @@ ${useLayer ? "}" : ""}
         };
         interest(trigger, overlay, {
           gain() {
+            overlay._openedViaHover = true;
             overlay._popoverable.setState(true);
             let listener = on(document, "scroll", () => {
               if (overlay._popoverable.getState()) {
@@ -7735,6 +7858,7 @@ ${useLayer ? "}" : ""}
         });
       }
       on(trigger, "click", () => overlay._popoverable.toggle());
+      closeNavmenuOverlayBeforeNavigation(overlay);
       if (overlay._popoverable.getState()) {
         setAttribute2(this, "data-open", "");
         setAttribute2(trigger, "data-open", "");
@@ -7769,7 +7893,7 @@ ${useLayer ? "}" : ""}
       });
     }
     unmount() {
-      if (this.overlay()?._popoverable?.getState() && !this.hasAttribute("hover")) {
+      if (this.overlay()?._popoverable?.getState() && this._locksScroll) {
         let { unlock } = lockScroll();
         unlock();
       }
@@ -7782,6 +7906,15 @@ ${useLayer ? "}" : ""}
     }
   };
   element("dropdown", UIDropdown);
+  function closeNavmenuOverlayBeforeNavigation(overlay) {
+    if (!overlay.matches("[data-flux-navmenu]")) return;
+    let close = (target) => {
+      if (!target.closest?.("[data-flux-navmenu-item]")) return;
+      overlay._popoverable.hide();
+    };
+    on(overlay, "mouseup", (e) => close(e.target));
+    on(overlay, "click", (e) => !e.isTrusted && close(e.target));
+  }
 
   // js/file-upload.js
   var UIFileUpload = class extends UIElement {
@@ -9046,7 +9179,7 @@ ${useLayer ? "}" : ""}
           label: new Intl.DateTimeFormat(this.config.locale, { month: display, timeZone: "UTC" }).format(new DateValue(2024, month).getDate())
         };
       }).filter(Boolean);
-      renderTemplate(select.querySelector("template"), (hydrate) => {
+      renderTemplate2(select.querySelector("template"), (hydrate) => {
         if (renderableMonths.length === 0) {
           let month = this.viewState.month;
           let label = new Intl.DateTimeFormat(this.config.locale, { month: display, timeZone: "UTC" }).format(new DateValue(2024, month).getDate());
@@ -9134,7 +9267,7 @@ ${useLayer ? "}" : ""}
         if (this.config.max && yearStart.isAfter(this.config.max)) return null;
         return year;
       }).filter(Boolean);
-      renderTemplate(select.querySelector("template"), (hydrate) => {
+      renderTemplate2(select.querySelector("template"), (hydrate) => {
         if (renderableYears.length === 0) {
           let year = this.viewState.year;
           return hydrate({ slots: { default: year } });
@@ -9177,7 +9310,7 @@ ${useLayer ? "}" : ""}
     }
     renderMonths() {
       let template = this.querySelector('template:not([name]), template[name="month"]');
-      renderTemplate(template, (hydrate) => {
+      renderTemplate2(template, (hydrate) => {
         let monthOffsetTemplate = Array.from({ length: this.config.months }).map((_, idx) => idx);
         this.monthEls = monthOffsetTemplate.map((offset3) => {
           let offsetState = this.viewState.generateOffsetState(offset3);
@@ -9209,7 +9342,7 @@ ${useLayer ? "}" : ""}
         }
       });
       let template = this.querySelector("template");
-      template && renderTemplate(template, (hydrate) => {
+      template && renderTemplate2(template, (hydrate) => {
         return hydrate({ slots: { default: DateValue.today().getDay() } });
       });
     }
@@ -9298,6 +9431,7 @@ ${useLayer ? "}" : ""}
       this.config = calendar.config;
       this.viewState = calendar.viewState;
       this.offsetState = this.viewState.generateOffsetState(this.offset);
+      if (this.querySelector("ui-date-picker-trigger")) return;
       let [firstInput, secondInput] = this.querySelectorAll("input");
       if (this.config.mode === CalendarModes.RANGE) {
         syncInputStateWithRangeSelectionState(firstInput, secondInput, calendar);
@@ -9555,6 +9689,9 @@ ${useLayer ? "}" : ""}
       initCursorSelectionListeners2(this.dayInput);
       initCursorSelectionListeners2(this.monthInput);
       initCursorSelectionListeners2(this.yearInput);
+      initInputListeners(this.inputs, (input, previousValue) => {
+        this.processInputValue(input, previousValue, inputOrder);
+      });
       this.inputs.forEach((input, i) => {
         input.addEventListener("keydown", (e) => {
           if (e.key === "ArrowRight" && i < this.inputs.length - 1) {
@@ -9712,6 +9849,12 @@ ${useLayer ? "}" : ""}
         this.dayInput.value = max2.toString().padStart(2, "0");
       }
     }
+    expandTwoDigitYear(year) {
+      let rangeEnd = DateValue.today().getYear() + 20;
+      let century = Math.floor(rangeEnd / 100) * 100;
+      let expandedYear = century + year;
+      return expandedYear > rangeEnd ? expandedYear - 100 : expandedYear;
+    }
     initTwoDigitInputListeners(input, { max: max2, advanceThreshold, handleSecondDigit, onValueChange }) {
       let isEditing = false;
       input.addEventListener("keydown", (e) => {
@@ -9846,6 +9989,11 @@ ${useLayer ? "}" : ""}
         highlightInputContents2(this.yearInput);
       });
       this.yearInput.addEventListener("blur", () => {
+        if (buffer.length > 0 && buffer.length <= 2) {
+          this.yearInput.value = this.expandTwoDigitYear(parseInt(buffer)).toString();
+        } else if (buffer.length > 0) {
+          this.yearInput.value = buffer.padStart(4, "0");
+        }
         buffer = "";
         if (this.yearInput.value === "0000") {
           this.yearInput.value = "0001";
@@ -9854,7 +10002,66 @@ ${useLayer ? "}" : ""}
         this.processDate();
       });
     }
+    processInputValue(input, previousValue, inputOrder) {
+      let value3 = input.value;
+      let date = parseDateInput(value3, inputOrder);
+      if (!date) {
+        if (!this.isValidInputValue(input, value3)) {
+          input.value = previousValue;
+          highlightInputContents2(input);
+          return;
+        }
+        if (value3 !== "") {
+          let length = input === this.yearInput ? 4 : 2;
+          let number = parseInt(value3);
+          if (input === this.yearInput && value3.length <= 2) {
+            number = this.expandTwoDigitYear(number);
+          }
+          input.value = number.toString().padStart(length, "0");
+          input.style.color = "";
+          input.classList.remove("font-mono");
+        }
+        this.clampDay();
+        this.processDate();
+        return;
+      }
+      this.dayInput.value = date.day.toString().padStart(2, "0");
+      this.monthInput.value = date.month.toString().padStart(2, "0");
+      this.yearInput.value = date.year.toString().padStart(4, "0");
+      this.processDate();
+      let lastInput = this.inputs.at(-1);
+      lastInput.focus();
+      highlightInputContents2(lastInput);
+    }
+    isValidInputValue(input, value3) {
+      if (value3 === "") return true;
+      if (!/^\d+$/.test(value3)) return false;
+      let number = parseInt(value3);
+      if (input === this.dayInput) return value3.length <= 2 && number >= 1 && number <= 31;
+      if (input === this.monthInput) return value3.length <= 2 && number >= 1 && number <= 12;
+      if (input === this.yearInput) return value3.length <= 4;
+      return false;
+    }
   };
+  function parseDateInput(value3, inputOrder) {
+    let isoMatch = value3.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) {
+      return {
+        year: parseInt(isoMatch[1]),
+        month: parseInt(isoMatch[2]),
+        day: parseInt(isoMatch[3])
+      };
+    }
+    let parts = value3.trim().split(/\D+/);
+    if (parts.at(-1) === "") parts.pop();
+    if (parts.length !== inputOrder.length) return null;
+    if (parts.some((part) => !/^\d+$/.test(part))) return null;
+    let date = {};
+    inputOrder.forEach((type, index) => {
+      date[type] = parseInt(parts[index]);
+    });
+    return date;
+  }
   function getLocaleInfo(locale) {
     try {
       let formatter = new Intl.DateTimeFormat(locale, {
@@ -9880,6 +10087,22 @@ ${useLayer ? "}" : ""}
         placeholders: { day: "dd", month: "mm", year: "yyyy" }
       };
     }
+  }
+  function initInputListeners(inputs, handleInput) {
+    inputs.forEach((input) => {
+      let previousValue = input.value;
+      input.addEventListener("focus", () => {
+        previousValue = input.value;
+      });
+      input.addEventListener("beforeinput", () => {
+        previousValue = input.value;
+      });
+      input.addEventListener("input", (event) => {
+        event.stopPropagation();
+        handleInput(input, previousValue);
+        previousValue = input.value;
+      });
+    });
   }
   function initCursorSelectionListeners2(input) {
     input.addEventListener("focus", () => {
@@ -10101,13 +10324,13 @@ ${useLayer ? "}" : ""}
       this.templates.placeholder?.clearPlaceholder?.();
       this.templates.date?.clearDate?.();
       if (picker.selectable.hasSelection()) {
-        let { cleanup } = renderTemplate(this.templates.date, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.date, (hydrate) => {
           return hydrate({ slots: { default: picker.selectable.display(this.picker.calendar.config.locale) } });
         });
         this.templates.date.clearDate = cleanup;
       } else {
         if (!this.templates.placeholder) return;
-        let { cleanup } = renderTemplate(this.templates.placeholder, (hydrate) => {
+        let { cleanup } = renderTemplate2(this.templates.placeholder, (hydrate) => {
           return hydrate({ slots: {} });
         });
         this.templates.placeholder.clearPlaceholder = cleanup;
@@ -10153,7 +10376,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       Array.from([root, popover]).forEach((i) => {
         dialogable.getState() ? setAttribute2(i, "data-open", "") : removeAttribute(i, "data-open", "");
       });
-      dialogable.getState() && anchorable.reposition();
+      dialogable.getState() ? anchorable.reposition() : anchorable.cleanup();
     };
     dialogable.onChange(() => refreshPopover());
     refreshPopover();
@@ -10627,6 +10850,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             this.showPopover();
             e.preventDefault();
             e.stopPropagation();
+          } else if (dropdown.hasAttribute("data-flux-sidebar-group-dropdown") && ["Enter", " "].includes(e.key)) {
+            this.fromCollapsedSidebarGroupTrigger = !this.matches(":popover-open");
           }
         });
       }
@@ -10642,9 +10867,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
     onPopoverShow() {
       requestAnimationFrame(() => {
-        if (this.fromArrowDown) {
+        let openedViaHover = this._openedViaHover;
+        this._openedViaHover = false;
+        if (openedViaHover) return;
+        if (this.fromArrowDown || this.fromCollapsedSidebarGroupTrigger) {
           this._focusable.focusFirst();
           this.fromArrowDown = false;
+          this.fromCollapsedSidebarGroupTrigger = false;
         } else {
           this.focus();
         }
@@ -10976,26 +11205,6 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         overlay._popoverable.getState() ? overlay._anchorable.reposition() : overlay._anchorable.cleanup();
       });
       this._disableable = new Disableable(this);
-      let removeInterest;
-      this._disableable.onInitAndChange((disabled) => {
-        if (removeInterest) {
-          removeInterest();
-          removeInterest = null;
-        }
-        if (!disabled) {
-          let result = interest(this, overlay, {
-            gain() {
-              overlay._popoverable.setState(true);
-            },
-            lose() {
-              overlay._popoverable.setState(false);
-            },
-            focusable: true,
-            useSafeArea: false
-          });
-          removeInterest = result.remove;
-        }
-      });
       let observer = new MutationObserver(() => {
         if (this.getAttribute("draggable") === "true") {
           overlay._popoverable.setState(false);
@@ -11017,6 +11226,40 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         setAttribute2(overlay, "aria-hidden", "true");
       }
       setAttribute2(overlay, "role", "tooltip");
+    }
+    // interest() registers a "focusin" listener on document. boot() runs on every
+    // construction, including Livewire's cloneNode() and innerHTML parses that never
+    // get connected, so registering there leaks a listener (and the whole subtree)
+    // per clone. Only connected tooltips should touch document...
+    mount() {
+      if (!this._disableable) return;
+      let overlay = this.overlay();
+      let removeInterest;
+      this._disableable.onInitAndChange((disabled) => {
+        if (removeInterest) {
+          removeInterest();
+          removeInterest = null;
+        }
+        if (!disabled) {
+          let result = interest(this, overlay, {
+            gain() {
+              overlay._popoverable.setState(true);
+            },
+            lose() {
+              overlay._popoverable.setState(false);
+            },
+            focusable: true,
+            useSafeArea: false
+          });
+          removeInterest = result.remove;
+        }
+      });
+      this.onUnmount(() => {
+        if (removeInterest) {
+          removeInterest();
+          removeInterest = null;
+        }
+      });
     }
     button() {
       return this.firstElementChild;
@@ -11106,35 +11349,36 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         }
         this.updateDataAttributes(this);
       });
-      new ViewportResizeObserver(this.observable, this.config);
-      document.addEventListener("flux-sidebar-toggle", () => {
+      let viewportObserver = new ViewportResizeObserver(this.observable, this.config);
+      this.onUnmount(() => viewportObserver.disconnect());
+      let onSidebarToggle = () => {
         if (this.state.viewportDesktop) {
           this.state.collapsedDesktop ? this.observable.notify(EVENTS.DESKTOP_EXPANDED) : this.observable.notify(EVENTS.DESKTOP_COLLAPSED);
         } else {
           this.state.collapsedMobile ? this.observable.notify(EVENTS.MOBILE_EXPANDED) : this.observable.notify(EVENTS.MOBILE_COLLAPSED);
         }
-      });
+      };
+      document.addEventListener("flux-sidebar-toggle", onSidebarToggle);
+      this.onUnmount(() => document.removeEventListener("flux-sidebar-toggle", onSidebarToggle));
       this.addEventListener("click", (e) => {
         if (!(e.target === this)) return;
         if (!this.state.collapsedDesktop) return;
         this.observable.notify(EVENTS.DESKTOP_EXPANDED);
       });
-      this.addEventListener("mouseenter", (e) => {
-        this.state.active = true;
-        this.observable.notify(EVENTS.STATE_CHANGED);
+      this.addEventListener("mouseenter", () => this.refreshActiveState());
+      this.addEventListener("mouseleave", () => this.refreshActiveState());
+      this.addEventListener("focusin", () => this.refreshActiveState());
+      this.addEventListener("focusout", () => queueMicrotask(() => this.refreshActiveState()));
+      let groupDropdownObserver = new MutationObserver((mutations) => {
+        if (!mutations.some((mutation) => mutation.target.matches?.("[data-flux-sidebar-group-dropdown]"))) return;
+        this.refreshActiveState();
       });
-      this.addEventListener("mouseleave", (e) => {
-        this.state.active = false;
-        this.observable.notify(EVENTS.STATE_CHANGED);
+      groupDropdownObserver.observe(this, {
+        attributes: true,
+        attributeFilter: ["data-open"],
+        subtree: true
       });
-      this.addEventListener("focusin", (e) => {
-        this.state.active = true;
-        this.observable.notify(EVENTS.STATE_CHANGED);
-      });
-      this.addEventListener("focusout", (e) => {
-        this.state.active = false;
-        this.observable.notify(EVENTS.STATE_CHANGED);
-      });
+      this.onUnmount(() => groupDropdownObserver.disconnect());
     }
     setStickyPositionStyles() {
       let offsetTop = this.offsetTop;
@@ -11147,6 +11391,12 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       this.style.position = "sticky";
       this.style.top = offsetTop + "px";
       this.style.maxHeight = `calc(100dvh - ${offsetTop}px)`;
+    }
+    refreshActiveState() {
+      let active = !!(this.matches(":hover") || this.querySelector(":focus-visible") || this.querySelector("[data-flux-sidebar-group-dropdown][data-open]"));
+      if (this.state.active === active) return;
+      this.state.active = active;
+      this.observable.notify(EVENTS.STATE_CHANGED);
     }
     updateDataAttributes(el) {
       let isFullCollapsible = this.config.collapsible === true;
@@ -11184,11 +11434,15 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
     watchForViewportChanges() {
       let breakpoint = typeof this.breakpoint === "number" ? `${this.breakpoint}px` : this.breakpoint;
-      let viewport = matchMedia(`(min-width: ${breakpoint})`);
-      viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
-      viewport.addEventListener("change", () => {
-        viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
-      });
+      this.viewport = matchMedia(`(min-width: ${breakpoint})`);
+      this.onViewportChange = () => {
+        this.viewport.matches ? this.observable.notify(EVENTS.VIEWPORT_ENTER_DESKTOP) : this.observable.notify(EVENTS.VIEWPORT_ENTER_MOBILE);
+      };
+      this.onViewportChange();
+      this.viewport.addEventListener("change", this.onViewportChange);
+    }
+    disconnect() {
+      this.viewport.removeEventListener("change", this.onViewportChange);
     }
   };
   var UISidebarToggle = class extends UIElement {
@@ -11299,13 +11553,15 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       this.registerNativeInputListeners();
       this.registerPointerListeners();
       this.registerMutationObserver();
-      new ResizeObserver(() => {
-        this.repositionThumbsAndIndicator();
-        this.repositionTicks();
-      }).observe(this);
     }
     mount() {
       this.setupFieldIfExists();
+      let resizeObserver = new ResizeObserver(() => {
+        this.repositionThumbsAndIndicator();
+        this.repositionTicks();
+      });
+      resizeObserver.observe(this);
+      this.onUnmount(() => resizeObserver.disconnect());
     }
     setNativeInputAttributes() {
       for (let i = 0; i < this.inputEls.length; i++) {
@@ -11618,12 +11874,388 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   }
   element("slider", UISlider);
 
+  // js/carousel.js
+  var UICarousel = class extends UIElement {
+    mount() {
+      this.track = null;
+      this.slides = [];
+      this.indicators = this.indicators || [];
+      this.state = { current: 0, atStart: true, atEnd: false };
+      this.updateFrame = null;
+      this.autoplayTimeout = null;
+      this.autoplayPauseLocks = /* @__PURE__ */ new Set();
+      this.observer = null;
+      this.resizeObserver = null;
+      this._disableable = new Disableable(this);
+      this.syncElementsAndState();
+      if (!this.track || this.slides.length === 0) return;
+      this._disableable.onInitAndChange((disabled) => this.syncDisabledState(disabled));
+      requestAnimationFrame(() => {
+        setAttribute2(this, "data-ready", "");
+      });
+      this.onUnmount(
+        on(this.track, "scroll", () => this.queueStateUpdate(), { passive: true }).off
+      );
+      this.observer = new MutationObserver(() => this.syncElementsAndState());
+      this.observer.observe(this.track, { childList: true });
+      this.onUnmount(() => this.observer.disconnect());
+      this.resizeObserver = new ResizeObserver(() => {
+        this.indicators.forEach((indicator) => indicator.render());
+        this.queueStateUpdate();
+      });
+      this.resizeObserver.observe(this.track);
+      this.onUnmount(() => this.resizeObserver.disconnect());
+      this.setupAutoplay();
+    }
+    unmount() {
+      if (this.updateFrame) cancelAnimationFrame(this.updateFrame);
+      this.clearAutoplayTimeout();
+    }
+    next() {
+      if (this.state.atEnd && this.canRewind()) return this.goTo(0);
+      this.goTo(this.calculateTargetIndex(1));
+    }
+    previous() {
+      this.goTo(this.calculateTargetIndex(-1));
+    }
+    goTo(index) {
+      if (!this.track || this.slides.length === 0) return;
+      if (this.disabled) return;
+      index = clamp3(index, 0, this.slides.length - 1);
+      this.track.scrollBy({
+        left: this.scrollDistanceTo(this.slides[index]),
+        behavior: this.scrollBehavior()
+      });
+      this.updateState();
+      this.syncDisabledState(this.disabled);
+    }
+    syncElementsAndState() {
+      this.refreshElements();
+      if (!this.track) return;
+      this.setupAccessibility();
+      this.indicators.forEach((indicator) => {
+        indicator.carousel = indicator.carousel || this;
+        indicator.render();
+      });
+      this.updateState();
+      this.syncDisabledState(this.disabled);
+    }
+    refreshElements() {
+      this.track = this.querySelector("[data-flux-carousel-track]");
+      this.slides = Array.from(this.track?.querySelectorAll(":scope > ui-carousel-slide") || []);
+      this.indicators = Array.from(/* @__PURE__ */ new Set([
+        ...this.indicators,
+        ...this.querySelectorAll("ui-carousel-indicators")
+      ]));
+    }
+    setupAccessibility() {
+      setDefaultAttribute(this, "role", "group");
+      setDefaultAttribute(this, "aria-roledescription", "carousel");
+      setDefaultAttribute(this.track, "aria-live", "polite");
+      setDefaultAttribute(this.track, "aria-atomic", "false");
+      this.slides.forEach((slide, index) => {
+        setDefaultAttribute(slide, "role", "group");
+        setDefaultAttribute(slide, "aria-roledescription", "slide");
+        setDefaultAttribute(slide, "aria-label", `${index + 1} of ${this.slides.length}`);
+      });
+    }
+    queueStateUpdate() {
+      if (this.updateFrame) return;
+      this.updateFrame = requestAnimationFrame(() => {
+        this.updateFrame = null;
+        this.updateState();
+      });
+    }
+    updateState() {
+      this.state = this.readState();
+      this.reflectState();
+    }
+    readState() {
+      return {
+        current: this.calculateCurrentIndex(),
+        atStart: this.isSlideVisible(this.slides[0]),
+        atEnd: this.isSlideVisible(this.slides[this.slides.length - 1])
+      };
+    }
+    reflectState() {
+      this.reflectEdgeState();
+      this.reflectScrollPercentage();
+      this.reflectSelectedSlide();
+    }
+    reflectEdgeState() {
+      let atEnd = this.state.atEnd && !this.canRewind();
+      this.state.atStart ? setAttribute2(this, "data-at-start", "") : removeAttribute(this, "data-at-start");
+      atEnd ? setAttribute2(this, "data-at-end", "") : removeAttribute(this, "data-at-end");
+      this.controlElements("ui-carousel-button").forEach((button) => {
+        this.state.atStart ? setAttribute2(button, "data-at-start", "") : removeAttribute(button, "data-at-start");
+        atEnd ? setAttribute2(button, "data-at-end", "") : removeAttribute(button, "data-at-end");
+      });
+      this.syncButtonDisabledStates();
+    }
+    reflectScrollPercentage() {
+      let scrollableWidth = this.track.scrollWidth - this.track.clientWidth;
+      let percentage = scrollableWidth > 0 ? Math.abs(this.track.scrollLeft) / scrollableWidth * 100 : 0;
+      this.track.style.setProperty("--flux-carousel-scroll-percentage", percentage + "%");
+      if (scrollableWidth <= 0) {
+        this.track.style.setProperty("--flux-carousel-fade-left", "100%");
+        this.track.style.setProperty("--flux-carousel-fade-right", "100%");
+        return;
+      }
+      let fade = "calc(100% - var(--flux-carousel-fade-size))";
+      let scrolled = percentage + "%";
+      let remaining = `calc(100% - ${percentage}%)`;
+      this.track.style.setProperty(
+        "--flux-carousel-fade-left",
+        isRTL(this) ? `max(${fade}, ${scrolled})` : `max(${fade}, ${remaining})`
+      );
+      this.track.style.setProperty(
+        "--flux-carousel-fade-right",
+        isRTL(this) ? `max(${fade}, ${remaining})` : `max(${fade}, ${scrolled})`
+      );
+    }
+    reflectSelectedSlide() {
+      this.slides.forEach((slide, index) => {
+        index === this.state.current ? setAttribute2(slide, "data-selected", "") : removeAttribute(slide, "data-selected");
+      });
+      this.indicators.forEach((indicator) => indicator.update(this.state.current));
+    }
+    syncDisabledState(disabled) {
+      disabled ? setAttribute2(this, "aria-disabled", "true") : removeAttribute(this, "aria-disabled");
+      this.controlElements().forEach((control) => {
+        disabled ? setAttribute2(control, "data-disabled", "") : removeAttribute(control, "data-disabled");
+        removeAttribute(control, "aria-disabled");
+      });
+      this.syncButtonDisabledStates();
+      this.syncAutoplay();
+    }
+    setupAutoplay() {
+      if (!this.hasAttribute("autoplay")) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      this.onUnmount(on(this, "mouseenter", () => this.pauseAutoplay("hover")).off);
+      this.onUnmount(on(this, "mouseleave", () => this.resumeAutoplay("hover")).off);
+      this.onUnmount(on(this, "focusin", () => this.pauseAutoplay("focus")).off);
+      this.onUnmount(on(this, "focusout", (event) => {
+        if (!this.contains(event.relatedTarget)) this.resumeAutoplay("focus");
+      }).off);
+      this.onUnmount(on(this.track, "pointerdown", () => this.pauseAutoplay("manual")).off);
+      this.onUnmount(on(this.track, "wheel", () => this.pauseAutoplay("manual"), { passive: true }).off);
+      this.onUnmount(on(this.track, "touchstart", () => this.pauseAutoplay("manual"), { passive: true }).off);
+      this.controlElements().filter((control) => !this.contains(control)).forEach((control) => {
+        this.onUnmount(on(control, "mouseenter", () => this.pauseAutoplay("hover")).off);
+        this.onUnmount(on(control, "mouseleave", () => this.resumeAutoplay("hover")).off);
+        this.onUnmount(on(control, "focusin", () => this.pauseAutoplay("focus")).off);
+        this.onUnmount(on(control, "focusout", (event) => {
+          if (!control.contains(event.relatedTarget)) this.resumeAutoplay("focus");
+        }).off);
+      });
+      this.scheduleAutoplay();
+    }
+    syncAutoplay() {
+      if (!this.hasAttribute("autoplay")) return;
+      this.disabled ? this.clearAutoplayTimeout() : this.scheduleAutoplay();
+    }
+    scheduleAutoplay() {
+      this.clearAutoplayTimeout();
+      if (!this.hasAttribute("autoplay")) return;
+      if (this.disabled) return;
+      if (this.autoplayPauseLocks.size > 0) return;
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      this.autoplayTimeout = setTimeout(() => {
+        this.autoplayTimeout = null;
+        this.advanceAutoplay();
+        this.scheduleAutoplay();
+      }, this.autoplayInterval());
+    }
+    clearAutoplayTimeout() {
+      if (!this.autoplayTimeout) return;
+      clearTimeout(this.autoplayTimeout);
+      this.autoplayTimeout = null;
+    }
+    pauseAutoplay(reason = "manual") {
+      if (!this.hasAttribute("autoplay")) return;
+      this.autoplayPauseLocks.add(reason);
+      this.clearAutoplayTimeout();
+    }
+    resumeAutoplay(reason) {
+      if (!this.hasAttribute("autoplay")) return;
+      this.autoplayPauseLocks.delete(reason);
+      this.scheduleAutoplay();
+    }
+    advanceAutoplay() {
+      this.state.atEnd ? this.goTo(0) : this.next();
+    }
+    autoplayInterval() {
+      let interval = Number(this.getAttribute("autoplay-interval") || 5e3);
+      return Number.isFinite(interval) ? Math.max(1e3, interval) : 5e3;
+    }
+    syncButtonDisabledStates() {
+      this.controlElements().forEach((control) => {
+        control.querySelectorAll("button").forEach((button) => {
+          this.buttonIsDisabled(control) ? setAttribute2(button, "disabled", "") : removeAttribute(button, "disabled");
+        });
+      });
+    }
+    buttonIsDisabled(control) {
+      if (this.disabled) return true;
+      if (!control.matches("ui-carousel-button")) return false;
+      return control.getAttribute("direction") === "previous" ? this.state.atStart : this.state.atEnd && !this.canRewind();
+    }
+    canRewind() {
+      return this.getAttribute("wrap") === "rewind" && !(this.state.atStart && this.state.atEnd);
+    }
+    controlElements(selector = "ui-carousel-button, ui-carousel-indicators") {
+      let controls = Array.from(this.querySelectorAll(selector));
+      if (this.hasAttribute("name")) {
+        controls.push(...document.querySelectorAll(
+          selector.split(",").map((selector2) => `${selector2.trim()}[name="${CSS.escape(this.getAttribute("name"))}"]`).join(", ")
+        ));
+      }
+      return Array.from(new Set(controls));
+    }
+    calculateTargetIndex(direction) {
+      let current = this.calculateCurrentIndex();
+      if (this.getAttribute("advance") !== "page") return current + direction;
+      return current + this.visibleSlideCount() * direction;
+    }
+    visibleSlideCount() {
+      return Math.max(1, this.slides.filter((slide) => this.isSlideVisible(slide)).length);
+    }
+    calculateCurrentIndex() {
+      let current = 0;
+      let distance = Infinity;
+      let trackRect = this.track.getBoundingClientRect();
+      this.slides.forEach((slide, index) => {
+        let slideRect = slide.getBoundingClientRect();
+        let slideDistance = isRTL(this) ? Math.abs(trackRect.right - slideRect.right) : Math.abs(trackRect.left - slideRect.left);
+        if (slideDistance < distance) {
+          current = index;
+          distance = slideDistance;
+        }
+      });
+      return current;
+    }
+    isSlideVisible(slide) {
+      if (!slide) return false;
+      let trackRect = this.track.getBoundingClientRect();
+      let slideRect = slide.getBoundingClientRect();
+      let tolerance = 1;
+      return slideRect.left >= trackRect.left - tolerance && slideRect.right <= trackRect.right + tolerance;
+    }
+    scrollDistanceTo(slide) {
+      let trackRect = this.track.getBoundingClientRect();
+      let slideRect = slide.getBoundingClientRect();
+      return isRTL(this) ? slideRect.right - trackRect.right : slideRect.left - trackRect.left;
+    }
+    scrollBehavior() {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return "instant";
+      return this.getAttribute("scroll") === "instant" ? "instant" : "smooth";
+    }
+  };
+  var UICarouselIndicators = class extends UIElement {
+    boot() {
+      this.buttons = [];
+      this.buttonCleanups = [];
+      this.targets = [];
+    }
+    mount() {
+      this.carousel = this.findCarousel();
+      if (!this.carousel) return;
+      this.carousel.indicators = this.carousel.indicators || [];
+      this.render();
+      if (!this.carousel.indicators.includes(this)) this.carousel.indicators.push(this);
+      this.update(this.carousel.calculateCurrentIndex());
+      this.onUnmount(() => {
+        this.cleanupButtonListeners();
+        this.carousel.indicators = this.carousel.indicators.filter((indicator) => indicator !== this);
+      });
+    }
+    render() {
+      this.cleanupButtonListeners();
+      let buttons = [];
+      let targets = this.calculateTargets();
+      this.rendered = renderTemplate(this.querySelector("template"), (hydrate) => {
+        return targets.map((target, index) => {
+          let label = this.carousel.getAttribute("advance") === "page" ? `Show page ${index + 1}` : `Show slide ${index + 1}`;
+          let button = hydrate({ attrs: { "aria-label": label } });
+          this.buttonCleanups.push(
+            on(button, "click", () => {
+              this.carousel.pauseAutoplay();
+              this.carousel.goTo(target);
+            }).off
+          );
+          buttons.push(button);
+          return button;
+        });
+      });
+      this.buttons = buttons;
+      this.targets = targets;
+    }
+    cleanupButtonListeners() {
+      this.buttonCleanups.forEach((cleanup) => cleanup());
+      this.buttonCleanups = [];
+    }
+    update(current) {
+      let currentIndicator = this.targets.reduce((closest2, target, index) => {
+        return Math.abs(current - target) < Math.abs(current - this.targets[closest2]) ? index : closest2;
+      }, 0);
+      if (this.carousel.state.atEnd) currentIndicator = this.targets.length - 1;
+      this.buttons.forEach((button, index) => {
+        if (index === currentIndicator) {
+          setAttribute2(button, "data-selected", "");
+          setAttribute2(button, "aria-current", "true");
+        } else {
+          removeAttribute(button, "data-selected");
+          removeAttribute(button, "aria-current");
+        }
+      });
+    }
+    calculateTargets() {
+      let indexes = this.carousel.slides.map((slide, index) => index);
+      if (this.carousel.getAttribute("advance") !== "page") return indexes;
+      let pageSize = this.carousel.visibleSlideCount();
+      return indexes.filter((index) => index % pageSize === 0);
+    }
+    findCarousel() {
+      if (this.hasAttribute("name")) {
+        return document.querySelector(`ui-carousel[name="${CSS.escape(this.getAttribute("name"))}"]`);
+      }
+      return this.closest("ui-carousel");
+    }
+  };
+  var UICarouselButton = class extends UIElement {
+    mount() {
+      this.onUnmount(
+        on(this, "click", (event) => {
+          let carousel = this.carousel();
+          if (!carousel) return;
+          carousel.pauseAutoplay();
+          this.getAttribute("direction") === "previous" ? carousel.previous() : carousel.next();
+          event.preventDefault();
+        }).off
+      );
+    }
+    carousel() {
+      if (this.hasAttribute("name")) {
+        return document.querySelector(`ui-carousel[name="${CSS.escape(this.getAttribute("name"))}"]`);
+      }
+      return this.closest("ui-carousel");
+    }
+  };
+  function setDefaultAttribute(el, name, value3) {
+    if (!el.hasAttribute(name)) setAttribute2(el, name, value3);
+  }
+  function clamp3(value3, min2, max2) {
+    return Math.min(Math.max(value3, min2), max2);
+  }
+  element("carousel", UICarousel);
+  element("carousel-indicators", UICarouselIndicators);
+  element("carousel-button", UICarouselButton);
+
   // js/color-picker.js
   var UIColorPicker = class extends UIControl {
     // Lifecycle
     boot() {
       this.listeners = [];
-      this.syncingValueAttribute = false;
       this.scrollLocked = false;
       this.pointerCleanup = null;
       this.previewEls = [];
@@ -11711,8 +12343,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             return;
           }
           if (mutation.attributeName === "value") {
-            if (this.syncingValueAttribute) return;
-            this.setValue(this.getAttribute("value"), { dispatch: false });
+            let attrValue = this.getAttribute("value");
+            let stateValue = this.committedState.empty ? null : this.committedState.value;
+            if ((attrValue ?? null) === stateValue) {
+              this.syncUI();
+              return;
+            }
+            this.setValue(attrValue, { dispatch: false });
             return;
           }
           if (mutation.attributeName === "format") {
@@ -11778,22 +12415,22 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (this.state.empty) {
         nextState = {
           hsv: {
-            h: clamp3(partial.h ?? 0, 0, 360),
-            s: clamp3(partial.s ?? 0, 0, 100),
-            v: clamp3(partial.v ?? 0, 0, 100)
+            h: clamp4(partial.h ?? 0, 0, 360),
+            s: clamp4(partial.s ?? 0, 0, 100),
+            v: clamp4(partial.v ?? 0, 0, 100)
           },
-          alpha: clamp3(options.alpha ?? 1, 0, 1),
+          alpha: clamp4(options.alpha ?? 1, 0, 1),
           empty: false
         };
       } else {
         nextState = {
           ...this.state,
           hsv: {
-            h: clamp3(partial.h ?? this.state.hsv.h, 0, 360),
-            s: clamp3(partial.s ?? this.state.hsv.s, 0, 100),
-            v: clamp3(partial.v ?? this.state.hsv.v, 0, 100)
+            h: clamp4(partial.h ?? this.state.hsv.h, 0, 360),
+            s: clamp4(partial.s ?? this.state.hsv.s, 0, 100),
+            v: clamp4(partial.v ?? this.state.hsv.v, 0, 100)
           },
-          alpha: clamp3(options.alpha ?? this.state.alpha, 0, 1),
+          alpha: clamp4(options.alpha ?? this.state.alpha, 0, 1),
           empty: false
         };
       }
@@ -11852,7 +12489,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (state.empty) return null;
       let rgb = hsvToRgb(state.hsv.h, state.hsv.s, state.hsv.v);
       let hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
-      let alpha = clamp3(state.alpha, 0, 1);
+      let alpha = clamp4(state.alpha, 0, 1);
       switch (this.getFormat()) {
         case "hexa":
           return `${rgbToHex(rgb.r, rgb.g, rgb.b)}${alphaToHex(alpha)}`;
@@ -11869,15 +12506,11 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       }
     }
     syncValueAttribute() {
-      this.syncingValueAttribute = true;
       if (this.committedState.empty || !this.committedState.value) {
         removeAttribute(this, "value");
       } else {
         setAttribute2(this, "value", this.committedState.value);
       }
-      queueMicrotask(() => {
-        this.syncingValueAttribute = false;
-      });
     }
     // Interaction
     toggle() {
@@ -12013,13 +12646,14 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       on(this.areaEl, "keydown", (event) => {
         if (this._disableable.isDisabled()) return;
         let step = event.shiftKey ? 10 : 2;
+        let horizontalStep = isRTL(this) ? -step : step;
         let { s, v } = this.state.hsv;
         switch (event.key) {
           case "ArrowRight":
-            s += step;
+            s += horizontalStep;
             break;
           case "ArrowLeft":
-            s -= step;
+            s -= horizontalStep;
             break;
           case "ArrowUp":
             v += step;
@@ -12048,8 +12682,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
     setAreaFromPointer(event) {
       let rect = this.areaEl.getBoundingClientRect();
-      let saturation = clamp3((event.clientX - rect.left) / rect.width * 100, 0, 100);
-      let value3 = clamp3((1 - (event.clientY - rect.top) / rect.height) * 100, 0, 100);
+      let horizontalRatio = isRTL(this) ? (rect.right - event.clientX) / rect.width : (event.clientX - rect.left) / rect.width;
+      let saturation = clamp4(horizontalRatio * 100, 0, 100);
+      let value3 = clamp4((1 - (event.clientY - rect.top) / rect.height) * 100, 0, 100);
       this.setSaturationValue(saturation, value3, { dispatch: false });
       this.dispatchEvent(new Event("input", { bubbles: false }));
     }
@@ -12229,7 +12864,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (!this.areaThumb) return;
       let saturation = Math.round(this.state.hsv.s);
       let brightness = Math.round(this.state.hsv.v);
-      this.areaThumb.style.left = `${this.state.hsv.s}%`;
+      this.areaThumb.style.insetInlineStart = `${this.state.hsv.s}%`;
       this.areaThumb.style.top = `${100 - this.state.hsv.v}%`;
       setAttribute2(this.areaThumb, "aria-valuenow", saturation);
       setAttribute2(this.areaThumb, "aria-valuetext", `Saturation ${saturation}%, brightness ${brightness}%`);
@@ -12344,7 +12979,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     nextState.value = nextState.empty ? null : picker.formatValue(nextState);
     return nextState;
   }
-  function clamp3(value3, min2, max2) {
+  function clamp4(value3, min2, max2) {
     return Math.min(Math.max(value3, min2), max2);
   }
   function normalizeHue(value3) {
@@ -12518,6 +13153,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (dialogable.getState()) {
         anchorable.reposition();
         onOpen();
+      } else {
+        anchorable.cleanup();
       }
     };
     dialogable.onChange(() => refresh());
@@ -12597,6 +13234,22 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       this._disableable.onInitAndChange((disabled) => {
         disabled ? removeAttribute(button, "tabindex", "0") : setAttribute2(button, "tabindex", "0");
       });
+      let updateState = () => {
+        button.hasAttribute("data-loading") ? setAttribute2(button, "aria-busy", "true") : removeAttribute(button, "aria-busy");
+        button.hasAttribute("data-loading") || button.disabled ? setAttribute2(button, "aria-disabled", "true") : removeAttribute(button, "aria-disabled");
+      };
+      updateState();
+      let observer = new MutationObserver(updateState);
+      observer.observe(button, { attributeFilter: ["data-loading", "disabled"] });
+      this.onUnmount(() => observer.disconnect());
+      for (let event of ["click", "keydown", "keyup"]) {
+        on(button, event, (e) => {
+          if (!button.hasAttribute("data-loading")) return;
+          if (event !== "click" && !["Enter", " "].includes(e.key)) return;
+          e.preventDefault();
+          e.stopImmediatePropagation();
+        }, { capture: true });
+      }
       on(button, "click", this._disableable.disabled((e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -12745,6 +13398,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   element("legend", UILegend);
 
   // js/chart/chart.js
+  var isDefined = (value3) => value3 !== void 0 && value3 !== null;
   function generateChartObject(config) {
     let scaleFns = {
       "time": scaleTime,
@@ -12766,7 +13420,150 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       }
       return memoizedValues[memoKey];
     };
+    let dimensions = {
+      index: {
+        key: config.dimensions.index.key,
+        asArea: config.dimensions.index.asArea,
+        get axis() {
+          return chart.axes[chart.horizontal ? "y" : "x"];
+        },
+        get rawValues() {
+          return memoize("index.rawValues", dataMemoKey, () => chart.data.map((d) => d[this.key]));
+        },
+        get type() {
+          return memoize("index.type", dataMemoKey, () => {
+            return this.axis.defaultScale || (this.rawValues.every((v) => isDateish(v)) ? "time" : "categorical");
+          });
+        },
+        get values() {
+          return memoize("index.values", dataMemoKey, () => this.rawValues.map((v) => {
+            if (this.type === "time") {
+              return dateFromString(v);
+            } else if (this.type === "linear") {
+              return Number(v);
+            } else {
+              return v;
+            }
+          }));
+        },
+        get points() {
+          return memoize("index.points", dataMemoKey + dimensionsMemoKey, () => {
+            return chart.data.map((datum) => {
+              let { start, center, end, width } = this.axis.scale(datum[this.key], { area: this.asArea });
+              return {
+                start,
+                center,
+                end,
+                width,
+                datum
+              };
+            });
+          });
+        }
+      },
+      value: {
+        keys: config.dimensions.value.keys,
+        includeZero: config.dimensions.value.includeZero,
+        get axis() {
+          return chart.axes[chart.horizontal ? "x" : "y"];
+        },
+        get type() {
+          return memoize("value.type", dataMemoKey, () => this.axis.defaultScale || "linear");
+        },
+        get values() {
+          return memoize("value.values", dataMemoKey, () => {
+            let groupsData = chart.data.flatMap((d) => chart.groupsMetadata.reduce((acc, groupMetadata) => {
+              groupMetadata.children.forEach((itemMetadata) => {
+                if (itemMetadata.type === "bar") {
+                  if (!itemMetadata.field) return;
+                  if (!isDefined(d[itemMetadata.field])) return;
+                  acc.push(d[itemMetadata.field]);
+                }
+                if (itemMetadata.type === "stack") {
+                  let gap = Number(itemMetadata.gap.replace("px", ""));
+                  let positiveValue = 0;
+                  let negativeValue = 0;
+                  let hasPositive = false;
+                  let hasNegative = false;
+                  itemMetadata.children.forEach((childMetadata) => {
+                    if (childMetadata.type === "bar") {
+                      if (!childMetadata.field) return;
+                      if (!isDefined(d[childMetadata.field])) return;
+                      let val = d[childMetadata.field];
+                      if (val >= 0) {
+                        if (hasPositive) positiveValue += gap;
+                        positiveValue += val;
+                        hasPositive = true;
+                      } else {
+                        if (hasNegative) negativeValue -= gap;
+                        negativeValue += val;
+                        hasNegative = true;
+                      }
+                    }
+                  });
+                  if (hasPositive) acc.push(positiveValue);
+                  if (hasNegative) acc.push(negativeValue);
+                }
+              });
+              return acc;
+            }, []));
+            let stacksData = chart.data.flatMap((d) => chart.stacksMetadata.reduce((acc, stackMetadata) => {
+              let gap = Number(stackMetadata.gap.replace("px", ""));
+              let positiveValue = 0;
+              let negativeValue = 0;
+              let hasPositive = false;
+              let hasNegative = false;
+              stackMetadata.children.forEach((childMetadata) => {
+                if (childMetadata.type === "bar") {
+                  if (!childMetadata.field) return;
+                  if (!isDefined(d[childMetadata.field])) return;
+                  let val = d[childMetadata.field];
+                  if (val >= 0) {
+                    if (hasPositive) positiveValue += gap;
+                    positiveValue += val;
+                    hasPositive = true;
+                  } else {
+                    if (hasNegative) negativeValue -= gap;
+                    negativeValue += val;
+                    hasNegative = true;
+                  }
+                }
+              });
+              if (hasPositive) acc.push(positiveValue);
+              if (hasNegative) acc.push(negativeValue);
+              return acc;
+            }, []));
+            let data = chart.data.flatMap((d) => this.keys.reduce((acc, key) => {
+              if (!isDefined(d[key])) {
+                return acc;
+              }
+              acc.push(d[key]);
+              return acc;
+            }, []));
+            return [...groupsData, ...stacksData, ...data, ...this.includeZero ? [0] : []];
+          });
+        },
+        zeroLine() {
+          let position = this.axis.scale(0).center;
+          if (this.axis.axis === "x") {
+            return {
+              x1: position,
+              x2: position,
+              y1: chart.dimensions.index.axis.range[0],
+              y2: chart.dimensions.index.axis.range[1]
+            };
+          }
+          return {
+            x1: chart.dimensions.index.axis.range[0],
+            x2: chart.dimensions.index.axis.range[1],
+            y1: position,
+            y2: position
+          };
+        }
+      }
+    };
     let chart = {
+      horizontal: config.horizontal,
       locale: config.locale,
       data: [],
       stacksMetadata: config.stacksMetadata,
@@ -12774,13 +13571,14 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       width: config.width,
       height: config.height,
       inset: config.inset,
+      dimensions,
       axes: {
         x: {
           axis: "x",
-          key: config.axes.x.key,
           format: config.axes.x.format,
           inset: { start: 0, end: 0 },
           position: config.axes.x.position || "bottom",
+          defaultScale: config.axes.x.scale,
           tickStart: config.axes.x.tickStart,
           tickEnd: config.axes.x.tickEnd,
           tickCount: config.axes.x.tickCount,
@@ -12788,50 +13586,25 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           tickValues: config.axes.x.tickValues,
           tickSuffix: config.axes.x.tickSuffix,
           tickPrefix: config.axes.x.tickPrefix,
-          asArea: config.axes.x.asArea,
-          get rawValues() {
-            return memoize("x.rawValues", dataMemoKey, () => chart.data.map((d) => d[this.key]));
-          },
-          get type() {
-            return memoize("x.type", dataMemoKey, () => {
-              return config.axes.x.scale || (this.rawValues.every((v) => isDateish(v)) ? "time" : "categorical");
-            });
-          },
           get interval() {
             return memoize("x.interval", dataMemoKey, () => {
               return config.axes.x.interval || "auto";
             });
           },
-          get values() {
-            return memoize("x.values", dataMemoKey, () => this.rawValues.map((v) => {
-              if (this.type === "time") {
-                return dateFromString(v);
-              } else if (this.type === "linear") {
-                return Number(v);
-              } else {
-                return v;
-              }
-            }));
+          get dimension() {
+            return chart.dimensions[chart.horizontal ? "value" : "index"];
           },
-          get points() {
-            return memoize("x.points", dataMemoKey + dimensionsMemoKey, () => {
-              return chart.data.map((datum) => {
-                let { start, center, end, width } = this.scale(datum[this.key], { area: this.asArea });
-                return {
-                  start,
-                  center,
-                  end,
-                  width,
-                  datum
-                };
-              });
-            });
+          get values() {
+            return this.dimension.values;
+          },
+          get type() {
+            return this.dimension.type;
           },
           get ticks() {
             return memoize("x.ticks", dataMemoKey, () => {
-              let xTickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
-              let xTickLabels = generateTickLabels(xTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval, chart.locale);
-              return xTickValues.map((value3, index) => ({ value: value3, label: xTickLabels[index] }));
+              let tickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
+              let tickLabels = generateTickLabels(tickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval, chart.locale);
+              return tickValues.map((value3, index) => ({ value: value3, label: tickLabels[index] }));
             });
           },
           get domain() {
@@ -12846,10 +13619,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         },
         y: {
           axis: "y",
-          keys: config.axes.y.keys,
           format: config.axes.y.format,
           inset: { start: 0, end: 0 },
           position: config.axes.y.position || "left",
+          defaultScale: config.axes.y.scale,
           tickStart: config.axes.y.tickStart,
           tickEnd: config.axes.y.tickEnd,
           tickCount: config.axes.y.tickCount,
@@ -12857,101 +13630,36 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           tickValues: config.axes.y.tickValues,
           tickSuffix: config.axes.y.tickSuffix,
           tickPrefix: config.axes.y.tickPrefix,
-          get values() {
-            return memoize("y.values", dataMemoKey, () => {
-              let groupsData = chart.data.flatMap((d) => chart.groupsMetadata.reduce((acc, groupMetadata) => {
-                groupMetadata.children.forEach((itemMetadata) => {
-                  if (itemMetadata.type === "bar") {
-                    if (!itemMetadata.field) return;
-                    if (d[itemMetadata.field] === void 0) return;
-                    acc.push(d[itemMetadata.field]);
-                  }
-                  if (itemMetadata.type === "stack") {
-                    let gap = Number(itemMetadata.gap.replace("px", ""));
-                    let positiveValue = 0;
-                    let negativeValue = 0;
-                    let hasPositive = false;
-                    let hasNegative = false;
-                    itemMetadata.children.forEach((childMetadata) => {
-                      if (childMetadata.type === "bar") {
-                        if (!childMetadata.field) return;
-                        if (d[childMetadata.field] === void 0) return;
-                        let val = d[childMetadata.field];
-                        if (val >= 0) {
-                          if (hasPositive) positiveValue += gap;
-                          positiveValue += val;
-                          hasPositive = true;
-                        } else {
-                          if (hasNegative) negativeValue -= gap;
-                          negativeValue += val;
-                          hasNegative = true;
-                        }
-                      }
-                    });
-                    if (hasPositive) acc.push(positiveValue);
-                    if (hasNegative) acc.push(negativeValue);
-                  }
-                });
-                return acc;
-              }, []));
-              let stacksData = chart.data.flatMap((d) => chart.stacksMetadata.reduce((acc, stackMetadata) => {
-                let gap = Number(stackMetadata.gap.replace("px", ""));
-                let positiveValue = 0;
-                let negativeValue = 0;
-                let hasPositive = false;
-                let hasNegative = false;
-                stackMetadata.children.forEach((childMetadata) => {
-                  if (childMetadata.type === "bar") {
-                    if (!childMetadata.field) return;
-                    if (d[childMetadata.field] === void 0) return;
-                    let val = d[childMetadata.field];
-                    if (val >= 0) {
-                      if (hasPositive) positiveValue += gap;
-                      positiveValue += val;
-                      hasPositive = true;
-                    } else {
-                      if (hasNegative) negativeValue -= gap;
-                      negativeValue += val;
-                      hasNegative = true;
-                    }
-                  }
-                });
-                if (hasPositive) acc.push(positiveValue);
-                if (hasNegative) acc.push(negativeValue);
-                return acc;
-              }, []));
-              let data = chart.data.flatMap((d) => this.keys.reduce((acc, key) => {
-                if (d[key] === void 0) {
-                  return acc;
-                }
-                acc.push(d[key]);
-                return acc;
-              }, []));
-              return [...groupsData, ...stacksData, ...data];
-            });
-          },
-          get type() {
-            return memoize("y.type", dataMemoKey, () => {
-              return config.axes.y.scale || "linear";
-            });
-          },
           get interval() {
             return memoize("y.interval", dataMemoKey, () => {
               return config.axes.y.interval || "auto";
             });
           },
+          get dimension() {
+            return chart.dimensions[chart.horizontal ? "index" : "value"];
+          },
+          get values() {
+            return this.dimension.values;
+          },
+          get type() {
+            return this.dimension.type;
+          },
           get ticks() {
             return memoize("y.ticks", dataMemoKey, () => {
-              let yTickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
-              let yTickLabels = generateTickLabels(yTickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval, chart.locale);
-              return yTickValues.map((value3, index) => ({ value: value3, label: yTickLabels[index] }));
+              let tickValues = generateTickValues(chart.data, this, generateDomain(this.type, this.values));
+              let tickLabels = generateTickLabels(tickValues, this.type, this.format, this.tickSuffix, this.tickPrefix, this.interval, chart.locale);
+              return tickValues.map((value3, index) => ({ value: value3, label: tickLabels[index] }));
             });
           },
           get domain() {
             return memoize("y.domain", dataMemoKey, () => generateDomain(this.type, [...this.ticks.map((t) => t.value), ...this.values]));
           },
           get range() {
-            return memoize("y.range", dimensionsMemoKey, () => [chart.height - chart.inset.bottom - this.inset.end, chart.inset.top + this.inset.start]);
+            return memoize(
+              "y.range",
+              dimensionsMemoKey,
+              () => chart.horizontal ? [chart.inset.top + this.inset.start, chart.height - chart.inset.bottom - this.inset.end] : [chart.height - chart.inset.bottom - this.inset.end, chart.inset.top + this.inset.start]
+            );
           },
           get scale() {
             return memoize("y.scale", dimensionsMemoKey + dataMemoKey, () => scaleFns[this.type](this.domain, this.range, this.values));
@@ -12959,16 +13667,29 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         }
       },
       get series() {
-        return memoize("series", dataMemoKey + dimensionsMemoKey, () => this.axes.y.keys.reduce((acc, key) => {
-          if (!chart.data[0].hasOwnProperty(key)) {
+        return memoize("series", dataMemoKey + dimensionsMemoKey, () => this.dimensions.value.keys.reduce((acc, key) => {
+          if (!chart.data.some((datum) => isDefined(datum[key]))) {
             console.warn(`ui-chart: series field "${key}" does not exist`);
             return acc;
           }
-          let points = chart.data.map((datum) => ({
-            x: chart.axes.x.scale(datum[chart.axes.x.key], { area: chart.axes.x.asArea }).center,
-            y: chart.axes.y.scale(datum[key]).center,
-            datum
-          }));
+          let segments = [];
+          let currentSegment = [];
+          chart.data.forEach((datum) => {
+            if (!isDefined(datum[key])) {
+              if (currentSegment.length) segments.push(currentSegment);
+              currentSegment = [];
+              return;
+            }
+            let index = chart.dimensions.index.axis.scale(datum[chart.dimensions.index.key], { area: chart.dimensions.index.asArea }).center;
+            let value3 = chart.dimensions.value.axis.scale(datum[key]).center;
+            currentSegment.push({
+              x: chart.horizontal ? value3 : index,
+              y: chart.horizontal ? index : value3,
+              datum
+            });
+          });
+          if (currentSegment.length) segments.push(currentSegment);
+          let points = segments.flat();
           let series = {
             field: key,
             values: chart.data.map((d) => d[key]),
@@ -12977,7 +13698,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                 start: groupStart,
                 center: groupCenter,
                 width: fullGroupWidth
-              } = chart.axes.x.scale(chart.axes.x.domain[0], { area: chart.axes.x.asArea });
+              } = chart.dimensions.index.axis.scale(chart.dimensions.index.axis.domain[0], { area: chart.dimensions.index.asArea });
               let barRadius = radius;
               if (barWidth.match(/^(\d+)%$/)) {
                 barWidth = fullGroupWidth * Number(barWidth.replace("%", "")) / 100;
@@ -12985,27 +13706,33 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                 barWidth = Number(barWidth.replace("px", ""));
               }
               let groupStartOffset = (fullGroupWidth - barWidth) / 2;
-              return chart.data.map((d) => {
+              return chart.data.flatMap((d) => {
                 let value3 = d[key];
-                let { start } = chart.axes.x.scale(d[chart.axes.x.key], { area: chart.axes.x.asArea });
-                let x = start + groupStartOffset;
-                let y = value3 >= 0 ? chart.axes.y.scale(value3).center : chart.axes.y.scale(0).center;
-                let height = value3 >= 0 ? chart.axes.y.scale(0).center - y : chart.axes.y.scale(value3).center - y;
-                let width = barWidth;
+                if (!isDefined(value3)) return [];
+                let { start } = chart.dimensions.index.axis.scale(d[chart.dimensions.index.key], { area: chart.dimensions.index.asArea });
+                let x, y, width, height;
                 let radius2 = barRadius;
-                if (height < minHeight) {
-                  y -= minHeight - height;
-                  height = minHeight;
+                if (chart.horizontal) {
+                  x = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center : chart.dimensions.value.axis.scale(value3).center;
+                  y = start + groupStartOffset;
+                  width = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center - x : chart.dimensions.value.axis.scale(0).center - x;
+                  height = barWidth;
+                  if (width < minHeight) {
+                    if (value3 < 0) x -= minHeight - width;
+                    width = minHeight;
+                  }
+                } else {
+                  x = start + groupStartOffset;
+                  y = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center : chart.dimensions.value.axis.scale(0).center;
+                  height = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center - y : chart.dimensions.value.axis.scale(value3).center - y;
+                  width = barWidth;
+                  if (height < minHeight) {
+                    y -= minHeight - height;
+                    height = minHeight;
+                  }
                 }
-                if (value3 < 0) {
-                  radius2 = {
-                    topLeft: radius2.bottomLeft,
-                    topRight: radius2.bottomRight,
-                    bottomRight: radius2.topRight,
-                    bottomLeft: radius2.topLeft
-                  };
-                }
-                return {
+                radius2 = orientBarRadius(radius2, value3, chart.horizontal);
+                return [{
                   x,
                   y,
                   width,
@@ -13013,28 +13740,32 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                   path: () => {
                     return getBarPath(x, y, width, height, radius2);
                   }
-                };
+                }];
               });
             },
             linePath(curve = "smooth") {
-              let points2 = this.points.map((p) => [p.x, p.y]);
-              return {
-                smooth: smoothX,
+              let createPath = {
+                smooth: (points2) => smooth(points2, chart.horizontal ? "y" : "x"),
                 none: noCurve
-              }[curve](points2);
+              }[curve];
+              return this.segments.map((segment) => createPath(segment.map((point) => [point.x, point.y]))).filter(Boolean).join(" ");
             },
             areaPath(curve = "smooth") {
-              let linePath = {
-                smooth: smoothX,
+              let createPath = {
+                smooth: (points2) => smooth(points2, chart.horizontal ? "y" : "x"),
                 none: noCurve
-              }[curve](this.points.map((p) => [p.x, p.y]));
-              let firstPointX = this.points[0].x;
-              let lastPointX = this.points[this.points.length - 1].x;
-              let baselineY = chart.axes.y.scale(chart.axes.y.domain[0]).center;
-              let areaPath = `${linePath} L${lastPointX},${baselineY} L${firstPointX},${baselineY} Z`;
-              return areaPath;
+              }[curve];
+              return this.segments.map((segment) => {
+                let linePath = createPath(segment.map((point) => [point.x, point.y]));
+                if (!linePath) return "";
+                let firstPoint = segment[0];
+                let lastPoint = segment[segment.length - 1];
+                let baseline = chart.dimensions.value.axis.scale(chart.dimensions.value.axis.domain[0]).center;
+                return chart.horizontal ? `${linePath} L${baseline},${lastPoint.y} L${baseline},${firstPoint.y} Z` : `${linePath} L${lastPoint.x},${baseline} L${firstPoint.x},${baseline} Z`;
+              }).filter(Boolean).join(" ");
             },
-            points
+            points,
+            segments
           };
           acc[key] = series;
           return acc;
@@ -13062,7 +13793,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                   start: groupStart,
                   center: groupCenter,
                   width: fullGroupWidth
-                } = chart.axes.x.scale(chart.axes.x.domain[0], { area: chart.axes.x.asArea });
+                } = chart.dimensions.index.axis.scale(chart.dimensions.index.axis.domain[0], { area: chart.dimensions.index.asArea });
                 let stackWidth = stackMetadata.width ?? "90%";
                 if (stackWidth.match(/^(\d+)%$/)) {
                   stackWidth = fullGroupWidth * Number(stackWidth.replace("%", "")) / 100;
@@ -13103,13 +13834,21 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                         previousPositiveHeight[index] = 0;
                         previousNegativeHeight[index] = 0;
                       }
-                      let { start } = chart.axes.x.scale(chart.data[index][chart.axes.x.key], { area: chart.axes.x.asArea });
-                      let x = start + stackStartOffset;
-                      let y = value3 >= 0 ? chart.axes.y.scale(value3).center : chart.axes.y.scale(0).center;
-                      let height = value3 >= 0 ? chart.axes.y.scale(0).center - y : chart.axes.y.scale(value3).center - y;
-                      let width = stackWidth;
+                      let { start } = chart.dimensions.index.axis.scale(chart.data[index][chart.dimensions.index.key], { area: chart.dimensions.index.asArea });
+                      let x, y, width, height;
                       let minHeight = Number(itemMetadata.minHeight.replace("px", ""));
                       let radius = itemMetadata.radius;
+                      if (chart.horizontal) {
+                        x = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center : chart.dimensions.value.axis.scale(value3).center;
+                        y = start + stackStartOffset;
+                        width = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center - x : chart.dimensions.value.axis.scale(0).center - x;
+                        height = stackWidth;
+                      } else {
+                        x = start + stackStartOffset;
+                        y = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center : chart.dimensions.value.axis.scale(0).center;
+                        height = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center - y : chart.dimensions.value.axis.scale(value3).center - y;
+                        width = stackWidth;
+                      }
                       if (stackRadius) {
                         let isTopBar = itemMetadata.field === topBarField[index];
                         let isBottomBar = itemMetadata.field === bottomBarField[index];
@@ -13133,19 +13872,20 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                           radius = visualRadius;
                         }
                       }
-                      y = value3 >= 0 ? y - previousPositiveHeight[index] : y + previousNegativeHeight[index];
-                      if (height < minHeight) {
-                        y -= minHeight - height;
-                        height = minHeight;
+                      if (chart.horizontal) {
+                        if (width < minHeight) {
+                          if (value3 < 0) x -= minHeight - width;
+                          width = minHeight;
+                        }
+                        x = value3 >= 0 ? x + previousPositiveHeight[index] : x - previousNegativeHeight[index];
+                      } else {
+                        y = value3 >= 0 ? y - previousPositiveHeight[index] : y + previousNegativeHeight[index];
+                        if (height < minHeight) {
+                          y -= minHeight - height;
+                          height = minHeight;
+                        }
                       }
-                      if (value3 < 0) {
-                        radius = {
-                          topLeft: radius.bottomLeft,
-                          topRight: radius.bottomRight,
-                          bottomRight: radius.topRight,
-                          bottomLeft: radius.topLeft
-                        };
-                      }
+                      radius = orientBarRadius(radius, value3, chart.horizontal);
                       let bar = {
                         x,
                         y,
@@ -13156,9 +13896,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                         }
                       };
                       if (value3 >= 0) {
-                        previousPositiveHeight[index] += height + stackGap;
+                        previousPositiveHeight[index] += (chart.horizontal ? width : height) + stackGap;
                       } else {
-                        previousNegativeHeight[index] += height + stackGap;
+                        previousNegativeHeight[index] += (chart.horizontal ? width : height) + stackGap;
                       }
                       bars.push(bar);
                     });
@@ -13217,7 +13957,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                 start: groupStart,
                 center: groupCenter,
                 width: fullGroupWidth
-              } = chart.axes.x.scale(chart.axes.x.domain[0], { area: chart.axes.x.asArea });
+              } = chart.dimensions.index.axis.scale(chart.dimensions.index.axis.domain[0], { area: chart.dimensions.index.asArea });
               let groupWidth = groupMetadata.width ?? "90%";
               if (groupWidth.match(/^(\d+)%$/)) {
                 groupWidth = fullGroupWidth * Number(groupWidth.replace("%", "")) / 100;
@@ -13264,31 +14004,37 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                 if (itemMetadata.type === "bar") {
                   let bars = [];
                   data[itemMetadata.field].forEach((value3, index2) => {
-                    let { start: groupStart2 } = chart.axes.x.scale(chart.data[index2][chart.axes.x.key], { area: chart.axes.x.asArea });
-                    let x = groupStart2 + itemOffset;
-                    let y = value3 >= 0 ? chart.axes.y.scale(value3).center : chart.axes.y.scale(0).center;
-                    let height = value3 >= 0 ? chart.axes.y.scale(0).center - y : chart.axes.y.scale(value3).center - y;
+                    let { start: groupStart2 } = chart.dimensions.index.axis.scale(chart.data[index2][chart.dimensions.index.key], { area: chart.dimensions.index.asArea });
+                    let x, y, localWidth, height;
                     let minHeight = Number(itemMetadata.minHeight.replace("px", ""));
                     let radius = itemMetadata.radius;
-                    if (height < minHeight) {
-                      y -= minHeight - height;
-                      height = minHeight;
+                    if (chart.horizontal) {
+                      x = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center : chart.dimensions.value.axis.scale(value3).center;
+                      y = groupStart2 + itemOffset;
+                      localWidth = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center - x : chart.dimensions.value.axis.scale(0).center - x;
+                      height = width;
+                      if (localWidth < minHeight) {
+                        if (value3 < 0) x -= minHeight - localWidth;
+                        localWidth = minHeight;
+                      }
+                    } else {
+                      x = groupStart2 + itemOffset;
+                      y = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center : chart.dimensions.value.axis.scale(0).center;
+                      height = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center - y : chart.dimensions.value.axis.scale(value3).center - y;
+                      localWidth = width;
+                      if (height < minHeight) {
+                        y -= minHeight - height;
+                        height = minHeight;
+                      }
                     }
-                    if (value3 < 0) {
-                      radius = {
-                        topLeft: radius.bottomLeft,
-                        topRight: radius.bottomRight,
-                        bottomRight: radius.topRight,
-                        bottomLeft: radius.topLeft
-                      };
-                    }
+                    radius = orientBarRadius(radius, value3, chart.horizontal);
                     let bar = {
                       x,
                       y,
-                      width,
+                      width: localWidth,
                       height,
                       path: () => {
-                        return getBarPath(x, y, width, height, radius);
+                        return getBarPath(x, y, localWidth, height, radius);
                       }
                     };
                     bars.push(bar);
@@ -13330,12 +14076,21 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                           previousPositiveHeight[index2] = 0;
                           previousNegativeHeight[index2] = 0;
                         }
-                        let { start } = chart.axes.x.scale(chart.data[index2][chart.axes.x.key], { area: chart.axes.x.asArea });
-                        let x = start + itemOffset;
-                        let y = value3 >= 0 ? chart.axes.y.scale(value3).center : chart.axes.y.scale(0).center;
-                        let height = value3 >= 0 ? chart.axes.y.scale(0).center - y : chart.axes.y.scale(value3).center - y;
+                        let { start } = chart.dimensions.index.axis.scale(chart.data[index2][chart.dimensions.index.key], { area: chart.dimensions.index.asArea });
+                        let x, y, localWidth, height;
                         let minHeight = Number(child.minHeight.replace("px", ""));
                         let radius = child.radius;
+                        if (chart.horizontal) {
+                          x = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center : chart.dimensions.value.axis.scale(value3).center;
+                          y = start + itemOffset;
+                          localWidth = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center - x : chart.dimensions.value.axis.scale(0).center - x;
+                          height = width;
+                        } else {
+                          x = start + itemOffset;
+                          y = value3 >= 0 ? chart.dimensions.value.axis.scale(value3).center : chart.dimensions.value.axis.scale(0).center;
+                          height = value3 >= 0 ? chart.dimensions.value.axis.scale(0).center - y : chart.dimensions.value.axis.scale(value3).center - y;
+                          localWidth = width;
+                        }
                         if (stackRadius) {
                           let isTopBar = child.field === topBarField[index2];
                           let isBottomBar = child.field === bottomBarField[index2];
@@ -13359,32 +14114,33 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
                             radius = visualRadius;
                           }
                         }
-                        if (height < minHeight) {
-                          y -= minHeight - height;
-                          height = minHeight;
+                        if (chart.horizontal) {
+                          if (localWidth < minHeight) {
+                            if (value3 < 0) x -= minHeight - localWidth;
+                            localWidth = minHeight;
+                          }
+                          x = value3 >= 0 ? x + previousPositiveHeight[index2] : x - previousNegativeHeight[index2];
+                        } else {
+                          if (height < minHeight) {
+                            y -= minHeight - height;
+                            height = minHeight;
+                          }
+                          y = value3 >= 0 ? y - previousPositiveHeight[index2] : y + previousNegativeHeight[index2];
                         }
-                        y = value3 >= 0 ? y - previousPositiveHeight[index2] : y + previousNegativeHeight[index2];
-                        if (value3 < 0) {
-                          radius = {
-                            topLeft: radius.bottomLeft,
-                            topRight: radius.bottomRight,
-                            bottomRight: radius.topRight,
-                            bottomLeft: radius.topLeft
-                          };
-                        }
+                        radius = orientBarRadius(radius, value3, chart.horizontal);
                         let bar = {
                           x,
                           y,
-                          width,
+                          width: localWidth,
                           height,
                           path: () => {
-                            return getBarPath(x, y, width, height, radius);
+                            return getBarPath(x, y, localWidth, height, radius);
                           }
                         };
                         if (value3 >= 0) {
-                          previousPositiveHeight[index2] += height + stackGap;
+                          previousPositiveHeight[index2] += (chart.horizontal ? localWidth : height) + stackGap;
                         } else {
-                          previousNegativeHeight[index2] += height + stackGap;
+                          previousNegativeHeight[index2] += (chart.horizontal ? localWidth : height) + stackGap;
                         }
                         bars.push(bar);
                       });
@@ -13400,16 +14156,49 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           return series;
         }));
       },
-      closestXPoint(xPosition) {
-        return this.closestXPoints(xPosition)[0];
+      cursor(indexPoint, type = "line") {
+        if (type === "area") {
+          if (this.horizontal) {
+            return {
+              x: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[0]).center,
+              y: indexPoint.start,
+              width: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[1]).center - this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[0]).center,
+              height: indexPoint.width
+            };
+          }
+          return {
+            x: indexPoint.start,
+            y: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[1]).center,
+            width: indexPoint.width,
+            height: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[0]).center - this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[1]).center
+          };
+        }
+        if (this.horizontal) {
+          let y = indexPoint.center;
+          return [
+            { x: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[0]).center, y },
+            { x: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[1]).center, y }
+          ];
+        }
+        let x = indexPoint.center;
+        return [
+          { x, y: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[0]).center },
+          { x, y: this.dimensions.value.axis.scale(this.dimensions.value.axis.domain[1]).center }
+        ];
       },
-      closestXPoints(xPosition) {
-        return memoize("closestXPoints", dataMemoKey + dimensionsMemoKey + xPosition, () => {
+      indexPosition(x, y) {
+        return this.horizontal ? y : x;
+      },
+      closestIndexPoint(indexPosition) {
+        return this.closestIndexPoints(indexPosition)[0];
+      },
+      closestIndexPoints(indexPosition) {
+        return memoize("closestIndexPoints", dataMemoKey + dimensionsMemoKey + indexPosition, () => {
           let closestPoints = [];
           let minDistance = Infinity;
           let lastPoint = null;
-          this.axes.x.points.forEach((point) => {
-            const distance = Math.abs(point.center - xPosition);
+          this.dimensions.index.points.forEach((point) => {
+            let distance = Math.abs(point.center - indexPosition);
             if (distance < minDistance) {
               minDistance = distance;
               lastPoint = point;
@@ -13419,9 +14208,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           return closestPoints;
         });
       },
-      updateDimensions(dimensions, inset) {
-        this.width = dimensions.width;
-        this.height = dimensions.height;
+      updateDimensions(dimensions2, inset) {
+        this.width = dimensions2.width;
+        this.height = dimensions2.height;
         this.inset = inset;
         dimensionsMemoKey++;
       },
@@ -13445,6 +14234,26 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     };
     chart.updateData(config.data);
     return chart;
+  }
+  function orientBarRadius(radius, value3, horizontal) {
+    let oriented = { ...radius };
+    if (value3 < 0) {
+      oriented = {
+        topLeft: oriented.bottomLeft,
+        topRight: oriented.bottomRight,
+        bottomRight: oriented.topRight,
+        bottomLeft: oriented.topLeft
+      };
+    }
+    if (horizontal) {
+      oriented = {
+        topLeft: oriented.bottomLeft,
+        topRight: oriented.topLeft,
+        bottomRight: oriented.topRight,
+        bottomLeft: oriented.bottomRight
+      };
+    }
+    return oriented;
   }
   function generateDomain(type, values) {
     let deduplicatedValues = [...new Set(values)];
@@ -13490,6 +14299,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       let tickEnd = axis.tickEnd === 0 || axis.tickEnd === "0" ? 0 : axis.tickEnd || "auto";
       if (tickStart === "auto" && minValue > 0 && maxValue > 0) {
         minValue = 0;
+      } else if (tickStart !== "min" && !isNaN(Number(tickStart))) {
+        minValue = Math.min(minValue, Number(tickStart));
       }
       if (tickEnd !== "auto" && tickEnd !== "max" && !isNaN(Number(tickEnd))) {
         maxValue = Number(tickEnd);
@@ -13542,11 +14353,11 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       }
     } else if (axis.type === "time") {
       let tickCount = axis.tickCount || data.length;
-      let [_, ticks] = generateDateFormatAndTicks(domain[0], domain[1], tickCount, axis.interval, axis.asArea);
+      let [_, ticks] = generateDateFormatAndTicks(domain[0], domain[1], tickCount, axis.interval, axis.dimension.asArea);
       return ticks;
     } else if (axis.type === "categorical") {
       data.forEach((datum) => {
-        let value3 = datum[axis.key];
+        let value3 = datum[axis.dimension.key];
         tickValues.push(value3);
       });
       if (axis.tickCount && tickValues.length > axis.tickCount) {
@@ -13595,6 +14406,15 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         let end = start + step2;
         return { start, center, end, width: step2 };
       }
+      if (count === 1) {
+        let point2 = range[0] + (range[1] - range[0]) / 2;
+        return {
+          start: point2,
+          center: point2,
+          end: point2,
+          width: 0
+        };
+      }
       let step = (range[1] - range[0]) / (count - 1);
       let point = range[0] + index * step;
       return {
@@ -13618,10 +14438,14 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       };
     };
   }
-  function smoothX(points) {
+  function smooth(points, direction = "x") {
     if (points.length < 2) return "";
     const sign = (x) => x < 0 ? -1 : 1;
-    const calculateSlope = (x0, y0, x1, y1, x2, y2) => {
+    const getCoords = (point) => direction === "x" ? { x: point[0], y: point[1] } : { x: point[1], y: point[0] };
+    const calculateSlope = (p0, p1, p2) => {
+      const { x: x0, y: y0 } = getCoords(p0);
+      const { x: x1, y: y1 } = getCoords(p1);
+      const { x: x2, y: y2 } = getCoords(p2);
       const h0 = x1 - x0;
       const h1 = x2 - x1;
       const s0 = (y1 - y0) / (h0 || h1 < 0 && -0);
@@ -13629,7 +14453,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       const p = (s0 * h1 + s1 * h0) / (h0 + h1);
       return (sign(s0) + sign(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
     };
-    const endpointSlope = (x0, y0, x1, y1, t) => {
+    const endpointSlope = (p0, p1, t) => {
+      const { x: x0, y: y0 } = getCoords(p0);
+      const { x: x1, y: y1 } = getCoords(p1);
       const h = x1 - x0;
       return h ? (3 * (y1 - y0) / h - t) / 2 : t;
     };
@@ -13642,31 +14468,30 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       const p1 = points[i + 1];
       if (p0[0] === p1[0] && p0[1] === p1[1]) continue;
       const p2 = points[i + 2];
-      const t1 = calculateSlope(p0[0], p0[1], p1[0], p1[1], p2[0], p2[1]);
-      const dx = (p1[0] - p0[0]) / 3;
-      const c1x = p0[0] + dx;
-      const c1y = p0[1] + dx * (i === 0 ? endpointSlope(p0[0], p0[1], p1[0], p1[1], t1) : points[i - 1] ? calculateSlope(points[i - 1][0], points[i - 1][1], p0[0], p0[1], p1[0], p1[1]) : t1);
-      const c2x = p1[0] - dx;
-      const c2y = p1[1] - dx * t1;
+      const t1 = calculateSlope(p0, p1, p2);
+      const { x: x0 } = getCoords(p0);
+      const { x: x1 } = getCoords(p1);
+      const delta = (x1 - x0) / 3;
+      const slope = i === 0 ? endpointSlope(p0, p1, t1) : points[i - 1] ? calculateSlope(points[i - 1], p0, p1) : t1;
+      const c1x = direction === "x" ? p0[0] + delta : p0[0] + delta * slope;
+      const c1y = direction === "x" ? p0[1] + delta * slope : p0[1] + delta;
+      const c2x = direction === "x" ? p1[0] - delta : p1[0] - delta * t1;
+      const c2y = direction === "x" ? p1[1] - delta * t1 : p1[1] - delta;
       path += `C${c1x},${c1y} ${c2x},${c2y} ${p1[0]},${p1[1]}`;
     }
     const n = points.length;
     const last = points[n - 1];
     const secondLast = points[n - 2];
     if (!(last[0] === secondLast[0] && last[1] === secondLast[1])) {
-      const t0 = calculateSlope(
-        points[n - 3][0],
-        points[n - 3][1],
-        secondLast[0],
-        secondLast[1],
-        last[0],
-        last[1]
-      );
-      const dx = (last[0] - secondLast[0]) / 3;
-      const c1x = secondLast[0] + dx;
-      const c1y = secondLast[1] + dx * t0;
-      const c2x = last[0] - dx;
-      const c2y = last[1] - dx * endpointSlope(secondLast[0], secondLast[1], last[0], last[1], t0);
+      const t0 = calculateSlope(points[n - 3], secondLast, last);
+      const { x: x0 } = getCoords(secondLast);
+      const { x: x1 } = getCoords(last);
+      const delta = (x1 - x0) / 3;
+      const endSlope = endpointSlope(secondLast, last, t0);
+      const c1x = direction === "x" ? secondLast[0] + delta : secondLast[0] + delta * t0;
+      const c1y = direction === "x" ? secondLast[1] + delta * t0 : secondLast[1] + delta;
+      const c2x = direction === "x" ? last[0] - delta : last[0] - delta * endSlope;
+      const c2y = direction === "x" ? last[1] - delta * endSlope : last[1] - delta;
       path += `C${c1x},${c1y} ${c2x},${c2y} ${last[0]},${last[1]}`;
     }
     return path;
@@ -13766,6 +14591,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       if (!value3) return void 0;
       const dateValue = dateFromString(value3);
       if (isNaN(dateValue.getTime())) return void 0;
+      if (domainDiff === 0) {
+        let center = range[0] + rangeDiff / 2;
+        if (area) {
+          return { start: range[0], center, end: range[1], width: rangeDiff / count };
+        }
+        return { start: center, center, end: center, width: 0 };
+      }
       const percent = (dateValue.getTime() - minValue) / domainDiff;
       if (area) {
         let index = Math.floor(percent * count);
@@ -13922,34 +14754,215 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     };
   }
 
+  // js/chart/pie.js
+  var TAU = Math.PI * 2;
+  var START_ANGLE = -Math.PI / 2;
+  var FULL_CIRCLE_EPSILON = 1e-9;
+  var PIE_PALETTE = ["blue", "violet", "emerald", "amber", "rose", "cyan", "fuchsia", "lime", "orange", "teal", "indigo", "pink", "sky", "green", "yellow", "red", "purple"];
+  function generatePieSectors(data, { field = "value", labelField = "index", colorAssignments = /* @__PURE__ */ new Map() } = {}) {
+    let { items, issues } = normalizePieData(data, { field, labelField });
+    return {
+      sectors: partitionPie(resolvePieColors(items, colorAssignments)),
+      issues
+    };
+  }
+  function normalizePieData(data, { field = "value", labelField = "index" } = {}) {
+    let issues = /* @__PURE__ */ new Set();
+    let items = [];
+    data.forEach((datum, index) => {
+      let raw = datum[field];
+      if (raw === void 0 || raw === null) return;
+      let value3 = parseValue(raw);
+      if (!Number.isFinite(value3)) return issues.add("invalid");
+      if (value3 < 0) return issues.add("negative");
+      if (value3 === 0) return;
+      let color = datum.color === void 0 || datum.color === null ? null : String(datum.color);
+      if (color !== null && !PIE_PALETTE.includes(color)) {
+        issues.add("invalid-color");
+        color = null;
+      }
+      items.push({
+        key: resolveKey(datum, labelField, index),
+        datum,
+        label: datum[labelField],
+        value: value3,
+        index,
+        color
+      });
+    });
+    if (data.length > 0 && data.every((datum) => datum[field] === void 0)) issues.add("missing-field");
+    if (new Set(items.map((item) => String(item.key))).size !== items.length) issues.add("duplicate-key");
+    return { items, issues: [...issues] };
+  }
+  function resolvePieColors(items, assignments = /* @__PURE__ */ new Map(), palette = PIE_PALETTE) {
+    let keys = [...new Set(items.filter((item) => !item.color).map((item) => String(item.key)))];
+    let taken = new Set(keys.filter((key) => assignments.has(key)).map((key) => assignments.get(key)));
+    keys.filter((key) => !assignments.has(key)).sort().forEach((key) => {
+      let slot = hashString(key) % palette.length;
+      if (taken.size < palette.length) {
+        while (taken.has(palette[slot])) slot = (slot + 1) % palette.length;
+      }
+      assignments.set(key, palette[slot]);
+      taken.add(palette[slot]);
+    });
+    return items.map((item) => ({ ...item, color: item.color ?? assignments.get(String(item.key)) }));
+  }
+  function partitionPie(items) {
+    let total = items.reduce((sum, item) => sum + item.value, 0);
+    if (!(total > 0)) return [];
+    let angle = START_ANGLE;
+    return items.map((item) => {
+      let startAngle = angle;
+      angle += item.value / total * TAU;
+      return {
+        ...item,
+        total,
+        percentage: item.value / total,
+        startAngle,
+        endAngle: angle
+      };
+    });
+  }
+  function resolvePieLayout({ width, height, inset = {}, innerRadius = 0, separatorWidth = 0 }) {
+    let left = inset.left ?? 0;
+    let right = inset.right ?? 0;
+    let top = inset.top ?? 0;
+    let bottom = inset.bottom ?? 0;
+    let availableWidth = Math.max(0, width - left - right);
+    let availableHeight = Math.max(0, height - top - bottom);
+    let outerRadius = Math.max(0, Math.min(availableWidth, availableHeight) / 2 - separatorWidth / 2);
+    let resolvedInnerRadius = parseInnerRadius(innerRadius, outerRadius);
+    resolvedInnerRadius = Math.min(Math.max(0, resolvedInnerRadius), Math.max(0, outerRadius - 1));
+    return {
+      cx: left + availableWidth / 2,
+      cy: top + availableHeight / 2,
+      outerRadius,
+      innerRadius: resolvedInnerRadius
+    };
+  }
+  function getSectorPath({ cx, cy, innerRadius = 0, outerRadius, startAngle, endAngle, cornerRadius = 0 }) {
+    let r0 = Math.max(0, innerRadius);
+    let r1 = outerRadius;
+    let a0 = startAngle;
+    let a1 = endAngle;
+    let da = a1 - a0;
+    if (!(r1 > 0) || !(da > 0)) return "";
+    let point = (radius, angle) => `${cx + Math.cos(angle) * radius},${cy + Math.sin(angle) * radius}`;
+    let arc = (radius, largeArc, sweep, to) => `A${radius},${radius} 0 ${largeArc} ${sweep} ${to}`;
+    if (da >= TAU - FULL_CIRCLE_EPSILON) {
+      let opposite = a0 + Math.PI;
+      let outer = `M${point(r1, a0)} ${arc(r1, 1, 1, point(r1, opposite))} ${arc(r1, 1, 1, point(r1, a0))} Z`;
+      if (r0 <= 0) return outer;
+      return `${outer} M${point(r0, a0)} ${arc(r0, 1, 0, point(r0, opposite))} ${arc(r0, 1, 0, point(r0, a0))} Z`;
+    }
+    let { outer: rc1, inner: rc0 } = clampCornerRadius(cornerRadius, r0, r1, da);
+    let parts = [];
+    if (rc1 > 0) {
+      let rho1 = r1 - rc1;
+      let delta1 = Math.min(Math.asin(rc1 / rho1), da / 2);
+      let foot1 = rho1 * Math.cos(delta1);
+      parts.push(`M${point(foot1, a0)}`);
+      parts.push(arc(rc1, 0, 1, point(r1, a0 + delta1)));
+      parts.push(arc(r1, da - 2 * delta1 > Math.PI ? 1 : 0, 1, point(r1, a1 - delta1)));
+      parts.push(arc(rc1, 0, 1, point(foot1, a1)));
+    } else {
+      parts.push(`M${point(r1, a0)}`);
+      parts.push(arc(r1, da > Math.PI ? 1 : 0, 1, point(r1, a1)));
+    }
+    if (r0 <= 0) {
+      parts.push(`L${cx},${cy}`);
+    } else if (rc0 > 0) {
+      let rho0 = r0 + rc0;
+      let delta0 = Math.min(Math.asin(rc0 / rho0), da / 2);
+      let foot0 = rho0 * Math.cos(delta0);
+      parts.push(`L${point(foot0, a1)}`);
+      parts.push(arc(rc0, 0, 1, point(r0, a1 - delta0)));
+      parts.push(arc(r0, da - 2 * delta0 > Math.PI ? 1 : 0, 0, point(r0, a0 + delta0)));
+      parts.push(arc(rc0, 0, 1, point(foot0, a0)));
+    } else {
+      parts.push(`L${point(r0, a1)}`);
+      parts.push(arc(r0, da > Math.PI ? 1 : 0, 0, point(r0, a0)));
+    }
+    parts.push("Z");
+    return parts.join(" ");
+  }
+  function clampCornerRadius(cornerRadius, r0, r1, da) {
+    let rc = Math.min(Math.max(0, Number(cornerRadius) || 0), (r1 - r0) / 2);
+    let outer = rc;
+    let inner = r0 > 0 ? rc : 0;
+    if (rc > 0 && da < Math.PI) {
+      let s = Math.sin(da / 2);
+      outer = Math.min(outer, r1 * s / (1 + s));
+      if (s < 1) inner = Math.min(inner, r0 * s / (1 - s));
+    }
+    return {
+      outer: outer > 1e-6 ? outer : 0,
+      inner: inner > 1e-6 ? inner : 0
+    };
+  }
+  function parseValue(raw) {
+    if (typeof raw === "number") return raw;
+    if (typeof raw === "string" && raw.trim() !== "") return Number(raw);
+    return NaN;
+  }
+  function parseInnerRadius(value3, outerRadius) {
+    if (typeof value3 === "number") return value3;
+    let string = String(value3 ?? "").trim();
+    if (string.endsWith("%")) return outerRadius * (Number(string.slice(0, -1)) || 0) / 100;
+    return Number(string.replace(/px$/, "")) || 0;
+  }
+  function resolveKey(datum, labelField, index) {
+    if (datum.id !== void 0 && datum.id !== null) return datum.id;
+    if (datum[labelField] !== void 0 && datum[labelField] !== null) return datum[labelField];
+    return index;
+  }
+  function hashString(string) {
+    let hash = 2166136261;
+    for (let i = 0; i < string.length; i++) {
+      hash ^= string.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
   // js/chart/index.js
-  var UIChart = class extends HTMLElement {
-    constructor() {
-      super();
+  var UIChart = class extends UIElement {
+    boot() {
+      this._data = this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : [];
+      this._observable = new Observable();
+      this._selectable = { getState: () => this._data, setState: (value3) => {
+        this._data = value3;
+        this._observable.notify("data", this._data);
+      } };
+      this._controllable = new Controllable(this);
+      this._controllable.initial((initial) => initial && this._selectable.setState(initial));
+      this._controllable.getter(() => this._selectable.getState());
+      this._controllable.setter((value3) => {
+        this._selectable.setState(value3);
+      });
+      this._pieColorAssignments = /* @__PURE__ */ new Map();
+    }
+    mount() {
+      if (this._valueOnUnmount !== void 0 && this._valueOnUnmount !== this.getAttribute("value")) {
+        this._data = this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : [];
+      }
       this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
       let svgTemplate = this.querySelector('template[name="svg"]');
       let svg = hydrateTemplate(svgTemplate);
       svgTemplate.after(svg);
       this.init(svgTemplate, svg);
     }
+    unmount() {
+      this._valueOnUnmount = this.getAttribute("value");
+      this._observable = new Observable();
+    }
     init(svgTemplate, svg) {
-      if (!this._initialized) {
-        this._data = this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : [];
-        this._observable = new Observable();
-        this._selectable = { getState: () => this._data, setState: (value3) => {
-          this._data = value3;
-          this._observable.notify("data", this._data);
-        } };
-        this._controllable = new Controllable(this);
-        this._controllable.initial((initial) => initial && this._selectable.setState(initial));
-        this._controllable.getter(() => this._selectable.getState());
-        this._controllable.setter((value3) => {
-          this._selectable.setState(value3);
-        });
-        this._initialized = true;
-      }
+      let horizontal = this.hasAttribute("horizontal");
       let locale = this.hasAttribute("locale") ? this.getAttribute("locale") : getLocale();
       let hasBars = false;
+      let hasLines = false;
+      let hasAreas = false;
+      let hasPoints = false;
       let templates = {
         svg: svgTemplate,
         bars: {},
@@ -13960,6 +14973,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         stacks: [],
         cursor: svgTemplate.content.querySelector('template[name="cursor"]'),
         zeroLine: svgTemplate.content.querySelector('template[name="zero-line"]'),
+        pie: svgTemplate.content.querySelector('template[name="pie"]'),
         axes: {
           x: {
             template: svgTemplate.content.querySelector('template[name="axis"][axis="x"]'),
@@ -13991,12 +15005,15 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       });
       svgTemplate.content.querySelectorAll('template[name="line"]').forEach((template) => {
         templates.lines[template.getAttribute("field")] = template;
+        hasLines = true;
       });
       svgTemplate.content.querySelectorAll('template[name="area"]').forEach((template) => {
         templates.areas[template.getAttribute("field")] = template;
+        hasAreas = true;
       });
       svgTemplate.content.querySelectorAll('template[name="point"]').forEach((template) => {
         templates.points[template.getAttribute("field")] = template;
+        hasPoints = true;
       });
       let repositionCursor = () => {
       };
@@ -14074,10 +15091,32 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         });
         groupsMetadata.push(groupMetadata);
       });
+      let hasCartesianMarks = hasBars || hasLines || hasAreas || hasPoints;
+      let requiresMultipleDataPoints = hasCartesianMarks ? hasLines || hasAreas : true;
+      let pieTemplates = svgTemplate.content.querySelectorAll('template[name="pie"]');
+      let hasPie = pieTemplates.length > 0;
+      let hasCartesianChrome = !!(templates.cursor || templates.zeroLine || templates.axes.x.template || templates.axes.y.template);
+      let pieConflict = null;
+      if (hasPie && (hasCartesianMarks || hasCartesianChrome)) {
+        pieConflict = "ui-chart: a pie cannot be combined with bar, line, area, point, axis, cursor, or zero-line marks, so nothing was rendered.";
+      } else if (pieTemplates.length > 1) {
+        pieConflict = "ui-chart: only one pie is allowed per chart, so nothing was rendered.";
+      }
+      let pieMetadata = null;
+      if (hasPie) {
+        pieMetadata = {
+          field: templates.pie.getAttribute("field") || "value",
+          labelField: templates.pie.getAttribute("label-field") || "index",
+          innerRadius: templates.pie.getAttribute("inner-radius") ?? "0",
+          radius: Number(templates.pie.getAttribute("radius")) || 0,
+          separatorWidth: Number(templates.pie.firstElementChild?.getAttribute("stroke-width")) || 0
+        };
+      }
       overlay = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       overlay.setAttribute("data-overlay", "");
       overlay.setAttribute("fill", "none");
       overlay.setAttribute("pointer-events", "all");
+      if (hasPie) overlay.setAttribute("pointer-events", "none");
       overlay.addEventListener("mousemove", throttle(function(event) {
         repositionCursor(event);
         repositionTooltip(event);
@@ -14121,7 +15160,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           gutter.left = values[3];
         }
       }
-      let [xKey, yKeys] = discoverXandYKeys(svg, hasBars);
+      let [indexKey, valueKeys] = discoverDimensions(svg, hasBars, horizontal);
       let svgRect = svg.parentElement.getBoundingClientRect();
       if (svgRect.width === 0 || svgRect.height === 0) {
         let visibilityObserver = new ResizeObserver((entries) => {
@@ -14132,8 +15171,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           }
         });
         visibilityObserver.observe(svg.parentElement);
+        this.onUnmount(() => visibilityObserver.disconnect());
         return;
       }
+      if (pieConflict) console.warn(pieConflict);
       if (templates.tooltip) {
         tooltip = hydrateTemplate(templates.tooltip);
         templates.tooltip.after(tooltip);
@@ -14143,6 +15184,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         templates.summary.after(summary);
       }
       let chart = generateChartObject({
+        horizontal,
         locale,
         data: this._data,
         stacksMetadata,
@@ -14155,9 +15197,18 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           top: 0,
           bottom: 0
         },
+        dimensions: {
+          index: {
+            key: indexKey,
+            asArea: hasBars || templates.cursor?.innerHTML?.match(/type="([^"]+)"/)?.[1] === "area"
+          },
+          value: {
+            keys: valueKeys,
+            includeZero: hasBars
+          }
+        },
         axes: {
           x: {
-            key: xKey,
             format: templates.axes.x.template?.hasAttribute("format") ? JSON.parse(templates.axes.x.template?.getAttribute("format")) : null,
             scale: templates.axes.x.template?.getAttribute("scale"),
             interval: templates.axes.x.template?.getAttribute("interval"),
@@ -14168,11 +15219,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             tickStep: templates.axes.x.template?.getAttribute("tick-step") ? Number(templates.axes.x.template?.getAttribute("tick-step")) : null,
             tickSuffix: templates.axes.x.template?.getAttribute("tick-suffix"),
             tickPrefix: templates.axes.x.template?.getAttribute("tick-prefix"),
-            tickValues: templates.axes.x.template?.hasAttribute("tick-values") ? JSON.parse(templates.axes.x.template?.getAttribute("tick-values")) : null,
-            asArea: hasBars || templates.cursor?.innerHTML?.match(/type="([^"]+)"/)?.[1] === "area"
+            tickValues: templates.axes.x.template?.hasAttribute("tick-values") ? JSON.parse(templates.axes.x.template?.getAttribute("tick-values")) : null
           },
           y: {
-            keys: yKeys,
             format: templates.axes.y.template?.hasAttribute("format") ? JSON.parse(templates.axes.y.template?.getAttribute("format")) : null,
             scale: templates.axes.y.template?.getAttribute("scale"),
             interval: templates.axes.y.template?.getAttribute("interval"),
@@ -14187,17 +15236,182 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
           }
         }
       });
+      let renderTooltipContent = (datum) => {
+        let tooltipClone = templates.tooltip.content.cloneNode(true).firstElementChild;
+        tooltipClone.querySelectorAll("slot").forEach((slot) => {
+          let field = slot.getAttribute("field");
+          if (field) {
+            let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : null;
+            let value3 = datum[field];
+            if (format === null) return slot.textContent = value3;
+            format = { ...format, timeZone: "UTC" };
+            if (isNumeric(value3)) {
+              value3 = Number(value3).toLocaleString(chart.locale, format);
+            } else if (isDateish2(value3)) {
+              value3 = new Date(value3).toLocaleDateString(chart.locale, format);
+            }
+            slot.textContent = value3;
+          }
+        });
+        tooltip.innerHTML = tooltipClone.innerHTML;
+      };
+      let positionTooltip = (anchorX, anchorY) => {
+        let tooltipRect = tooltip.getBoundingClientRect();
+        let svgRect2 = svg.getBoundingClientRect();
+        let rightSpace = svgRect2.width - (anchorX + tooltipRect.width + 15);
+        let bottomSpace = svgRect2.height - (anchorY + tooltipRect.height + 15);
+        let xOffset = rightSpace < 0 ? anchorX - tooltipRect.width - 15 : anchorX + 15;
+        let yOffset = bottomSpace < 0 ? anchorY - tooltipRect.height - 15 : anchorY + 15;
+        let originX = 0;
+        let originY = 0;
+        if (tooltip.offsetParent) {
+          let parentRect = tooltip.offsetParent.getBoundingClientRect();
+          originX = svgRect2.left - (parentRect.left + tooltip.offsetParent.clientLeft) - tooltip.offsetLeft;
+          originY = svgRect2.top - (parentRect.top + tooltip.offsetParent.clientTop) - tooltip.offsetTop;
+        }
+        tooltip.style.transform = `translate(${originX + xOffset}px, ${originY + yOffset}px)`;
+      };
+      let renderSummaryContent = (datum, useFallback) => {
+        let summaryClone = templates.summary.content.cloneNode(true).firstElementChild;
+        summaryClone.querySelectorAll("slot").forEach((slot) => {
+          let field = slot.getAttribute("field");
+          if (field) {
+            let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : {};
+            format = { ...format, timeZone: "UTC" };
+            let value3 = slot.hasAttribute("fallback") && useFallback ? slot.getAttribute("fallback") : datum[field];
+            if (isNumeric(value3)) {
+              value3 = Number(value3).toLocaleString(chart.locale, format);
+            } else if (isDateish2(value3)) {
+              value3 = new Date(value3).toLocaleString(chart.locale, format);
+            }
+            slot.textContent = value3;
+          }
+        });
+        summary.innerHTML = summaryClone.innerHTML;
+      };
+      let orderMarks = () => {
+        svg.appendChild(overlay);
+        svg.querySelectorAll("[data-grid-line-group]").forEach((i) => overlay.before(i));
+        svg.querySelectorAll("[data-axis-line]").forEach((i) => overlay.before(i));
+        if (cursorType === "area") svg.querySelectorAll("[data-cursor]").forEach((i) => overlay.before(i));
+        let groupIndex = 0;
+        let stackIndex = 0;
+        svgTemplate.content.querySelectorAll('template[name="group"], template[name="stack"]:not(template[name="group"] template[name="stack"]), template[name="bar"]:not(template[name="stack"] template[name="bar"]):not(template[name="group"] template[name="bar"]), template[name="line"], template[name="area"], template[name="point"], template[name="pie"]').forEach((template) => {
+          let name = template.getAttribute("name");
+          let field = template.getAttribute("field");
+          let el;
+          if (name === "group") {
+            el = svg.querySelector(`[data-group][data-group-index="${groupIndex}"]`);
+            groupIndex++;
+          } else if (name === "stack") {
+            el = svg.querySelector(`[data-stack][data-stack-index="${stackIndex}"]`);
+            stackIndex++;
+          } else if (name === "bar") {
+            el = svg.querySelector(`[data-bar-group][data-series="${field}"]`);
+          } else if (name === "point") {
+            el = svg.querySelector(`[data-point-group][data-series="${field}"]`);
+          } else if (name === "pie") {
+            el = svg.querySelector(`[data-pie-group][data-series="${field}"]`);
+          } else {
+            el = svg.querySelector(`[data-${name}][data-series="${field}"]`);
+          }
+          if (el) overlay.before(el);
+        });
+        svg.querySelectorAll("[data-zero-line]").forEach((i) => overlay.before(i));
+        if (cursorType === "line") svg.querySelectorAll("[data-cursor]").forEach((i) => overlay.before(i));
+      };
+      let insetForOverflow = () => {
+        let overflow = getSvgOverflow(svg);
+        adjustOverflowForPendingTickRotation(svg, chart, gutter, overflow);
+        chart.updateDimensions({ width: chart.width, height: chart.height }, {
+          left: gutter.left + overflow.left,
+          right: gutter.right + overflow.right,
+          top: gutter.top + overflow.top,
+          bottom: gutter.bottom + overflow.bottom
+        });
+      };
+      let pieSectors = [];
+      let updatePieSectors = () => {
+        if (!pieMetadata || pieConflict) return;
+        let { sectors, issues } = generatePieSectors(chart.data, {
+          field: pieMetadata.field,
+          labelField: pieMetadata.labelField,
+          colorAssignments: this._pieColorAssignments
+        });
+        pieSectors = sectors;
+        issues.forEach((issue) => console.warn(pieWarning(issue, pieMetadata.field)));
+      };
+      updatePieSectors();
+      let renderDefaultPieSummary = () => {
+        let lastSector = pieSectors[pieSectors.length - 1];
+        if (lastSector) renderSummaryContent(lastSector.datum, true);
+      };
+      let activateSector = (event, sector) => {
+        svg.querySelectorAll("[data-sector]").forEach((i) => {
+          removeAttribute(i, "data-active");
+          removeAttribute(i, "data-inactive");
+        });
+        if (event === null) {
+          if (tooltip) removeAttribute(tooltip, "data-active");
+          if (summary) renderDefaultPieSummary();
+          return;
+        }
+        svg.querySelectorAll("[data-sector]").forEach((i) => {
+          setAttribute2(i, i === event.currentTarget ? "data-active" : "data-inactive", "");
+        });
+        if (tooltip) {
+          let svgRect2 = svg.getBoundingClientRect();
+          setAttribute2(tooltip, "data-active", "");
+          tooltip.style.setProperty("--flux-chart-color", pieFill(sector));
+          positionTooltip(event.clientX - svgRect2.left, event.clientY - svgRect2.top);
+          renderTooltipContent(sector.datum);
+        }
+        if (summary) renderSummaryContent(sector.datum, false);
+      };
+      let redrawPie = (checkOverflow = true) => {
+        svg.querySelector("[data-pie-group]")?.remove();
+        if (pieConflict || pieSectors.length === 0) return;
+        let layout = resolvePieLayout({
+          width: chart.width,
+          height: chart.height,
+          inset: chart.inset,
+          innerRadius: pieMetadata.innerRadius,
+          separatorWidth: pieMetadata.separatorWidth
+        });
+        let pieGroupEl = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        pieGroupEl.setAttribute("data-pie-group", "");
+        pieGroupEl.setAttribute("data-series", pieMetadata.field);
+        pieSectors.forEach((sector) => {
+          let sectorEl = hydrateSvgTemplate(templates.pie);
+          sectorEl.setAttribute("data-sector", "");
+          sectorEl.setAttribute("data-series", pieMetadata.field);
+          sectorEl.setAttribute("data-key", sector.key);
+          sectorEl.setAttribute("d", getSectorPath({ ...layout, startAngle: sector.startAngle, endAngle: sector.endAngle, cornerRadius: pieMetadata.radius }));
+          sectorEl.style.fill = pieFill(sector);
+          sectorEl.addEventListener("mousemove", throttle((event) => activateSector(event, sector), 1));
+          sectorEl.addEventListener("mouseleave", () => activateSector(null));
+          pieGroupEl.appendChild(sectorEl);
+        });
+        svg.appendChild(pieGroupEl);
+        if (summary) renderDefaultPieSummary();
+        orderMarks();
+        if (checkOverflow) {
+          insetForOverflow();
+          redrawPie(false);
+        }
+      };
       let redraw = (checkOverflow = true) => {
         setAttribute2(svg, "viewBox", `0 0 ${chart.width} ${chart.height}`);
+        if (hasPie) return redrawPie(checkOverflow);
         if (chart.data.length === 0) {
           return;
         }
-        if (chart.data.length === 1) {
-          console.warn("ui-chart: chart only has one data point so it cannot be rendered.");
+        if (chart.data.length === 1 && requiresMultipleDataPoints) {
+          console.warn("ui-chart: chart only has one data point so charts with lines or areas cannot be rendered.");
           return;
         }
-        if (chart.data[0][chart.axes.x.key] === void 0) {
-          console.warn(`ui-chart: axis field "${chart.axes.x.key}" does not exist`);
+        if (chart.data[0][chart.dimensions.index.key] === void 0) {
+          console.warn(`ui-chart: axis field "${chart.dimensions.index.key}" does not exist`);
           return;
         }
         Object.entries(chart.series).forEach(([field, series]) => {
@@ -14326,7 +15540,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             pointGroupEl.setAttribute("data-point-group", "");
             pointGroupEl.setAttribute("data-series", field);
             series.points.forEach((point) => {
-              if (!isFinite(point.y)) return;
+              if (!isFinite(point.x) || !isFinite(point.y)) return;
               let pointEl = hydrateSvgTemplate(template);
               pointEl.setAttribute("data-point", "");
               pointEl.setAttribute("data-series", field);
@@ -14344,9 +15558,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
               let mouseX = event.clientX - svg.getBoundingClientRect().left;
               let mouseY = event.clientY - svg.getBoundingClientRect().top;
               if (mouseX >= chart.inset.left && mouseX <= chart.width - chart.inset.right && mouseY >= chart.inset.top && mouseY <= chart.height - chart.inset.bottom) {
-                let closestPoints = chart.closestXPoints(mouseX);
+                let closestPoints = chart.closestIndexPoints(chart.indexPosition(mouseX, mouseY));
                 closestPoints.forEach((point) => {
-                  pointGroupEl.querySelectorAll(`[data-point][cx="${point.x}"]`).forEach((i) => i.setAttribute("data-active", ""));
+                  let index = chart.data.indexOf(point.datum);
+                  pointGroupEl.querySelectorAll("[data-point]")[index]?.setAttribute("data-active", "");
                 });
               }
             } else {
@@ -14360,10 +15575,11 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             let axisLineEl = hydrateSvgTemplate(templates.axes.x.axisLine);
             axisLineEl.setAttribute("data-axis-line", "");
             axisLineEl.setAttribute("data-axis", "x");
-            axisLineEl.setAttribute("x1", chart.axes.x.scale(chart.axes.x.domain[0]).center);
-            axisLineEl.setAttribute("x2", chart.axes.x.scale(chart.axes.x.domain[1]).center);
-            axisLineEl.setAttribute("y1", chart.axes.y.scale(chart.axes.y.domain[chart.axes.x.position === "bottom" ? 0 : 1]).center);
-            axisLineEl.setAttribute("y2", chart.axes.y.scale(chart.axes.y.domain[chart.axes.x.position === "bottom" ? 0 : 1]).center);
+            axisLineEl.setAttribute("x1", chart.axes.x.range[0]);
+            axisLineEl.setAttribute("x2", chart.axes.x.range[1]);
+            let y = chart.axes.x.position === "bottom" ? Math.max(...chart.axes.y.range) : Math.min(...chart.axes.y.range);
+            axisLineEl.setAttribute("y1", y);
+            axisLineEl.setAttribute("y2", y);
             svg.appendChild(axisLineEl);
           }
           if (templates.axes.x.gridLine) {
@@ -14375,8 +15591,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
               let gridLineEl = hydrateSvgTemplate(templates.axes.x.gridLine);
               gridLineEl.setAttribute("data-grid-line", "");
               gridLineEl.setAttribute("data-axis", "x");
-              gridLineEl.setAttribute("x1", chart.axes.x.scale(value3).center);
-              gridLineEl.setAttribute("x2", chart.axes.x.scale(value3).center);
+              gridLineEl.setAttribute("x1", chart.axes.x.scale(value3, { area: chart.axes.x.dimension.asArea }).center);
+              gridLineEl.setAttribute("x2", chart.axes.x.scale(value3, { area: chart.axes.x.dimension.asArea }).center);
               gridLineEl.setAttribute("y1", chart.inset.top);
               gridLineEl.setAttribute("y2", chart.height - chart.inset.bottom);
               gridLineGroupEl.appendChild(gridLineEl);
@@ -14389,7 +15605,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             tickMarkGroupEl.setAttribute("data-tick-mark-group", "");
             tickMarkGroupEl.setAttribute("data-axis", "x");
             chart.axes.x.ticks.forEach(({ value: value3, label }) => {
-              let position = { x: chart.axes.x.scale(value3, { area: chart.axes.x.asArea }).center, y: chart.axes.y.scale(chart.axes.y.domain[chart.axes.x.position === "bottom" ? 0 : 1]).center };
+              let position = {
+                x: chart.axes.x.scale(value3, { area: chart.axes.x.dimension.asArea }).center,
+                y: chart.axes.x.position === "bottom" ? Math.max(...chart.axes.y.range) : Math.min(...chart.axes.y.range)
+              };
               let tickMarkEl = hydrateSvgTemplate(templates.axes.x.tickMark);
               tickMarkEl.setAttribute("data-tick-mark", "");
               tickMarkEl.setAttribute("data-axis", "x");
@@ -14404,7 +15623,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             tickLabelGroupEl.setAttribute("data-tick-label-group", "");
             tickLabelGroupEl.setAttribute("data-axis", "x");
             chart.axes.x.ticks.forEach(({ value: value3, label }) => {
-              let position = { x: chart.axes.x.scale(value3, { area: chart.axes.x.asArea }).center, y: chart.axes.y.scale(chart.axes.y.domain[chart.axes.x.position === "bottom" ? 0 : 1]).center };
+              let position = {
+                x: chart.axes.x.scale(value3, { area: chart.axes.x.dimension.asArea }).center,
+                y: chart.axes.x.position === "bottom" ? Math.max(...chart.axes.y.range) : Math.min(...chart.axes.y.range)
+              };
               let tickLabelEl = hydrateSvgTemplate(templates.axes.x.tickLabel);
               tickLabelEl.querySelectorAll("slot").forEach((i) => i.replaceWith(document.createTextNode(label)));
               tickLabelEl.setAttribute("data-tick-label", "");
@@ -14422,10 +15644,10 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             let axisLineEl = hydrateSvgTemplate(templates.axes.y.axisLine);
             axisLineEl.setAttribute("data-axis-line", "");
             axisLineEl.setAttribute("data-axis", "y");
-            axisLineEl.setAttribute("x1", chart.axes.x.scale(chart.axes.x.domain[chart.axes.y.position === "left" ? 0 : 1]).center);
-            axisLineEl.setAttribute("x2", chart.axes.x.scale(chart.axes.x.domain[chart.axes.y.position === "left" ? 0 : 1]).center);
-            axisLineEl.setAttribute("y1", chart.axes.y.scale(chart.axes.y.domain[0]).center);
-            axisLineEl.setAttribute("y2", chart.axes.y.scale(chart.axes.y.domain[1]).center);
+            axisLineEl.setAttribute("x1", chart.axes.x.range[chart.axes.y.position === "left" ? 0 : 1]);
+            axisLineEl.setAttribute("x2", chart.axes.x.range[chart.axes.y.position === "left" ? 0 : 1]);
+            axisLineEl.setAttribute("y1", chart.axes.y.range[0]);
+            axisLineEl.setAttribute("y2", chart.axes.y.range[1]);
             svg.appendChild(axisLineEl);
           }
           if (templates.axes.y.gridLine) {
@@ -14434,7 +15656,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             gridLineGroupEl.setAttribute("data-grid-line-group", "");
             gridLineGroupEl.setAttribute("data-axis", "y");
             chart.axes.y.ticks.forEach(({ value: value3, label }) => {
-              let position = { x: chart.axes.x.scale(chart.axes.x.domain[0]).center, y: chart.axes.y.scale(value3).center };
+              let position = { x: chart.axes.x.range[0], y: chart.axes.y.scale(value3, { area: chart.axes.y.dimension.asArea }).center };
               let gridLineEl = hydrateSvgTemplate(templates.axes.y.gridLine);
               gridLineEl.setAttribute("data-grid-line", "");
               gridLineEl.setAttribute("data-axis", "y");
@@ -14452,7 +15674,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             tickMarkGroupEl.setAttribute("data-tick-mark-group", "");
             tickMarkGroupEl.setAttribute("data-axis", "y");
             chart.axes.y.ticks.forEach(({ value: value3, label }) => {
-              let position = { x: chart.axes.x.scale(chart.axes.x.domain[chart.axes.y.position === "left" ? 0 : 1]).center, y: chart.axes.y.scale(value3).center };
+              let position = { x: chart.axes.x.range[chart.axes.y.position === "left" ? 0 : 1], y: chart.axes.y.scale(value3, { area: chart.axes.y.dimension.asArea }).center };
               let tickMarkEl = hydrateSvgTemplate(templates.axes.y.tickMark);
               tickMarkEl.setAttribute("data-tick-mark", "");
               tickMarkEl.setAttribute("data-axis", "y");
@@ -14467,7 +15689,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             tickLabelGroupEl.setAttribute("data-tick-label-group", "");
             tickLabelGroupEl.setAttribute("data-axis", "y");
             chart.axes.y.ticks.forEach(({ value: value3, label }) => {
-              let position = { x: chart.axes.x.scale(chart.axes.x.domain[chart.axes.y.position === "left" ? 0 : 1]).center, y: chart.axes.y.scale(value3).center };
+              let position = { x: chart.axes.x.range[chart.axes.y.position === "left" ? 0 : 1], y: chart.axes.y.scale(value3, { area: chart.axes.y.dimension.asArea }).center };
               let tickLabelEl = hydrateSvgTemplate(templates.axes.y.tickLabel);
               tickLabelEl.querySelectorAll("slot").forEach((i) => i.replaceWith(document.createTextNode(label)));
               tickLabelEl.setAttribute("data-tick-label", "");
@@ -14479,15 +15701,16 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             handleTickOverflow(tickLabelGroupEl, chart.axes.y);
           }
         }
-        if (templates.zeroLine && chart.axes.y.domain[0] < 0 && chart.axes.y.domain[1] > 0) {
-          svg.querySelector('[data-zero-line][data-axis="y"]')?.remove();
+        svg.querySelector("[data-zero-line]")?.remove();
+        if (templates.zeroLine && chart.dimensions.value.axis.domain[0] < 0 && chart.dimensions.value.axis.domain[1] > 0) {
           let zeroLineEl = hydrateSvgTemplate(templates.zeroLine);
           zeroLineEl.setAttribute("data-zero-line", "");
-          zeroLineEl.setAttribute("data-axis", "y");
-          zeroLineEl.setAttribute("x1", chart.axes.x.scale(chart.axes.x.domain[0]).center);
-          zeroLineEl.setAttribute("x2", chart.axes.x.scale(chart.axes.x.domain[1]).center);
-          zeroLineEl.setAttribute("y1", chart.axes.y.scale(0).center);
-          zeroLineEl.setAttribute("y2", chart.axes.y.scale(0).center);
+          zeroLineEl.setAttribute("data-axis", chart.dimensions.value.axis.axis);
+          let { x1, x2, y1, y2 } = chart.dimensions.value.zeroLine();
+          zeroLineEl.setAttribute("x1", x1);
+          zeroLineEl.setAttribute("x2", x2);
+          zeroLineEl.setAttribute("y1", y1);
+          zeroLineEl.setAttribute("y2", y2);
           svg.appendChild(zeroLineEl);
         }
         if (overlay) {
@@ -14498,24 +15721,19 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         }
         if (cursor) {
           cursorType = cursor.getAttribute("type") ?? "line";
-          let renderCursor = (closestXPoint) => {
+          let renderCursor = (closestIndexPoint) => {
             if (cursorType === "area") {
               cursor.setAttribute("opacity", "0.1");
-              let x2 = closestXPoint.start;
-              let y = chart.axes.y.scale(chart.axes.y.domain[1]).center;
-              let width = closestXPoint.width;
-              let height = chart.axes.y.scale(chart.axes.y.domain[0]).center - chart.axes.y.scale(chart.axes.y.domain[1]).center;
+              let { x, y, width, height } = chart.cursor(closestIndexPoint, "area");
               let radius = parseRadius(cursor.getAttribute("radius") ?? "0");
               cursor.setAttribute("fill", "currentColor");
               cursor.setAttribute("stroke", "none");
-              cursor.setAttribute("d", getBarPath(x2, y, width, height, radius));
+              cursor.setAttribute("d", getBarPath(x, y, width, height, radius));
               return;
             }
             cursor.setAttribute("opacity", "1");
-            let x = closestXPoint.center;
-            let y1 = chart.axes.y.scale(chart.axes.y.domain[0]).center;
-            let y2 = chart.axes.y.scale(chart.axes.y.domain[1]).center;
-            cursor.setAttribute("d", `M ${x} ${y1} L ${x} ${y2}`);
+            let [start, end] = chart.cursor(closestIndexPoint);
+            cursor.setAttribute("d", `M ${start.x} ${start.y} L ${end.x} ${end.y}`);
           };
           repositionCursor = (event) => {
             if (event) {
@@ -14523,8 +15741,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
               let mouseX = event.clientX - svgRect2.left;
               let mouseY = event.clientY - svgRect2.top;
               if (mouseX >= chart.inset.left && mouseX <= chart.width - chart.inset.right && mouseY >= chart.inset.top && mouseY <= chart.height - chart.inset.bottom) {
-                let closestXPoint = chart.closestXPoint(mouseX);
-                renderCursor(closestXPoint);
+                let closestIndexPoint = chart.closestIndexPoint(chart.indexPosition(mouseX, mouseY));
+                renderCursor(closestIndexPoint);
               } else {
                 cursor.setAttribute("opacity", "0");
               }
@@ -14541,33 +15759,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
               let mouseX = event.clientX - svg.getBoundingClientRect().left;
               let mouseY = event.clientY - svg.getBoundingClientRect().top;
               if (mouseX >= chart.inset.left && mouseX <= chart.width - chart.inset.right && mouseY >= chart.inset.top && mouseY <= chart.height - chart.inset.bottom) {
-                let closestXPoint = chart.closestXPoint(mouseX);
-                if (closestXPoint) {
+                let closestIndexPoint = chart.closestIndexPoint(chart.indexPosition(mouseX, mouseY));
+                if (closestIndexPoint) {
                   setAttribute2(tooltip, "data-active", "");
-                  let tooltipRect = tooltip.getBoundingClientRect();
-                  let svgRect2 = svg.getBoundingClientRect();
-                  let rightSpace = svgRect2.width - (closestXPoint.center + tooltipRect.width + 15);
-                  let bottomSpace = svgRect2.height - (mouseY + tooltipRect.height + 15);
-                  let xOffset = rightSpace < 0 ? closestXPoint.center - tooltipRect.width - 15 : closestXPoint.center + 15;
-                  let yOffset = bottomSpace < 0 ? mouseY - tooltipRect.height - 15 : mouseY + 15;
-                  tooltip.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-                  let tooltipClone = templates.tooltip.content.cloneNode(true).firstElementChild;
-                  tooltipClone.querySelectorAll("slot").forEach((slot) => {
-                    let field = slot.getAttribute("field");
-                    if (field) {
-                      let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : null;
-                      let value3 = closestXPoint.datum[field];
-                      if (format === null) return slot.textContent = value3;
-                      format = { ...format, timeZone: "UTC" };
-                      if (isNumeric(value3)) {
-                        value3 = Number(value3).toLocaleString(chart.locale, format);
-                      } else if (isDateish2(value3)) {
-                        value3 = new Date(value3).toLocaleDateString(chart.locale, format);
-                      }
-                      slot.textContent = value3;
-                    }
-                  });
-                  tooltip.innerHTML = tooltipClone.innerHTML;
+                  let anchorX = chart.horizontal ? mouseX : closestIndexPoint.center;
+                  let anchorY = chart.horizontal ? closestIndexPoint.center : mouseY;
+                  positionTooltip(anchorX, anchorY);
+                  renderTooltipContent(closestIndexPoint.datum);
                 } else {
                   removeAttribute(tooltip, "data-active");
                 }
@@ -14579,72 +15777,24 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         }
         if (summary) {
           updateSummary = (event) => {
-            let closestXPoint = null;
+            let closestIndexPoint = null;
             if (event !== null) {
               let mouseX = event.clientX - svg.getBoundingClientRect().left;
               let mouseY = event.clientY - svg.getBoundingClientRect().top;
               if (mouseX >= chart.inset.left && mouseX <= chart.width - chart.inset.right && mouseY >= chart.inset.top && mouseY <= chart.height - chart.inset.bottom) {
-                closestXPoint = chart.closestXPoint(mouseX);
+                closestIndexPoint = chart.closestIndexPoint(chart.indexPosition(mouseX, mouseY));
               }
             }
-            closestXPoint = closestXPoint || chart.closestXPoint(chart.axes.x.range[1]);
-            if (closestXPoint) {
-              let summaryClone = templates.summary.content.cloneNode(true).firstElementChild;
-              summaryClone.querySelectorAll("slot").forEach((slot) => {
-                let field = slot.getAttribute("field");
-                if (field) {
-                  let format = slot.hasAttribute("format") ? JSON.parse(slot.getAttribute("format")) : {};
-                  format = { ...format, timeZone: "UTC" };
-                  let value3 = slot.hasAttribute("fallback") && event === null ? slot.getAttribute("fallback") : closestXPoint.datum[field];
-                  if (isNumeric(value3)) {
-                    value3 = Number(value3).toLocaleString(chart.locale, format);
-                  } else if (isDateish2(value3)) {
-                    value3 = new Date(value3).toLocaleString(chart.locale, format);
-                  }
-                  slot.textContent = value3;
-                }
-              });
-              summary.innerHTML = summaryClone.innerHTML;
+            closestIndexPoint = closestIndexPoint || chart.closestIndexPoint(chart.dimensions.index.axis.range[1]);
+            if (closestIndexPoint) {
+              renderSummaryContent(closestIndexPoint.datum, event === null);
             }
           };
           updateSummary(null);
         }
-        svg.appendChild(overlay);
-        svg.querySelectorAll("[data-grid-line-group]").forEach((i) => overlay.before(i));
-        svg.querySelectorAll("[data-axis-line]").forEach((i) => overlay.before(i));
-        if (cursorType === "area") svg.querySelectorAll("[data-cursor]").forEach((i) => overlay.before(i));
-        let groupIndex = 0;
-        let stackIndex = 0;
-        svgTemplate.content.querySelectorAll('template[name="group"], template[name="stack"]:not(template[name="group"] template[name="stack"]), template[name="bar"]:not(template[name="stack"] template[name="bar"]):not(template[name="group"] template[name="bar"]), template[name="line"], template[name="area"], template[name="point"]').forEach((template) => {
-          let name = template.getAttribute("name");
-          let field = template.getAttribute("field");
-          let el;
-          if (name === "group") {
-            el = svg.querySelector(`[data-group][data-group-index="${groupIndex}"]`);
-            groupIndex++;
-          } else if (name === "stack") {
-            el = svg.querySelector(`[data-stack][data-stack-index="${stackIndex}"]`);
-            stackIndex++;
-          } else if (name === "bar") {
-            el = svg.querySelector(`[data-bar-group][data-series="${field}"]`);
-          } else if (name === "point") {
-            el = svg.querySelector(`[data-point-group][data-series="${field}"]`);
-          } else {
-            el = svg.querySelector(`[data-${name}][data-series="${field}"]`);
-          }
-          if (el) overlay.before(el);
-        });
-        svg.querySelectorAll("[data-zero-line]").forEach((i) => overlay.before(i));
-        if (cursorType === "line") svg.querySelectorAll("[data-cursor]").forEach((i) => overlay.before(i));
+        orderMarks();
         if (checkOverflow) {
-          let overflow = getSvgOverflow(svg);
-          adjustOverflowForPendingTickRotation(svg, chart, gutter, overflow);
-          chart.updateDimensions({ width: chart.width, height: chart.height }, {
-            left: gutter.left + overflow.left,
-            right: gutter.right + overflow.right,
-            top: gutter.top + overflow.top,
-            bottom: gutter.bottom + overflow.bottom
-          });
+          insetForOverflow();
           redraw(false);
         }
       };
@@ -14667,6 +15817,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       });
       this._observable.subscribe("data", () => {
         chart.updateData(this._data);
+        updatePieSectors();
         chart.updateDimensions({ width: chart.width, height: chart.height }, {
           left: 0,
           right: 0,
@@ -14675,31 +15826,50 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         });
         redraw();
       });
-      new ResizeObserver(() => {
+      let resizeObserver = new ResizeObserver(() => {
         this._observable.notify("resize");
-      }).observe(this);
-      new MutationObserver((mutations) => {
+      });
+      resizeObserver.observe(this);
+      this.onUnmount(() => resizeObserver.disconnect());
+      let mutationObserver = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (mutation.attributeName !== "value") return;
           this._selectable.setState(this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : []);
         });
-      }).observe(this, { attributes: true, attributeFilter: ["value"] });
+      });
+      mutationObserver.observe(this, { attributes: true, attributeFilter: ["value"] });
+      this.onUnmount(() => mutationObserver.disconnect());
     }
   };
   customElements.define("ui-chart", UIChart);
-  function discoverXandYKeys(svg, hasBars = false) {
-    let xKey = null;
-    let yKeys = [];
-    svg.querySelectorAll('template[name="line"], template[name="area"], template[name="point"], template[name="bar"]:not(template[name="stack"] template[name="bar"]):not(template[name="group"] template[name="bar"])').forEach((template) => {
-      yKeys.push(template.getAttribute("field") || "value");
+  function discoverDimensions(svg, hasBars = false, horizontal = false) {
+    let indexKey = null;
+    let valueKeys = [];
+    svg.querySelectorAll('template[name="line"], template[name="area"], template[name="point"], template[name="pie"], template[name="bar"]:not(template[name="stack"] template[name="bar"]):not(template[name="group"] template[name="bar"])').forEach((template) => {
+      valueKeys.push(template.getAttribute("field") || "value");
     });
-    svg.querySelectorAll('template[name="axis"][axis="x"]').forEach((template) => {
-      xKey = template.getAttribute("field") || "index";
+    svg.querySelectorAll(`template[name="axis"][axis="${horizontal ? "y" : "x"}"]`).forEach((template) => {
+      indexKey = template.getAttribute("field") || "index";
     });
-    yKeys = Array.from(new Set(yKeys));
-    if (xKey === null) xKey = "index";
-    if (yKeys.length === 0 && !hasBars) yKeys = ["value"];
-    return [xKey, yKeys];
+    svg.querySelectorAll('template[name="pie"][label-field]').forEach((template) => {
+      indexKey = template.getAttribute("label-field");
+    });
+    valueKeys = Array.from(new Set(valueKeys));
+    if (indexKey === null) indexKey = "index";
+    if (valueKeys.length === 0 && !hasBars) valueKeys = ["value"];
+    return [indexKey, valueKeys];
+  }
+  function pieFill(sector) {
+    return `var(--color-${sector.color}-500)`;
+  }
+  function pieWarning(issue, field) {
+    return {
+      "missing-field": `ui-chart: series field "${field}" does not exist`,
+      "invalid": "ui-chart: pie values must be finite numbers, so non-numeric values were omitted.",
+      "negative": "ui-chart: pie values must be positive, so negative values were omitted.",
+      "duplicate-key": "ui-chart: multiple pie sectors resolved to the same identity (id or label field), so their colors and updates may be ambiguous.",
+      "invalid-color": `ui-chart: pie "color" values must be one of ${PIE_PALETTE.join(", ")}, so unsupported colors fell back to the default palette.`
+    }[issue];
   }
   function hydrateSvgTemplate(template) {
     let svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -14927,11 +16097,11 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
   // js/close.js
   var UIClose = class extends UIElement {
     mount() {
-      let button = this.querySelector("button,ui-button");
-      on(button, "click", () => {
+      this.onUnmount(on(this, "click", (event) => {
+        if (!event.target.closest("button,ui-button")) return;
         let closeable = closest(this, (el) => !!el._closeable)?._closeable;
         closeable?.close();
-      });
+      }).off);
     }
   };
   element("close", UIClose);
@@ -14941,6 +16111,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     toasts = [];
     initiallyExpanded = false;
     expanded = false;
+    hovered = false;
     mount() {
       this.initiallyExpanded = this.hasAttribute("expanded");
       let position = this.getAttribute("position") || "bottom right";
@@ -14952,6 +16123,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         this.horizontalPosition = "end";
       }
       setAttribute2(this, "role", "status");
+      let onVisibilityChange = () => this.syncTimeouts();
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      this.onUnmount(() => document.removeEventListener("visibilitychange", onVisibilityChange));
     }
     showToast(options = {}) {
       let toastContainer = this.querySelector("ui-toast");
@@ -14976,20 +16150,21 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         this.animateIn(toast);
         this.updateList();
       };
-      let hide2 = () => {
+      let hide3 = () => {
         this.animateOut(toast);
         this.updateList();
       };
       this.toasts.unshift(toast);
       this.appendChild(template);
       show();
-      template.hideToast = hide2;
+      template.hideToast = hide3;
       let toastTimeout = duration !== 0 && timeout(() => {
         toast.timeout = null;
-        hide2();
+        hide3();
       }, duration);
       if (toastTimeout) {
         toast.timeout = toastTimeout;
+        this.syncTimeouts();
       }
       template.destroyToast = () => {
         if (toast.timeout) {
@@ -15003,18 +16178,21 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         template.remove();
         if (this.toasts.length === 0) {
           this.expanded = false;
+          this.hovered = false;
         }
         this.updateList();
       };
       template.addEventListener("mouseenter", () => {
-        this.pauseTimeouts();
+        this.hovered = true;
+        this.syncTimeouts();
         if (!this.initiallyExpanded) {
           this.expanded = true;
           this.updateList();
         }
       });
       template.addEventListener("mouseleave", () => {
-        this.resumeTimeouts();
+        this.hovered = false;
+        this.syncTimeouts();
         if (!this.initiallyExpanded) {
           this.expanded = false;
           this.updateList();
@@ -15032,6 +16210,9 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       for (let toast of this.toasts) {
         toast.timeout?.resume();
       }
+    }
+    syncTimeouts() {
+      document.hidden || this.hovered ? this.pauseTimeouts() : this.resumeTimeouts();
     }
     animateIn(toast) {
       let reverseVerticalPosition = this.verticalPosition === "top" ? "bottom" : "top";
@@ -15059,6 +16240,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         toast.el.remove();
         if (this.toasts.length === 0) {
           this.expanded = false;
+          this.hovered = false;
         }
       };
       if (toast.contentEl.getAnimations().length) {
@@ -15108,13 +16290,22 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     }
   };
   var UIToast = class extends UIElement {
+    toastTimeout = null;
+    hovered = false;
     mount() {
       if (!this.closest("ui-toast-group")) {
         setAttribute2(this, "role", "status");
-        document.addEventListener("keydown", (e) => {
+        let onKeydown = (e) => {
           if (e.key === "Escape") {
             this.hideToast();
           }
+        };
+        document.addEventListener("keydown", onKeydown);
+        let onVisibilityChange = () => this.syncTimeout();
+        document.addEventListener("visibilitychange", onVisibilityChange);
+        this.onUnmount(() => {
+          document.removeEventListener("keydown", onKeydown);
+          document.removeEventListener("visibilitychange", onVisibilityChange);
         });
         this.defaultPosition = this.getAttribute("position") || "bottom end";
       }
@@ -15133,7 +16324,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         this.showPopover();
         template.classList.add("showing");
       };
-      let hide2 = () => {
+      let hide3 = () => {
         template._hiding = true;
         template.classList.remove("showing");
         if (template.getAnimations().length) {
@@ -15148,21 +16339,28 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       };
       this.appendChild(template);
       show();
-      template.hideToast = hide2;
-      let toastTimeout = duration !== 0 && timeout(() => {
-        hide2();
-      }, duration);
+      template.hideToast = hide3;
+      this.toastTimeout = duration !== 0 ? timeout(() => {
+        this.toastTimeout = null;
+        hide3();
+      }, duration) : null;
       template.destroyToast = () => {
-        toastTimeout && toastTimeout.cancel();
+        if (!template.isConnected) return;
+        this.toastTimeout?.cancel();
+        this.toastTimeout = null;
+        this.hovered = false;
         template.remove();
         this.hidePopover();
       };
       template.addEventListener("mouseenter", () => {
-        toastTimeout && toastTimeout.pause();
+        this.hovered = true;
+        this.syncTimeout();
       });
       template.addEventListener("mouseleave", () => {
-        toastTimeout && toastTimeout.resume();
+        this.hovered = false;
+        this.syncTimeout();
       });
+      this.syncTimeout();
       template._closeable = new Closeable(template);
       template._closeable.onClose(() => template.destroyToast());
     }
@@ -15170,12 +16368,18 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       let toast = this.template().nextElementSibling;
       toast && toast.destroyToast();
     }
+    syncTimeout() {
+      if (!this.toastTimeout) return;
+      document.hidden || this.hovered ? this.toastTimeout.pause() : this.toastTimeout.resume();
+    }
     template() {
       return this.querySelector("template");
     }
     prepareToastTemplate(options) {
       let slots = options.slots || {};
       let dataset = options.dataset || {};
+      let link = options.link || null;
+      let action = options.action || null;
       let templateEl = this.template();
       if (!templateEl) {
         return console.warn("ui-toast: no template element found", this);
@@ -15191,8 +16395,111 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       Object.entries(dataset).forEach(([key, value3]) => {
         template.dataset[key] = value3;
       });
+      this.hydrateLinkTemplate(template, link);
+      this.hydrateAction(template, action);
       template.querySelectorAll("slot").forEach((slot) => slot.remove());
       return template;
+    }
+    hydrateLinkTemplate(template, link) {
+      let linkTemplate = template.querySelector('template[name="link"]');
+      if (!linkTemplate) return;
+      if (!link) {
+        linkTemplate.remove();
+        return;
+      }
+      let linkEl = linkTemplate.content.cloneNode(true).firstElementChild;
+      Object.entries(link).forEach(([key, value3]) => {
+        if ([null, void 0, false].includes(value3)) return;
+        if (["label", "text"].includes(key)) return;
+        if (key === "navigate" && value3) {
+          return linkEl.setAttribute("wire:navigate", "");
+        }
+        if (!["href", "target", "rel", "download"].includes(key)) return;
+        if (key === "download" && value3 === true) {
+          return linkEl.setAttribute(key, "");
+        }
+        linkEl.setAttribute(key, value3);
+      });
+      linkEl.querySelectorAll('slot[name="text"]').forEach(
+        (slot) => slot.replaceWith(document.createTextNode(link.label ?? link.text ?? ""))
+      );
+      linkTemplate.replaceWith(linkEl);
+    }
+    hydrateAction(template, action) {
+      let actionTemplate = template.querySelector('template[name="action"]');
+      if (!actionTemplate) return;
+      if (!action?.label || !action.href && !action.event && typeof action.onClick !== "function") {
+        actionTemplate.remove();
+        return;
+      }
+      let container = actionTemplate.content.cloneNode(true).firstElementChild;
+      let button = container.querySelector("[data-flux-toast-action-button]");
+      let link = container.querySelector("[data-flux-toast-action-link]");
+      let actionEl = action.href ? link : button;
+      let unusedEl = action.href ? button : link;
+      let labelEl = actionEl?.querySelector("[data-flux-toast-action-label]");
+      if (!actionEl || !labelEl) {
+        actionTemplate.remove();
+        return;
+      }
+      unusedEl?.remove();
+      labelEl.textContent = action.label;
+      actionTemplate.replaceWith(container);
+      if (action.href) {
+        this.hydrateActionLink(actionEl, action);
+        actionEl.addEventListener("click", () => {
+          setTimeout(() => template._closeable?.close());
+        });
+        return;
+      }
+      actionEl.addEventListener("click", () => {
+        if (typeof action.onClick === "function") {
+          action.onClick();
+        } else if (action.event) {
+          if (action.dismiss !== false) this.dismissAfterLoading(actionEl, template);
+          actionEl.dispatchEvent(new CustomEvent(action.event, {
+            bubbles: true,
+            composed: true,
+            detail: action.params || {}
+          }));
+        }
+        if (!action.event && action.dismiss !== false) template._closeable?.close();
+      });
+    }
+    hydrateActionLink(linkEl, action) {
+      Object.entries(action).forEach(([key, value3]) => {
+        if ([null, void 0, false].includes(value3)) return;
+        if (key === "navigate" && value3) {
+          return linkEl.setAttribute("wire:navigate", "");
+        }
+        if (!["href", "target", "rel", "download"].includes(key)) return;
+        if (key === "download" && value3 === true) {
+          return linkEl.setAttribute(key, "");
+        }
+        linkEl.setAttribute(key, value3);
+      });
+    }
+    dismissAfterLoading(actionEl, template) {
+      let loadingStarted = actionEl.hasAttribute("data-loading");
+      let observer = new MutationObserver(() => {
+        if (actionEl.hasAttribute("data-loading")) {
+          loadingStarted = true;
+          return;
+        }
+        if (loadingStarted) {
+          observer.disconnect();
+          template._closeable?.close();
+        }
+      });
+      observer.observe(actionEl, {
+        attributes: true,
+        attributeFilter: ["data-loading"]
+      });
+      setTimeout(() => {
+        if (loadingStarted || actionEl.hasAttribute("data-loading")) return;
+        observer.disconnect();
+        template._closeable?.close();
+      }, 150);
     }
   };
   element("toast-group", UIToastGroup);
@@ -15337,11 +16644,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       on(this, "scroll", (e) => {
         this.updateAttributes();
       }, { passive: true });
-      new ResizeObserver(() => {
-        this.updateAttributes();
-      }).observe(this);
     }
     mount() {
+      let resizeObserver = new ResizeObserver(() => {
+        this.updateAttributes();
+      });
+      resizeObserver.observe(this);
+      this.onUnmount(() => resizeObserver.disconnect());
       queueMicrotask(() => {
         this.updateAttributes();
       });
@@ -15378,6 +16687,12 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         else el.hide();
       });
     }
+    selectPanel(name) {
+      for (let tabs of this.querySelectorAll("ui-tabs")) {
+        if (tabs.closest("ui-tab-group") !== this) continue;
+        tabs._selectableGroup?.setState(name);
+      }
+    }
     getPanel(name) {
       return this.walkPanels((el, bail) => {
         if (el.getAttribute("name") === name) {
@@ -15405,9 +16720,13 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
       on(this, "scroll", (e) => {
         this.updateScrollVariable();
       }, { passive: true });
-      new ResizeObserver(() => {
+    }
+    mount() {
+      let resizeObserver = new ResizeObserver(() => {
         this.updateScrollVariable();
-      }).observe(this);
+      });
+      resizeObserver.observe(this);
+      this.onUnmount(() => resizeObserver.disconnect());
     }
     updateScrollVariable() {
       let percentage = Math.abs(this.scrollLeft) / (this.scrollWidth - this.clientWidth) * 100;
@@ -15530,11 +16849,17 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
     el.show = () => {
       setAttribute2(el, "data-selected", "");
       setAttribute2(el, "tabindex", "0");
+      removeAttribute(el, "hidden");
     };
     el.hide = () => {
       removeAttribute(el, "data-selected");
       setAttribute2(el, "tabindex", "-1");
+      setAttribute2(el, "hidden", el.closest("ui-tab-group")?.hasAttribute("findable") ? "until-found" : "");
     };
+    on(el, "beforematch", () => {
+      let group = el.closest("ui-tab-group");
+      if (group?.hasAttribute("findable")) group.selectPanel(el.getAttribute("name"));
+    });
     el._initialized = true;
   }
   element("tab-group", UITabGroup);
@@ -15617,12 +16942,17 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         setAttribute2(this.inputEls[i], "autocomplete", i === 0 ? this.config.autocomplete : "off");
         setAttribute2(this.inputEls[i], "aria-label", this.config.inputAriaLabelTemplate.replace("{current}", i + 1).replace("{total}", this.length));
         let prevValue;
+        let prevInsertedChar;
         on(this.inputEls[i], "beforeinput", (e) => {
           prevValue = e.target.value;
+          prevInsertedChar = e.inputType === "insertText" && e.data?.length === 1 ? e.data : null;
         });
         on(this.inputEls[i], "input", (e) => {
           e.stopPropagation();
           let value3 = e.target.value;
+          if (value3.length > 1 && prevInsertedChar) {
+            value3 = e.target.value = prevInsertedChar;
+          }
           if (value3.length > 1) {
             this.state.setValue(value3);
             this.focusIndex(this.nextIndex());
@@ -15663,9 +16993,21 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
             e.preventDefault();
           }
         });
+        let pointerType;
         on(this.inputEls[i], "pointerdown", (e) => {
+          pointerType = e.pointerType;
+          if (e.pointerType !== "mouse") return;
           this.focusIndex(Math.min(i, this.nextIndex()));
           e.preventDefault();
+        });
+        on(this.inputEls[i], "click", (e) => {
+          if (pointerType === "mouse") return;
+          let index = Math.min(i, this.nextIndex());
+          if (document.activeElement === this.inputEls[index]) {
+            requestAnimationFrame(() => this.inputEls[index].setSelectionRange(0, 1));
+          } else {
+            this.focusIndex(index);
+          }
         });
         on(this.inputEls[i], "focus", (e) => {
           e.target.setSelectionRange(0, 1);
@@ -15741,6 +17083,8 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         if (options.heading) detail.slots.heading = options.heading;
         if (options.variant) detail.dataset.variant = options.variant;
         if (options.position) detail.dataset.position = options.position;
+        if (options.link) detail.link = options.link;
+        if (options.action) detail.action = options.action;
         if (options.duration !== void 0) detail.duration = options.duration;
         document.dispatchEvent(new CustomEvent("toast-show", { detail }));
       },
