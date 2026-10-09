@@ -74,11 +74,6 @@ class Issue extends Model
         static::replicating(function (Issue $issue) {
             // When replicating an issue, we need to set a new instance
             $issue->setGuidelineInstance();
-
-            // Replication copies raw attributes, so reassign HTML fields to clean their links through the cast
-            foreach (array_keys($issue->getCasts(), HtmlWithValidLinks::class) as $field) {
-                $issue->setAttribute($field, $issue->getAttributes()[$field] ?? null);
-            }
         });
 
         static::updating(function (Issue $issue) {

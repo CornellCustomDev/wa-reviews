@@ -173,8 +173,9 @@ class Sheet
             $textFormat->setUnderline($underline);
         }
         // Google Sheets rejects the entire batchUpdate if any link URI is invalid, so export the text without the link
-        if ($link && HtmlWithValidLinks::isValidLinkUri($link)) {
-            $textFormat->setLink(new Link(['uri' => $link]));
+        $uri = $link ? HtmlWithValidLinks::normalizeLinkUri($link) : null;
+        if ($uri) {
+            $textFormat->setLink(new Link(['uri' => $uri]));
         } elseif ($link) {
             Log::warning('Dropped invalid link from Google Sheets export', ['href' => $link]);
         }

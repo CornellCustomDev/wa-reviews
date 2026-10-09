@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use Illuminate\Support\Uri;
+use League\Uri\Contracts\UriException;
 
 /**
  * Behaves like AsHtmlString, but unwraps links with invalid hrefs (keeping their text) before storage.
@@ -51,23 +53,37 @@ class HtmlWithValidLinks implements CastsAttributes, SerializesCastableAttribute
 
     public static function isValidLinkUri(string $uri): bool
     {
-        // Characters that are never valid unencoded in a URI (RFC 3986), whitespace, control characters,
-        // and percent signs that don't start a valid percent-encoding
-        if (preg_match('/[\s\x00-\x1F\x7F"<>\\\\^`{|}]|%(?![0-9A-Fa-f]{2})/u', $uri)) {
-            return false;
+        return static::normalizeLinkUri($uri) !== null;
+    }
+
+    /**
+     * Parse a link URI per RFC 3986, percent-encoding characters that need it (e.g. spaces).
+     *
+     * @return string|null The normalized URI, or null if it can't be parsed or isn't an absolute http(s), mailto, or tel link
+     */
+    public static function normalizeLinkUri(string $uri): ?string
+    {
+        try {
+            $parsed = Uri::of($uri);
+        } catch (UriException) {
+            return null;
         }
 
-        if (preg_match('/^https?:/i', $uri)) {
-            return filter_var($uri, FILTER_VALIDATE_URL) !== false;
-        }
+        $isLink = match (strtolower($parsed->scheme() ?? '')) {
+            'http', 'https' => filled($parsed->host()),
+            'mailto', 'tel' => true,
+            default => false,
+        };
 
-        return (bool) preg_match('/^(mailto|tel):.+/i', $uri);
+        return $isLink ? $parsed->value() : null;
     }
 
     /**
      * Replace each link that has an invalid href with its contents. HTML without invalid links is returned unchanged.
      *
-     * Each removal is logged as a warning, since this edits user content without an activity record of the original.
+     * Valid links are stored as written; consumers that need strict URIs (e.g. the Google Sheets export) should
+     * use normalizeLinkUri(). Each removal is logged as a warning, since this edits user content without an
+     * activity record of the original.
      *
      * @param  array{model?: class-string, id?: mixed, field?: string}  $context  Identifies the content being cleaned in the log
      */
