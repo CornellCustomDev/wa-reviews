@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Casts\HtmlWithValidLinks;
 use App\Enums\Agents;
 use App\Enums\GuidelineStatus;
 use App\Models\Comment;
 use App\Services\SiteImprove\SiteimproveService;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,6 +35,15 @@ class Scope extends Model
     protected $casts = [
         'checklist_comments' => 'array',
     ];
+
+    protected function notes(): Attribute
+    {
+        return Attribute::make(
+            set: fn (?string $value) => isset($value)
+                ? HtmlWithValidLinks::removeInvalidLinks($value, ['model' => static::class, 'id' => $this->getKey(), 'field' => 'notes'])
+                : null,
+        );
+    }
 
     public function project(): BelongsTo
     {

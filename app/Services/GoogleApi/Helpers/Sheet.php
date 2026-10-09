@@ -2,6 +2,7 @@
 
 namespace App\Services\GoogleApi\Helpers;
 
+use App\Casts\HtmlWithValidLinks;
 use Google\Service\Sheets\AddSheetRequest;
 use Google\Service\Sheets\AddTableRequest;
 use Google\Service\Sheets\Borders;
@@ -30,6 +31,7 @@ use Google\Service\Sheets\TextRotation;
 use Google\Service\Sheets\UpdateCellsRequest;
 use Google\Service\Sheets\UpdateDimensionPropertiesRequest;
 use Google\Service\Sheets\UpdateSheetPropertiesRequest;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use function hexdec;
 use function ltrim;
@@ -170,8 +172,11 @@ class Sheet
         if ($underline) {
             $textFormat->setUnderline($underline);
         }
-        if ($link) {
+        // Google Sheets rejects the entire batchUpdate if any link URI is invalid, so export the text without the link
+        if ($link && HtmlWithValidLinks::isValidLinkUri($link)) {
             $textFormat->setLink(new Link(['uri' => $link]));
+        } elseif ($link) {
+            Log::warning('Dropped invalid link from Google Sheets export', ['href' => $link]);
         }
 
         return static::cellFormat(textFormat: $textFormat);

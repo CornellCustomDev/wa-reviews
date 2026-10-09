@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\HtmlWithValidLinks;
 use App\Enums\Agents;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
@@ -9,7 +10,6 @@ use App\Enums\Impact;
 use App\Enums\IssueStatus;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
-use Illuminate\Database\Eloquent\Casts\AsHtmlString;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -48,14 +48,14 @@ class Issue extends Model
     ];
 
     protected $casts = [
-        'description' => AsHtmlString::class,
+        'description' => HtmlWithValidLinks::class,
         'assessment' => Assessment::class,
         'impact' => Impact::class,
         'testing_method' => TestingMethod::class,
-        'recommendation' => AsHtmlString::class,
-        'testing' => AsHtmlString::class,
+        'recommendation' => HtmlWithValidLinks::class,
+        'testing' => HtmlWithValidLinks::class,
         'image_links' => 'array',
-        'ai_reasoning' => AsHtmlString::class,
+        'ai_reasoning' => HtmlWithValidLinks::class,
         'ai_status' => AIStatus::class,
         'status' => IssueStatus::class,
         'needs_mitigation' => 'boolean',

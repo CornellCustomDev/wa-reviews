@@ -5,6 +5,7 @@ namespace Tests\Unit\GoogleApi;
 use App\Services\GoogleApi\Helpers\HtmlToSheetsTextRuns;
 use App\Services\GoogleApi\Helpers\Sheet;
 use Google\Service\Sheets\CellData;
+use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -82,6 +83,22 @@ class HtmlToSheetsTest extends TestCase
 
         $this->assertEquals(1, count($getFormat('link', 'https://www.w3.org/WAI/tutorials/tables/multi-level/')), 'Expected 1 link run to include the href URI.');
         $this->assertEquals(1, count($formatRuns), 'Expected only one format run to be present.');
+    }
+
+    #[Test] public function drops_invalid_link_uri_but_keeps_text(): void
+    {
+        // An editor link whose href absorbed escaped markup, which Google Sheets rejects as an invalid URI
+        $html = '<p>Contact <a target="_blank" rel="noopener noreferrer nofollow" href="mailto:someone@example.com&quot;&gt;someone@example.com&lt;/a&gt;">Someone</a>.</p>';
+
+        Log::spy();
+
+        [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($html);
+
+        $this->assertEquals('Contact Someone.', $text);
+        $this->assertEmpty($this->filterFormats(Sheet::extractFormatRuns($runs))('link'));
+        Log::shouldHaveReceived('warning')->once()->with('Dropped invalid link from Google Sheets export', [
+            'href' => 'mailto:someone@example.com">someone@example.com</a>',
+        ]);
     }
 
     /**
