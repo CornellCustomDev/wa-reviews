@@ -63,6 +63,9 @@
                 </x-cd.layout.sidebar-top>
             @endif
             <x-cd.layout.main-article :breadcrumbs="$breadcrumbs">
+                @session('warning')
+                    <x-warning-callout :warning="$value" />
+                @endsession
                 {{ $slot }}
             </x-cd.layout.main-article>
             @if ($sidebar && ($sidebarSecondary ?? false))

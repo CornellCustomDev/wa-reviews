@@ -170,8 +170,10 @@ class Sheet
         if ($underline) {
             $textFormat->setUnderline($underline);
         }
-        if ($link) {
-            $textFormat->setLink(new Link(['uri' => $link]));
+        // Google Sheets rejects the entire batchUpdate if any link URI is invalid, so export the text without the link
+        $uri = $link ? SheetLinks::normalize($link) : null;
+        if ($uri) {
+            $textFormat->setLink(new Link(['uri' => $uri]));
         }
 
         return static::cellFormat(textFormat: $textFormat);

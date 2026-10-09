@@ -84,6 +84,17 @@ class HtmlToSheetsTest extends TestCase
         $this->assertEquals(1, count($formatRuns), 'Expected only one format run to be present.');
     }
 
+    #[Test] public function drops_invalid_link_uri_but_keeps_text(): void
+    {
+        // An editor link whose href absorbed escaped markup, which Google Sheets rejects as an invalid URI
+        $html = '<p>Contact <a target="_blank" rel="noopener noreferrer nofollow" href="mailto:someone@example.com&quot;&gt;someone@example.com&lt;/a&gt;">Someone</a>.</p>';
+
+        [$text, $runs] = HtmlToSheetsTextRuns::fromHtml($html);
+
+        $this->assertEquals('Contact Someone.', $text);
+        $this->assertEmpty($this->filterFormats(Sheet::extractFormatRuns($runs))('link'));
+    }
+
     /**
      * Returns a closure that can be used to filter format runs by a specific format and optional value.
      */

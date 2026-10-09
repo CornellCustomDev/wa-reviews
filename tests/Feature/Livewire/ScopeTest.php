@@ -69,6 +69,24 @@ class ScopeTest extends FeatureTestCase
             ->assertDispatched('refresh-scopes');
     }
 
+    #[Test] public function add_scope_with_invalid_link_shows_warning_in_place()
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $project = Project::factory()->create(['team_id' => $user->teams()->first()->id]);
+        $project->assignToUser($user);
+
+        Livewire::test(AddScope::class, ['project' => $project])
+            ->set('form.title', 'Test Scope')
+            ->set('form.notes', '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">Someone</a></p>')
+            ->call('save')
+            ->assertDispatched('refresh-scopes')
+            ->assertSet('warning.details', ['Notes: &quot;Someone&quot;'])
+            ->assertSee('Notes: &quot;Someone&quot;', false);
+
+        // Pulled from the session so it doesn't appear again on a later page
+        $this->assertFalse(session()->has('warning'));
+    }
+
     #[Test] public function can_show_scope()
     {
         $user = $this->getLoggedInTestUser();
@@ -106,6 +124,23 @@ class ScopeTest extends FeatureTestCase
             'title' => 'Updated Scope',
             'notes' => 'This is an updated scope',
         ]);
+    }
+
+    #[Test] public function update_with_invalid_link_saves_and_warns_about_export()
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $project = Project::factory()->create(['team_id' => $user->teams()->first()->id]);
+        $project->assignToUser($user);
+        $scope = Scope::factory()->create(['project_id' => $project->id]);
+        $notes = '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">Someone</a></p>';
+
+        Livewire::test(UpdateScope::class, ['scope' => $scope])
+            ->set('form.notes', $notes)
+            ->call('save')
+            ->assertRedirect(route('scope.show', $scope));
+
+        $this->assertEquals($notes, $scope->fresh()->notes);
+        $this->assertEquals(['Notes: &quot;Someone&quot;'], session('warning.details'));
     }
 
     #[Test] public function member_cannot_update_scope()

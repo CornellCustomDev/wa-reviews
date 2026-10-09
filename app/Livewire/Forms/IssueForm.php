@@ -8,6 +8,7 @@ use App\Enums\Impact;
 use App\Enums\IssueStatus;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
+use App\Exports\ProjectReportGoogle;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
@@ -171,6 +172,8 @@ class IssueForm extends Form
             ]);
         }
 
+        $this->flashInvalidLinksWarning();
+
         return $this->issue;
     }
 
@@ -206,6 +209,23 @@ class IssueForm extends Form
         $this->issue->update($attributes);
 
         event(new IssueChanged($this->issue, 'updated'));
+
+        $this->flashInvalidLinksWarning();
+    }
+
+    /**
+     * Warn about links that will prevent the report from exporting to Google Sheets.
+     */
+    private function flashInvalidLinksWarning(): void
+    {
+        $invalidLinks = ProjectReportGoogle::findIssueFieldsWithInvalidLinks($this->issue);
+
+        if ($invalidLinks) {
+            session()->flash('warning', [
+                'heading' => 'Issue saved, but these invalid links will prevent the report from exporting to Google Sheets:',
+                'details' => array_map(e(...), $invalidLinks),
+            ]);
+        }
     }
 
     public function removeExistingImage(string $filename): void

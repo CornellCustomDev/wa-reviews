@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Services\GoogleApi\Helpers\Sheet;
+use App\Services\GoogleApi\Helpers\SheetLinks;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
 use App\Services\GoogleApi\ServiceWrappers\SheetUpdates;
 use Exception;
@@ -48,6 +49,52 @@ class ProjectReportGoogle
         }
 
         return $spreadsheet->spreadsheetId;
+    }
+
+    /**
+     * Find the links in an issue that the export would reject.
+     *
+     * @return list<string>
+     */
+    public static function findIssueFieldsWithInvalidLinks(Issue $issue): array
+    {
+        $invalidLinks = [];
+
+        foreach (SheetLinks::invalidLinksInHtml($issue->description) as $link) {
+            $invalidLinks[] = 'Description: "' . $link['text'] . '"';
+        }
+        foreach (SheetLinks::invalidLinksInHtml($issue->recommendation) as $link) {
+            $invalidLinks[] = 'Recommendations: "' . $link['text'] . '"';
+        }
+        foreach (SheetLinks::invalidLinksInHtml($issue->testing) as $link) {
+            $invalidLinks[] = 'Testing: "' . $link['text'] . '"';
+        }
+        foreach ($issue->image_links ?? [] as $imagePath) {
+            if (! SheetLinks::isValid($imagePath)) {
+                $invalidLinks[] = "Images: $imagePath";
+            }
+        }
+
+        return $invalidLinks;
+    }
+
+    /**
+     * Find the links in a scope that the export would reject.
+     *
+     * @return list<string>
+     */
+    public static function findScopeFieldsWithInvalidLinks(Scope $scope): array
+    {
+        $invalidLinks = [];
+
+        foreach (SheetLinks::invalidLinksInHtml($scope->notes) as $link) {
+            $invalidLinks[] = 'Notes: "' . $link['text'] . '"';
+        }
+        if ($scope->url && ! SheetLinks::isValid($scope->url)) {
+            $invalidLinks[] = "URL: $scope->url";
+        }
+
+        return $invalidLinks;
     }
 
     private static function getIntroFieldUpdates(Project $project): array
