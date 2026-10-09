@@ -51,8 +51,9 @@ class HtmlWithValidLinks implements CastsAttributes, SerializesCastableAttribute
 
     public static function isValidLinkUri(string $uri): bool
     {
-        // Characters that are never valid unencoded in a URI (RFC 3986), plus whitespace
-        if (preg_match('/[\s"<>\\\\^`{|}]/u', $uri)) {
+        // Characters that are never valid unencoded in a URI (RFC 3986), whitespace, control characters,
+        // and percent signs that don't start a valid percent-encoding
+        if (preg_match('/[\s\x00-\x1F\x7F"<>\\\\^`{|}]|%(?![0-9A-Fa-f]{2})/u', $uri)) {
             return false;
         }
 
@@ -72,7 +73,7 @@ class HtmlWithValidLinks implements CastsAttributes, SerializesCastableAttribute
      */
     public static function removeInvalidLinks(string $html, array $context = []): string
     {
-        if (! str_contains($html, '<a')) {
+        if (stripos($html, '<a') === false) {
             return $html;
         }
 

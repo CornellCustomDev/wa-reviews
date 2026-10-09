@@ -46,6 +46,30 @@ class HtmlWithValidLinksTest extends TestCase
         $this->assertFalse(HtmlWithValidLinks::isValidLinkUri('mailto:someone@example.com">someone@example.com</a>'));
         $this->assertFalse(HtmlWithValidLinks::isValidLinkUri('https://example.com/has space'));
         $this->assertFalse(HtmlWithValidLinks::isValidLinkUri('example.com'));
+        $this->assertFalse(HtmlWithValidLinks::isValidLinkUri("mailto:someone@example.com\x01"));
+        $this->assertFalse(HtmlWithValidLinks::isValidLinkUri('mailto:someone%zz@example.com'));
+        $this->assertTrue(HtmlWithValidLinks::isValidLinkUri('mailto:someone@example.com?subject=Hello%20there'));
+    }
+
+    #[Test]
+    public function removes_invalid_links_with_uppercase_tags(): void
+    {
+        $html = HtmlWithValidLinks::removeInvalidLinks('<p><A HREF="mailto:a@b.edu&quot;&gt;">Someone</A></p>');
+
+        $this->assertEquals('<p>Someone</p>', $html);
+    }
+
+    #[Test]
+    public function cloned_issue_is_stored_without_invalid_links(): void
+    {
+        // Content stored before the cast existed, which replicate() copies as raw attributes
+        $issue = Issue::factory()->create();
+        Issue::query()->whereKey($issue->id)->update(['recommendation' => self::HTML_WITH_INVALID_LINK]);
+
+        $clonedIssue = $issue->fresh()->replicate(except: ['guideline_instance']);
+        $clonedIssue->save();
+
+        $this->assertStringContainsString('Contact Someone,', Issue::query()->toBase()->find($clonedIssue->id)->recommendation);
     }
 
     #[Test]
