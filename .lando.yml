@@ -5,6 +5,14 @@ config:
   php: 8.3
   composer_version: 2-latest
 
+services:
+  appserver:
+    overrides:
+      environment:
+        # Boost's MCP server runs inside this container, where `lando` doesn't exist.
+        # Host-side `boost:install` still reads the `lando php` default from config/boost.php.
+        BOOST_PHP_EXECUTABLE_PATH: php
+
 
 tooling:
   phpunit:

@@ -33,3 +33,4 @@ bun.lock
 /.superpowers
 /docs/superpowers/plans
 /.worktrees
+/.playwright-mcp
