@@ -214,16 +214,16 @@ class IssueForm extends Form
     }
 
     /**
-     * Warn, without blocking the save, about links that will prevent the report from exporting to Google Sheets.
+     * Warn about links that will prevent the report from exporting to Google Sheets.
      */
     private function flashInvalidLinksWarning(): void
     {
-        $invalidLinks = ProjectReportGoogle::findInvalidIssueLinks($this->issue);
+        $invalidLinks = ProjectReportGoogle::findIssueFieldsWithInvalidLinks($this->issue);
 
         if ($invalidLinks) {
             session()->flash('warning', [
                 'heading' => 'Issue saved, but these invalid links will prevent the report from exporting to Google Sheets:',
-                'details' => $invalidLinks,
+                'details' => array_map(e(...), $invalidLinks),
             ]);
         }
     }

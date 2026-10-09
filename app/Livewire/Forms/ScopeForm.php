@@ -66,12 +66,12 @@ class ScopeForm extends Form
      */
     protected function flashInvalidLinksWarning(): void
     {
-        $invalidLinks = ProjectReportGoogle::findInvalidScopeLinks($this->scope);
+        $invalidLinks = ProjectReportGoogle::findScopeFieldsWithInvalidLinks($this->scope);
 
         if ($invalidLinks) {
             session()->flash('warning', [
                 'heading' => 'Scope saved, but these invalid links will prevent the report from exporting to Google Sheets:',
-                'details' => $invalidLinks,
+                'details' => array_map(e(...), $invalidLinks),
             ]);
         }
     }

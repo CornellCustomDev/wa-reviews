@@ -37,24 +37,15 @@ class SheetLinksTest extends TestCase
     {
         $this->assertEquals(
             [['text' => 'Someone', 'href' => 'mailto:someone@example.com">someone@example.com</a>']],
-            SheetLinks::invalidLinksIn(self::HTML_WITH_INVALID_LINK),
+            SheetLinks::invalidLinksInHtml(self::HTML_WITH_INVALID_LINK),
         );
-        $this->assertEquals([], SheetLinks::invalidLinksIn('<p><a href="https://example.com">fine</a></p>'));
-        $this->assertEquals([], SheetLinks::invalidLinksIn(null));
+        $this->assertEquals([], SheetLinks::invalidLinksInHtml('<p><a href="https://example.com">fine</a></p>'));
+        $this->assertEquals([], SheetLinks::invalidLinksInHtml(null));
     }
 
     #[Test]
     public function finds_invalid_links_with_uppercase_tags(): void
     {
-        $this->assertCount(1, SheetLinks::invalidLinksIn('<p><A HREF="mailto:a@b.edu&quot;&gt;">Someone</A></p>'));
-    }
-
-    #[Test]
-    public function describes_invalid_links_by_field(): void
-    {
-        $this->assertEquals(
-            ['Recommendations: "Someone"'],
-            SheetLinks::describeInvalidLinks(['Description' => '<p>No links</p>', 'Recommendations' => self::HTML_WITH_INVALID_LINK]),
-        );
+        $this->assertCount(1, SheetLinks::invalidLinksInHtml('<p><A HREF="mailto:a@b.edu&quot;&gt;">Someone</A></p>'));
     }
 }

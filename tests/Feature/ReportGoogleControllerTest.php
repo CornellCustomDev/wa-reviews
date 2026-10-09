@@ -31,17 +31,20 @@ class ReportGoogleControllerTest extends FeatureTestCase
         $issue = Issue::factory()->create([
             'project_id' => $this->project->id,
             'guideline_id' => $this->createGuidelineId(),
-            'recommendation' => '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">Someone</a></p>',
+            // Link text containing markup, as in the original bug, which must be shown escaped
+            'recommendation' => '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">mailto:a@b.edu"&gt;Someone&lt;/a&gt;</a></p>',
         ]);
         $this->mock(GoogleService::class)->shouldNotReceive('ensureAuthorized');
+        $expectedDetail = '<a href="'.route('issue.show', $issue).'">Issue '.$issue->getGuidelineInstanceNumber().'</a>, '
+            .'Recommendations: &quot;mailto:a@b.edu&quot;&gt;Someone&lt;/a&gt;&quot;';
 
         $this->get(route('project.report.google', $this->project))
             ->assertRedirect(route('project.report', $this->project))
-            ->assertSessionHas('warning.details', ['Issue '.$issue->getGuidelineInstanceNumber().', Recommendations: "Someone"']);
+            ->assertSessionHas('warning.details', [$expectedDetail]);
 
         $this->get(route('project.report', $this->project))
             ->assertSee('This report can’t be exported to Google Sheets until these invalid links are fixed:')
-            ->assertSee('Recommendations: &quot;Someone&quot;', false);
+            ->assertSee($expectedDetail, false);
     }
 
     #[Test]

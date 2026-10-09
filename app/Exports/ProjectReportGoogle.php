@@ -52,51 +52,23 @@ class ProjectReportGoogle
     }
 
     /**
-     * Describe the links in the report that Google Sheets would reject, which must be fixed before exporting.
+     * Find the links in an issue that the export would reject.
      *
-     * Covers every link the export sends, with labels matching the fields users edit.
-     *
-     * @return list<string> e.g. 'Issue 1.4.3-2, Recommendations: "Florencia Marcucci"'
+     * @return list<string>
      */
-    public static function findInvalidLinks(Project $project): array
+    public static function findIssueFieldsWithInvalidLinks(Issue $issue): array
     {
         $invalidLinks = [];
 
-        foreach (['Site URL' => $project->site_url, 'Siteimprove URL' => $project->siteimprove_url] as $label => $url) {
-            if ($url && ! SheetLinks::isValid($url)) {
-                $invalidLinks[] = "Project, $label: $url";
-            }
+        foreach (SheetLinks::invalidLinksInHtml($issue->description) as $link) {
+            $invalidLinks[] = 'Description: "' . $link['text'] . '"';
         }
-
-        /** @var Issue $issue */
-        foreach ($project->getReportableIssues() as $issue) {
-            foreach (static::findInvalidIssueLinks($issue) as $fieldLink) {
-                $invalidLinks[] = 'Issue ' . $issue->getGuidelineInstanceNumber() . ", $fieldLink";
-            }
+        foreach (SheetLinks::invalidLinksInHtml($issue->recommendation) as $link) {
+            $invalidLinks[] = 'Recommendations: "' . $link['text'] . '"';
         }
-
-        /** @var Scope $scope */
-        foreach ($project->scopes()->get() as $scope) {
-            foreach (static::findInvalidScopeLinks($scope) as $fieldLink) {
-                $invalidLinks[] = 'Scope "' . $scope->title . "\", $fieldLink";
-            }
+        foreach (SheetLinks::invalidLinksInHtml($issue->testing) as $link) {
+            $invalidLinks[] = 'Testing: "' . $link['text'] . '"';
         }
-
-        return $invalidLinks;
-    }
-
-    /**
-     * Describe the links in an issue that the export would reject.
-     *
-     * @return list<string> e.g. 'Recommendations: "Florencia Marcucci"'
-     */
-    public static function findInvalidIssueLinks(Issue $issue): array
-    {
-        $invalidLinks = SheetLinks::describeInvalidLinks([
-            'Description' => $issue->description,
-            'Recommendations' => $issue->recommendation,
-            'Testing' => $issue->testing,
-        ]);
         foreach ($issue->image_links ?? [] as $imagePath) {
             if (! SheetLinks::isValid($imagePath)) {
                 $invalidLinks[] = "Images: $imagePath";
@@ -107,13 +79,17 @@ class ProjectReportGoogle
     }
 
     /**
-     * Describe the links in a scope that the export would reject.
+     * Find the links in a scope that the export would reject.
      *
-     * @return list<string> e.g. 'Notes: "Florencia Marcucci"'
+     * @return list<string>
      */
-    public static function findInvalidScopeLinks(Scope $scope): array
+    public static function findScopeFieldsWithInvalidLinks(Scope $scope): array
     {
-        $invalidLinks = SheetLinks::describeInvalidLinks(['Notes' => $scope->notes]);
+        $invalidLinks = [];
+
+        foreach (SheetLinks::invalidLinksInHtml($scope->notes) as $link) {
+            $invalidLinks[] = 'Notes: "' . $link['text'] . '"';
+        }
         if ($scope->url && ! SheetLinks::isValid($scope->url)) {
             $invalidLinks[] = "URL: $scope->url";
         }

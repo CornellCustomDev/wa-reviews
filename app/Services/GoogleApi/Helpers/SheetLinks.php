@@ -46,7 +46,7 @@ class SheetLinks
      *
      * @return list<array{text: string, href: string}>
      */
-    public static function invalidLinksIn(string|Stringable|null $html): array
+    public static function invalidLinksInHtml(string|Stringable|null $html): array
     {
         $html = (string) $html;
         if (stripos($html, '<a') === false) {
@@ -71,21 +71,4 @@ class SheetLinks
         return $invalidLinks;
     }
 
-    /**
-     * Describe the invalid links in labeled HTML fields, for showing to users.
-     *
-     * @param  array<string, string|Stringable|null>  $htmlByLabel  HTML content keyed by a label such as the field name
-     * @return list<string> e.g. 'Recommendations: "Florencia Marcucci"'
-     */
-    public static function describeInvalidLinks(array $htmlByLabel): array
-    {
-        $descriptions = [];
-        foreach ($htmlByLabel as $label => $html) {
-            foreach (static::invalidLinksIn($html) as $link) {
-                $descriptions[] = $label.': "'.$link['text'].'"';
-            }
-        }
-
-        return $descriptions;
-    }
 }

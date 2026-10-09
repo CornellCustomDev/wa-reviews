@@ -46,7 +46,7 @@ class IssueFormTest extends FeatureTestCase
         $issue = $component->instance()->form->store($project);
 
         $this->assertEquals($recommendation, (string) $issue->fresh()->recommendation);
-        $this->assertEquals(['Recommendations: "Someone"'], session('warning.details'));
+        $this->assertEquals(['Recommendations: &quot;Someone&quot;'], session('warning.details'));
     }
 
     #[Test] public function store_without_invalid_links_does_not_warn(): void

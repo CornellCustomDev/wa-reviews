@@ -80,7 +80,7 @@ class ScopeTest extends FeatureTestCase
             ->set('form.notes', '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">Someone</a></p>')
             ->call('save')
             ->assertDispatched('refresh-scopes')
-            ->assertSet('warning.details', ['Notes: "Someone"'])
+            ->assertSet('warning.details', ['Notes: &quot;Someone&quot;'])
             ->assertSee('Notes: &quot;Someone&quot;', false);
 
         // Pulled from the session so it doesn't appear again on a later page
@@ -140,7 +140,7 @@ class ScopeTest extends FeatureTestCase
             ->assertRedirect(route('scope.show', $scope));
 
         $this->assertEquals($notes, $scope->fresh()->notes);
-        $this->assertEquals(['Notes: "Someone"'], session('warning.details'));
+        $this->assertEquals(['Notes: &quot;Someone&quot;'], session('warning.details'));
     }
 
     #[Test] public function member_cannot_update_scope()
