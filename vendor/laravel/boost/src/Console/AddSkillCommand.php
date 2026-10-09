@@ -9,6 +9,7 @@ use const DIRECTORY_SEPARATOR;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Laravel\Boost\Concerns\DisplayHelper;
 use Laravel\Boost\Skills\Remote\AuditResult;
@@ -100,7 +101,7 @@ class AddSkillCommand extends Command
         }
 
         if ($this->availableSkills->isEmpty()) {
-            $this->error('No valid skills are found in the repository.');
+            $this->error('No valid skills are found in the repository. Each skill must live in its own directory containing a SKILL.md — a SKILL.md at the repository root is not a skill. SKILL.blade.php is not supported.');
 
             return false;
         }
@@ -188,7 +189,10 @@ class AddSkillCommand extends Command
         if ($results['failedDetails'] !== []) {
             $this->error('Some skills failed to install:');
 
-            grid(array_keys($results['failedDetails']));
+            table(['Skill', 'Reason'], collect($results['failedDetails'])
+                ->map(fn (string $reason, string $name): array => [$name, $reason])
+                ->values()
+                ->all());
         }
 
         return self::SUCCESS;
@@ -249,7 +253,7 @@ class AddSkillCommand extends Command
             return true;
         }
 
-        if (! stream_isatty(STDIN)) {
+        if (! $this->input->isInteractive()) {
             return false;
         }
 
@@ -290,19 +294,26 @@ class AddSkillCommand extends Command
 
         foreach ($skills as $skill) {
             $targetPath = $this->skillTargetPath($skill);
-
-            if ($this->skillExists($skill)) {
-                File::deleteDirectory($targetPath);
-            }
+            $temporaryPath = dirname($targetPath).DIRECTORY_SEPARATOR.'.'.$skill->name.'-'.Str::random(8);
 
             try {
-                if ($this->fetcher->downloadSkill($skill, $targetPath)) {
-                    $results['installedNames'][] = $skill->name;
-                } else {
+                if (! $this->fetcher->downloadSkill($skill, $temporaryPath)) {
                     $results['failedDetails'][$skill->name] = 'Download failed';
+                    File::deleteDirectory($temporaryPath);
+
+                    continue;
                 }
+
+                if (! File::moveDirectory($temporaryPath, $targetPath, overwrite: true)) {
+                    $results['failedDetails'][$skill->name] = "Install failed, download kept at {$temporaryPath}";
+
+                    continue;
+                }
+
+                $results['installedNames'][] = $skill->name;
             } catch (RuntimeException $e) {
                 $results['failedDetails'][$skill->name] = $e->getMessage();
+                File::deleteDirectory($temporaryPath);
             }
         }
 
@@ -322,10 +333,7 @@ class AddSkillCommand extends Command
 
         /** @var array<string, array<int, AuditResult>> $auditResults */
         $auditResults = spin(
-            callback: fn (): array => (new SkillAuditor)->audit(
-                $this->repository->source(),
-                $skillNames,
-            ),
+            callback: fn (): array => $this->auditSkills($selectedSkills),
             message: 'Running security audit...',
         );
 
@@ -335,11 +343,35 @@ class AddSkillCommand extends Command
 
         $this->displayAuditResults($auditResults, $skillNames);
 
-        if (! stream_isatty(STDIN)) {
+        if (! $this->input->isInteractive()) {
             return true;
         }
 
         return confirm('Do you want to install these skills?');
+    }
+
+    /**
+     * @param  Collection<string, RemoteSkill>  $skills
+     * @return array<string, array<int, AuditResult>>
+     */
+    protected function auditSkills(Collection $skills): array
+    {
+        $auditor = new SkillAuditor;
+        $results = [];
+
+        $parentOf = fn (RemoteSkill $skill): string => Str::contains($skill->path, '/')
+            ? Str::beforeLast($skill->path, '/')
+            : '';
+
+        // The audit service resolves a skill as source + '/' + name, so each skill has to be sent under its own parent.
+        foreach ($skills->groupBy($parentOf) as $parent => $group) {
+            $source = $this->repository->fullName().($parent === '' ? '' : '/'.$parent);
+            $names = $group->map(fn (RemoteSkill $skill): string => $skill->name)->all();
+
+            $results = [...$results, ...$auditor->audit($source, $names)];
+        }
+
+        return $results;
     }
 
     /**

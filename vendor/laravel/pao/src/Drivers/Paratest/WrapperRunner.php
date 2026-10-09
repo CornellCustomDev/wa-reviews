@@ -114,23 +114,36 @@ final readonly class WrapperRunner implements RunnerInterface
                 continue;
             }
 
-            $sum = new TestResult(
+            $arguments = [
                 (int) $sum->hasTests() + (int) $testResult->hasTests(),
                 $sum->numberOfTestsRun() + $testResult->numberOfTestsRun(),
                 $sum->numberOfAssertions() + $testResult->numberOfAssertions(),
                 [...$sum->testErroredEvents(), ...$testResult->testErroredEvents()],
                 [...$sum->testFailedEvents(), ...$testResult->testFailedEvents()],
-                array_merge_recursive($sum->testConsideredRiskyEvents(), $testResult->testConsideredRiskyEvents()), // @phpstan-ignore argument.type
+                array_merge_recursive($sum->testConsideredRiskyEvents(), $testResult->testConsideredRiskyEvents()),
                 [...$sum->testSuiteSkippedEvents(), ...$testResult->testSuiteSkippedEvents()],
                 [...$sum->testSkippedEvents(), ...$testResult->testSkippedEvents()],
                 [...$sum->testMarkedIncompleteEvents(), ...$testResult->testMarkedIncompleteEvents()],
-                array_merge_recursive($sum->testTriggeredPhpunitDeprecationEvents(), $testResult->testTriggeredPhpunitDeprecationEvents()), // @phpstan-ignore argument.type
-                array_merge_recursive($sum->testTriggeredPhpunitErrorEvents(), $testResult->testTriggeredPhpunitErrorEvents()), // @phpstan-ignore argument.type
-                array_merge_recursive($sum->testTriggeredPhpunitNoticeEvents(), $testResult->testTriggeredPhpunitNoticeEvents()), // @phpstan-ignore argument.type
-                array_merge_recursive($sum->testTriggeredPhpunitWarningEvents(), $testResult->testTriggeredPhpunitWarningEvents()), // @phpstan-ignore argument.type
+                array_merge_recursive($sum->testTriggeredPhpunitDeprecationEvents(), $testResult->testTriggeredPhpunitDeprecationEvents()),
+                array_merge_recursive($sum->testTriggeredPhpunitErrorEvents(), $testResult->testTriggeredPhpunitErrorEvents()),
+                array_merge_recursive($sum->testTriggeredPhpunitNoticeEvents(), $testResult->testTriggeredPhpunitNoticeEvents()),
+                array_merge_recursive($sum->testTriggeredPhpunitWarningEvents(), $testResult->testTriggeredPhpunitWarningEvents()),
                 [...$sum->testRunnerTriggeredDeprecationEvents(), ...$testResult->testRunnerTriggeredDeprecationEvents()],
                 [...$sum->testRunnerTriggeredNoticeEvents(), ...$testResult->testRunnerTriggeredNoticeEvents()],
                 [...$sum->testRunnerTriggeredWarningEvents(), ...$testResult->testRunnerTriggeredWarningEvents()],
+            ];
+
+            $arguments = [
+                ...$arguments,
+                ...$this->mergeEventLists($sum, $testResult, [
+                    'testRunnerTriggeredIssueDeprecationEvents',
+                    'testRunnerTriggeredIssueErrorEvents',
+                    'testRunnerTriggeredIssueNoticeEvents',
+                    'testRunnerTriggeredIssuePhpDeprecationEvents',
+                    'testRunnerTriggeredIssuePhpNoticeEvents',
+                    'testRunnerTriggeredIssuePhpWarningEvents',
+                    'testRunnerTriggeredIssueWarningEvents',
+                ]),
                 [...$sum->errors(), ...$testResult->errors()],
                 [...$sum->deprecations(), ...$testResult->deprecations()],
                 [...$sum->notices(), ...$testResult->notices()],
@@ -139,9 +152,71 @@ final readonly class WrapperRunner implements RunnerInterface
                 [...$sum->phpNotices(), ...$testResult->phpNotices()],
                 [...$sum->phpWarnings(), ...$testResult->phpWarnings()],
                 $sum->numberOfIssuesIgnoredByBaseline() + $testResult->numberOfIssuesIgnoredByBaseline(),
-            );
+            ];
+
+            $arguments = [
+                ...$arguments,
+                ...$this->mergeDeprecationSummary($sum, $testResult),
+            ];
+
+            /** @phpstan-ignore-next-line argument.type */
+            $sum = new TestResult(...$arguments);
         }
 
         return $sum;
+    }
+
+    /**
+     * @return list<array<mixed>>
+     */
+    private function mergeDeprecationSummary(object $sum, object $testResult): array
+    {
+        $counts = [];
+
+        foreach ([
+            'self' => 'numberOfSelfDeprecations',
+            'direct' => 'numberOfDirectDeprecations',
+            'indirect' => 'numberOfIndirectDeprecations',
+            'unknown' => 'numberOfDeprecationsWithUnknownTrigger',
+        ] as $key => $method) {
+            if (! method_exists($sum, $method) || ! method_exists($testResult, $method)) {
+                return [];
+            }
+
+            $first = $sum->{$method}();
+            $second = $testResult->{$method}();
+
+            $counts[$key] = (is_int($first) ? $first : 0) + (is_int($second) ? $second : 0);
+        }
+
+        return [
+            $counts,
+            ...$this->mergeEventLists($sum, $testResult, ['retriedTests']),
+        ];
+    }
+
+    /**
+     * @param  list<non-empty-string>  $methods
+     * @return list<array<mixed>>
+     */
+    private function mergeEventLists(object $sum, object $testResult, array $methods): array
+    {
+        $merged = [];
+
+        foreach ($methods as $method) {
+            if (! method_exists($sum, $method)) {
+                return $merged;
+            }
+
+            $first = $sum->{$method}();
+            $second = $testResult->{$method}();
+
+            $merged[] = array_merge(
+                is_array($first) ? $first : [],
+                is_array($second) ? $second : [],
+            );
+        }
+
+        return $merged;
     }
 }

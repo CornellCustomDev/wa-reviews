@@ -20,7 +20,7 @@ $classes = Flux::classes()
     ->add('cursor-text [ui-color-picker[disabled]_&]:cursor-default')
     ->add(match ($size) {
         default => 'h-10 text-base sm:text-sm rounded-lg ps-[7px] py-2 leading-[1.375rem]' . ($hasTrailingIcons ? ' pe-[3px]' : ' pe-3'),
-        'sm' => 'h-8 text-sm rounded-lg ps-[5px] py-1.5 leading-[1.125rem]' . ($hasTrailingIcons ? ' pe-[3px]' : ' pe-2'),
+        'sm' => 'h-8 text-sm rounded-md ps-[5px] py-1.5 leading-[1.125rem]' . ($hasTrailingIcons ? ' pe-[3px]' : ' pe-2'),
         'xs' => 'h-6 text-xs rounded-md ps-[3px] py-1.5 leading-[1.125rem]' . ($hasTrailingIcons ? ' pe-[0px]' : ' pe-1.5'),
     })
     // Focus: show outline on the container when the inner input has focus-visible

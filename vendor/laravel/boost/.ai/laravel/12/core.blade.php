@@ -14,20 +14,18 @@
     - Console commands and schedule register in `{{ $assist->appPath('Console/Kernel.php') }}`
     - Rate limits likely exist in `RouteServiceProvider` or `{{ $assist->appPath('Http/Kernel.php') }}`
 @else
-- Since Laravel 11, Laravel has a new streamlined file structure which this project uses.
-
-## Laravel 12 Structure
-- In Laravel 12, middleware are no longer registered in `{{ $assist->appPath('Http/Kernel.php') }}`.
-- Middleware are configured declaratively in `bootstrap/app.php` using `Application::configure()->withMiddleware()`.
-- `bootstrap/app.php` is the file to register middleware, exceptions, and routing files.
-- `bootstrap/providers.php` contains application specific service providers.
-- The `{{ $assist->appPath('Console/Kernel.php') }}` file no longer exists; use `bootstrap/app.php` or `routes/console.php` for console configuration.
-- Console commands in `{{ $assist->appPath('Console/Commands/') }}` are automatically available and do not require manual registration.
+- This project uses the streamlined Laravel 11+ structure: register middleware, exceptions, and routing in `bootstrap/app.php` and service providers in `bootstrap/providers.php`. There is no `{{ $assist->appPath('Http/Kernel.php') }}` or `{{ $assist->appPath('Console/Kernel.php') }}`, and commands in `{{ $assist->appPath('Console/Commands/') }}` auto-register.
 @endif
 
+@scoped(['database/migrations/**'])
 ## Database
+
 - When modifying a column, the migration must include all of the attributes that were previously defined on the column. Otherwise, they will be dropped and lost.
+@endscoped
+
+@scoped(['database/migrations/**', 'app/Models/**'])
 - Laravel 12 allows limiting eagerly loaded records natively, without external packages: `$query->latest()->limit(10);`.
 
 ### Models
 - Casts can and likely should be set in a `casts()` method on a model rather than the `$casts` property. Follow existing conventions from other models.
+@endscoped

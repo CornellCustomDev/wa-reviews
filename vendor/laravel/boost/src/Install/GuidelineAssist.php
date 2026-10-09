@@ -7,9 +7,9 @@ namespace Laravel\Boost\Install;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Laravel\Boost\Install\Assists\Inertia;
-use Laravel\Roster\Enums\NodePackageManager;
-use Laravel\Roster\Enums\Packages;
-use Laravel\Roster\Roster;
+use Laravel\Boost\Support\PackageRegistry;
+use Laravel\Roster\Enums\JsPackageManager;
+use Laravel\Roster\ProjectManager;
 use Symfony\Component\Finder\Finder;
 
 class GuidelineAssist
@@ -17,7 +17,7 @@ class GuidelineAssist
     /** @var array<string, string> */
     protected array $enumPaths = [];
 
-    public function __construct(public Roster $roster, public GuidelineConfig $config, public ?Collection $skills = null)
+    public function __construct(public ProjectManager $project, public GuidelineConfig $config, public ?Collection $skills = null)
     {
         $this->skills ??= collect();
         $this->enumPaths = $this->discover();
@@ -84,39 +84,35 @@ class GuidelineAssist
 
     public function enumContents(): string
     {
-        if ($this->enumPaths === []) {
-            return '';
-        }
-
-        $path = current($this->enumPaths);
-
-        if (! is_file($path)) {
-            return '';
-        }
-
-        return file_get_contents($path) ?: '';
+        return collect($this->enumPaths)
+            ->sortKeys()
+            ->map(fn (string $path): string => is_file($path) ? (file_get_contents($path) ?: '') : '')
+            ->filter()
+            ->join(PHP_EOL);
     }
 
     public function inertia(): Inertia
     {
-        return new Inertia($this->roster);
+        return new Inertia($this->project);
     }
 
     public function supportsPintAgentFormatter(): bool
     {
-        return $this->roster->usesVersion(Packages::PINT, '1.27.0', '>=');
+        return $this->project->php()->uses(PackageRegistry::PINT, '>=1.27.0');
     }
 
-    public function hasPackage(Packages $package): bool
+    public function hasPackage(string $package, ?string $constraint = null): bool
     {
-        return $this->roster->packages()->contains(
-            fn ($pkg): bool => $pkg->package() === $package
-        );
+        if ($this->project->php()->uses($package, $constraint)) {
+            return true;
+        }
+
+        return $this->project->js()->uses($package, $constraint);
     }
 
     public function nodePackageManager(): string
     {
-        return ($this->roster->nodePackageManager() ?? NodePackageManager::NPM)->value;
+        return ($this->project->js()->packageManager() ?? JsPackageManager::Npm)->value;
     }
 
     protected function detectedNodePackageManager(): string
@@ -128,7 +124,7 @@ class GuidelineAssist
     {
         $npmExecutable = config('boost.executable_paths.npm');
 
-        if ($npmExecutable !== null) {
+        if ($npmExecutable) {
             return "{$npmExecutable} {$command}";
         }
 
@@ -148,7 +144,7 @@ class GuidelineAssist
     {
         $composerExecutable = config('boost.executable_paths.composer');
 
-        if ($composerExecutable !== null) {
+        if ($composerExecutable) {
             return "{$composerExecutable} {$command}";
         }
 
@@ -163,7 +159,7 @@ class GuidelineAssist
     {
         $vendorBinPrefix = config('boost.executable_paths.vendor_bin');
 
-        if ($vendorBinPrefix !== null) {
+        if ($vendorBinPrefix) {
             return "{$vendorBinPrefix}{$command}";
         }
 
@@ -178,7 +174,7 @@ class GuidelineAssist
     {
         $phpExecutable = config('boost.executable_paths.php');
 
-        if ($phpExecutable !== null) {
+        if ($phpExecutable) {
             return "{$phpExecutable} artisan";
         }
 
@@ -207,5 +203,10 @@ class GuidelineAssist
     public function hasMcpEnabled(): bool
     {
         return $this->config->hasMcp;
+    }
+
+    public function hasCloudEnabled(): bool
+    {
+        return $this->config->usesCloud;
     }
 }

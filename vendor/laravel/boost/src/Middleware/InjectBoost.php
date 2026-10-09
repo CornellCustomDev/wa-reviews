@@ -36,7 +36,7 @@ class InjectBoost
 
     protected function shouldInject(Request $request, Response $response): bool
     {
-        if ($request->headers->get('x-livewire-navigate') === '1') {
+        if ($request->headers->has('x-livewire-navigate')) {
             return false;
         }
 
@@ -59,8 +59,8 @@ class InjectBoost
 
         $content = $response->getContent();
 
-        // Check if it's HTML
-        if (! str_contains($content, '<html') && ! str_contains($content, '<head')) {
+        // Check for an <html> or <head> tag without matching e.g. <header>
+        if (preg_match('/<(html|head)[\s>]/', $content) !== 1) {
             return false;
         }
 

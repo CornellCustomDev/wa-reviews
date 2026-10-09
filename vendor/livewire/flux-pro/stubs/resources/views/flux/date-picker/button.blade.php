@@ -31,7 +31,14 @@ $classes = Flux::classes()
     ;
 @endphp
 
-<button type="button" {{ $attributes->class($classes) }} @if ($invalid) data-invalid @endif data-flux-group-target data-flux-date-picker-button>
+<button
+    type="button"
+    {{ $attributes->class($classes) }}
+    @if ($slot->isEmpty() && filled($placeholder) && ! $attributes->has('aria-label') && ! $attributes->has('aria-labelledby')) aria-label="{{ $placeholder }}" @endif
+    @if ($invalid) data-invalid @endif
+    data-flux-group-target
+    data-flux-date-picker-button
+>
     <flux:icon.calendar variant="mini" class="me-2 text-zinc-400/75 [[disabled]_&]:text-zinc-200! dark:text-white/60 dark:[[disabled]_&]:text-white/40!" />
 
     <?php if ($slot->isNotEmpty()): ?>

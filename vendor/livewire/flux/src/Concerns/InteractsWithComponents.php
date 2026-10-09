@@ -62,7 +62,7 @@ trait InteractsWithComponents
         };
     }
 
-    public function toast($text, $heading = null, $duration = 5000, $variant = null, $position = null)
+    public function toast($text, $heading = null, $duration = 5000, $variant = null, $position = null, $link = null, $action = null)
     {
         $params = [
             'duration' => $duration,
@@ -74,6 +74,8 @@ trait InteractsWithComponents
         if ($heading) $params['slots']['heading'] = $heading;
         if ($variant) $params['dataset']['variant'] = $variant;
         if ($position) $params['dataset']['position'] = $position;
+        if ($link) $params['link'] = $link;
+        if ($action) $params['action'] = $action;
 
         app('livewire')->current()->dispatch('toast-show', ...$params);
     }

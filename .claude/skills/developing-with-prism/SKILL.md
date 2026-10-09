@@ -184,13 +184,10 @@ $response = Prism::text()
 **ALWAYS use:** `prism-php/prism`
 
 ```bash
-
 # Correct
-
 composer require prism-php/prism
 
 # Wrong - do not use
-
 composer require echolabsdev/prism
 ```
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Laravel\Mcp\Transport;
 
+use Laravel\Mcp\Enums\MetaKey;
+use Laravel\Mcp\Enums\RequestHeader;
 use Laravel\Mcp\Exceptions\JsonRpcException;
 use Laravel\Mcp\Request;
 
@@ -16,17 +18,16 @@ class JsonRpcRequest
         public int|string $id,
         public string $method,
         public array $params,
-        public ?string $sessionId = null
     ) {
         //
     }
 
     /**
-     * @param  array{id: mixed, jsonrpc?: mixed, method?: mixed, params?: array<string, mixed>}  $jsonRequest
+     * @param  array{id: mixed, jsonrpc?: mixed, method?: mixed, params?: mixed}  $jsonRequest
      *
      * @throws JsonRpcException
      */
-    public static function from(array $jsonRequest, ?string $sessionId = null): static
+    public static function from(array $jsonRequest): static
     {
         $requestId = $jsonRequest['id'];
 
@@ -42,12 +43,20 @@ class JsonRpcRequest
             throw new JsonRpcException('Invalid Request: The [method] member is required and must be a string.', -32600, $requestId);
         }
 
+        if (array_key_exists('params', $jsonRequest) && ! self::isObject($jsonRequest['params'])) {
+            throw new JsonRpcException('Invalid params: The [params] member must be an object.', -32602, $requestId);
+        }
+
         return new static(
             id: $requestId,
             method: $jsonRequest['method'],
             params: $jsonRequest['params'] ?? [],
-            sessionId: $sessionId,
         );
+    }
+
+    private static function isObject(mixed $value): bool
+    {
+        return is_array($value) && ($value === [] || ! array_is_list($value));
     }
 
     public function cursor(): ?string
@@ -65,12 +74,71 @@ class JsonRpcRequest
      */
     public function meta(): ?array
     {
-        return isset($this->params['_meta']) && is_array($this->params['_meta']) ? $this->params['_meta'] : null;
+        return isset($this->params['_meta']) && self::isObject($this->params['_meta']) ? $this->params['_meta'] : null;
+    }
+
+    public function isLegacy(): bool
+    {
+        $meta = $this->meta() ?? [];
+
+        return ! array_key_exists(MetaKey::PROTOCOL_VERSION->value, $meta)
+            && ! array_key_exists(MetaKey::CLIENT_CAPABILITIES->value, $meta);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function mirroredHeaders(): array
+    {
+        $headers = [RequestHeader::METHOD->value => $this->method];
+
+        if (($name = $this->name()) !== null) {
+            $headers[RequestHeader::NAME->value] = (string) new HeaderValue($name);
+        }
+
+        return $headers;
+    }
+
+    public function name(): ?string
+    {
+        $key = $this->nameKey();
+
+        if ($key === null) {
+            return null;
+        }
+
+        $name = $this->get($key);
+
+        return is_string($name) ? $name : null;
+    }
+
+    public function requiresName(): bool
+    {
+        return $this->nameKey() !== null;
+    }
+
+    private function nameKey(): ?string
+    {
+        return match ($this->method) {
+            'tools/call', 'prompts/get' => 'name',
+            'resources/read' => 'uri',
+            default => null,
+        };
     }
 
     public function toRequest(): Request
     {
-        return new Request($this->params['arguments'] ?? [], $this->sessionId, $this->meta());
+        if (array_key_exists('arguments', $this->params)) {
+            $arguments = $this->params['arguments'];
+
+            if (! self::isObject($arguments)) {
+                throw new JsonRpcException('Invalid params: The [arguments] member must be an object.', -32602, $this->id);
+            }
+        } else {
+            $arguments = [];
+        }
+
+        return new Request($arguments, $this->meta());
     }
 
     /**

@@ -14,7 +14,7 @@
 
 @php
 $classes = Flux::classes()
-    ->add('[:where(&)]:min-w-48 [:where(&)]:max-h-[14rem] p-[.3125rem] scroll-py-[.3125rem]')
+    ->add('[:where(&)]:min-w-48 [:where(&)]:max-h-[14rem] p-[.3125rem] scroll-py-[.3125rem] overscroll-y-none')
     ->add('rounded-lg shadow-xs')
     ->add('border border-zinc-200 dark:border-zinc-600')
     ->add('bg-white dark:bg-zinc-700')
@@ -34,7 +34,7 @@ if (is_object($searchable)) $search = $searchable;
             <flux:pillbox.search :placeholder="$searchPlaceholder" />
         <?php endif; ?>
 
-        <ui-options class="max-h-[20rem] overflow-y-auto -me-[.3125rem] -mt-[.3125rem] pt-[.3125rem] pe-[.3125rem] -mb-[.3125rem] pb-[.3125rem] scroll-py-[.3125rem]">
+        <ui-options class="max-h-[20rem] overflow-y-auto overscroll-y-none -me-[.3125rem] -mt-[.3125rem] pt-[.3125rem] pe-[.3125rem] -mb-[.3125rem] pb-[.3125rem] scroll-py-[.3125rem]">
             <?php if ($empty): ?>
                  <?php if (is_string($empty)): ?>
                     <flux:pillbox.option.empty>{!! __($empty) !!}</flux:pillbox.option.empty>

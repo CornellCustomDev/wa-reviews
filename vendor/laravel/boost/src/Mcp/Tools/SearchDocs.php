@@ -11,15 +11,17 @@ use Laravel\Boost\Concerns\MakesHttpRequests;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 use Laravel\Roster\Package;
-use Laravel\Roster\Roster;
+use Laravel\Roster\ProjectManager;
 use Throwable;
 
+#[IsReadOnly]
 class SearchDocs extends Tool
 {
     use MakesHttpRequests;
 
-    public function __construct(protected Roster $roster)
+    public function __construct(protected ProjectManager $project)
     {
         //
     }
@@ -68,22 +70,22 @@ class SearchDocs extends Tool
             return $rawQueries;
         }
 
-        $queries = array_filter(
+        $queries = array_values(array_filter(
             array_map(trim(...), $rawQueries),
             fn (string $query): bool => $query !== '' && $query !== '*'
-        );
+        ));
 
         try {
-            $packagesCollection = $this->roster->packages();
+            $packagesCollection = $this->project->php()->packages()->concat($this->project->js()->packages());
 
             // Only search in specific packages
             if ($packagesFilter) {
-                $packagesCollection = $packagesCollection->filter(fn (Package $package): bool => in_array($package->rawName(), $packagesFilter, true));
+                $packagesCollection = $packagesCollection->filter(fn (Package $package): bool => in_array($package->name(), $packagesFilter, true));
             }
 
             $packages = $packagesCollection->map(function (Package $package): array {
-                $name = $package->rawName();
-                $version = $package->majorVersion().'.x';
+                $name = $package->name();
+                $version = $package->major().'.x';
 
                 return [
                     'name' => $name,

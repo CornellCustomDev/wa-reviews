@@ -2,6 +2,7 @@
 
 @props([
     'label' => null,
+    'labelField' => null,
     'field' => null,
     'format' => null,
     'prefix' => null,
@@ -19,6 +20,8 @@ $format = is_array($format) ? \Illuminate\Support\Js::encode($format) : $format;
         <div class="text-zinc-800 dark:text-white">{{ $label }}</div>
     @elseif ($label)
         {{ $label }}
+    @elseif ($labelField)
+        <div class="text-zinc-800 dark:text-white"><slot field="{{ $labelField }}"></slot></div>
     @endif
 
     @if ($field)

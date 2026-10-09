@@ -51,9 +51,12 @@ if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wir
 <flux:with-field :$attributes :$name>
     <ui-composer {{ $attributes->class($classes) }} data-flux-composer>
         <?php if ($header): ?>
-            <div {{ $header->attributes->class('col-span-3 flex items-center gap-1 mb-2') }}>
+            {{-- The :has(...not(template)) is here to prevent an empty <template x-for> from still applying the margin without any content... --}}
+            <div {{ $header->attributes->class('col-span-3 flex items-center gap-1 [:has(>_:not(template))]:mb-2') }}>
                 {{ $header }}
             </div>
+        <?php else: ?>
+            <div class="col-span-3 hidden"></div>
         <?php endif; ?>
 
         <div class="col-span-4 [[inline]_&]:col-span-2 [[inline]_&]:col-start-2">
@@ -84,6 +87,8 @@ if (($wireModel = $attributes->wire('model')) && $wireModel->directive && ! $wir
             <div {{ $footer->attributes->class('col-span-4 flex items-center gap-1') }}>
                 {{ $footer }}
             </div>
+        <?php else: ?>
+            <div class="col-span-4 hidden"></div>
         <?php endif; ?>
     </ui-composer>
 </flux:with-field>

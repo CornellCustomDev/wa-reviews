@@ -9,9 +9,14 @@ use InvalidArgumentException;
 
 class GitHubRepository
 {
-    public function __construct(public string $owner, public string $repo, public string $path = '')
+    public function __construct(public string $owner, public string $repo, public string $path = '', public string $branch = '')
     {
-        //
+        $path = trim($path, '/');
+
+        // A path copied from a file view points at SKILL.md, not the directory holding it.
+        $directory = basename($path) === 'SKILL.md' ? dirname($path) : $path;
+
+        $this->path = $directory === '.' ? '' : $directory;
     }
 
     /**
@@ -19,9 +24,9 @@ class GitHubRepository
      */
     public static function fromInput(string $input): self
     {
-        $input = self::normalizeUrl($input);
+        [$input, $branch] = self::normalizeUrl($input);
 
-        return self::parseOwnerRepoPath($input);
+        return self::parseOwnerRepoPath($input, $branch);
     }
 
     public function fullName(): string
@@ -37,14 +42,18 @@ class GitHubRepository
     }
 
     /**
+     * @return array{0: string, 1: string}
+     *
      * @throws InvalidArgumentException
      */
-    private static function normalizeUrl(string $input): string
+    private static function normalizeUrl(string $input): array
     {
-        $isUrl = Str::startsWith($input, ['http://', 'https://']);
+        if (preg_match('~^(?:[^@/:]+@)?(?<host>[^:]+):(?!//)(?<path>.+)$~', $input, $matches) === 1) {
+            $input = 'ssh://'.$matches['host'].'/'.$matches['path'];
+        }
 
-        if (! $isUrl) {
-            return $input;
+        if (! Str::startsWith($input, ['http://', 'https://', 'ssh://'])) {
+            return [$input, ''];
         }
 
         $parsed = parse_url($input);
@@ -56,19 +65,20 @@ class GitHubRepository
             throw new InvalidArgumentException('Only GitHub URLs are supported.');
         }
 
-        $path = Str::of($parsed['path'] ?? '')->trim('/')->toString();
+        $path = Str::of($parsed['path'] ?? '')->trim('/')->replaceEnd('.git', '')->toString();
 
-        if (Str::contains($path, '/tree/')) {
-            return Str::of($path)->replaceMatches('#/tree/[^/]+#', '')->toString();
+        // ponytail: a branch name containing a slash is indistinguishable from the path after it.
+        if (preg_match('#^(?P<repository>[^/]+/[^/]+)/(?:tree|blob)/(?P<branch>[^/]+)/?(?P<path>.*)$#', $path, $matches) === 1) {
+            return [rtrim($matches['repository'].'/'.$matches['path'], '/'), $matches['branch']];
         }
 
-        return $path;
+        return [$path, ''];
     }
 
     /**
      * @throws InvalidArgumentException
      */
-    private static function parseOwnerRepoPath(string $input): self
+    private static function parseOwnerRepoPath(string $input, string $branch = ''): self
     {
         $parts = explode('/', $input);
 
@@ -80,6 +90,7 @@ class GitHubRepository
             owner: $parts[0],
             repo: $parts[1],
             path: implode('/', array_slice($parts, 2)),
+            branch: $branch,
         );
     }
 }

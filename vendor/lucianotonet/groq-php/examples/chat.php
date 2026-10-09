@@ -1,7 +1,8 @@
 <div>
 <?php
 use LucianoTonet\GroqPHP\GroqException;
-require __DIR__ . '/_input.php';
+
+require __DIR__.'/_input.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $_POST['message'];
@@ -10,24 +11,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         $response = $groq->chat()->completions()->create([
-            'model' => 'llama-3.1-8b-instant',
+            'model' => 'openai/gpt-oss-20b',
             'messages' => [
                 [
                     'role' => 'user',
-                    'content' => $message
-                ]
+                    'content' => $message,
+                ],
             ],
         ]);
 
-        echo "<strong>assistant: </strong> ";
+        echo '<strong>assistant: </strong> ';
         echo $response['choices'][0]['message']['content'];
     } catch (GroqException $err) {
-        echo "<strong>assistant:</strong><br>".$err->getMessage()."<br>";
+        echo '<strong>assistant:</strong><br>'.$err->getMessage().'<br>';
 
-        echo "<pre>";
+        echo '<pre>';
         print_r($err->getError());
 
-        echo "</pre>";
+        echo '</pre>';
     }
 }
 ?>

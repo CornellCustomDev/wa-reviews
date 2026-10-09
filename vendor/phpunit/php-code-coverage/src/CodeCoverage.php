@@ -256,13 +256,18 @@ final class CodeCoverage
         }
 
         $linesToBeCovered = false;
-        $linesToBeUsed    = [];
 
         if ($covers !== false) {
-            $linesToBeCovered = $this->targetMapper()->mapTargets($covers);
+            $linesToBeCovered = [];
+
+            if ($covers->isNotEmpty()) {
+                $linesToBeCovered = $this->targetMapper()->mapTargets($covers);
+            }
         }
 
-        if ($linesToBeCovered !== false) {
+        $linesToBeUsed = [];
+
+        if ($linesToBeCovered !== false && $linesToBeCovered !== [] && $uses->isNotEmpty()) {
             $linesToBeUsed = $this->targetMapper()->mapTargets($uses);
         }
 
@@ -297,7 +302,13 @@ final class CodeCoverage
 
         $this->data->merge($that->data);
 
-        $this->tests = array_merge($this->tests, $that->getTests());
+        // The tests are added to the ones merged so far rather than merged
+        // with them into a new array: that would copy every test merged so
+        // far on each merge, which made merging the code coverage of many
+        // processes, one after another, quadratic.
+        foreach ($that->getTests() as $id => $test) {
+            $this->tests[$id] = $test;
+        }
 
         $this->cachedReport = null;
     }
@@ -403,6 +414,10 @@ final class CodeCoverage
 
     public function validate(TargetCollection $targets): ValidationResult
     {
+        if ($targets->isEmpty()) {
+            return ValidationResult::success();
+        }
+
         return (new TargetCollectionValidator)->validate($this->targetMapper(), $targets);
     }
 
@@ -411,7 +426,6 @@ final class CodeCoverage
      */
     public function driverIsPcov(): bool
     {
-        /** @phpstan-ignore isset.initializedProperty */
         return isset($this->driver) && $this->driver->isPcov();
     }
 
@@ -420,7 +434,6 @@ final class CodeCoverage
      */
     public function driverIsXdebug(): bool
     {
-        /** @phpstan-ignore isset.initializedProperty */
         return isset($this->driver) && $this->driver->isXdebug();
     }
 

@@ -90,12 +90,12 @@ $inputLoadingClasses = Flux::classes()
     ;
 
 $classes = Flux::classes()
-    ->add('w-full border rounded-lg block disabled:shadow-none dark:shadow-none')
+    ->add('w-full border block disabled:shadow-none dark:shadow-none')
     ->add('appearance-none') // Without this, input[type="date"] on mobile doesn't respect w-full...
     ->add(match ($size) {
-        default => 'text-base sm:text-sm py-2 h-10 leading-[1.375rem]', // This makes the height of the input 40px (same as buttons and such...)
-        'sm' => 'text-sm py-1.5 h-8 leading-[1.125rem]',
-        'xs' => 'text-xs py-1.5 h-6 leading-[1.125rem]',
+        default => 'text-base sm:text-sm rounded-lg py-2 h-10 leading-[1.375rem]', // This makes the height of the input 40px (same as buttons and such...)
+        'sm' => 'text-sm rounded-md py-1.5 h-8 leading-[1.125rem]',
+        'xs' => 'text-xs rounded-md py-1.5 h-6 leading-[1.125rem]',
     })
     ->add(match ($hasLeadingIcon) {
         true => 'ps-10',
@@ -138,7 +138,7 @@ $classes = Flux::classes()
 <?php elseif ($as !== 'button'): ?>
     <flux:with-field :$attributes :$name>
         <div {{ $attributes->only('class')->class('w-full relative block group/input') }} data-flux-input>
-            <?php if (is_string($iconLeading)): ?>
+            <?php if (is_string($iconLeading) && $iconLeading !== ''): ?>
                 <div class="pointer-events-none absolute top-0 bottom-0 border-s border-transparent flex items-center justify-center text-xs text-zinc-400/75 dark:text-white/60 ps-3 start-0">
                     <flux:icon :icon="$iconLeading" :variant="$iconVariant" :class="$iconClasses" />
                 </div>
@@ -178,7 +178,7 @@ $classes = Flux::classes()
                     <?php endif; ?>
 
                     <?php if ($kbd): ?>
-                        <span class="pointer-events-none">{{ $kbd }}</span>
+                        <span class="pointer-events-none last:pe-2">{{ $kbd }}</span>
                     <?php endif; ?>
 
                     <?php if ($expandable): ?>
@@ -193,7 +193,7 @@ $classes = Flux::classes()
                         <flux:input.viewable inset="left right" :$size :$iconVariant />
                     <?php endif; ?>
 
-                    <?php if (is_string($iconTrailing)): ?>
+                    <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>
                         <?php
                             $trailingIconClasses = clone $iconClasses;
                             $trailingIconClasses->add('text-zinc-400/75 dark:text-white/60 pointer-events-none');
@@ -208,7 +208,7 @@ $classes = Flux::classes()
     </flux:with-field>
 <?php else: ?>
     <button {{ $attributes->merge(['type' => 'button'])->class([$classes, 'w-full relative flex']) }}>
-        <?php if (is_string($iconLeading)): ?>
+        <?php if (is_string($iconLeading) && $iconLeading !== ''): ?>
             <div class="absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 ps-3 start-0">
                 <flux:icon :icon="$iconLeading" :variant="$iconVariant" :class="$iconClasses" />
             </div>
@@ -234,7 +234,7 @@ $classes = Flux::classes()
             </div>
         <?php endif; ?>
 
-        <?php if (is_string($iconTrailing)): ?>
+        <?php if (is_string($iconTrailing) && $iconTrailing !== ''): ?>
             <div class="absolute top-0 bottom-0 flex items-center justify-center text-xs text-zinc-400/75 pe-3 end-0">
                 <flux:icon :icon="$iconTrailing" :variant="$iconVariant" :class="$iconClasses" />
             </div>

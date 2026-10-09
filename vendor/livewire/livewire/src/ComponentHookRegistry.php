@@ -73,6 +73,10 @@ class ComponentHookRegistry
             return static::proxyCallToHooks($component, 'callRenderIsland')($name, $view, $data);
         });
 
+        on('render.placeholder', function ($component, $view, $data) {
+            return static::proxyCallToHooks($component, 'callRenderPlaceholder')($view, $data);
+        });
+
         on('dehydrate', function ($component, $context) {
             static::proxyCallToHooks($component, 'callDehydrate')($context);
         });
@@ -82,6 +86,10 @@ class ComponentHookRegistry
         });
 
         on('exception', function ($target, $e, $stopPropagation) {
+            if ($target instanceof \Livewire\Features\SupportFormObjects\Form) {
+                $target = $target->getComponent();
+            }
+
             if ($target instanceof \Livewire\Component) {
                 static::proxyCallToHooks($target, 'callException')($e, $stopPropagation);
             }

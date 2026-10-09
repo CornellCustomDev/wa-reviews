@@ -20,12 +20,17 @@
 ])
 
 @php
-$tooltip ??= $slot->isNotEmpty() ? (string) $slot : null;
+// Slots contain rendered HTML (including conditional comments) and encoded entities.
+// Tooltips should mirror only the visible text.
+$tooltip ??= $slot->isNotEmpty()
+    ? trim(html_entity_decode(strip_tags((string) $slot), ENT_QUOTES | ENT_HTML5, 'UTF-8'))
+    : null;
 
 // Size-up icons in square/icon-only buttons...
 $iconClasses = Flux::classes('size-4')
     ->add('in-data-flux-sidebar-group-dropdown:text-zinc-400! dark:in-data-flux-sidebar-group-dropdown:text-white/80!')
-    ->add('[[data-flux-sidebar-item]:hover_&]:text-current!');
+    ->add('[[data-flux-sidebar-item]:hover_&]:text-current!')
+    ->add('[[data-flux-sidebar-item][data-active]_&]:text-current!');
 
 $classes = Flux::classes()
     ->add('h-8 in-data-flux-sidebar-on-mobile:h-10 relative flex items-center gap-3 rounded-lg')
@@ -47,12 +52,14 @@ $classes = Flux::classes()
     })
     // Override the default styles to match dropdowns for when the item is inside a collapsed group dropdown...
     ->add('in-data-flux-sidebar-group-dropdown:w-auto! in-data-flux-sidebar-group-dropdown:px-2!')
+    ->add('in-data-flux-sidebar-group-dropdown:focus:outline-hidden!')
     ->add('in-data-flux-sidebar-group-dropdown:text-zinc-800! in-data-flux-sidebar-group-dropdown:bg-white! in-data-flux-sidebar-group-dropdown:hover:bg-zinc-50!')
-    ->add('dark:in-data-flux-sidebar-group-dropdown:text-white! dark:in-data-flux-sidebar-group-dropdown:bg-transparent! dark:in-data-flux-sidebar-group-dropdown:hover:bg-zinc-600!')
+    ->add('in-data-flux-sidebar-group-dropdown:data-active:bg-zinc-50!')
+    ->add('dark:in-data-flux-sidebar-group-dropdown:text-white! dark:in-data-flux-sidebar-group-dropdown:bg-transparent! dark:in-data-flux-sidebar-group-dropdown:hover:bg-zinc-600! dark:in-data-flux-sidebar-group-dropdown:data-active:bg-zinc-600!')
     ;
 @endphp
 
-<flux:tooltip :position="$tooltipPosition">
+<flux:tooltip :position="$tooltipPosition" class="block min-w-0">
     <flux:button-or-link :attributes="$attributes->class($classes)" data-flux-sidebar-item>
         <?php if ($icon): ?>
             <div class="relative">

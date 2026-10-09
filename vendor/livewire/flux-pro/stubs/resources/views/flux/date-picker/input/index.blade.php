@@ -1,4 +1,7 @@
-@blaze(fold: true)
+@blaze(fold: true, unsafe: [
+    // variant props
+    'placeholder', 'clearable', 'dropdown', 'invalid', 'size',
+])
 
 @props([
     'variant' => 'native',

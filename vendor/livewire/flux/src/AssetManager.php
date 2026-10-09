@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 
 class AssetManager
 {
+    protected static ?array $flagManifest = null;
+    protected static ?array $phoneManifest = null;
+
     static function boot()
     {
         $instance = new static;
@@ -39,6 +42,51 @@ class AssetManager
         Route::get('/flux/editor.css', [static::class, 'editorCss']);
         Route::get('/flux/editor.js', [static::class, 'editorJs']);
         Route::get('/flux/editor.min.js', [static::class, 'editorMinJs']);
+        Route::get('/flux/phone.js', [static::class, 'phoneJs']);
+        Route::get('/flux/phone.min.js', [static::class, 'phoneMinJs']);
+        Route::get('/flux/phone-utils.js', [static::class, 'phoneUtilsJs']);
+        Route::get('/flux/flags/{country}', [static::class, 'flag'])
+            ->where('country', '[A-Za-z]{2}')
+            ->name('__flux.flag');
+    }
+
+    public function flag(string $country)
+    {
+        $country = strtoupper($country);
+
+        abort_unless(static::hasFlag($country), 404);
+
+        return $this->pretendResponseIsFile(
+            __DIR__.'/../dist/flags/'.$country.'.svg',
+            'image/svg+xml; charset=utf-8',
+            ['X-Content-Type-Options' => 'nosniff'],
+        );
+    }
+
+    public static function flagUrl(string $country): ?string
+    {
+        $country = strtoupper(trim($country));
+        $hash = static::flagManifest()[$country] ?? null;
+
+        if (! $hash) return null;
+
+        // Following scripts(), editorScripts(), and editorStyles()
+        // Related: https://github.com/livewire/flux/pull/2183
+        return url(route('__flux.flag', ['country' => $country], false).'?id='.$hash);
+    }
+
+    public static function hasFlag(string $country): bool
+    {
+        return isset(static::flagManifest()[strtoupper(trim($country))]);
+    }
+
+    protected static function flagManifest(): array
+    {
+        return static::$flagManifest ??= json_decode(
+            file_get_contents(__DIR__.'/../dist/flags/manifest.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        )['flags'];
     }
 
     public function fluxJs() {
@@ -69,6 +117,24 @@ class AssetManager
         if (! Flux::pro()) throw new \Exception('Flux Pro is required to use the Flux editor.');
 
         return $this->pretendResponseIsFile(__DIR__.'/../../flux-pro/dist/editor.min.js', 'text/javascript');
+    }
+
+    public function phoneJs() {
+        if (! Flux::pro()) throw new \Exception('Flux Pro is required to use the Flux phone input.');
+
+        return $this->pretendResponseIsFile(__DIR__.'/../../flux-pro/dist/phone.js', 'text/javascript');
+    }
+
+    public function phoneMinJs() {
+        if (! Flux::pro()) throw new \Exception('Flux Pro is required to use the Flux phone input.');
+
+        return $this->pretendResponseIsFile(__DIR__.'/../../flux-pro/dist/phone.min.js', 'text/javascript');
+    }
+
+    public function phoneUtilsJs() {
+        if (! Flux::pro()) throw new \Exception('Flux Pro is required to use the Flux phone input.');
+
+        return $this->pretendResponseIsFile(__DIR__.'/../../flux-pro/dist/phone-utils.js', 'text/javascript');
     }
 
     public static function scripts($options = [])
@@ -154,12 +220,45 @@ HTML;
         return '<link rel="stylesheet" href="'. url('/flux/editor.css?id='. $versionHash) . '"' . $nonceAttr . '>';
     }
 
-    public function pretendResponseIsFile($file, $contentType = 'application/javascript; charset=utf-8')
+    public static function phoneScripts($nonce = null)
+    {
+        $manifest = static::phoneManifest();
+
+        $versionHash = $manifest['/phone.js'];
+
+        $nonceAttr = $nonce ? ' nonce="' . $nonce . '"' : '';
+
+        if (config('app.debug')) {
+            return '<script src="'. url('/flux/phone.js?id='. $versionHash) . '" defer' . $nonceAttr . '></script>';
+        } else {
+            return '<script src="'. url('/flux/phone.min.js?id='. $versionHash) . '" defer' . $nonceAttr . '></script>';
+        }
+    }
+
+    public static function phoneUtilsUrl()
+    {
+        $manifest = static::phoneManifest();
+
+        $versionHash = $manifest['/phone-utils.js'];
+
+        return url('/flux/phone-utils.js?id='. $versionHash);
+    }
+
+    protected static function phoneManifest(): array
+    {
+        return static::$phoneManifest ??= json_decode(
+            file_get_contents(__DIR__.'/../../flux-pro/dist/manifest.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+    }
+
+    public function pretendResponseIsFile($file, $contentType = 'application/javascript; charset=utf-8', $headers = [])
     {
         $lastModified = filemtime($file);
 
         return $this->cachedFileResponse($file, $contentType, $lastModified,
-            fn ($headers) => response()->file($file, $headers));
+            fn ($cacheHeaders) => response()->file($file, array_merge($cacheHeaders, $headers)));
     }
 
     protected function cachedFileResponse($filename, $contentType, $lastModified, $downloadCallback)

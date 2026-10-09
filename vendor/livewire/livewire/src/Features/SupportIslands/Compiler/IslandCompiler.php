@@ -4,16 +4,23 @@ namespace Livewire\Features\SupportIslands\Compiler;
 
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Arr;
+use Livewire\Compiler\Parser\Parser;
 
 class IslandCompiler
 {
     protected string $mutableContents;
+
+    protected ?string $imports;
 
     public function __construct(
         public string $pathSignature,
         public string $contents,
     ) {
         $this->mutableContents = $contents;
+
+        // Islands are extracted into separately compiled views, so any imports
+        // from the top of the view need to be carried into each island...
+        $this->imports = $this->extractImports();
     }
 
     public static function compile(string $pathSignature, string $contents): string
@@ -49,6 +56,8 @@ class IslandCompiler
         [$contents, $comments] = $this->stripBladeComments($this->mutableContents);
 
         $result = $compiler->compileStatementsMadePublic($contents);
+
+        $result = $this->restoreSetAsideDirectives($result, $compiler->setAsideDirectives);
 
         $result = $this->restoreBladeComments($result, $comments);
 
@@ -98,8 +107,13 @@ class IslandCompiler
         $scopeProviderCode = $this->generateScopeProviderCode($expression);
         $innerContent = $scopeProviderCode . $innerContent;
 
+        // Carry imports from the top of the view into the extracted island view...
+        if ($this->imports) {
+            $innerContent = $this->imports . "\n\n" . $innerContent;
+        }
+
         // Ensure the cached directory exists...
-        File::ensureDirectoryExists(dirname($cachedPath));
+        File::ensureDirectoryExists(dirname($cachedPath), 0777);
 
         // Write the cached island to the file system...
         file_put_contents($cachedPath, $innerContent);
@@ -107,6 +121,30 @@ class IslandCompiler
         app('livewire.compiler')->cacheManager->prepareGeneratedFileForCompilation($cachedPath);
 
         return $output;
+    }
+
+    protected function extractImports(): ?string
+    {
+        $prefix = explode('@island', $this->contents, 2)[0];
+
+        $imports = [];
+
+        // Collect `use` statements from leading PHP blocks (the compiler hoists
+        // an SFC's imports into one of these at the top of the view)...
+        while (preg_match('/\A\s*<\?php(.*?)\?>/s', $prefix, $matches)) {
+            if ($statements = Parser::extractUseStatements($matches[1])) {
+                $imports[] = "<?php\n" . $statements . "\n?>";
+            }
+
+            $prefix = substr($prefix, strlen($matches[0]));
+        }
+
+        // Collect `@use(...)` directives as-is and let Blade compile them within the island...
+        if (preg_match_all('/(?<![@\w])@use\s*\([^)]*\)/', $prefix, $matches)) {
+            $imports = array_merge($imports, $matches[0]);
+        }
+
+        return $imports ? implode("\n", $imports) : null;
     }
 
     protected function generateScopeProviderCode(string $expression): string
@@ -174,18 +212,41 @@ PHP;
         }, $contents);
     }
 
+    protected function restoreSetAsideDirectives(string $contents, array $directives): string
+    {
+        return strtr($contents, $directives);
+    }
+
     public function getHackedBladeCompiler()
     {
         $instance = new class (
             app('files'),
             rtrim(config('view.compiled'), '/\\') . '/livewire',
         ) extends \Illuminate\View\Compilers\BladeCompiler {
+            public array $setAsideDirectives = [];
+
+            protected string $setAsideDirectivePrefix = '[LIVEWIRE_DIRECTIVE:';
+
             /**
-             * Make this method public...
+             * Make statement compilation public and reserve a placeholder prefix
+             * that does not collide with authored view content...
              */
             public function compileStatementsMadePublic($template)
             {
+                while (str_contains($template, $this->setAsideDirectivePrefix)) {
+                    $this->setAsideDirectivePrefix .= '_';
+                }
+
                 return $this->compileStatements($template);
+            }
+
+            protected function setAside($directive)
+            {
+                $placeholder = $this->setAsideDirectivePrefix . count($this->setAsideDirectives) . ']';
+
+                $this->setAsideDirectives[$placeholder] = $directive;
+
+                return $placeholder;
             }
 
             /**
@@ -194,21 +255,15 @@ PHP;
              */
             protected function compileStatement($match)
             {
-                if (str_contains($match[1], '@')) {
-                    $match[0] = isset($match[3]) ? $match[1].$match[3] : $match[1];
-                } elseif (isset($this->customDirectives[$match[1]])) {
-                    $match[0] = $this->callCustomDirective($match[1], Arr::get($match, 3));
-                } elseif (method_exists($this, $method = 'compile'.ucfirst($match[1]))) {
-                    // Don't process through built-in directive methods...
-                    // $match[0] = $this->$method(Arr::get($match, 3));
+                if (isset($this->customDirectives[$match[1]])) {
+                    $compiled = $this->callCustomDirective($match[1], Arr::get($match, 3));
 
-                    // Just return the original match...
-                    return $match[0];
-                } else {
-                    return $match[0];
+                    return isset($match[3]) ? $compiled : $compiled.$match[2];
                 }
 
-                return isset($match[3]) ? $match[0] : $match[0].$match[2];
+                // Blade moves forward as it replaces statements, so foreign directives
+                // must be consumed during this island-only pass and restored afterward...
+                return $this->setAside($match[0]);
             }
         };
 

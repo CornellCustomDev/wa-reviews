@@ -34,10 +34,10 @@ $thumbClasses = Flux::classes()
         <div data-flux-slider-track class="{{ $trackClasses }}">
             {{-- Custom track background for color picker --}}
             @if ($channel === 'hue')
-                <div class="absolute inset-0 rounded-full" style="background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);"></div>
+                <div class="absolute inset-0 rounded-full rtl:-scale-x-100" style="background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);"></div>
             @else
                 <div class="absolute inset-0 rounded-full" style="background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%); background-size: 8px 8px; background-position: 0 0, 0 4px, 4px -4px, -4px 0px;" data-flux-color-picker-slider-checkerboard></div>
-                <div class="absolute inset-0 rounded-full" data-flux-color-picker-slider-track></div>
+                <div class="absolute inset-0 rounded-full rtl:-scale-x-100" data-flux-color-picker-slider-track></div>
             @endif
 
             {{-- Hidden indicator (not used visually, but ui-slider expects it) --}}

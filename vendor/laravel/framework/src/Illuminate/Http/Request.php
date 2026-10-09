@@ -391,7 +391,11 @@ class Request extends SymfonyRequest implements Arrayable, ArrayAccess
         return tap($this, function (Request $request) use ($input) {
             $request->getInputSource()
                 ->replace((new Collection($input))->reduce(
-                    fn ($requestInput, $value, $key) => data_set($requestInput, $key, $value),
+                    function ($requestInput, $value, $key) {
+                        Arr::set($requestInput, $key, $value);
+
+                        return $requestInput;
+                    },
                     $this->getInputSource()->all()
                 ));
         });
@@ -462,7 +466,9 @@ class Request extends SymfonyRequest implements Arrayable, ArrayAccess
     public function json($key = null, $default = null)
     {
         if (! isset($this->json)) {
-            $this->json = new InputBag((array) json_decode($this->getContent() ?: '[]', true));
+            $content = $this->getContent();
+
+            $this->json = new InputBag((array) json_decode(trim($content) === '' ? '[]' : $content, true));
         }
 
         if (is_null($key)) {

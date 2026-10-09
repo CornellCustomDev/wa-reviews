@@ -1,6 +1,6 @@
 # Groq PHP
 
-![Groq PHP](https://raw.githubusercontent.com/lucianotonet/groq-php/v0.0.9/art.png)
+![Groq PHP](https://raw.githubusercontent.com/lucianotonet/groq-php/main/art.png)
 
 [![Version](https://img.shields.io/github/v/release/lucianotonet/groq-php)](https://packagist.org/packages/lucianotonet/groq-php) [![Total Downloads](https://img.shields.io/packagist/dt/lucianotonet/groq-php)](https://packagist.org/packages/lucianotonet/groq-php) [![Tests](https://github.com/lucianotonet/groq-php/actions/workflows/tests.yml/badge.svg)](https://github.com/lucianotonet/groq-php/actions/workflows/tests.yml) [![License](https://img.shields.io/packagist/l/lucianotonet/groq-php)](https://packagist.org/packages/lucianotonet/groq-php)
 
@@ -19,6 +19,10 @@ Using on Laravel? Check this out: [GroqLaravel](https://github.com/lucianotonet/
 - [x] [Vision](#5-vision)
 - [x] [Reasoning](#6-reasoning)
 - [x] [Files and Batch Processing](#7-files-and-batch-processing)
+- [x] [Built-in Tools & Compound (web search, code execution)](#9-built-in-tools--compound)
+- [x] [Documents (RAG) & Citations](#10-documents-rag--citations)
+- [x] [Responses API](#11-responses-api)
+- [x] [Prompt Caching & Content Moderation](#prompt-caching--content-moderation)
 
 ## Installation
 
@@ -55,6 +59,20 @@ List available models.
 ```php
 $models = $groq->models()->list();
 print_r($models['data']);
+// print_r output (formatted):
+// Array (
+//   [0] => Array ( [id] => openai/gpt-oss-20b [object] => model [owned_by] => OpenAI )
+//   [1] => Array ( [id] => whisper-large-v3 [object] => model [owned_by] => Groq )
+//   ...
+// )
+```
+
+Retrieve a single model by its ID:
+
+```php
+$model = $groq->models()->retrieve('openai/gpt-oss-20b');
+echo $model['id'];
+// Output: openai/gpt-oss-20b
 ```
 
 ### 2. Chat (Completions)
@@ -70,13 +88,27 @@ $groq = new Groq(getenv('GROQ_API_KEY'));
 
 try {
     $response = $groq->chat()->completions()->create([
-        'model' => 'llama3-8b-8192', // Or another supported model
+        'model' => 'openai/gpt-oss-20b', // Or another supported model
         'messages' => [
             ['role' => 'user', 'content' => 'Explain the importance of low latency in LLMs'],
         ],
     ]);
 
     echo $response['choices'][0]['message']['content'];
+    // Expected response structure (formatted):
+    // {
+    //   "id": "chatcmpl-9a8b7c6d",
+    //   "object": "chat.completion",
+    //   "model": "openai/gpt-oss-20b",
+    //   "choices": [
+    //     {
+    //       "index": 0,
+    //       "message": { "role": "assistant", "content": "Low latency is critical because ..." },
+    //       "finish_reason": "stop"
+    //     }
+    //   ],
+    //   "usage": { "prompt_tokens": 15, "completion_tokens": 120, "total_tokens": 135 }
+    // }
 } catch (\LucianoTonet\GroqPHP\GroqException $e) {
     echo 'Error: ' . $e->getMessage();
 }
@@ -86,7 +118,7 @@ try {
 
 ```php
 $response = $groq->chat()->completions()->create([
-    'model' => 'llama3-8b-8192',
+    'model' => 'openai/gpt-oss-20b',
     'messages' => [
         ['role' => 'user', 'content' => 'Tell me a short story'],
     ],
@@ -100,13 +132,20 @@ foreach ($response->chunks() as $chunk) {
         flush();
     }
 }
+
+// Streamed chunk structure (formatted):
+// {
+//   "id": "chatcmpl-...",
+//   "choices": [ { "delta": { "role": "assistant", "content": "Once" }, "finish_reason": null } ]
+// }
+// Chunks stream until finish_reason: "stop" (then a final [DONE] signal).
 ```
 
 **JSON Mode:**
 
 ```php
 $response = $groq->chat()->completions()->create([
-    'model' => 'llama3-70b-8192',
+        'model' => 'openai/gpt-oss-120b',
     'messages' => [
         ['role' => 'system', 'content' => 'You are an API and must respond only with valid JSON.'],
         ['role' => 'user', 'content' => 'Give me information about the current weather in London'],
@@ -116,6 +155,51 @@ $response = $groq->chat()->completions()->create([
 
 $content = $response['choices'][0]['message']['content'];
 echo json_encode(json_decode($content), JSON_PRETTY_PRINT); // Display formatted JSON
+// Output (formatted JSON):
+// {
+//   "location": "London",
+//   "temperature": "15",
+//   "unit": "Celsius"
+// }
+```
+
+**Structured Outputs (`json_schema`):**
+
+Guarantee the response conforms to a JSON schema. In `strict` mode the model uses
+constrained decoding, so the output always matches the schema exactly.
+
+```php
+$response = $groq->chat()->completions()->create([
+    'model' => 'openai/gpt-oss-20b',
+    'messages' => [
+        ['role' => 'system', 'content' => 'Extract product review information from the text.'],
+        ['role' => 'user', 'content' => 'I bought the UltraSound Headphones and I am really impressed!'],
+    ],
+    'response_format' => [
+        'type' => 'json_schema',
+        'json_schema' => [
+            'name' => 'product_review',
+            'strict' => true,
+            'schema' => [
+                'type' => 'object',
+                'properties' => [
+                    'product_name' => ['type' => 'string'],
+                    'rating' => ['type' => 'number'],
+                ],
+                'required' => ['product_name', 'rating'],
+                'additionalProperties' => false,
+            ],
+        ],
+    ],
+]);
+
+$result = json_decode($response['choices'][0]['message']['content'], true);
+echo $result['product_name'];
+// Output (formatted JSON):
+// {
+//   "product_name": "UltraSound Headphones",
+//   "rating": 5
+// }
 ```
 
 **Additional Parameters (Chat Completions):**
@@ -163,7 +247,7 @@ $tools = [
 ];
 
 $response = $groq->chat()->completions()->create([
-    'model' => 'llama3-groq-70b-8192-tool-use-preview', // Model that supports tool calling
+        'model' => 'openai/gpt-oss-120b', // Model that supports tool calling
     'messages' => $messages,
     'tool_choice' => 'auto',
     'tools' => $tools
@@ -184,7 +268,7 @@ if (isset($response['choices'][0]['message']['tool_calls'])) {
 
     // Second call to the model with tool response:
     $response = $groq->chat()->completions()->create([
-        'model' => 'llama3-groq-70b-8192-tool-use-preview',
+        'model' => 'openai/gpt-oss-120b',
         'messages' => $messages
     ]);
     echo $response['choices'][0]['message']['content'];
@@ -192,6 +276,22 @@ if (isset($response['choices'][0]['message']['tool_calls'])) {
     // Direct response, no tool_calls
     echo $response['choices'][0]['message']['content'];
 }
+
+// When the model requests a tool, the first response includes:
+// {
+//   "choices": [
+//     {
+//       "message": {
+//         "role": "assistant",
+//         "tool_calls": [
+//           { "id": "call_abc", "type": "function", "function": { "name": "getNbaScore", "arguments": "{\"team_name\":\"Lakers\"}" } }
+//         ]
+//       }
+//     }
+//   ]
+// }
+// After calling getNbaScore() and sending the result back, the final echoed
+// content is, e.g.: "The Lakers currently have 100 points."
 ```
 
 **Advanced Tool Calling (with multiple tools and parallel calls):**
@@ -220,6 +320,13 @@ try {
     ]);
 
     echo json_encode($transcription, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    // Output (formatted JSON):
+    // {
+    //   "text": "Hello, how can I help you today",
+    //   "language": "english",
+    //   "duration": 3.2,
+    //   "segments": [ { "start": 0.0, "end": 2.1, "text": "Hello, how can I help you today" } ]
+    // }
 } catch (\LucianoTonet\GroqPHP\GroqException $e) {
     echo "Error: " . $e->getMessage();
 }
@@ -249,9 +356,9 @@ $groq = new Groq(getenv('GROQ_API_KEY'));
 try {
     // Method 1: Save to file
     $result = $groq->audio()->speech()
-        ->model('playai-tts')  // 'playai-tts' for English, 'playai-tts-arabic' for Arabic
+        ->model('canopylabs/orpheus-v1-english')  // 'canopylabs/orpheus-v1-english' for English, 'canopylabs/orpheus-arabic-saudi' for Arabic
         ->input('Hello, this text will be converted to speech')
-        ->voice('Bryan-PlayAI')  // Voice identifier
+        ->voice('troy')  // Voice identifier
         ->responseFormat('wav')  // Output format
         ->save('output.wav');
     
@@ -261,9 +368,9 @@ try {
     
     // Method 2: Get as stream
     $audioStream = $groq->audio()->speech()
-        ->model('playai-tts')
+        ->model('canopylabs/orpheus-v1-english')
         ->input('This is another example text')
-        ->voice('Bryan-PlayAI')
+        ->voice('troy')
         ->create();
     
     // Use the stream (e.g., send to browser)
@@ -274,14 +381,17 @@ try {
 } catch (\LucianoTonet\GroqPHP\GroqException $e) {
     echo "Error: " . $e->getMessage();
 }
+
+// Method 1 prints: "Audio file saved successfully!"
+// Method 2 streams raw WAV audio bytes (Content-Type: audio/wav).
 ```
 
-- **Models:** `'playai-tts'` (English), `'playai-tts-arabic'` (Arabic)
+- **Models:** `'canopylabs/orpheus-v1-english'` (English), `'canopylabs/orpheus-arabic-saudi'` (Arabic)
 - **Parameters:**
   - `model()`: The TTS model to use
-  - `input()`: Text to convert to speech
-  - `voice()`: Voice identifier (e.g., "Bryan-PlayAI")
-  - `responseFormat()`: Output format (default: "wav")
+  - `input()`: Text to convert to speech (Orpheus models accept a maximum of 200 characters)
+  - `voice()`: Voice identifier (e.g., "troy")
+  - `responseFormat()`: Output format. Orpheus models only support `"wav"` (default)
 - **Methods:**
   - `create()`: Returns audio content as stream
   - `save($filePath)`: Saves audio to a file and returns success boolean
@@ -305,15 +415,24 @@ try {
     // Custom options
     $response = $groq->vision()->analyze('path/to/image.jpg', 'What colors do you see?', [
         'temperature' => 0.7,
-        'max_tokens' => 100
+        'max_completion_tokens' => 100
     ]);
+
+    echo $response['choices'][0]['message']['content'];
+    // Expected response structure (formatted):
+    // {
+    //   "choices": [
+    //     { "message": { "role": "assistant", "content": "I see a sunset over the mountains..." }, "finish_reason": "stop" }
+    //   ],
+    //   "usage": { "prompt_tokens": 120, "completion_tokens": 40, "total_tokens": 160 }
+    // }
 } catch (\LucianoTonet\GroqPHP\GroqException $e) {
     echo 'Error: ' . $e->getMessage();
 }
 ```
 
 **Vision Model:**
-The vision functionality uses the `meta-llama/llama-4-scout-17b-16e-instruct` model by default, which supports:
+The vision functionality uses the `qwen/qwen3.6-27b` model by default, which supports:
 - Local image analysis (up to 4MB)
 - URL image analysis (up to 20MB)
 - Multi-turn conversations
@@ -333,7 +452,7 @@ try {
     $response = $groq->reasoning()->analyze(
         'Explain the process of photosynthesis.',
         [
-            'model' => 'deepseek-r1-distill-llama-70b',
+            'model' => 'qwen/qwen3.6-27b',
             'reasoning_format' => 'raw', // 'raw' (default), 'parsed', 'hidden'
             'temperature' => 0.6,
             'max_completion_tokens' => 10240
@@ -341,19 +460,28 @@ try {
     );
 
     echo $response['choices'][0]['message']['content'];
+    // Expected response structure (formatted):
+    // {
+    //   "choices": [
+    //     { "message": { "role": "assistant", "content": "<think>Photosynthesis converts light...</think>\nPhotosynthesis is the process by which..." }, "finish_reason": "stop" }
+    //   ],
+    //   "usage": { "prompt_tokens": ..., "completion_tokens": ..., "total_tokens": ... }
+    // }
 } catch (\LucianoTonet\GroqPHP\GroqException $e) {
     echo "Error: " . $e->getMessage();
 }
 ```
 
 - **`analyze()`:** Takes the prompt (question/problem) and an options array.
-- **`reasoning_format`:**
+- **`reasoning_format`:** (not supported by `openai/gpt-oss` models)
   - `'raw'`: Includes reasoning with `<think>` tags in content (default)
   - `'parsed'`: Returns reasoning in a separate `reasoning` field
   - `'hidden'`: Returns only the final answer
+- **`include_reasoning`:** (bool) Whether to include reasoning in `message.reasoning`. Mutually exclusive with `reasoning_format`. For `openai/gpt-oss` models use this instead (e.g., `'hidden'` → `include_reasoning => false`).
+- **`reasoning_effort`:** (string) Reasoning effort for supported models — `none`/`default` for `qwen/qwen3.6-27b`; `low`/`medium`/`high` for `openai/gpt-oss-*`.
 - **`system_prompt`:** Additional instructions for the model (optional). Added as a `system` message *before* the user message.
 - Must use `'parsed'` or `'hidden'` format when using JSON mode
-- Optional parameters: `temperature`, `max_completion_tokens`, `top_p`, `frequency_penalty`, etc.
+- Optional parameters: `temperature`, `max_completion_tokens`, `top_p`, `frequency_penalty`, `service_tier` (`auto`|`on_demand`|`flex`|`performance`|`null`), etc.
 
 #### Reasoning Formats
 
@@ -367,7 +495,7 @@ The reasoning feature supports three output formats:
    $response = $groq->reasoning()->analyze(
        "Explain quantum entanglement.",
        [
-           'model' => 'deepseek-r1-distill-llama-70b',
+            'model' => 'qwen/qwen3.6-27b',
            'reasoning_format' => 'raw'
        ]
    );
@@ -382,7 +510,7 @@ The reasoning feature supports three output formats:
    $response = $groq->reasoning()->analyze(
        "Solve this math problem: 3x + 7 = 22",
        [
-           'model' => 'deepseek-r1-distill-llama-70b',
+            'model' => 'qwen/qwen3.6-27b',
            'reasoning_format' => 'parsed'
        ]
    );
@@ -401,7 +529,7 @@ The reasoning feature supports three output formats:
    $response = $groq->reasoning()->analyze(
        "What is the capital of France?",
        [
-           'model' => 'deepseek-r1-distill-llama-70b',
+            'model' => 'qwen/qwen3.6-27b',
            'reasoning_format' => 'hidden'
        ]
    );
@@ -437,6 +565,12 @@ $content = $fileManager->download('file_id');
 
 // Delete file
 $fileManager->delete('file_id');
+
+// Expected response structures (formatted):
+// upload()    -> { "id": "file_abc123", "object": "file", "bytes": 1234, "filename": "file.jsonl", "purpose": "batch" }
+// list()      -> { "object": "list", "data": [ { "id": "file_abc123", "filename": "file.jsonl" } ], "has_more": false }
+// retrieve()  -> { "id": "file_abc123", "object": "file", "bytes": 1234, "filename": "file.jsonl", "purpose": "batch" }
+// download()  -> raw file contents as a string
 ```
 
 #### Batch Processing
@@ -467,6 +601,13 @@ $summary = $batch->getSummary();
 
 // Cancel batch
 $batch = $batchManager->cancel('batch_id');
+
+// Expected response structures (formatted):
+// create()   -> { "id": "batch_abc123", "object": "batch", "status": "validating", "endpoint": "/v1/chat/completions", "completion_window": "24h" }
+// list()     -> { "object": "list", "data": [ { "id": "batch_abc123", "status": "completed" } ], "has_more": false }
+// retrieve() -> { "id": "batch_abc123", "status": "completed", "request_counts": { "total": 10, "completed": 10, "failed": 0 } }
+// cancel()   -> { "id": "batch_abc123", "status": "cancelling" }
+// getSummary() -> { "total": 10, "completed": 10, "failed": 0 }
 ```
 
 **File Requirements:**
@@ -480,9 +621,9 @@ $batch = $batchManager->cancel('batch_id');
 
 **Example JSONL file:**
 ```jsonl
-{"custom_id": "chat-request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "llama-3.1-8b-instant", "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "What is quantum computing?"}]}}
+{"custom_id": "chat-request-1", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "openai/gpt-oss-20b", "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "What is quantum computing?"}]}}
 {"custom_id": "audio-request-1", "method": "POST", "url": "/v1/audio/transcriptions", "body": {"model": "whisper-large-v3", "language": "en", "url": "https://github.com/voxserv/audio_quality_testing_samples/raw/refs/heads/master/testaudio/8000/test01_20s.wav", "response_format": "verbose_json", "timestamp_granularities": ["segment"]}}
-{"custom_id": "chat-request-2", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "llama-3.3-70b-versatile", "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Explain machine learning in simple terms."}]}}
+{"custom_id": "chat-request-2", "method": "POST", "url": "/v1/chat/completions", "body": {"model": "openai/gpt-oss-120b", "messages": [{"role": "system", "content": "You are a helpful assistant."}, {"role": "user", "content": "Explain machine learning in simple terms."}]}}
 {"custom_id":"audio-request-2","method":"POST","url":"/v1/audio/translations","body":{"model":"whisper-large-v3","language":"en","url":"https://console.groq.com/audio/batch/sample-zh.wav","response_format":"verbose_json","timestamp_granularities":["segment"]}}
 ```
 
@@ -531,9 +672,205 @@ try {
         echo "Invalid JSON: " . $e->getFailedGeneration();
     }
 }
+
+// Output:
+// Groq Error: Incorrect API key provided
+// Type: authentication_error
+// Code: 401
 ```
 
 The `GroqException` class provides static methods for creating specific exceptions like `invalidRequest()`, `authenticationError()`, etc., following a factory pattern.
+
+### 9. Built-in Tools & Compound
+
+Groq's Compound systems (`compound-beta`, `compound-beta-mini`) ship server-side tools
+(web search, visit website, code execution, Wolfram Alpha) that run without any local
+function-calling setup. Use `LucianoTonet\GroqPHP\BuiltInTools` to build the
+`compound_custom` payload:
+
+```php
+use LucianoTonet\GroqPHP\Groq;
+use LucianoTonet\GroqPHP\BuiltInTools;
+
+$groq = new Groq(getenv('GROQ_API_KEY'));
+
+$response = $groq->chat()->completions()->create([
+    'model' => 'compound-beta',
+    'messages' => [
+        ['role' => 'user', 'content' => 'What happened in AI last week?'],
+    ],
+    'compound_custom' => BuiltInTools::compound([
+        BuiltInTools::WEB_SEARCH,
+        BuiltInTools::CODE_INTERPRETER,
+    ]),
+    'search_settings' => ['exclude_domains' => ['wikipedia.org']],
+]);
+
+echo $response['choices'][0]['message']['content'];
+// Expected response structure (formatted):
+// {
+//   "choices": [
+//     { "message": { "role": "assistant", "content": "Last week's AI highlights included new open-weight releases and faster inference benchmarks." }, "finish_reason": "stop" }
+//   ]
+// }
+```
+
+See `examples/built-in-tools.php` for a runnable script.
+
+### 10. Documents (RAG) & Citations
+
+Provide context documents directly in the request via the `documents` parameter. When
+`citation_options` is `enabled`, the model includes citations referencing those documents:
+
+```php
+use LucianoTonet\GroqPHP\BuiltInTools;
+
+$response = $groq->chat()->completions()->create([
+    'model' => 'llama-3.3-70b-versatile', // a model that supports documents
+    'messages' => [
+        ['role' => 'user', 'content' => 'Summarize the provided document'],
+    ],
+    'documents' => [
+        BuiltInTools::document('Groq is a fast inference platform...', 'doc-1'),
+    ],
+    'citation_options' => 'enabled',
+]);
+
+echo $response['choices'][0]['message']['content'];
+// Expected response structure (formatted):
+// {
+//   "choices": [
+//     { "message": { "role": "assistant", "content": "Groq is a fast AI inference platform focused on low-latency LLM serving." }, "finish_reason": "stop" }
+//   ],
+//   "citations": [ { "document": "doc-1", "url": "...", "title": "..." } ]  // present when citation_options=enabled
+// }
+```
+
+`BuiltInTools::document()` builds a text document; `BuiltInTools::documentFromFile()`
+builds one backed by a file previously uploaded via the Files API.
+
+> **Model support:** `documents` and `citation_options` are forwarded as-is, but only
+> models that enable them accept them. The historical RAG models (`llama-3.3-70b-versatile`,
+> `llama-3.1-8b-instant`) were retired on 2026-08-16 for free/developer tiers, so on those
+> tiers the current models (`openai/gpt-oss-*`, `qwen/qwen3.6-27b`, `compound-beta`) reject
+> `documents` with `not supported with this model`. Enterprise accounts with a committed-spend
+> contract may still have access to the legacy RAG models.
+
+### 11. Responses API
+
+Groq's Responses API (beta) is compatible with OpenAI's Responses API: it uses a single `input` field (a string or an array of input items), returns an `output` array of generated items, and supports structured outputs, reasoning controls and tool calling.
+
+```php
+use LucianoTonet\GroqPHP\Groq;
+use LucianoTonet\GroqPHP\Responses;
+
+$groq = new Groq(getenv('GROQ_API_KEY'));
+
+$response = $groq->responses()->create([
+    'model' => 'openai/gpt-oss-120b',
+    'input' => 'Tell me a fun fact about the moon in one sentence.',
+]);
+
+echo Responses::outputText($response);
+// Hello from the Responses API.
+```
+
+**Streaming:**
+
+```php
+$stream = $groq->responses()->create([
+    'model' => 'openai/gpt-oss-120b',
+    'input' => 'Tell me a short story.',
+    'stream' => true,
+]);
+
+foreach ($stream->chunks() as $event) {
+    if (($event['type'] ?? null) === 'response.output_text.delta') {
+        echo $event['delta'];
+    }
+}
+```
+
+**Structured outputs** follow the Responses API shape (`text.format` with `type: json_schema`):
+
+```php
+$response = $groq->responses()->create([
+    'model' => 'openai/gpt-oss-120b',
+    'input' => 'Extract product review information from the text.',
+    'text' => [
+        'format' => [
+            'type' => 'json_schema',
+            'name' => 'product_review',
+            'schema' => [
+                'type' => 'object',
+                'properties' => ['product_name' => ['type' => 'string'], 'rating' => ['type' => 'number']],
+                'required' => ['product_name', 'rating'],
+                'additionalProperties' => false,
+            ],
+        ],
+    ],
+]);
+
+$data = json_decode(Responses::outputText($response), true);
+echo $data['product_name'];
+```
+
+See `examples/responses.php` for a runnable script.
+
+## Prompt Caching & Content Moderation
+
+### Prompt Caching
+
+Groq enables **automatic prompt caching** on supported models (e.g. `openai/gpt-oss-120b`, `openai/gpt-oss-20b`, `kimi-k2`). There is no code change and no extra cost: when a request shares a common prefix with a recent one, Groq reuses the cached computation, cutting latency and giving a **50% discount on cached input tokens**.
+
+- Caching is prefix-based and exact-match: identical content must appear at the **start** of the prompt.
+- Place static content (system instructions, tool definitions, few-shot examples, schemas, large context) first, and dynamic content (user queries, timestamps, IDs) last, to maximize cache hits.
+- Monitor hits via the `usage` field: cached tokens are reported under `usage.prompt_tokens_details.cached_tokens` (Chat Completions and Responses API).
+- Cached data lives in volatile memory and expires automatically after a short period (a few hours); there is no manual cache management.
+
+```php
+$response = $groq->chat()->completions()->create([
+    'model' => 'openai/gpt-oss-120b',
+    'messages' => [
+        ['role' => 'system', 'content' => $longStaticSystemPrompt], // cached prefix
+        ['role' => 'user', 'content' => $userQuestion],             // dynamic, at the end
+    ],
+]);
+
+// Inspect cached tokens (populated when a cache hit occurs):
+$cached = $response['usage']['prompt_tokens_details']['cached_tokens'] ?? 0;
+echo "Cached input tokens: " . $cached;
+```
+
+### Content Moderation
+
+Groq does not expose a separate moderation endpoint; instead it provides **safeguard models** that you call through the standard Chat Completions API:
+
+- `openai/gpt-oss-safeguard-20b` — **recommended.** A policy-following reasoning model for custom Trust & Safety workflows (bring-your-own-policy). It returns a structured JSON decision.
+- `meta-llama/Llama-Guard-4-12B` — a multimodal safeguard model that classifies content against the MLCommons 14-category taxonomy and returns `safe` or `unsafe\nSX`. *Scheduled for deprecation on 2026-10-02; prefer `openai/gpt-oss-safeguard-20b` for new integrations.*
+
+A common pattern is to pre-screen user input (and optionally the model output) with a safeguard model before responding.
+
+```php
+use LucianoTonet\GroqPHP\Groq;
+
+$groq = new Groq(getenv('GROQ_API_KEY'));
+
+$screen = $groq->chat()->completions()->create([
+    'model' => 'openai/gpt-oss-safeguard-20b',
+    'messages' => [
+        ['role' => 'user', 'content' => $userMessage],
+    ],
+]);
+
+if (str_starts_with($screen['choices'][0]['message']['content'], 'unsafe')) {
+    echo "Request blocked by content moderation.";
+} else {
+    // proceed with the real model
+}
+```
+
+See `examples/content-moderation.php` for a runnable script.
 
 ## Examples
 
@@ -562,9 +899,9 @@ Finally, you can access the examples in your browser at `http://127.0.0.1:8000`.
 
 ## Tests
 
-The `tests/` folder contains unit tests. Run them with `composer test`. Tests require the `GROQ_API_KEY` environment variable to be set.
+The `tests/` folder contains unit tests. Run them with `composer test`. By default they run against an offline mock and need no API key; set `GROQ_LIVE_TESTS=1` (and a `GROQ_API_KEY`) to exercise the real API.
 
-> **Note:** Tests make real API calls to Groq and consume API credits. For this reason, our CI pipeline runs tests only on PHP 8.2. If you need to test with different PHP versions, please do so locally and be mindful of API usage.
+> **Note:** The default test suite runs against an offline mock (no API credits). Live tests that hit the real Groq API run only on a nightly schedule and require `GROQ_LIVE_TESTS=1` plus a `GROQ_API_KEY`. To run live tests locally: `GROQ_LIVE_TESTS=1 composer test`.
 
 ## Requirements
 
