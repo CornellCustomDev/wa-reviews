@@ -7,6 +7,7 @@ use App\Models\Issue;
 use App\Models\Project;
 use App\Models\Scope;
 use App\Services\GoogleApi\Helpers\Sheet;
+use App\Services\GoogleApi\Helpers\SheetLinks;
 use App\Services\GoogleApi\Helpers\Spreadsheet;
 use App\Services\GoogleApi\ServiceWrappers\SheetUpdates;
 use Exception;
@@ -48,6 +49,55 @@ class ProjectReportGoogle
         }
 
         return $spreadsheet->spreadsheetId;
+    }
+
+    /**
+     * Describe the links in the report that Google Sheets would reject, which must be fixed before exporting.
+     *
+     * Covers every link the export sends, with labels matching the fields users edit.
+     *
+     * @return list<string> e.g. 'Issue 1.4.3-2, Recommendations: "Florencia Marcucci"'
+     */
+    public static function findInvalidLinks(Project $project): array
+    {
+        $invalidLinks = [];
+
+        foreach (['Site URL' => $project->site_url, 'Siteimprove URL' => $project->siteimprove_url] as $label => $url) {
+            if ($url && ! SheetLinks::isValid($url)) {
+                $invalidLinks[] = "Project, $label: $url";
+            }
+        }
+
+        /** @var Issue $issue */
+        foreach ($project->getReportableIssues() as $issue) {
+            $issueLabel = 'Issue ' . $issue->getGuidelineInstanceNumber();
+            $fieldLinks = SheetLinks::describeInvalidLinks([
+                'Description' => $issue->description,
+                'Recommendations' => $issue->recommendation,
+                'Testing' => $issue->testing,
+            ]);
+            foreach ($fieldLinks as $fieldLink) {
+                $invalidLinks[] = "$issueLabel, $fieldLink";
+            }
+            foreach ($issue->image_links ?? [] as $imagePath) {
+                if (! SheetLinks::isValid($imagePath)) {
+                    $invalidLinks[] = "$issueLabel, Images: $imagePath";
+                }
+            }
+        }
+
+        /** @var Scope $scope */
+        foreach ($project->scopes()->get() as $scope) {
+            $scopeLabel = 'Scope "' . $scope->title . '"';
+            if ($scope->url && ! SheetLinks::isValid($scope->url)) {
+                $invalidLinks[] = "$scopeLabel, URL: $scope->url";
+            }
+            foreach (SheetLinks::describeInvalidLinks(['Notes' => $scope->notes]) as $fieldLink) {
+                $invalidLinks[] = "$scopeLabel, $fieldLink";
+            }
+        }
+
+        return $invalidLinks;
     }
 
     private static function getIntroFieldUpdates(Project $project): array

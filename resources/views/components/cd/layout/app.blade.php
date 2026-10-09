@@ -63,6 +63,20 @@
                 </x-cd.layout.sidebar-top>
             @endif
             <x-cd.layout.main-article :breadcrumbs="$breadcrumbs">
+                @session('warning')
+                    <flux:callout class="mb-4" color="amber" icon="exclamation-triangle" role="alert">
+                        <flux:callout.heading>{{ $value['heading'] }}</flux:callout.heading>
+                        @if (! empty($value['details']))
+                            <flux:callout.text class="text-cds-gray-950!">
+                                <ul>
+                                    @foreach ($value['details'] as $detail)
+                                        <li>{{ $detail }}</li>
+                                    @endforeach
+                                </ul>
+                            </flux:callout.text>
+                        @endif
+                    </flux:callout>
+                @endsession
                 {{ $slot }}
             </x-cd.layout.main-article>
             @if ($sidebar && ($sidebarSecondary ?? false))

@@ -5,6 +5,7 @@ namespace App\Livewire\Forms;
 use App\Models\Scope;
 use App\Models\Project;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
+use App\Services\GoogleApi\Helpers\SheetLinks;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -38,6 +39,7 @@ class ScopeForm extends Form
 
         $this->scope = $project->scopes()->create($this->all());
         $this->fetchPageContent($this->scope->url);
+        $this->flashInvalidLinksWarning();
 
         return $this->scope;
     }
@@ -54,6 +56,23 @@ class ScopeForm extends Form
 
         if ($this->scope->wasChanged('url')) {
             $this->fetchPageContent($this->scope->url);
+        }
+
+        $this->flashInvalidLinksWarning();
+    }
+
+    /**
+     * Warn, without blocking the save, about links that will prevent the report from exporting to Google Sheets.
+     */
+    protected function flashInvalidLinksWarning(): void
+    {
+        $invalidLinks = SheetLinks::describeInvalidLinks(['Notes' => $this->scope->notes]);
+
+        if ($invalidLinks) {
+            session()->flash('warning', [
+                'heading' => 'Scope saved, but these invalid links will prevent the report from exporting to Google Sheets:',
+                'details' => $invalidLinks,
+            ]);
         }
     }
 

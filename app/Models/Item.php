@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use App\Casts\HtmlWithValidLinks;
 use App\Enums\AIStatus;
 use App\Enums\Assessment;
 use App\Enums\Impact;
 use App\Enums\TestingMethod;
 use App\Events\ItemChanged;
+use Illuminate\Database\Eloquent\Casts\AsHtmlString;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -37,13 +37,13 @@ class Item extends Model
 
     protected $casts = [
         'assessment' => Assessment::class,
-        'description' => HtmlWithValidLinks::class,
+        'description' => AsHtmlString::class,
         'testing_method' => TestingMethod::class,
-        'recommendation' => HtmlWithValidLinks::class,
-        'testing' => HtmlWithValidLinks::class,
+        'recommendation' => AsHtmlString::class,
+        'testing' => AsHtmlString::class,
         'image_links' => 'array',
         'impact' => Impact::class,
-        'ai_reasoning' => HtmlWithValidLinks::class,
+        'ai_reasoning' => AsHtmlString::class,
         'ai_status' => AIStatus::class,
     ];
 

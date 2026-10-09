@@ -13,6 +13,7 @@ use App\Models\Issue;
 use App\Models\Item;
 use App\Models\Project;
 use App\Models\SiaRule;
+use App\Services\GoogleApi\Helpers\SheetLinks;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
@@ -171,6 +172,8 @@ class IssueForm extends Form
             ]);
         }
 
+        $this->flashInvalidLinksWarning();
+
         return $this->issue;
     }
 
@@ -206,6 +209,26 @@ class IssueForm extends Form
         $this->issue->update($attributes);
 
         event(new IssueChanged($this->issue, 'updated'));
+
+        $this->flashInvalidLinksWarning();
+    }
+
+    /**
+     * Warn, without blocking the save, about links that will prevent the report from exporting to Google Sheets.
+     */
+    private function flashInvalidLinksWarning(): void
+    {
+        $invalidLinks = SheetLinks::describeInvalidLinks([
+            'Description' => $this->issue->description,
+            'Recommendations' => $this->issue->recommendation,
+        ]);
+
+        if ($invalidLinks) {
+            session()->flash('warning', [
+                'heading' => 'Issue saved, but these invalid links will prevent the report from exporting to Google Sheets:',
+                'details' => $invalidLinks,
+            ]);
+        }
     }
 
     public function removeExistingImage(string $filename): void

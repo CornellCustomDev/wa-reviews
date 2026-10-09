@@ -15,6 +15,15 @@ class ReportGoogleController extends Controller
      */
     public function __invoke(Request $request, GoogleService $googleService, Project $project)
     {
+        // Google Sheets rejects the whole export if any link is invalid, so have the user fix them first
+        $invalidLinks = ProjectReportGoogle::findInvalidLinks($project);
+        if ($invalidLinks) {
+            return redirect()->route('project.report', $project)->with('warning', [
+                'heading' => 'This report can’t be exported to Google Sheets until these invalid links are fixed:',
+                'details' => $invalidLinks,
+            ]);
+        }
+
         if (!$googleService->ensureAuthorized()) {
             return redirect()->away($googleService->getAuthUrl($request->fullUrl()));
         }
