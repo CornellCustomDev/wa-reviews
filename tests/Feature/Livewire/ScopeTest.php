@@ -69,6 +69,24 @@ class ScopeTest extends FeatureTestCase
             ->assertDispatched('refresh-scopes');
     }
 
+    #[Test] public function add_scope_with_invalid_link_shows_warning_in_place()
+    {
+        $user = $this->getLoggedInTestUser([Roles::Reviewer]);
+        $project = Project::factory()->create(['team_id' => $user->teams()->first()->id]);
+        $project->assignToUser($user);
+
+        Livewire::test(AddScope::class, ['project' => $project])
+            ->set('form.title', 'Test Scope')
+            ->set('form.notes', '<p><a href="mailto:a@b.edu&quot;&gt;a@b.edu&lt;/a&gt;">Someone</a></p>')
+            ->call('save')
+            ->assertDispatched('refresh-scopes')
+            ->assertSet('warning.details', ['Notes: "Someone"'])
+            ->assertSee('Notes: &quot;Someone&quot;', false);
+
+        // Pulled from the session so it doesn't appear again on a later page
+        $this->assertFalse(session()->has('warning'));
+    }
+
     #[Test] public function can_show_scope()
     {
         $user = $this->getLoggedInTestUser();

@@ -1,4 +1,8 @@
 <div>
+    @if ($warning)
+        <x-warning-callout :warning="$warning" class="mt-4" />
+    @endif
+
     <flux:modal name="add-scope">
         <form class="mb-0!" wire:submit.prevent="save">
             <h3>Add a Scope</h3>

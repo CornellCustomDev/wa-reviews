@@ -8,12 +8,12 @@ use App\Enums\Impact;
 use App\Enums\IssueStatus;
 use App\Enums\TestingMethod;
 use App\Events\IssueChanged;
+use App\Exports\ProjectReportGoogle;
 use App\Models\Guideline;
 use App\Models\Issue;
 use App\Models\Item;
 use App\Models\Project;
 use App\Models\SiaRule;
-use App\Services\GoogleApi\Helpers\SheetLinks;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Validate;
@@ -218,10 +218,7 @@ class IssueForm extends Form
      */
     private function flashInvalidLinksWarning(): void
     {
-        $invalidLinks = SheetLinks::describeInvalidLinks([
-            'Description' => $this->issue->description,
-            'Recommendations' => $this->issue->recommendation,
-        ]);
+        $invalidLinks = ProjectReportGoogle::findInvalidIssueLinks($this->issue);
 
         if ($invalidLinks) {
             session()->flash('warning', [

@@ -2,10 +2,10 @@
 
 namespace App\Livewire\Forms;
 
+use App\Exports\ProjectReportGoogle;
 use App\Models\Scope;
 use App\Models\Project;
 use App\Services\AccessibilityAnalyzer\AccessibilityAnalyzerService;
-use App\Services\GoogleApi\Helpers\SheetLinks;
 use Livewire\Attributes\Validate;
 use Livewire\Form;
 
@@ -66,7 +66,7 @@ class ScopeForm extends Form
      */
     protected function flashInvalidLinksWarning(): void
     {
-        $invalidLinks = SheetLinks::describeInvalidLinks(['Notes' => $this->scope->notes]);
+        $invalidLinks = ProjectReportGoogle::findInvalidScopeLinks($this->scope);
 
         if ($invalidLinks) {
             session()->flash('warning', [
