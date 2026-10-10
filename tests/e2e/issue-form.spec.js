@@ -1,21 +1,15 @@
 import { test, expect } from '@playwright/test';
+import { chooseFirstOption, collectBrowserErrors, field, firstLinkPath } from './helpers.js';
 
 /**
  * Smoke check for the Add Issue form: every field accepts input, dropdown
  * options are laid out and selectable, and the page logs no errors. It never
  * submits, so the local database is left unchanged.
  *
- * Uses the first project on /projects; set E2E_ISSUE_FORM_PATH to check a
- * different form, e.g. /project/1/issue/create.
+ * Uses the first project on /projects.
  */
 test('add issue form accepts input in every field', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', (error) => errors.push(error.message));
-    page.on('console', (message) => {
-        if (message.type() === 'error') {
-            errors.push(message.text());
-        }
-    });
+    const errors = collectBrowserErrors(page);
 
     // Locally, /login signs in as the REMOTE_USER override.
     await page.goto('/login');
@@ -56,51 +50,5 @@ test('add issue form accepts input in every field', async ({ page }) => {
 });
 
 async function issueFormPath(page) {
-    if (process.env.E2E_ISSUE_FORM_PATH) {
-        return process.env.E2E_ISSUE_FORM_PATH;
-    }
-
-    await page.goto('/projects');
-    const projectUrl = await page.locator('a[href*="/project/"]').evaluateAll((links) => links
-        .map((link) => link.href)
-        .find((href) => /\/project\/\d+$/.test(href)));
-    expect(projectUrl, 'a project link on /projects').toBeTruthy();
-
-    return `${new URL(projectUrl).pathname}/issue/create`;
-}
-
-function field(form, label) {
-    return form.locator('[data-flux-field]').filter({
-        has: form.page().locator(':scope > [data-flux-label]', { hasText: new RegExp(`^\\s*${label}`) }),
-    });
-}
-
-/**
- * Opens a combobox, checks its options render properly, and picks the first.
- */
-async function chooseFirstOption(selectField) {
-    const input = selectField.getByRole('combobox');
-    await input.click();
-    const options = selectField.locator('ui-option:visible');
-    await expect(options.first()).toBeVisible();
-
-    const layout = await options.evaluateAll((elements) => elements.slice(0, 10).map((option) => ({
-        text: option.textContent.trim().replace(/\s+/g, ' '),
-        squeezed: [option, ...option.querySelectorAll('*')].some((element) => element instanceof HTMLElement
-            && getComputedStyle(element).display !== 'inline'
-            && element.scrollWidth > element.clientWidth + 1),
-    })));
-    const description = (await selectField.locator(':scope > [data-flux-description]').textContent())?.trim().replace(/\s+/g, ' ');
-
-    for (const option of layout) {
-        expect(option.squeezed, `"${option.text}" fits its option box`).toBe(false);
-        if (description) {
-            expect(option.text, 'option text excludes the field description').not.toContain(description);
-        }
-    }
-
-    await options.first().click();
-    await expect(input).toHaveValue(layout[0].text);
-
-    return { input, value: layout[0].text };
+    return `${await firstLinkPath(page, '/projects', /\/project\/\d+$/)}/issue/create`;
 }

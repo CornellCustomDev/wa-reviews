@@ -9,7 +9,7 @@ export default defineConfig({
     testDir: './tests/e2e',
     reporter: 'list',
     use: {
-        baseURL: process.env.E2E_BASE_URL ?? 'https://wa-reviews.lndo.site',
+        baseURL: 'https://wa-reviews.lndo.site',
         channel: 'chrome',
         ignoreHTTPSErrors: true,
         screenshot: 'only-on-failure',
