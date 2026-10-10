@@ -34,3 +34,5 @@ bun.lock
 /docs/superpowers/plans
 /.worktrees
 /.playwright-mcp
+/test-results
+/playwright-report
