@@ -231,8 +231,9 @@
 
         [data-flux-option] {
             @apply font-systemUi text-white font-normal;
-            div {
-                @apply w-0;
+            /* Hide only the check indicator column, not the option text wrappers */
+            div:has(> [data-flux-icon]) {
+                @apply hidden;
             }
 
             &[data-active] {
