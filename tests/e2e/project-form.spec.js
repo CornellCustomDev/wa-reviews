@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { collectBrowserErrors, field, firstLinkPath } from './helpers.js';
+import { collectBrowserErrors, field, firstLinkPath, refreshLivewire } from './helpers.js';
 
 /**
  * Smoke check for the Create Project form: every field accepts input, the
@@ -43,9 +43,9 @@ test('create project form accepts input in every field', async ({ page }) => {
     for (const [label, value] of Object.entries(editors)) {
         await field(form, label).locator('[contenteditable="true"]').fill(value);
     }
-    await page.waitForLoadState('networkidle');
+    await refreshLivewire(form);
 
-    // Values must survive any Livewire round trips the inputs triggered.
+    // Values must survive a Livewire round trip.
     for (const [label, value] of Object.entries(textboxes)) {
         await expect(field(form, label).getByRole('textbox'), label).toHaveValue(value);
     }

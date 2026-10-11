@@ -40,10 +40,44 @@ export function field(form, label) {
 export async function chooseFirstOption(selectField) {
     const input = selectField.getByRole('combobox');
     await input.click();
+
+    return chooseFirstVisibleOption(selectField, input);
+}
+
+/**
+ * Types into a combobox, checks the filtered options render properly and
+ * contain the search text, and picks the first.
+ */
+export async function chooseOptionByTyping(selectField, search) {
+    const input = selectField.getByRole('combobox');
+    await input.clear();
+    await input.pressSequentially(search);
+    const choice = await chooseFirstVisibleOption(selectField, input);
+    expect(choice.value, `option found by typing "${search}"`).toContain(search);
+
+    return choice;
+}
+
+/**
+ * Sends any deferred wire:model updates and re-renders the form's Livewire
+ * component, so assertions afterwards cover a full server round trip.
+ */
+export async function refreshLivewire(form) {
+    const update = form.page().waitForResponse((response) => response.request().method() === 'POST'
+        && response.url().includes('livewire'));
+    await form.evaluate((element) => {
+        const componentId = element.closest('[wire\\:id]').getAttribute('wire:id');
+
+        return window.Livewire.find(componentId).$refresh();
+    });
+    expect((await update).ok(), 'Livewire update succeeded').toBe(true);
+}
+
+async function chooseFirstVisibleOption(selectField, input) {
     const options = selectField.locator('ui-option:visible');
     await expect(options.first()).toBeVisible();
 
-    const layout = await options.evaluateAll((elements) => elements.slice(0, 10).map((option) => ({
+    const layout = await options.evaluateAll((elements) => elements.map((option) => ({
         text: option.textContent.trim().replace(/\s+/g, ' '),
         squeezed: [option, ...option.querySelectorAll('*')].some((element) => element instanceof HTMLElement
             && getComputedStyle(element).display !== 'inline'

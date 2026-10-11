@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { collectBrowserErrors, field, firstLinkPath } from './helpers.js';
+import { collectBrowserErrors, field, firstLinkPath, refreshLivewire } from './helpers.js';
 
 /**
  * Smoke check for the Add Scope form: every field accepts input and the page
@@ -22,9 +22,9 @@ test('add scope form accepts input in every field', async ({ page }) => {
     await title.fill('Smoke check scope');
     await url.fill('https://example.cornell.edu/smoke-check');
     await notes.fill('Entered by the Playwright smoke check.');
-    await page.waitForLoadState('networkidle');
+    await refreshLivewire(form);
 
-    // Values must survive any Livewire round trips the inputs triggered.
+    // Values must survive a Livewire round trip.
     await expect(title).toHaveValue('Smoke check scope');
     await expect(url).toHaveValue('https://example.cornell.edu/smoke-check');
     await expect(notes).toHaveText('Entered by the Playwright smoke check.');
