@@ -13,7 +13,7 @@
         <div class="flex flex-wrap gap-4 mt-2 mb-4">
             @foreach ($existingImages as $imagePath)
                 @php($imageName = pathinfo($imagePath, PATHINFO_BASENAME))
-                <div class="relative mt-2">
+                <div class="relative mt-2" data-file-preview>
                     <div class="relative border border-cds-gray-900 p-px">
                         @php($fileType = pathinfo($imagePath, PATHINFO_EXTENSION))
                         @if(in_array($fileType, ['pdf', 'eml']))
@@ -48,7 +48,7 @@
                 </div>
             @endforeach
             @foreach (data_get($this, $name) as $index => $file)
-                <div class="relative mt-2">
+                <div class="relative mt-2" data-file-preview>
                     <div class="relative border border-cds-gray-900 p-px">
                         @if($file->isPreviewable())
                             <img
@@ -85,15 +85,25 @@
 <script>
     Alpine.data('images', () => {
         return {
+            init() {
+                // The file input's label only knows its latest selection, so count every preview after each update.
+                this.$nextTick(() => this.updateFileLabel());
+                $wire.interceptMessage(({ onSuccess }) => {
+                    onSuccess(({ onMorphed }) => onMorphed(() => this.updateFileLabel()));
+                });
+            },
+            updateFileLabel() {
+                const count = this.$root.querySelectorAll('[data-file-preview]').length;
+                this.$root.querySelector('[x-ref="name"]').textContent = count === 0
+                    ? 'No file chosen'
+                    : `${count} ${count === 1 ? 'file' : 'files'}`;
+            },
             removeImage(name) {
                 // For newly uploaded images
                 $wire.removeUpload('{{ $name }}', name);
-                $wire.$el.querySelector('[x-ref="name"]').textContent = 'Image removed (temporary)';
             },
             removeExistingImage(name) {
                 $wire.dispatch('remove-existing-image', { filename: name });
-                // $wire.$refresh();
-                $wire.$el.querySelector('[x-ref="name"]').textContent = 'Image removed (existing)';
             },
         }
     });

@@ -1,10 +1,12 @@
+import { fileURLToPath } from 'node:url';
 import { test, expect } from '@playwright/test';
 import { chooseFirstOption, chooseOptionByTyping, collectBrowserErrors, field, firstLinkPath, refreshLivewire } from './helpers.js';
 
 /**
  * Smoke check for the Add Issue form: every field accepts input, dropdown
  * options are laid out and selectable, and the page logs no errors. It never
- * submits, so the local database is left unchanged.
+ * submits, so the local database is left unchanged; the image upload only
+ * lands in Livewire's temporary upload directory, which Livewire cleans up.
  *
  * Uses the first project on /projects.
  */
@@ -43,6 +45,21 @@ test('add issue form accepts input in every field', async ({ page }) => {
     const testingMethod = await chooseFirstOption(field(form, 'Testing method'));
     const contentIssue = form.getByRole('checkbox', { name: 'Content entry issue' });
     await contentIssue.check();
+
+    // Each upload adds to the previews; the file input's label counts them all.
+    const imageInput = form.getByLabel('Image examples');
+    const imageLabel = form.locator('[x-ref="name"]');
+    const previews = form.getByRole('img', { name: /^Preview of image: / });
+    await imageInput.setInputFiles(imageFixture('unit_signature_sample.png'));
+    await expect(previews).toHaveCount(1);
+    await expect(imageLabel).toHaveText('1 file');
+    await imageInput.setInputFiles(imageFixture('cuseal_full_white480_dimmed.png'));
+    await expect(previews).toHaveCount(2);
+    await expect(imageLabel).toHaveText('2 files');
+    for (const preview of await previews.all()) {
+        await expect.poll(() => preview.evaluate((image) => image.complete && image.naturalWidth), 'preview image loads').toBeGreaterThan(0);
+    }
+
     await refreshLivewire(form);
 
     // Values must survive a Livewire round trip.
@@ -54,10 +71,23 @@ test('add issue form accepts input in every field', async ({ page }) => {
     await expect(moderate).toBeChecked();
     await expect(recommendations).toHaveText('Make each menu item focusable.');
     await expect(contentIssue).toBeChecked();
+    await expect(previews).toHaveCount(2);
+    await expect(imageLabel).toHaveText('2 files');
     await expect(form.getByRole('button', { name: 'Add Issue' })).toBeEnabled();
+
+    await form.getByRole('button', { name: 'Remove unit_signature_sample.png' }).click();
+    await expect(previews).toHaveCount(1);
+    await expect(imageLabel).toHaveText('1 file');
+    await form.getByRole('button', { name: 'Remove cuseal_full_white480_dimmed.png' }).click();
+    await expect(previews).toHaveCount(0);
+    await expect(imageLabel).toHaveText('No file chosen');
 
     expect(errors, 'browser errors').toEqual([]);
 });
+
+function imageFixture(name) {
+    return fileURLToPath(new URL(`../../public/cwd-framework/images/cornell/${name}`, import.meta.url));
+}
 
 async function issueFormPath(page) {
     return `${await firstLinkPath(page, '/projects', /\/project\/\d+$/)}/issue/create`;
