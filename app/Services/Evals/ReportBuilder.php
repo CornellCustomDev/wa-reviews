@@ -42,9 +42,17 @@ class ReportBuilder
             array_keys($baselineScores)
         ));
 
+        // A metric a margin was registered for is compared even when neither run
+        // scored it: otherwise an unlabelled dataset would drop its quality
+        // metric from the table and pass on reliability alone.
+        $metricNames = $this->catalog->order(array_unique([
+            ...$this->comparableMetrics($candidateScores, $baselineScores, $pairedCaseIds),
+            ...array_keys((array) $candidate->margins),
+        ]));
+
         $metrics = [];
 
-        foreach ($this->comparableMetrics($candidateScores, $baselineScores, $pairedCaseIds) as $metric) {
+        foreach ($metricNames as $metric) {
             $metrics[$metric] = $this->compareMetric(
                 $metric,
                 $candidate,

@@ -49,7 +49,12 @@ class EvalModel extends Command
 
     /**
      * What each agent is held to when no margins are given: a usable answer
-     * every time, and no loss on the one quality metric it produces.
+     * every time, and no loss on the quality metrics it produces.
+     *
+     * StructuredOutput is a copy job, so every fidelity check is gated: the
+     * per-field text, the summary, and the exact set of guidelines. A model
+     * could otherwise rewrite the summary or append an invented guideline while
+     * copying every other field perfectly.
      *
      * @var array<string, array<string, array{margin: float}>>
      */
@@ -57,6 +62,8 @@ class EvalModel extends Command
         Agents::StructuredOutput->value => [
             'schema_valid' => ['margin' => 0.0],
             'field_match_rate' => ['margin' => 0.0],
+            'feedback_match' => ['margin' => 0.0],
+            'guideline_ids_exact' => ['margin' => 0.0],
         ],
         Agents::GuidelineRecommender->value => [
             'finished_stop' => ['margin' => 0.05],
@@ -91,35 +98,46 @@ class EvalModel extends Command
 
         if ($this->option('baseline')) {
             $model = $this->option('model') ?: $productionModel;
-            $this->plan($cases, $profile, $model, asBaseline: true);
+            $this->plan($cases, $profile, $model, null, asBaseline: true);
 
             if ($this->option('dry-run')) {
                 return self::SUCCESS;
             }
 
-            $run = $this->replay($runner, $cases, $profile, $model, $this->margins($agent, $baseline), asBaseline: true);
+            $run = $this->replay($runner, $cases, $profile, $model, null, $this->margins($agent, $baseline), asBaseline: true);
+
+            if ($run->status === EvalRunStatus::Failed) {
+                return self::FAILURE;
+            }
 
             $this->components->info("Run {$run->getKey()} is now the baseline for dataset \"{$datasetVersion}\". Run ai:eval --model=<candidate> to test against it.");
 
-            return $run->status === EvalRunStatus::Failed ? self::FAILURE : self::SUCCESS;
+            return self::SUCCESS;
         }
 
         $model = $this->option('model') ?: $this->askForModel($productionModel);
 
         if (! $baseline) {
             $this->components->info("No baseline for dataset \"{$datasetVersion}\" yet; the production model ({$productionModel}) will be replayed first.");
-            $this->plan($cases, $profile, $productionModel, asBaseline: true);
+            $this->plan($cases, $profile, $productionModel, null, asBaseline: true);
         }
 
-        $this->plan($cases, $profile, $model, asBaseline: false);
+        $this->plan($cases, $profile, $model, $baseline, asBaseline: false);
 
         if ($this->option('dry-run')) {
             return self::SUCCESS;
         }
 
         $margins = $this->margins($agent, $baseline);
-        $baseline ??= $this->replay($runner, $cases, $profile, $productionModel, $margins, asBaseline: true);
-        $candidate = $this->replay($runner, $cases, $profile, $model, $margins, asBaseline: false);
+        $baseline ??= $this->replay($runner, $cases, $profile, $productionModel, null, $margins, asBaseline: true);
+
+        if ($baseline->status === EvalRunStatus::Failed) {
+            $this->error('The baseline replay produced no usable results, so there is nothing to compare a candidate against.');
+
+            return self::FAILURE;
+        }
+
+        $candidate = $this->replay($runner, $cases, $profile, $model, $baseline, $margins, asBaseline: false);
 
         $report = $builder->build($candidate, $baseline);
         $markdown = $builder->toMarkdown($report);
@@ -269,34 +287,40 @@ class EvalModel extends Command
     }
 
     /**
-     * The full model snapshot for a run: the configured profiles with one
-     * replaced, so the run stays interpretable after config moves on.
+     * The full model snapshot for a run, with one profile replaced.
+     *
+     * A candidate starts from the baseline's snapshot rather than today's
+     * config, so that if the provider or the other profile has moved since the
+     * baseline ran, the comparison still changes exactly one thing. A baseline
+     * starts from the configured production models.
      *
      * @return array<string, mixed>
      */
-    private function models(string $profile, string $model): array
+    private function models(string $profile, string $model, ?EvalRun $baseline): array
     {
-        $profiles = [];
+        $configured = [];
 
         foreach ([ChatProfile::Chat, ChatProfile::Task] as $chatProfile) {
-            $profiles[$chatProfile->value] = $chatProfile->value === $profile
-                ? $model
-                : config("cornell_ai.profiles.{$chatProfile->value}.model");
+            $configured[$chatProfile->value] = config("cornell_ai.profiles.{$chatProfile->value}.model");
         }
 
-        return [
-            'provider' => config('cornell_ai.prism_provider'),
-            'profiles' => $profiles,
+        $snapshot = [
+            'provider' => data_get($baseline?->models, 'provider') ?? config('cornell_ai.prism_provider'),
+            'profiles' => array_merge($configured, (array) data_get($baseline?->models, 'profiles', [])),
         ];
+
+        $snapshot['profiles'][$profile] = $model;
+
+        return $snapshot;
     }
 
     /**
      * @param  Collection<int, EvalCase>  $cases
      */
-    private function plan(Collection $cases, string $profile, string $model, bool $asBaseline): void
+    private function plan(Collection $cases, string $profile, string $model, ?EvalRun $baseline, bool $asBaseline): void
     {
         $repeats = max(1, (int) $this->option('repeats'));
-        $models = $this->models($profile, $model);
+        $models = $this->models($profile, $model, $baseline);
 
         $this->newLine();
         $this->components->twoColumnDetail(
@@ -317,21 +341,17 @@ class EvalModel extends Command
      * @param  Collection<int, EvalCase>  $cases
      * @param  array<string, mixed>  $margins
      */
-    private function replay(EvalRunner $runner, Collection $cases, string $profile, string $model, array $margins, bool $asBaseline): EvalRun
+    private function replay(EvalRunner $runner, Collection $cases, string $profile, string $model, ?EvalRun $baseline, array $margins, bool $asBaseline): EvalRun
     {
         $run = EvalRun::create([
             'label' => $this->option('label') ?: ($asBaseline ? "baseline-{$model}" : "candidate-{$model}"),
             'dataset_version' => $cases->first()->dataset_version,
             'status' => EvalRunStatus::Pending,
             'repeats' => max(1, (int) $this->option('repeats')),
-            'models' => $this->models($profile, $model),
+            'models' => $this->models($profile, $model, $baseline),
             'margins' => $margins,
             'git_sha' => $this->gitSha(),
         ]);
-
-        if ($asBaseline) {
-            $run->markAsBaseline();
-        }
 
         $this->newLine();
         $this->components->info("Replaying run {$run->getKey()} — {$run->label}");
@@ -348,6 +368,14 @@ class EvalModel extends Command
         });
 
         $this->components->twoColumnDetail('  errors', "{$failures} / ".($cases->count() * $run->repeats));
+
+        // A baseline is promoted only once it has usable results; a run where
+        // every call errored must not displace the baseline that worked.
+        if ($asBaseline && $run->status !== EvalRunStatus::Failed) {
+            $run->markAsBaseline();
+        } elseif ($asBaseline) {
+            $this->error("Run {$run->getKey()} errored on every call and was not made the baseline.");
+        }
 
         return $run;
     }

@@ -153,6 +153,22 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertTrue($scores['feedback_match']);
         $this->assertSame(0, $scores['dropped_guideline_count']);
         $this->assertSame(0, $scores['added_guideline_count']);
+        $this->assertSame(0, $scores['duplicate_guideline_count']);
+    }
+
+    public function test_a_guideline_emitted_twice_is_not_an_exact_match(): void
+    {
+        $payload = $this->payload();
+        $case = $this->structuredOutputCase($payload);
+        $duplicated = $payload;
+        $duplicated['guidelines'][] = $payload['guidelines'][0];
+
+        $scores = $this->gradeStructured($case, $duplicated);
+
+        $this->assertFalse($scores['guideline_ids_exact'], 'Keying by number must not hide a repeated guideline.');
+        $this->assertSame(1, $scores['duplicate_guideline_count']);
+        $this->assertSame(0, $scores['added_guideline_count']);
+        $this->assertSame(1.0, $scores['field_match_rate'], 'The repeated copy is faithful field by field; the defect is the repetition.');
     }
 
     public function test_rewritten_and_dropped_content_is_caught_field_by_field(): void

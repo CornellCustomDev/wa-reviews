@@ -4,6 +4,7 @@ namespace Tests\Feature\Evals;
 
 use App\Enums\Agents;
 use App\Enums\ChatProfile;
+use App\Enums\EvalRunStatus;
 use App\Models\ChatHistory;
 use App\Models\EvalCase;
 use App\Models\EvalResult;
@@ -70,7 +71,11 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame($baseline->dataset_version, $candidate->dataset_version);
         $this->assertSame('candidate-task', $candidate->modelForProfile(ChatProfile::Task->value));
         $this->assertSame('production-chat', $candidate->modelForProfile(ChatProfile::Chat->value), 'Only the profile the agent reads is swapped.');
-        $this->assertSame(['schema_valid' => ['margin' => 0], 'field_match_rate' => ['margin' => 0]], $candidate->margins);
+        $this->assertSame(
+            ['schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
+            array_keys($candidate->margins),
+            'Every fidelity check is gated by default.'
+        );
 
         // The sampled cases come from the shared development database, so how
         // many of them carry a parseable reference varies; identical answers
@@ -103,6 +108,12 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFalse($candidate->is_baseline);
         $this->assertTrue($baseline->refresh()->is_baseline);
         $this->assertSame($margins, $candidate->margins);
+        $this->assertSame('candidate-task', $candidate->modelForProfile(ChatProfile::Task->value));
+        $this->assertSame(
+            $baseline->modelForProfile(ChatProfile::Chat->value),
+            $candidate->modelForProfile(ChatProfile::Chat->value),
+            'The untouched profile comes from the baseline snapshot, not from whatever config says today.'
+        );
         $this->assertSame(1, $candidate->results()->where('eval_case_id', $case->id)->count());
         $this->assertFileExists($this->reportPath);
     }
@@ -131,6 +142,29 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileDoesNotExist($this->reportPath);
     }
 
+    public function test_a_baseline_replay_that_errors_on_every_call_does_not_displace_the_current_baseline(): void
+    {
+        // A case with nothing to transform errors before any model is called.
+        $this->structuredOutputCase('eval-model-broken-baseline')
+            ->update(['input' => ['schema' => 'recommended_guidelines', 'data' => '']]);
+        $previous = EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-broken-baseline',
+            'is_baseline' => true,
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--baseline' => true,
+            '--dataset-version' => 'eval-model-broken-baseline',
+            '--repeats' => 1,
+        ])->assertFailed();
+
+        $failed = EvalRun::latest('id')->firstOrFail();
+
+        $this->assertSame(EvalRunStatus::Failed, $failed->status);
+        $this->assertFalse($failed->is_baseline);
+        $this->assertTrue($previous->refresh()->is_baseline);
+    }
+
     public function test_a_recommender_candidate_replaces_the_chat_profile(): void
     {
         Prism::fake([
@@ -149,6 +183,13 @@ class EvalModelTest extends FeatureTestCase
         EvalRun::factory()->create([
             'dataset_version' => 'eval-model-recommender',
             'is_baseline' => true,
+            'models' => [
+                'provider' => 'cornell',
+                'profiles' => [
+                    ChatProfile::Chat->value => 'baseline-chat',
+                    ChatProfile::Task->value => 'baseline-task',
+                ],
+            ],
         ]);
 
         $this->artisan('ai:eval', [
@@ -162,7 +203,7 @@ class EvalModelTest extends FeatureTestCase
         $candidate = EvalRun::latest('id')->firstOrFail();
 
         $this->assertSame('candidate-chat', $candidate->modelForProfile(ChatProfile::Chat->value));
-        $this->assertSame('production-task', $candidate->modelForProfile(ChatProfile::Task->value), 'The nested transform keeps the production model.');
+        $this->assertSame('baseline-task', $candidate->modelForProfile(ChatProfile::Task->value), 'The nested transform keeps the model the baseline ran with.');
     }
 
     public function test_a_dry_run_calls_no_model_and_writes_nothing(): void

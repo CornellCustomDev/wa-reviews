@@ -64,18 +64,16 @@ class EvalReport extends Command
 
         if ($this->option('json')) {
             $this->line(json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } else {
+            $markdown = $builder->toMarkdown($report);
 
-            return self::SUCCESS;
-        }
+            $this->line($markdown);
 
-        $markdown = $builder->toMarkdown($report);
-
-        $this->line($markdown);
-
-        if ($path = $this->option('out')) {
-            File::ensureDirectoryExists(dirname($path));
-            File::put($path, $markdown);
-            $this->info("Written to $path");
+            if ($path = $this->option('out')) {
+                File::ensureDirectoryExists(dirname($path));
+                File::put($path, $markdown);
+                $this->info("Written to $path");
+            }
         }
 
         // A failed verdict is a non-zero exit so this can gate a decision

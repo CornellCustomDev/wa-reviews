@@ -149,6 +149,28 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertSame('no margins registered', $report['verdict']);
     }
 
+    public function test_a_registered_margin_whose_metric_was_never_scored_makes_the_verdict_inconclusive(): void
+    {
+        $cases = $this->cases(3);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new', margins: [
+            'finished_stop' => ['margin' => 0.05],
+            'f1_strict' => ['margin' => 0.02],
+        ]);
+
+        // Reliability is perfect on both sides, but no case carried a label, so
+        // the quality metric the margins demand never produced a number.
+        $this->makeResults($baseline, $cases, [1, 1, 1], metric: 'finished_stop');
+        $this->makeResults($candidate, $cases, [1, 1, 1], metric: 'finished_stop');
+
+        $report = $this->build($candidate, $baseline);
+
+        $this->assertSame('pass', $report['metrics']['finished_stop']['verdict']);
+        $this->assertSame('insufficient data', $report['metrics']['f1_strict']['verdict'], 'Absent quality evidence is not a pass.');
+        $this->assertSame(0, $report['metrics']['f1_strict']['n']);
+        $this->assertSame('inconclusive', $report['verdict']);
+    }
+
     public function test_it_warns_when_the_runs_are_not_comparable(): void
     {
         $baseline = $this->evalRun('old', dataset: 'v1');
@@ -231,6 +253,22 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertStringContainsString('**Verdict: FAIL**', file_get_contents($path));
 
         unlink($path);
+    }
+
+    public function test_the_report_command_exits_non_zero_on_a_failure_in_json_mode_too(): void
+    {
+        $cases = $this->cases(4);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new', margins: ['f1_strict' => ['margin' => 0.01]]);
+
+        $this->makeResults($baseline, $cases, [0.9, 0.9, 0.9, 0.9]);
+        $this->makeResults($candidate, $cases, [0.1, 0.1, 0.1, 0.1]);
+
+        $this->artisan('ai:eval-report', [
+            '--run' => $candidate->id,
+            '--baseline' => $baseline->id,
+            '--json' => true,
+        ])->expectsOutputToContain('"verdict": "fail"')->assertFailed();
     }
 
     public function test_the_report_command_can_rescore_both_runs_first(): void

@@ -99,9 +99,14 @@ class StructuralGrader
     private function schemaIssues(array $payload, array $guidelines): array
     {
         $issues = [];
+        $rawGuidelines = $payload['guidelines'] ?? null;
 
-        if (! is_array($payload['guidelines'] ?? null)) {
+        if (! is_array($rawGuidelines) || ! array_is_list($rawGuidelines)) {
             $issues[] = 'guidelines is not a list';
+        } elseif (count($rawGuidelines) !== count($guidelines)) {
+            // `guidelines()` drops members that are not objects so the field
+            // checks below can run; they are still a departure from the schema.
+            $issues[] = sprintf('guidelines has %d entries that are not objects', count($rawGuidelines) - count($guidelines));
         }
 
         if (! is_string($payload['feedback'] ?? null)) {

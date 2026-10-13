@@ -28,6 +28,7 @@ class MetricCatalog
         // that changed on the way through is the model rewriting content.
         'field_match_rate' => MetricDirection::HigherBetter,
         'feedback_match' => MetricDirection::HigherBetter,
+        'guideline_ids_exact' => MetricDirection::HigherBetter,
 
         // Recommender agreement with the reviewers' verdicts.
         'f1_strict' => MetricDirection::HigherBetter,

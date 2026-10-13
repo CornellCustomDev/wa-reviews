@@ -37,7 +37,7 @@ The useful options:
 | `--baseline` | Replay the model as the new baseline instead. Do this when the production model or its prompt changes. Without `--model` it uses the configured production model. |
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |
-| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones. |
+| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones: zero loss on every fidelity check for StructuredOutput, and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
 
 `ai:eval-report --run=<id> --baseline=<id>` re-reads any two past runs, and
 `--regrade` re-scores them first after a grader change. Grading never calls a
@@ -85,6 +85,7 @@ without altering it, so the case's own input is the ground truth:
 - `field_match_rate`: share of fields carried through unchanged. Anything
   below 1.0 means the model rewrote content it was told to copy.
 - `feedback_match`: the summary text was carried through verbatim.
+- `guideline_ids_exact`: the same guidelines, no additions, drops or repeats.
 
 **GuidelineRecommender** is graded against the reviewer marks:
 

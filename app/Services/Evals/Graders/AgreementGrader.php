@@ -46,7 +46,7 @@ class AgreementGrader
      */
     private const array STRUCTURED_OUTPUT_SCORE_KEYS = [
         'fields_compared', 'fields_matched', 'field_match_rate', 'field_mismatches',
-        'guideline_ids_exact', 'dropped_guideline_count', 'added_guideline_count', 'feedback_match',
+        'guideline_ids_exact', 'dropped_guideline_count', 'added_guideline_count', 'duplicate_guideline_count', 'feedback_match',
     ];
 
     /**
@@ -173,10 +173,14 @@ class AgreementGrader
             ];
         }
 
+        $producedList = is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
         $expected = $this->guidelinesByNumber($reference['guidelines']);
-        $produced = $this->guidelinesByNumber(
-            is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : []
-        );
+        $produced = $this->guidelinesByNumber($producedList);
+
+        // Keying by number collapses a guideline the model emitted twice, so
+        // the exact-set check is made on the full lists, duplicates included.
+        $expectedNumbers = $this->numbers($reference['guidelines']);
+        $producedNumbers = $this->numbers($producedList);
 
         $compared = 0;
         $matched = 0;
@@ -204,11 +208,35 @@ class AgreementGrader
             'fields_matched' => $matched,
             'field_match_rate' => $compared === 0 ? null : round($matched / $compared, 4),
             'field_mismatches' => array_slice($mismatches, 0, 40),
-            'guideline_ids_exact' => array_keys($expected) === array_keys($produced),
+            'guideline_ids_exact' => $expectedNumbers === $producedNumbers,
             'dropped_guideline_count' => count(array_diff(array_keys($expected), array_keys($produced))),
             'added_guideline_count' => count(array_diff(array_keys($produced), array_keys($expected))),
+            'duplicate_guideline_count' => count($producedNumbers) - count(array_unique($producedNumbers)),
             'feedback_match' => $this->normalise($reference['feedback']) === $this->normalise($payload['feedback'] ?? null),
         ];
+    }
+
+    /**
+     * Every numeric guideline number in a list, sorted, duplicates kept.
+     *
+     * @param  array<int, mixed>  $guidelines
+     * @return array<int, int>
+     */
+    private function numbers(array $guidelines): array
+    {
+        $numbers = [];
+
+        foreach ($guidelines as $guideline) {
+            $number = ((array) $guideline)['number'] ?? null;
+
+            if (is_numeric($number)) {
+                $numbers[] = (int) $number;
+            }
+        }
+
+        sort($numbers);
+
+        return $numbers;
     }
 
     /**

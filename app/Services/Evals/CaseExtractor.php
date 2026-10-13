@@ -426,13 +426,12 @@ class CaseExtractor
     }
 
     /**
-     * Stored page HTML lives on the filesystem, so this is a file read per scope
-     * — memoised because extraction touches the same scope repeatedly.
+     * Stored page HTML lives on the filesystem; its size comes from storage
+     * metadata so extraction never reads hundreds of large pages just to
+     * measure them. Memoised because extraction touches the same scope repeatedly.
      */
     private function pageContentLength(int $scopeId): int
     {
-        return $this->pageContentLengths[$scopeId] ??= strlen(
-            Scope::find($scopeId)?->getPageContent() ?? ''
-        );
+        return $this->pageContentLengths[$scopeId] ??= Scope::find($scopeId)?->getPageContentSize() ?? 0;
     }
 }
