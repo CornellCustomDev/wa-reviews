@@ -61,6 +61,12 @@ class IssueFormAnalyzer extends Component
             return;
         }
 
+        if ($this->scope->pageContentExceedsAnalysisLimit()) {
+            $this->feedback = $this->scope->pageContentAnalysisRefusal();
+            $this->showFeedback = true;
+            return;
+        }
+
         // Remove any existing recommendation for this issue first
         $this->recommendations = collect();
         unset($this->hasUnreviewedItems);

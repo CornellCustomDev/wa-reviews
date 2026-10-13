@@ -24,6 +24,8 @@ class Page extends Model
         'retrieved_at' => 'datetime',
     ];
 
+    private ?int $pageContentSize = null;
+
     protected static function booted(): void
     {
         static::deleting(function (Page $page) {
@@ -68,6 +70,26 @@ class Page extends Model
     }
 
     /**
+     * The size of the stored content in bytes, read from the file rather than
+     * its contents so a multi-megabyte page can be measured without loading it.
+     *
+     * Remembered per instance, since a single size-limit check asks for it
+     * more than once.
+     */
+    public function getPageContentSize(): int
+    {
+        if ($this->pageContentSize !== null) {
+            return $this->pageContentSize;
+        }
+
+        if (empty($this->page_content) || ! Storage::exists($this->page_content)) {
+            return $this->pageContentSize = 0;
+        }
+
+        return $this->pageContentSize = Storage::size($this->page_content);
+    }
+
+    /**
      * @throws Exception If the content cannot be stored.
      */
     public function storePageContent(string $content): void
@@ -76,6 +98,7 @@ class Page extends Model
 
         if (Storage::put($storageFilePath, $content)) {
             $this->page_content = $storageFilePath;
+            $this->pageContentSize = null;
             $this->retrieved_at = now();
             $this->save();
         } else {
