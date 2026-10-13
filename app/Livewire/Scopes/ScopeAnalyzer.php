@@ -23,6 +23,12 @@ class ScopeAnalyzer extends Component
         // Authorize because we add issues
         $this->authorize('update', $this->scope);
 
+        if ($this->scope->pageContentExceedsAnalysisLimit()) {
+            $this->feedback = $this->scope->pageContentAnalysisRefusal();
+            $this->showFeedback = true;
+            return;
+        }
+
         $this->initiateAction();
     }
 
