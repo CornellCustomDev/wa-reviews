@@ -28,15 +28,13 @@
         </form>
     </div>
 
-    @if(!$showChat)
-        <div x-show="$wire.feedback != ''" x-cloak>
-            <hr>
-            <div class="panel">
-                <h3 class="h5">AI Response</h3>
-                {!! Str::of($feedback)->markdown() !!}
-            </div>
+    <div x-show="$wire.feedback != ''" x-cloak>
+        <hr>
+        <div class="panel">
+            <h3 class="h5">AI Response</h3>
+            {!! Str::of($feedback)->markdown() !!}
         </div>
-    @endif
+    </div>
 
     <div x-show="$wire.response != null && $wire.response != ''" class="hidden">
         <hr>

@@ -13,6 +13,7 @@ use App\Models\Item;
 use App\Models\Page;
 use App\Models\Project;
 use App\Models\Scope;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,13 +41,23 @@ class OversizedPageContentTest extends FeatureTestCase
     {
         // An empty fake means any model call at all fails the test.
         Prism::fake([]);
+        Log::spy();
+        $scope = $this->scopeWithPageOfSize(5000);
 
-        Livewire::test(ScopeAnalyzer::class, ['scope' => $this->scopeWithPageOfSize(5000)])
+        Livewire::test(ScopeAnalyzer::class, ['scope' => $scope])
             ->call('recommendGuidelines')
             ->assertSet('showFeedback', true)
             // `initiateAction()` would have set this, so it was never reached.
             ->assertSet('streaming', false)
             ->assertSee('too large for AI analysis');
+
+        // The count of these warnings is the evidence docs/oversized-page-content.md relies on.
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            fn (string $message, array $context) => str_contains($message, 'exceeds the analysis limit')
+                && $context['scope_id'] === $scope->id
+                && $context['size'] === 5000
+                && $context['limit'] === 1000
+        );
     }
 
     #[Test]
@@ -99,6 +110,8 @@ class OversizedPageContentTest extends FeatureTestCase
             'scope' => $this->scopeWithPageOfSize(5000),
             'chatMessages' => [],
         ])
+            // Messages can only be sent with the chat open, so the refusal must show there.
+            ->set('showChat', true)
             ->set('userMessage', 'Is this page accessible?')
             ->call('sendChatMessage')
             ->assertSee('too large for AI analysis')
@@ -106,7 +119,7 @@ class OversizedPageContentTest extends FeatureTestCase
     }
 
     #[Test]
-    public function the_size_is_measured_without_reading_the_content(): void
+    public function the_limit_compares_the_stored_page_size(): void
     {
         $scope = $this->scopeWithPageOfSize(2048);
 
