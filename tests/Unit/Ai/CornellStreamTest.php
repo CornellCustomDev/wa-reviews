@@ -2,64 +2,71 @@
 
 namespace Tests\Unit\Ai;
 
-use App\Ai\Prism\Providers\CornellStream;
-use GuzzleHttp\Psr7\Utils;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\Test;
-use Psr\Http\Message\StreamInterface;
+use Prism\Prism\Exceptions\PrismException;
+use Prism\Prism\Facades\Prism;
+use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Tests\TestCase;
 
+/**
+ * Streams through the `cornell` provider against a faked gateway, so these
+ * also fail if `CornellApi` stops using `CornellStream` or a Prism upgrade
+ * stops calling the overridden parser.
+ */
 class CornellStreamTest extends TestCase
 {
     #[Test]
-    public function it_reshapes_a_litellm_error_line_so_prism_can_raise_it(): void
+    public function a_litellm_error_line_is_raised_with_the_gateways_message(): void
     {
-        $line = '{"error":{"message":"litellm.APIError: Your input exceeds the context window of this model.","type":null,"code":"400"}}';
+        $this->fakeGateway(
+            '{"error":{"message":"litellm.APIError: Your input exceeds the context window of this model.","type":null,"code":"400"}}',
+        );
 
-        $data = $this->parse($line);
+        $this->expectException(PrismException::class);
+        $this->expectExceptionMessage('Code: 400. Message: litellm.APIError: Your input exceeds the context window of this model.');
 
-        // Prism's OpenAI handler dispatches on a top-level `type`; without this the
-        // real message is lost to `Undefined array key "type"`.
-        $this->assertSame('error', $data['type']);
-        $this->assertSame('400', $data['error']['code']);
-        $this->assertStringContainsString('context window', $data['error']['message']);
+        $this->streamText();
     }
 
     #[Test]
-    public function it_logs_and_skips_an_untyped_line_that_carries_no_error(): void
+    public function an_untyped_line_without_an_error_is_logged_and_skipped(): void
     {
-        Log::shouldReceive('warning')->once()->withArgs(
+        Log::spy();
+        $this->fakeGateway(
+            '{"type":"response.created","response":{"id":"resp_1","model":"openai.gpt-4.1-mini"}}',
+            '{"keepalive":true}',
+            '{"type":"response.output_text.delta","delta":"Guideline 1.1.1"}',
+            '{"type":"response.completed","response":{"id":"resp_1","usage":{"input_tokens":10,"output_tokens":3}}}',
+        );
+
+        $text = $this->streamText();
+
+        $this->assertSame('Guideline 1.1.1', $text);
+        Log::shouldHaveReceived('warning')->once()->withArgs(
             fn (string $message, array $context) => str_contains($message, 'no type')
                 && $context['keys'] === ['keepalive']
         );
-
-        $this->assertNull($this->parse('{"keepalive":true}'));
     }
 
-    #[Test]
-    public function it_passes_a_well_formed_openai_line_through_untouched(): void
+    private function fakeGateway(string ...$jsonLines): void
     {
-        $data = $this->parse('{"type":"response.output_text.delta","delta":"Guideline 1.1.1"}');
+        $body = collect($jsonLines)->map(fn (string $json) => "data: {$json}\n\n")->implode('');
 
-        $this->assertSame('response.output_text.delta', $data['type']);
-        $this->assertSame('Guideline 1.1.1', $data['delta']);
+        Http::fake(['*' => Http::response($body, 200, ['Content-Type' => 'text/event-stream'])]);
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function parse(string $json): ?array
+    private function streamText(): string
     {
-        $stream = new CornellStream(Http::baseUrl('https://example.test'));
+        $text = '';
 
-        $method = new \ReflectionMethod($stream, 'parseNextDataLine');
+        foreach (Prism::text()->using('cornell', 'openai.gpt-4.1-mini')->withPrompt('Hello')->asStream() as $event) {
+            if ($event instanceof TextDeltaEvent) {
+                $text .= $event->delta;
+            }
+        }
 
-        return $method->invoke($stream, $this->sse($json));
-    }
-
-    private function sse(string $json): StreamInterface
-    {
-        return Utils::streamFor("data: {$json}\n");
+        return $text;
     }
 }
