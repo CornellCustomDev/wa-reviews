@@ -280,6 +280,15 @@ class AgreementGrader
 
     private function f1(?float $precision, ?float $recall): ?float
     {
+        // Precision is undefined when nothing judgeable came back, and recall is
+        // then zero by construction. An answer that finds none of what reviewers
+        // endorsed is the worst F1, not a case with nothing to score — otherwise
+        // a model that returns nothing is dropped from the comparison instead of
+        // losing it.
+        if ($precision === null && $recall === 0.0) {
+            return 0.0;
+        }
+
         if ($precision === null || $recall === null || $precision + $recall === 0.0) {
             return $precision === null || $recall === null ? null : 0.0;
         }

@@ -91,6 +91,19 @@ class CaseExtractorTest extends FeatureTestCase
         );
     }
 
+    public function test_it_skips_a_recommender_case_whose_page_is_larger_than_production_will_analyse(): void
+    {
+        config()->set('cornell_ai.page_content_char_limit', 10);
+        $history = ChatHistory::factory()->recommender()->create([
+            'context_type' => Scope::class,
+            'context_id' => $this->makeScopeWithPageContent('<html><body>This page is longer than ten characters.</body></html>')->id,
+        ]);
+        $extractor = $this->extractor();
+
+        $this->assertNull($extractor->extract($history, 'v1'));
+        $this->assertArrayHasKey('page content exceeds the analysis limit', $extractor->drainSkipReasons());
+    }
+
     public function test_it_unwraps_the_data_payload_for_a_structured_output_case(): void
     {
         $history = ChatHistory::factory()->structuredOutput('Recommendation prose.')->create();

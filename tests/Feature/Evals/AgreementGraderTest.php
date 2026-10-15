@@ -61,6 +61,20 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(1, $scores['scoreable_count']);
     }
 
+    public function test_an_answer_that_finds_nothing_reviewers_endorsed_scores_zero_rather_than_dropping_out(): void
+    {
+        [$accepted] = $this->guidelineIds(1);
+
+        $case = $this->recommenderCase(['accepted_guideline_ids' => [$accepted]]);
+
+        $scores = $this->grade($case, []);
+
+        $this->assertNull($scores['precision_strict'], 'Nothing came back, so there is no precision to speak of.');
+        $this->assertSame(0.0, $scores['recall_strict']);
+        $this->assertSame(0.0, $scores['f1_strict'], 'Without this the case would vanish from the F1 comparison instead of losing it.');
+        $this->assertSame(0.0, $scores['f1_lenient']);
+    }
+
     public function test_pre_existing_guidelines_are_excluded_rather_than_penalised(): void
     {
         [$accepted, $preExisting] = $this->guidelineIds(2);

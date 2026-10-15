@@ -333,6 +333,14 @@ class CaseExtractor
             return $this->skip('stored page content missing');
         }
 
+        // Production refuses a page this large before calling a model, so the
+        // question is never asked there. Replaying it would grade a model on
+        // something users cannot do, and fail any model whose context window is
+        // smaller than the page for a reason that never reaches production.
+        if ($this->pageContentLength($scopeId) > config('cornell_ai.page_content_char_limit')) {
+            return $this->skip('page content exceeds the analysis limit');
+        }
+
         return [
             'prompt' => $prompt,
             'scope_id' => $scopeId,
