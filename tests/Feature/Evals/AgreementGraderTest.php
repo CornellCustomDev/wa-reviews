@@ -229,24 +229,100 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(1.0, $scores['field_match_rate']);
     }
 
-    public function test_a_truncated_reference_is_skipped_rather_than_scored_against_nothing(): void
+    public function test_a_truncated_reference_is_scored_on_guideline_numbers(): void
     {
-        $payload = $this->payload();
-        $case = $this->structuredOutputCase($payload);
+        $payload = $this->payload(3);
+        $case = $this->truncatedStructuredOutputCase($payload);
 
-        // The source run finished with `Length`, so the recorded narrative is
-        // JSON cut off mid-structure.
+        $kept = $this->gradeStructured($case, $payload);
+
+        $this->assertTrue($kept['agreement_scored']);
+        $this->assertTrue($kept['reference_truncated']);
+        $this->assertTrue($kept['guideline_ids_exact']);
+        $this->assertNull($kept['field_match_rate'], 'Fields cut off mid-JSON cannot be compared.');
+        $this->assertNull($kept['feedback_match'], 'The cut falls before the summary.');
+
+        $withoutPartial = $payload;
+        array_pop($withoutPartial['guidelines']);
+
+        $dropped = $this->gradeStructured($case, $withoutPartial);
+
+        $this->assertTrue($dropped['guideline_ids_exact'], 'Leaving out the guideline the cut fell in is faithful.');
+        $this->assertSame(0, $dropped['dropped_guideline_count']);
+    }
+
+    public function test_a_guideline_invented_to_fill_a_truncated_reference_is_caught(): void
+    {
+        $payload = $this->payload(2);
+        $case = $this->truncatedStructuredOutputCase($payload);
+
+        $padded = $payload;
+        $padded['guidelines'][] = [...$payload['guidelines'][0], 'number' => $this->makeGuideline()->id];
+
+        $scores = $this->gradeStructured($case, $padded);
+
+        $this->assertFalse($scores['guideline_ids_exact']);
+        $this->assertSame(1, $scores['added_guideline_count']);
+    }
+
+    public function test_a_complete_guideline_dropped_from_a_truncated_reference_is_caught(): void
+    {
+        $payload = $this->payload(3);
+        $case = $this->truncatedStructuredOutputCase($payload);
+
+        $missingMiddle = $payload;
+        unset($missingMiddle['guidelines'][1]);
+        $missingMiddle['guidelines'] = array_values($missingMiddle['guidelines']);
+
+        $scores = $this->gradeStructured($case, $missingMiddle);
+
+        $this->assertFalse($scores['guideline_ids_exact']);
+        $this->assertSame(1, $scores['dropped_guideline_count']);
+    }
+
+    public function test_a_guideline_the_schema_cannot_hold_is_not_expected_back(): void
+    {
+        $payload = $this->payload(2);
+        $payload['guidelines'][1]['assessment'] = 'Pass';
+
+        $onlyFailures = $payload;
+        unset($onlyFailures['guidelines'][1]);
+
+        $scores = $this->gradeStructured($this->structuredOutputCase($payload), $onlyFailures);
+
+        $this->assertTrue($scores['guideline_ids_exact'], 'The schema only takes Fail or Warn, so leaving out a Pass is right.');
+        $this->assertSame(0, $scores['dropped_guideline_count']);
+        $this->assertSame(1, $scores['out_of_schema_guideline_count']);
+        $this->assertSame(1.0, $scores['field_match_rate']);
+    }
+
+    public function test_a_passing_guideline_in_a_truncated_reference_is_not_expected_back(): void
+    {
+        $payload = $this->payload(3);
+        $payload['guidelines'][0]['assessment'] = 'Pass';
+        $case = $this->truncatedStructuredOutputCase($payload);
+
+        $middleOnly = ['guidelines' => [$payload['guidelines'][1]], 'feedback' => ''];
+
+        $scores = $this->gradeStructured($case, $middleOnly);
+
+        $this->assertTrue($scores['guideline_ids_exact']);
+        $this->assertSame(1, $scores['out_of_schema_guideline_count']);
+    }
+
+    public function test_a_prose_reference_is_skipped_rather_than_scored_against_nothing(): void
+    {
+        $case = $this->structuredOutputCase($this->payload());
         $case->update(['input' => [
             'schema' => 'recommended_guidelines',
-            'data' => substr(json_encode($payload), 0, 120),
+            'data' => 'Could you share the rendered HTML of the sign-up form?',
         ]]);
 
-        $scores = $this->gradeStructured($case->refresh(), $payload);
+        $scores = $this->gradeStructured($case->refresh(), ['guidelines' => [], 'feedback' => '']);
 
         $this->assertFalse($scores['agreement_scored']);
-        $this->assertSame('reference not parseable', $scores['agreement_skipped']);
-        $this->assertSame('regex', $scores['reference_parse_method']);
-        $this->assertNull($scores['added_guideline_count'], 'A faithful answer must not be reported as invention.');
+        $this->assertSame('reference is prose', $scores['agreement_skipped']);
+        $this->assertNull($scores['guideline_ids_exact']);
     }
 
     public function test_re_grading_clears_a_stale_score_when_a_case_stops_being_scoreable(): void
@@ -264,11 +340,11 @@ class AgreementGraderTest extends FeatureTestCase
         $usable->mergeScores(app(AgreementGrader::class)->grade($case, $usable));
         $this->assertSame(0, $usable->refresh()->score('added_guideline_count'));
 
-        // ...then the source narrative turns out to be truncated and the case
-        // is re-graded: the stale real score must not survive the merge.
+        // ...then the source narrative turns out to be prose and the case is
+        // re-graded: the stale real score must not survive the merge.
         $case->update(['input' => [
             'schema' => 'recommended_guidelines',
-            'data' => substr(json_encode($payload), 0, 120),
+            'data' => 'Could you share the rendered HTML of the sign-up form?',
         ]]);
         $usable->mergeScores(app(AgreementGrader::class)->grade($case->refresh(), $usable));
 
@@ -349,6 +425,22 @@ class AgreementGraderTest extends FeatureTestCase
         return EvalCase::factory()->structuredOutput()->create([
             'dataset_version' => 'agreement-test',
             'input' => ['schema' => 'recommended_guidelines', 'data' => json_encode($payload)],
+        ]);
+    }
+
+    /**
+     * A case whose source run finished with `Length`: the narrative is JSON cut
+     * off inside the last guideline, just after its number.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function truncatedStructuredOutputCase(array $payload): EvalCase
+    {
+        $json = json_encode($payload);
+
+        return EvalCase::factory()->structuredOutput()->create([
+            'dataset_version' => 'agreement-test',
+            'input' => ['schema' => 'recommended_guidelines', 'data' => substr($json, 0, strrpos($json, '"heading"'))],
         ]);
     }
 

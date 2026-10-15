@@ -489,7 +489,26 @@ class ReportBuilder
             $warnings[] = 'No margins were registered on the candidate run, so no pass/fail verdict can be issued.';
         }
 
+        $uncachedRuns = array_filter([$baseline, $candidate], fn (EvalRun $run) => $this->predatesCachedTokenCounting($run));
+
+        if ($uncachedRuns !== []) {
+            $warnings[] = sprintf(
+                '`prompt_tokens` on run %s left out cached input, so it understates any model that reused a cached prompt. Re-run to compare token counts.',
+                implode(' and ', array_map(fn (EvalRun $run) => $run->getKey(), $uncachedRuns)),
+            );
+        }
+
         return $warnings;
+    }
+
+    /**
+     * Runs recorded before `EvalRunner` counted cached input carry no
+     * `cachedPromptTokens`, and their stored prompt counts cannot be repaired.
+     */
+    private function predatesCachedTokenCounting(EvalRun $run): bool
+    {
+        return $run->results()->whereNotNull('usage')->get(['usage'])
+            ->contains(fn ($result) => is_array($result->usage) && ! array_key_exists('cachedPromptTokens', $result->usage));
     }
 
     /**

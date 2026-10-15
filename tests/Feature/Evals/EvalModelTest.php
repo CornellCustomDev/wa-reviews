@@ -72,9 +72,9 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame('candidate-task', $candidate->modelForProfile(ChatProfile::Task->value));
         $this->assertSame('production-chat', $candidate->modelForProfile(ChatProfile::Chat->value), 'Only the profile the agent reads is swapped.');
         $this->assertSame(
-            ['schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
+            ['completed', 'schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
             array_keys($candidate->margins),
-            'Every fidelity check is gated by default.'
+            'Reliability and every fidelity check are gated by default.'
         );
 
         // The sampled cases come from the shared development database, so how

@@ -123,6 +123,37 @@ class RecommendationParser
     }
 
     /**
+     * The guidelines in JSON that was cut off, in the order they appear: each
+     * `"number"` with the `"assessment"` that follows it, if the cut came later.
+     * Fields are written in schema order, so an assessment always belongs to
+     * the number before it.
+     *
+     * @return array<int, array{number: string, assessment: string|null}>
+     */
+    public static function scrapeGuidelines(?string $text): array
+    {
+        if ($text === null) {
+            return [];
+        }
+
+        preg_match_all('/"(number|assessment)"\s*:\s*(?:"([^"]*)"|(\d+)(?=\s*[,}\n]))/', $text, $matches, PREG_SET_ORDER);
+
+        $guidelines = [];
+
+        foreach ($matches as $match) {
+            $value = trim(($match[3] ?? '') !== '' ? $match[3] : $match[2]);
+
+            if ($match[1] === 'number') {
+                $guidelines[] = ['number' => $value, 'assessment' => null];
+            } elseif ($guidelines !== []) {
+                $guidelines[array_key_last($guidelines)]['assessment'] = $value;
+            }
+        }
+
+        return $guidelines;
+    }
+
+    /**
      * @return array<int, string>
      */
     private static function scrapeNumbers(?string $text): array
@@ -131,9 +162,11 @@ class RecommendationParser
             return [];
         }
 
-        preg_match_all('/"number"\s*:\s*"?([\d,\s]+?)"?\s*[,}\n]/', $text, $matches);
+        // Any complete value counts, so a malformed number such as `"33 and 34"`
+        // is still seen; a value cut off before it ends is not.
+        preg_match_all('/"number"\s*:\s*(?:"([^"]*)"|(\d+)(?=\s*[,}\n]))/', $text, $matches, PREG_SET_ORDER);
 
-        return array_map('trim', $matches[1] ?? []);
+        return array_map(fn (array $match) => trim(($match[2] ?? '') !== '' ? $match[2] : $match[1]), $matches);
     }
 
     /**

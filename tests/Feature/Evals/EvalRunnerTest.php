@@ -32,7 +32,9 @@ class EvalRunnerTest extends FeatureTestCase
     public function test_it_replays_a_structured_output_case_and_scores_it(): void
     {
         Prism::fake([
-            $this->structuredFake()->withUsage(new Usage(1200, 340)),
+            // Prism's structured handler reports cached input separately from
+            // `promptTokens`, so 200 uncached + 1000 cached is 1200 sent.
+            $this->structuredFake()->withUsage(new Usage(200, 340, cacheReadInputTokens: 1000)),
         ]);
 
         $case = $this->structuredOutputCase();
@@ -42,7 +44,8 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertNull($result->error);
         $this->assertSame('Stop', $result->finish_reason);
-        $this->assertSame(1200, $result->usage['promptTokens']);
+        $this->assertSame(1200, $result->usage['promptTokens'], 'Cached input is still input.');
+        $this->assertSame(1000, $result->usage['cachedPromptTokens']);
         $this->assertSame(340, $result->usage['completionTokens']);
         $this->assertGreaterThan(0, $result->latency_ms, 'Latency is a new signal history does not carry.');
         $this->assertSame([$this->guidelineId], $result->output['guideline_ids']);
@@ -57,7 +60,7 @@ class EvalRunnerTest extends FeatureTestCase
         // Agreement grading runs inline too; this case's reference is prose, so
         // it is recorded as unscoreable rather than left ungraded.
         $this->assertFalse($result->score('agreement_scored'));
-        $this->assertSame('reference not parseable', $result->scores['agreement_skipped']);
+        $this->assertSame('reference is prose', $result->scores['agreement_skipped']);
     }
 
     public function test_it_leaves_no_database_residue(): void
@@ -88,7 +91,7 @@ class EvalRunnerTest extends FeatureTestCase
                     TextStepFake::make()->withText('Guideline 9001 fails.'),
                 ]))
                 ->withFinishReason(FinishReason::Stop)
-                ->withUsage(new Usage(98000, 900))
+                ->withUsage(new Usage(98000, 900, cacheReadInputTokens: 60000))
                 ->withMeta(new Meta('fake', 'fake')),
             $this->structuredFake(),
         ]);
@@ -106,6 +109,7 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertTrue($result->score('structured_transform_ok'));
         $this->assertTrue($result->score('schema_valid'));
+        $this->assertSame(98000, $result->usage['promptTokens'], 'The stream already counts cached input; it must not be added twice.');
         $this->assertSame(1, $result->score('tool_call_count'));
         $this->assertFalse($result->score('max_steps_hit'));
         $this->assertSame($histories, ChatHistory::count(), 'Both the recommender and the nested transform writes are discarded.');
@@ -152,6 +156,7 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertStringContainsString('no input data', $result->error);
         $this->assertFalse($result->score('completed'));
+        $this->assertNull($result->score('schema_valid'), 'A call that never came back is a reliability failure, not a schema one.');
         $this->assertSame($results + 1, EvalResult::count(), 'A failure is still a result, not a lost case.');
     }
 

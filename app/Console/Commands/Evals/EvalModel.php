@@ -61,10 +61,15 @@ class EvalModel extends Command
      * could otherwise rewrite the summary or append an invented guideline while
      * copying every other field perfectly.
      *
+     * Calls that never came back are gated apart from those checks, and with
+     * room for one: a single gateway timeout moves a 20-case mean by 0.025, so
+     * a zero margin would fail a model for the network rather than its answers.
+     *
      * @var array<string, array<string, array{margin: float}>>
      */
     private const array DEFAULT_MARGINS = [
         Agents::StructuredOutput->value => [
+            'completed' => ['margin' => 0.1],
             'schema_valid' => ['margin' => 0.0],
             'field_match_rate' => ['margin' => 0.0],
             'feedback_match' => ['margin' => 0.0],
