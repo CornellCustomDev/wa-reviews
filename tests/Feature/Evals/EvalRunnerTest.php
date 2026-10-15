@@ -170,6 +170,23 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertSame('candidate-task', config('cornell_ai.profiles.'.ChatProfile::Task->value.'.model'));
     }
 
+    public function test_it_applies_a_runs_reasoning_effort_and_clears_one_it_does_not_name(): void
+    {
+        $effortKey = 'cornell_ai.profiles.'.ChatProfile::Chat->value.'.reasoning_effort';
+        $runner = app(EvalRunner::class);
+
+        $runner->applyModels([
+            'profiles' => [ChatProfile::Chat->value => 'candidate-chat'],
+            'reasoning_effort' => [ChatProfile::Chat->value => 'low'],
+        ]);
+
+        $this->assertSame('low', config($effortKey));
+
+        $runner->applyModels(['profiles' => [ChatProfile::Chat->value => 'baseline-chat']]);
+
+        $this->assertNull(config($effortKey), 'A run that names no effort must not inherit one from the environment.');
+    }
+
     public function test_replay_answers_every_case_once_per_repeat_and_completes_the_run(): void
     {
         Prism::fake([$this->structuredFake(), $this->structuredFake()]);

@@ -152,8 +152,11 @@ class EvalRunner
     /**
      * Point the chat profiles at this run's models.
      *
-     * Both agents read `config('cornell_ai.profiles')` inside their
-     * constructors, so overriding config is the whole of the model swap.
+     * Both agents read `config('cornell_ai.profiles')` and the profile's
+     * reasoning effort inside their constructors, so overriding config is the
+     * whole of the model swap. A run that names no effort clears any the
+     * environment configures, so the effort is always part of what the run
+     * recorded.
      *
      * @param  array<string, mixed>  $models
      */
@@ -165,6 +168,7 @@ class EvalRunner
 
         foreach ($models['profiles'] ?? [] as $profile => $model) {
             config()->set("cornell_ai.profiles.$profile.model", $model);
+            config()->set("cornell_ai.profiles.$profile.reasoning_effort", $models['reasoning_effort'][$profile] ?? null);
         }
     }
 

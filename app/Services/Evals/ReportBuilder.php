@@ -188,7 +188,11 @@ class ReportBuilder
      */
     private function describeModels(array $run): string
     {
-        $models = collect($run['models'])->map(fn ($model, $profile) => "$profile: $model")->implode(', ');
+        $models = collect($run['models'])->map(function ($model, $profile) use ($run) {
+            $effort = $run['reasoning_effort'][$profile] ?? null;
+
+            return $effort ? "$profile: $model (effort: $effort)" : "$profile: $model";
+        })->implode(', ');
 
         return $models === '' ? 'unknown' : $models;
     }
@@ -501,6 +505,7 @@ class ReportBuilder
             'repeats' => $run->repeats,
             'models' => data_get($run->models, 'profiles', []),
             'provider' => data_get($run->models, 'provider'),
+            'reasoning_effort' => data_get($run->models, 'reasoning_effort', []),
             'git_sha' => $run->git_sha,
             'results' => $run->results()->count(),
             'errors' => $run->results()->whereNotNull('error')->count(),

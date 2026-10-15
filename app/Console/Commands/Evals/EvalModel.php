@@ -14,6 +14,10 @@ use App\Services\Evals\EvalRunner;
 use App\Services\Evals\ReportBuilder;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\Events\ConnectionFailed;
+use Illuminate\Http\Client\Events\RequestSending;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -36,6 +40,7 @@ class EvalModel extends Command
         {--agent=StructuredOutput : The AI feature to evaluate: StructuredOutput (cheap) or GuidelineRecommender (large pages, slow).}
         {--model= : The candidate model. Prompted for when omitted.}
         {--profile= : Which chat profile the model replaces, chat or task. Defaults to the profile the agent reads, so only one thing changes.}
+        {--effort= : Reasoning effort (minimal, low, medium or high) for the profile being replaced. Defaults to the model\'s own.}
         {--baseline : Replay this model (default: the configured production model) as the new baseline instead of as a candidate.}
         {--repeats=2 : Replays per case. Two or more separates a model difference from sampling noise.}
         {--limit=20 : Cases to extract when the agent has no dataset yet.}
@@ -71,9 +76,20 @@ class EvalModel extends Command
         ],
     ];
 
+    /**
+     * @var list<string>
+     */
+    private const array EFFORTS = ['minimal', 'low', 'medium', 'high'];
+
     public function handle(CaseExtractor $extractor, EvalRunner $runner, ReportBuilder $builder): int
     {
         $agent = Agents::tryFrom((string) $this->option('agent'));
+
+        if ($this->option('effort') && ! in_array($this->option('effort'), self::EFFORTS, true)) {
+            $this->error(sprintf('Unsupported effort "%s". Supported: %s.', $this->option('effort'), implode(', ', self::EFFORTS)));
+
+            return self::FAILURE;
+        }
 
         if (! $agent || ! in_array($agent->value, CaseExtractor::SUPPORTED_AGENTS, true)) {
             $this->error(sprintf('Unsupported agent "%s". Supported: %s.', $this->option('agent'), implode(', ', CaseExtractor::SUPPORTED_AGENTS)));
@@ -311,6 +327,10 @@ class EvalModel extends Command
 
         $snapshot['profiles'][$profile] = $model;
 
+        if ($effort = $this->option('effort')) {
+            $snapshot['reasoning_effort'] = [$profile => $effort];
+        }
+
         return $snapshot;
     }
 
@@ -330,6 +350,10 @@ class EvalModel extends Command
 
         foreach ($models['profiles'] as $name => $profileModel) {
             $this->components->twoColumnDetail("  {$name}", $name === $profile ? "<options=bold>{$profileModel}</>" : $profileModel);
+        }
+
+        foreach ($models['reasoning_effort'] ?? [] as $name => $effort) {
+            $this->components->twoColumnDetail("  {$name} reasoning effort", $effort);
         }
 
         if ($cases->first()?->agent?->name === Agents::GuidelineRecommender->value) {
@@ -356,7 +380,11 @@ class EvalModel extends Command
         $this->newLine();
         $this->components->info("Replaying run {$run->getKey()} — {$run->label}");
 
-        $failures = $runner->replay($run, $cases, function (EvalCase $case, EvalResult $result) {
+        $stopLogging = $this->logHttpRequests($requestNumber);
+
+        $failures = $runner->replay($run, $cases, function (EvalCase $case, EvalResult $result) use (&$requestNumber) {
+            $requestNumber = 0;
+
             $this->line(sprintf(
                 '  case %d/%d — %s %dms%s',
                 $case->getKey(),
@@ -366,6 +394,8 @@ class EvalModel extends Command
                 $result->failed() ? ': '.$result->error : ($result->score('schema_valid') ? ' schema ok' : ' SCHEMA INVALID'),
             ));
         });
+
+        $stopLogging();
 
         $this->components->twoColumnDetail('  errors', "{$failures} / ".($cases->count() * $run->repeats));
 
@@ -378,6 +408,51 @@ class EvalModel extends Command
         }
 
         return $run;
+    }
+
+    /**
+     * Print every HTTP request a replay makes, so a failure can be placed: on
+     * the first request of a case or deep into its tool loop, and how long the
+     * gateway took to answer before it did.
+     *
+     * Streaming responses report the time to the first byte, which is the wait
+     * the request timeout bounds, not the length of the whole stream. The
+     * request lines come before the case's summary line, and the count restarts
+     * with each case.
+     *
+     * @param  int|null  $requestNumber  Set to the running request count; reset by the caller after each case.
+     * @return callable(): void Stops the logging.
+     */
+    private function logHttpRequests(?int &$requestNumber): callable
+    {
+        $active = true;
+        $requestNumber = 0;
+        $startedAt = null;
+
+        $this->line(sprintf('  request timeout: %ss', config('prism.request_timeout')));
+
+        Event::listen(RequestSending::class, function () use (&$active, &$requestNumber, &$startedAt) {
+            if ($active) {
+                $requestNumber++;
+                $startedAt = microtime(true);
+            }
+        });
+
+        Event::listen(ResponseReceived::class, function (ResponseReceived $event) use (&$active, &$requestNumber, &$startedAt) {
+            if ($active && $startedAt !== null) {
+                $this->line(sprintf('    request %d — HTTP %d after %.1fs', $requestNumber, $event->response->status(), microtime(true) - $startedAt));
+            }
+        });
+
+        Event::listen(ConnectionFailed::class, function (ConnectionFailed $event) use (&$active, &$requestNumber, &$startedAt) {
+            if ($active && $startedAt !== null) {
+                $this->line(sprintf('    request %d — FAILED after %.1fs: %s', $requestNumber, microtime(true) - $startedAt, $event->exception->getMessage()));
+            }
+        });
+
+        return function () use (&$active) {
+            $active = false;
+        };
     }
 
     private function gitSha(): ?string
