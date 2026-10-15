@@ -96,6 +96,9 @@ return [
         ],
         ChatProfile::Chat->value => [
             'model' => env('AI_MODEL_CHAT', 'openai.gpt-4.1-mini'),
+            // Optional: minimal, low, medium or high. Unset uses the model's own
+            // default. A model that does not reason may reject it.
+            'reasoning_effort' => env('AI_REASONING_EFFORT_CHAT'),
         ],
         ChatProfile::Task->value => [
             'model' => env('AI_MODEL_TASK', 'openai.gpt-4o-mini'),
