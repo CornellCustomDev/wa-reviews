@@ -101,10 +101,35 @@ return [
             'reasoning_effort' => env('AI_REASONING_EFFORT_CHAT'),
         ],
         ChatProfile::Task->value => [
-            'model' => env('AI_MODEL_TASK', 'openai.gpt-4o-mini'),
+            'model' => env('AI_MODEL_TASK', 'gemini-3.5-flash-lite'),
         ],
         ChatProfile::Default->value => [
             'model' => env('AI_MODEL_DEFAULT', 'openai.gpt-4.1-mini'),
         ],
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cornell AI API Models
+    |--------------------------------------------------------------------------
+    |
+    | Named models available through the Cornell AI API's LiteLLM gateway.
+    | `lando artisan ai:eval` suggests these when asking which model to use,
+    | in addition to the models already seen in past eval runs and the model
+    | currently configured for production.
+    |
+    */
+    'api_models' => [
+        // Legacy
+        'openai.gpt-4o-mini',    // $0.165
+        'openai.gpt-4.1-mini',   // $0.40
+        'openai.o4-mini',        // $1.10
+        // Available
+        'openai.gpt-5.4-nano',   // $0.20
+        'openai.gpt-5.4-mini',   // $0.75
+        'gpt-6-luna',            // $0.10 [2x if more than 272K tokens]
+        'gpt-6.1-sol',           // $2.00 [2x if more than 272K tokens]
+        'gemini-3.8-flash',      // $0.75 [on 50% of until Dec 31, 2026]
+        'gemini-3.5-flash-lite', // $0.30 [faster, may need a little prompt tuning]
+    ],
 ];
