@@ -2,6 +2,7 @@
 
 namespace App\Services\Evals;
 
+use App\Enums\Agents;
 use App\Enums\MetricDirection;
 use App\Models\EvalCase;
 use App\Models\EvalRun;
@@ -502,12 +503,17 @@ class ReportBuilder
     }
 
     /**
-     * Runs recorded before `EvalRunner` counted cached input carry no
-     * `cachedPromptTokens`, and their stored prompt counts cannot be repaired.
+     * StructuredOutput runs recorded before `EvalRunner` counted cached input
+     * carry no `cachedPromptTokens`, and their stored prompt counts cannot be
+     * repaired. Recommender runs are unaffected: they stream, and Prism's
+     * stream handler always counted cached input.
      */
     private function predatesCachedTokenCounting(EvalRun $run): bool
     {
-        return $run->results()->whereNotNull('usage')->get(['usage'])
+        return $run->results()
+            ->whereNotNull('usage')
+            ->whereHas('evalCase.agent', fn ($query) => $query->where('name', Agents::StructuredOutput->value))
+            ->get(['usage'])
             ->contains(fn ($result) => is_array($result->usage) && ! array_key_exists('cachedPromptTokens', $result->usage));
     }
 

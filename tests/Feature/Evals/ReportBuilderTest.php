@@ -198,20 +198,35 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertStringContainsString('same models', implode(' ', $report['warnings']));
     }
 
-    public function test_it_warns_when_a_run_predates_cached_token_counting(): void
+    public function test_it_warns_when_a_structured_output_run_predates_cached_token_counting(): void
     {
-        $cases = $this->cases(1);
+        $case = EvalCase::factory()->structuredOutput()->create(['dataset_version' => 'report-test']);
         $baseline = $this->evalRun('old');
         $candidate = $this->evalRun('new');
 
-        $this->makeResult($baseline, $cases[0], ['prompt_tokens' => 41])
+        $this->makeResult($baseline, $case, ['prompt_tokens' => 41])
             ->update(['usage' => ['promptTokens' => 41, 'completionTokens' => 500]]);
-        $this->makeResult($candidate, $cases[0], ['prompt_tokens' => 2857]);
+        $this->makeResult($candidate, $case, ['prompt_tokens' => 2857]);
 
         $warnings = implode(' ', $this->build($candidate, $baseline)['warnings']);
 
         $this->assertStringContainsString("run {$baseline->id} left out cached input", $warnings);
         $this->assertStringNotContainsString("run {$candidate->id}", $warnings);
+    }
+
+    public function test_a_recommender_run_is_not_warned_about_cached_tokens(): void
+    {
+        $cases = $this->cases(1);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new');
+
+        $this->makeResult($baseline, $cases[0], ['prompt_tokens' => 98000])
+            ->update(['usage' => ['promptTokens' => 98000, 'completionTokens' => 900]]);
+        $this->makeResult($candidate, $cases[0], ['prompt_tokens' => 98000]);
+
+        $warnings = implode(' ', $this->build($candidate, $baseline)['warnings']);
+
+        $this->assertStringNotContainsString('cached input', $warnings, 'The stream handler always counted cached input.');
     }
 
     public function test_it_lists_the_worst_per_case_regressions(): void
