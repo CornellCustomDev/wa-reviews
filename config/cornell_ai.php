@@ -95,7 +95,7 @@ return [
             'model' => env('AI_MODEL_REASONING', 'openai.o4-mini'),
         ],
         ChatProfile::Chat->value => [
-            'model' => env('AI_MODEL_CHAT', 'openai.gpt-4.1-mini'),
+            'model' => env('AI_MODEL_CHAT', 'openai.gpt-5.4-mini'),
             // Optional: minimal, low, medium or high. Unset uses the model's own
             // default. A model that does not reason may reject it.
             'reasoning_effort' => env('AI_REASONING_EFFORT_CHAT'),
@@ -104,7 +104,7 @@ return [
             'model' => env('AI_MODEL_TASK', 'gemini-3.5-flash-lite'),
         ],
         ChatProfile::Default->value => [
-            'model' => env('AI_MODEL_DEFAULT', 'openai.gpt-4.1-mini'),
+            'model' => env('AI_MODEL_DEFAULT', 'openai.gpt-5.4-mini'),
         ],
     ],
 
