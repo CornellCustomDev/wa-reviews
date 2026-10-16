@@ -22,7 +22,8 @@ class AiToolsTest extends TestCase
         return [
     //        'Anthropic'   => [Provider::Anthropic, 'claude-3-5-sonnet-latest'],
     //        'OpenAI'      => [Provider::OpenAI, 'gpt-4.1-mini'],
-            'Cornell API' => ['cornell', 'openai.gpt-4.1-mini'],
+            'Cornell API - openai' => ['cornell', 'openai.gpt-5.4-nano'],
+            'Cornell API - gemini' => ['cornell', 'gemini-3.5-flash-lite'],
         ];
     }
 

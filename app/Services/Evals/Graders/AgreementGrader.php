@@ -47,6 +47,7 @@ class AgreementGrader
     private const array STRUCTURED_OUTPUT_SCORE_KEYS = [
         'fields_compared', 'fields_matched', 'field_match_rate', 'field_mismatches',
         'guideline_ids_exact', 'dropped_guideline_count', 'added_guideline_count', 'duplicate_guideline_count', 'feedback_match',
+        'reference_truncated', 'out_of_schema_guideline_count',
     ];
 
     /**
@@ -157,29 +158,34 @@ class AgreementGrader
             ];
         }
 
-        // A reference the parser could not decode is not a reference. Most of
-        // these are source runs that finished with `Length`, so the recorded
-        // text is JSON cut off mid-structure: the regex fallback recovers
-        // guideline ids but no fields, and scoring against it would report
-        // every guideline the model returned as invented and every field as
-        // rewritten. Those are artefacts of the truncation, not defects in the
-        // answer, so the case is skipped the same way an errored one is.
-        if ($reference['parse_method'] !== 'json') {
+        // Prose has no structure to carry through: it is the recommender asking
+        // for more of the page, so there is nothing to hold the answer to.
+        if ($reference['parse_method'] !== 'json' && ! str_contains((string) ($case->input['data'] ?? ''), '"guidelines"')) {
             return [
                 ...array_fill_keys(self::STRUCTURED_OUTPUT_SCORE_KEYS, null),
                 'agreement_scored' => false,
-                'agreement_skipped' => 'reference not parseable',
+                'agreement_skipped' => 'reference is prose',
                 'reference_parse_method' => $reference['parse_method'],
             ];
         }
 
-        $producedList = is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
-        $expected = $this->guidelinesByNumber($reference['guidelines']);
+        if ($reference['parse_method'] !== 'json') {
+            return $this->gradeTruncatedStructuredOutput((string) ($case->input['data'] ?? ''), $payload);
+        }
+
+        // A reference entry naming several guidelines ("33 and 34") is faithfully
+        // carried through as one entry per guideline. The answer is never split:
+        // a model that passes the combined number through, or keeps only its
+        // first guideline, has lost one that production cannot store.
+        $producedList = $this->producedGuidelines($payload);
+        $referenceSplit = RecommendationParser::splitCombinedGuidelines($reference['guidelines']);
+        $referenceGuidelines = array_values(array_filter($referenceSplit, fn (array $guideline) => $this->fitsSchema($guideline)));
+        $expected = $this->guidelinesByNumber($referenceGuidelines);
         $produced = $this->guidelinesByNumber($producedList);
 
         // Keying by number collapses a guideline the model emitted twice, so
         // the exact-set check is made on the full lists, duplicates included.
-        $expectedNumbers = $this->numbers($reference['guidelines']);
+        $expectedNumbers = $this->numbers($referenceGuidelines);
         $producedNumbers = $this->numbers($producedList);
 
         $compared = 0;
@@ -204,6 +210,10 @@ class AgreementGrader
 
         return [
             'agreement_scored' => true,
+            'agreement_skipped' => null,
+            'reference_parse_method' => $reference['parse_method'],
+            'reference_truncated' => false,
+            'out_of_schema_guideline_count' => count($referenceSplit) - count($referenceGuidelines),
             'fields_compared' => $compared,
             'fields_matched' => $matched,
             'field_match_rate' => $compared === 0 ? null : round($matched / $compared, 4),
@@ -214,6 +224,71 @@ class AgreementGrader
             'duplicate_guideline_count' => count($producedNumbers) - count(array_unique($producedNumbers)),
             'feedback_match' => $this->normalise($reference['feedback']) === $this->normalise($payload['feedback'] ?? null),
         ];
+    }
+
+    /**
+     * Guideline-number fidelity against a reference cut off mid-JSON.
+     *
+     * These are source runs that finished with `Length`. Their fields cannot be
+     * recovered, but every `"number"` before the cut can, and those numbers are
+     * enough to catch a model that invents a guideline to fill the gap. The last
+     * guideline is usually incomplete, so dropping it counts as faithful; any
+     * other drop, addition or repeat does not. The cut also falls before
+     * `feedback`, so there is no summary to compare.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function gradeTruncatedStructuredOutput(string $data, array $payload): array
+    {
+        $scraped = RecommendationParser::scrapeGuidelines($data);
+        $inSchema = array_filter($scraped, fn (array $guideline) => $this->fitsSchema($guideline));
+        $expected = $this->numbers(RecommendationParser::splitCombinedGuidelines($inSchema));
+
+        $last = array_key_last($scraped);
+        $withoutPartial = $this->numbers(RecommendationParser::splitCombinedGuidelines(array_diff_key($inSchema, [$last => true])));
+
+        $produced = $this->numbers($this->producedGuidelines($payload));
+        $producedUnique = array_values(array_unique($produced));
+
+        return [
+            ...array_fill_keys(self::STRUCTURED_OUTPUT_SCORE_KEYS, null),
+            'agreement_scored' => true,
+            'agreement_skipped' => null,
+            'reference_parse_method' => 'regex',
+            'reference_truncated' => true,
+            'out_of_schema_guideline_count' => count($scraped) - count($inSchema),
+            'guideline_ids_exact' => $produced === $expected || $produced === $withoutPartial,
+            'dropped_guideline_count' => count(array_diff(array_unique($withoutPartial), $producedUnique)),
+            'added_guideline_count' => count(array_diff($producedUnique, $expected)),
+            'duplicate_guideline_count' => count($produced) - count($producedUnique),
+        ];
+    }
+
+    /**
+     * The guidelines a structured payload returned, exactly as returned.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<int, mixed>
+     */
+    private function producedGuidelines(array $payload): array
+    {
+        return is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
+    }
+
+    /**
+     * Whether production's schema can hold a reference guideline at all. The
+     * recommender sometimes lists guidelines it judged `Pass`, but the schema
+     * only takes `Fail` or `Warn`, so a model that leaves them out is right to.
+     *
+     * @param  array<string, mixed>  $guideline
+     */
+    private function fitsSchema(array $guideline): bool
+    {
+        $assessment = $guideline['assessment'] ?? null;
+
+        return ! is_string($assessment)
+            || in_array($assessment, GuidelinesAnalyzerService::ISSUE_SCHEMA['properties']['assessment']['enum'], true);
     }
 
     /**
@@ -280,6 +355,15 @@ class AgreementGrader
 
     private function f1(?float $precision, ?float $recall): ?float
     {
+        // Precision is undefined when nothing judgeable came back, and recall is
+        // then zero by construction. An answer that finds none of what reviewers
+        // endorsed is the worst F1, not a case with nothing to score — otherwise
+        // a model that returns nothing is dropped from the comparison instead of
+        // losing it.
+        if ($precision === null && $recall === 0.0) {
+            return 0.0;
+        }
+
         if ($precision === null || $recall === null || $precision + $recall === 0.0) {
             return $precision === null || $recall === null ? null : 0.0;
         }

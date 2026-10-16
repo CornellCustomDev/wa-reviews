@@ -18,6 +18,11 @@ use Psr\Http\Message\StreamInterface;
  *
  * Reshaping the line lets Prism's own error branch raise it properly; anything
  * else untyped carries no dispatchable event and is logged and skipped.
+ *
+ * A failure the model's own API reports arrives as a `response.failed` event
+ * inside an HTTP 200 stream, with the error nested under `response`. Prism has
+ * no branch for it, so the stream would simply end on its last finish reason
+ * with no text, as if the model had stopped. It is reshaped the same way.
  */
 class CornellStream extends Stream
 {
@@ -27,6 +32,13 @@ class CornellStream extends Stream
     protected function parseNextDataLine(StreamInterface $stream): ?array
     {
         $data = parent::parseNextDataLine($stream);
+
+        if (($data['type'] ?? null) === 'response.failed') {
+            return [
+                'type' => 'error',
+                'error' => data_get($data, 'response.error') ?: ['message' => 'The model reported a failed response.'],
+            ];
+        }
 
         if ($data === null || array_key_exists('type', $data)) {
             return $data;

@@ -31,6 +31,20 @@ class CornellStreamTest extends TestCase
     }
 
     #[Test]
+    public function a_failed_response_event_is_raised_instead_of_ending_the_stream_quietly(): void
+    {
+        $this->fakeGateway(
+            '{"type":"response.created","response":{"id":"resp_1","model":"openai.gpt-5.4-mini"}}',
+            '{"type":"response.failed","response":{"id":"resp_1","status":"failed","error":{"code":"context_length_exceeded","message":"Your input exceeds the context window of this model."}}}',
+        );
+
+        $this->expectException(PrismException::class);
+        $this->expectExceptionMessage('Code: context_length_exceeded. Message: Your input exceeds the context window of this model.');
+
+        $this->streamText();
+    }
+
+    #[Test]
     public function an_untyped_line_without_an_error_is_logged_and_skipped(): void
     {
         Log::spy();

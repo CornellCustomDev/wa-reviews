@@ -72,9 +72,9 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame('candidate-task', $candidate->modelForProfile(ChatProfile::Task->value));
         $this->assertSame('production-chat', $candidate->modelForProfile(ChatProfile::Chat->value), 'Only the profile the agent reads is swapped.');
         $this->assertSame(
-            ['schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
+            ['completed', 'schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
             array_keys($candidate->margins),
-            'Every fidelity check is gated by default.'
+            'Reliability and every fidelity check are gated by default.'
         );
 
         // The sampled cases come from the shared development database, so how
@@ -116,6 +116,39 @@ class EvalModelTest extends FeatureTestCase
         );
         $this->assertSame(1, $candidate->results()->where('eval_case_id', $case->id)->count());
         $this->assertFileExists($this->reportPath);
+    }
+
+    public function test_effort_is_recorded_on_the_candidate_for_the_profile_it_replaces(): void
+    {
+        Prism::fake([$this->structuredFake()]);
+        $this->structuredOutputCase('eval-model-effort');
+        $baseline = EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-effort',
+            'is_baseline' => true,
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--model' => 'candidate-task',
+            '--effort' => 'low',
+            '--dataset-version' => 'eval-model-effort',
+            '--repeats' => 1,
+            '--out' => $this->reportPath,
+        ])->assertSuccessful();
+
+        $candidate = EvalRun::latest('id')->firstOrFail();
+
+        $this->assertSame([ChatProfile::Task->value => 'low'], $candidate->models['reasoning_effort']);
+        $this->assertArrayNotHasKey('reasoning_effort', $baseline->refresh()->models ?? []);
+        $this->assertStringContainsString('task: candidate-task (effort: low)', File::get($this->reportPath));
+    }
+
+    public function test_an_unknown_effort_is_refused_before_anything_runs(): void
+    {
+        $runsBefore = EvalRun::count();
+
+        $this->artisan('ai:eval', ['--model' => 'candidate-task', '--effort' => 'extreme'])->assertFailed();
+
+        $this->assertSame($runsBefore, EvalRun::count());
     }
 
     public function test_the_baseline_flag_replaces_the_current_baseline_and_writes_no_report(): void

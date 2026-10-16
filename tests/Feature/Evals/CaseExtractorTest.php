@@ -8,6 +8,7 @@ use App\Models\Agent;
 use App\Models\ChatHistory;
 use App\Models\EvalCase;
 use App\Models\Issue;
+use App\Models\Page;
 use App\Models\Scope;
 use App\Services\Evals\CaseExtractor;
 use Tests\Feature\FeatureTestCase;
@@ -89,6 +90,19 @@ class CaseExtractorTest extends FeatureTestCase
             $this->extractor()->extract($history, 'v1'),
             'Replaying against empty page content would grade both models on nothing.'
         );
+    }
+
+    public function test_it_skips_a_recommender_case_whose_page_is_larger_than_production_will_analyse(): void
+    {
+        config()->set('cornell_ai.page_content_char_limit', 10);
+        $history = ChatHistory::factory()->recommender()->create([
+            'context_type' => Scope::class,
+            'context_id' => $this->makeScopeWithPageContent('<html><body>This page is longer than ten characters.</body></html>')->id,
+        ]);
+        $extractor = $this->extractor();
+
+        $this->assertNull($extractor->extract($history, 'v1'));
+        $this->assertArrayHasKey('page content exceeds the analysis limit', $extractor->drainSkipReasons());
     }
 
     public function test_it_unwraps_the_data_payload_for_a_structured_output_case(): void
@@ -244,6 +258,43 @@ class CaseExtractorTest extends FeatureTestCase
         $extractor->extractDataset(Agents::GuidelineRecommender, 'test-skips', null);
 
         $this->assertArrayHasKey('stored page content missing', $extractor->drainSkipReasons());
+    }
+
+    public function test_a_reviewed_only_dataset_keeps_just_the_cases_a_reviewer_triaged(): void
+    {
+        $triaged = $this->recommenderHistoryWithIssue($this->makeScopeWithPageContent(), AIStatus::Rejected);
+
+        // A second scope on the same faked disk: the helper above resets it.
+        $untriagedScope = Scope::factory()->create();
+        $untriagedScope->setCurrentPage(Page::createPageContent($untriagedScope, $untriagedScope->url, '<html><body><p>Hi</p></body></html>'));
+        $this->recommenderHistoryWithIssue($untriagedScope->refresh(), AIStatus::Generated);
+        $extractor = $this->extractor();
+
+        $stored = $extractor->extractDataset(Agents::GuidelineRecommender, 'test-reviewed', null, reviewedOnly: true);
+
+        $this->assertSame([$triaged->ulid], $stored->pluck('source_chat_history_ulid')->all());
+        $this->assertSame(1, $extractor->drainSkipReasons()['no reviewer verdicts'] ?? null);
+    }
+
+    /**
+     * A replayable recommender run on `$scope` that produced one issue carrying `$status`.
+     */
+    private function recommenderHistoryWithIssue(Scope $scope, AIStatus $status): ChatHistory
+    {
+        $history = ChatHistory::factory()->recommender([11])->create([
+            'context_type' => Scope::class,
+            'context_id' => $scope->id,
+        ]);
+
+        Issue::factory()->create([
+            'scope_id' => $scope->id,
+            'project_id' => $scope->project_id,
+            'guideline_id' => $this->makeGuideline()->id,
+            'chat_history_ulid' => $history->ulid,
+            'ai_status' => $status,
+        ]);
+
+        return $history;
     }
 
     private function extractor(): CaseExtractor
