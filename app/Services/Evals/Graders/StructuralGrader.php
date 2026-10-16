@@ -67,6 +67,12 @@ class StructuralGrader
             $scores['steps'] = $steps;
             $scores['max_steps_hit'] = $steps >= self::MAX_STEPS;
             $scores['tool_call_count'] = count($result->tool_calls ?? []);
+
+            // Read from the recommender's own text, before StructuredOutput has
+            // had a chance to repair or collapse a combined number.
+            $scores['combined_number_count'] = $result->failed()
+                ? null
+                : count(RecommendationParser::combinedNumbers($output['text'] ?? null));
         }
 
         return $scores;

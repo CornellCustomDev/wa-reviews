@@ -173,8 +173,13 @@ class AgreementGrader
             return $this->gradeTruncatedStructuredOutput((string) ($case->input['data'] ?? ''), $payload);
         }
 
-        $producedList = is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
-        $referenceGuidelines = array_values(array_filter($reference['guidelines'], fn (array $guideline) => $this->fitsSchema($guideline)));
+        // A reference entry naming several guidelines ("33 and 34") is faithfully
+        // carried through as one entry per guideline. The answer is never split:
+        // a model that passes the combined number through, or keeps only its
+        // first guideline, has lost one that production cannot store.
+        $producedList = $this->producedGuidelines($payload);
+        $referenceSplit = RecommendationParser::splitCombinedGuidelines($reference['guidelines']);
+        $referenceGuidelines = array_values(array_filter($referenceSplit, fn (array $guideline) => $this->fitsSchema($guideline)));
         $expected = $this->guidelinesByNumber($referenceGuidelines);
         $produced = $this->guidelinesByNumber($producedList);
 
@@ -208,7 +213,7 @@ class AgreementGrader
             'agreement_skipped' => null,
             'reference_parse_method' => $reference['parse_method'],
             'reference_truncated' => false,
-            'out_of_schema_guideline_count' => count($reference['guidelines']) - count($referenceGuidelines),
+            'out_of_schema_guideline_count' => count($referenceSplit) - count($referenceGuidelines),
             'fields_compared' => $compared,
             'fields_matched' => $matched,
             'field_match_rate' => $compared === 0 ? null : round($matched / $compared, 4),
@@ -238,13 +243,12 @@ class AgreementGrader
     {
         $scraped = RecommendationParser::scrapeGuidelines($data);
         $inSchema = array_filter($scraped, fn (array $guideline) => $this->fitsSchema($guideline));
-        $expected = $this->numbers($inSchema);
+        $expected = $this->numbers(RecommendationParser::splitCombinedGuidelines($inSchema));
 
         $last = array_key_last($scraped);
-        $withoutPartial = $this->numbers(array_diff_key($inSchema, [$last => true]));
+        $withoutPartial = $this->numbers(RecommendationParser::splitCombinedGuidelines(array_diff_key($inSchema, [$last => true])));
 
-        $producedList = is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
-        $produced = $this->numbers($producedList);
+        $produced = $this->numbers($this->producedGuidelines($payload));
         $producedUnique = array_values(array_unique($produced));
 
         return [
@@ -259,6 +263,17 @@ class AgreementGrader
             'added_guideline_count' => count(array_diff($producedUnique, $expected)),
             'duplicate_guideline_count' => count($produced) - count($producedUnique),
         ];
+    }
+
+    /**
+     * The guidelines a structured payload returned, exactly as returned.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array<int, mixed>
+     */
+    private function producedGuidelines(array $payload): array
+    {
+        return is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
     }
 
     /**

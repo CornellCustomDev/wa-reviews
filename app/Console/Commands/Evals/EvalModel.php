@@ -460,12 +460,22 @@ class EvalModel extends Command
         };
     }
 
+    /**
+     * The commit the run replays, marked `-dirty` when tracked files differ
+     * from it: an uncommitted prompt change is otherwise invisible on the run.
+     */
     private function gitSha(): ?string
     {
         try {
             $result = Process::run('git rev-parse --short HEAD');
 
-            return $result->successful() ? trim($result->output()) : null;
+            if (! $result->successful()) {
+                return null;
+            }
+
+            $modified = Process::run('git diff --quiet HEAD')->exitCode() === 1;
+
+            return trim($result->output()).($modified ? '-dirty' : '');
         } catch (Throwable) {
             return null;
         }

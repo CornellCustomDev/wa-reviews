@@ -198,6 +198,24 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertStringContainsString('same models', implode(' ', $report['warnings']));
     }
 
+    public function test_same_model_runs_from_different_code_name_the_code_change(): void
+    {
+        $models = ['provider' => 'cornell', 'profiles' => ['chat' => 'a', 'task' => 'b']];
+        $cases = $this->cases(1);
+
+        $baseline = $this->evalRun('old', models: $models);
+        $candidate = $this->evalRun('new', models: $models);
+        $baseline->update(['git_sha' => 'aaaa1111']);
+        $candidate->update(['git_sha' => 'aaaa1111-dirty']);
+
+        $this->makeResults($baseline, $cases, [0.5]);
+        $this->makeResults($candidate, $cases, [0.5]);
+
+        $warnings = implode(' ', $this->build($candidate, $baseline)['warnings']);
+
+        $this->assertStringContainsString('code or prompts at aaaa1111-dirty versus aaaa1111', $warnings);
+    }
+
     public function test_it_warns_when_a_structured_output_run_predates_cached_token_counting(): void
     {
         $case = EvalCase::factory()->structuredOutput()->create(['dataset_version' => 'report-test']);

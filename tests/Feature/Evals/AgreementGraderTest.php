@@ -310,6 +310,67 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(1, $scores['out_of_schema_guideline_count']);
     }
 
+    public function test_splitting_a_combined_guideline_number_into_one_entry_each_is_faithful(): void
+    {
+        [$first, $second] = $this->guidelineIds(2);
+        $combined = $this->payload();
+        $combined['guidelines'][0]['number'] = "$first and $second";
+        $split = $combined;
+        $split['guidelines'] = [
+            [...$combined['guidelines'][0], 'number' => $first],
+            [...$combined['guidelines'][0], 'number' => $second],
+        ];
+
+        $scores = $this->gradeStructured($this->structuredOutputCase($combined), $split);
+
+        $this->assertTrue($scores['guideline_ids_exact']);
+        $this->assertSame(0, $scores['added_guideline_count']);
+        $this->assertSame(20, $scores['fields_compared'], 'Each guideline the combined entry names is held to its shared fields.');
+        $this->assertSame(1.0, $scores['field_match_rate']);
+    }
+
+    public function test_keeping_only_the_first_of_a_combined_guideline_number_is_a_drop(): void
+    {
+        [$first, $second] = $this->guidelineIds(2);
+        $combined = $this->payload();
+        $combined['guidelines'][0]['number'] = "$first and $second";
+        $collapsed = $combined;
+        $collapsed['guidelines'][0]['number'] = $first;
+
+        $scores = $this->gradeStructured($this->structuredOutputCase($combined), $collapsed);
+
+        $this->assertFalse($scores['guideline_ids_exact']);
+        $this->assertSame(1, $scores['dropped_guideline_count']);
+        $this->assertSame(0, $scores['added_guideline_count']);
+    }
+
+    public function test_passing_a_combined_guideline_number_through_unchanged_is_not_faithful(): void
+    {
+        [$first, $second] = $this->guidelineIds(2);
+        $combined = $this->payload();
+        $combined['guidelines'][0]['number'] = "$first and $second";
+
+        $scores = $this->gradeStructured($this->structuredOutputCase($combined), $combined);
+
+        $this->assertFalse($scores['guideline_ids_exact'], 'Production cannot store "33 and 34", so both guidelines are lost.');
+        $this->assertSame(2, $scores['dropped_guideline_count']);
+    }
+
+    public function test_a_combined_guideline_number_in_a_truncated_reference_expects_each_guideline(): void
+    {
+        [$first, $second] = $this->guidelineIds(2);
+        $combined = $this->payload(2);
+        $combined['guidelines'][0]['number'] = "$first and $second";
+        $split = $combined;
+        $split['guidelines'][0]['number'] = $first;
+        $split['guidelines'] = [$split['guidelines'][0], [...$split['guidelines'][0], 'number' => $second], $split['guidelines'][1]];
+
+        $scores = $this->gradeStructured($this->truncatedStructuredOutputCase($combined), $split);
+
+        $this->assertTrue($scores['guideline_ids_exact']);
+        $this->assertSame(0, $scores['added_guideline_count']);
+    }
+
     public function test_a_prose_reference_is_skipped_rather_than_scored_against_nothing(): void
     {
         $case = $this->structuredOutputCase($this->payload());

@@ -479,7 +479,13 @@ class ReportBuilder
         }
 
         if ($candidate->models === $baseline->models) {
-            $warnings[] = 'Both runs used the same models; any difference here is sampling noise.';
+            $warnings[] = $candidate->git_sha && $baseline->git_sha && $candidate->git_sha !== $baseline->git_sha
+                ? sprintf(
+                    'Both runs used the same models, so a difference here comes from the code or prompts at %s versus %s, or from sampling noise.',
+                    $candidate->git_sha,
+                    $baseline->git_sha,
+                )
+                : 'Both runs used the same models; any difference here is sampling noise.';
         }
 
         if (($candidate->repeats ?? 1) < 2) {
