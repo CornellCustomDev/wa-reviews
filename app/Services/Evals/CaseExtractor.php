@@ -42,9 +42,13 @@ class CaseExtractor
      * every source the agent accepts, deduplicated, then sampled across strata
      * down to `$limit`. Call `drainSkipReasons()` afterwards for what was left out.
      *
+     * With `$reviewedOnly`, a case is kept only if a reviewer accepted, modified
+     * or rejected at least one of its guidelines. Most recommender runs were
+     * never triaged, so a mixed sample leaves F1 resting on a handful of cases.
+     *
      * @return Collection<int, EvalCase>
      */
-    public function extractDataset(Agents $agent, string $datasetVersion, ?int $limit): Collection
+    public function extractDataset(Agents $agent, string $datasetVersion, ?int $limit, bool $reviewedOnly = false): Collection
     {
         $extracted = collect();
 
@@ -56,6 +60,10 @@ class CaseExtractor
 
                 foreach ($histories as $history) {
                     $attributes = $this->extract($history, $datasetVersion, $agent);
+
+                    if ($attributes !== null && $reviewedOnly && ($attributes['labels']['mined']['triaged_count'] ?? 0) === 0) {
+                        $attributes = $this->skip('no reviewer verdicts');
+                    }
 
                     if ($attributes !== null) {
                         $extracted->push($attributes);

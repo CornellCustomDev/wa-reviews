@@ -44,6 +44,7 @@ class EvalModel extends Command
         {--baseline : Replay this model (default: the configured production model) as the new baseline instead of as a candidate.}
         {--repeats=2 : Replays per case. Two or more separates a model difference from sampling noise.}
         {--limit=20 : Cases to extract when the agent has no dataset yet.}
+        {--reviewed : When extracting, keep only cases a reviewer triaged, so recommender F1 rests on more evidence.}
         {--dataset-version= : The frozen question set to use. Defaults to the agent\'s most recent one, extracting a new one if there is none.}
         {--margins= : JSON of non-inferiority margins per metric. Defaults to the baseline\'s margins, then to the agent\'s standard ones.}
         {--label= : Name for the run. Defaults to the model.}
@@ -203,7 +204,7 @@ class EvalModel extends Command
 
         $this->components->info("No {$agent->value} cases in dataset \"{$version}\" yet; extracting up to {$limit}.");
 
-        $cases = $extractor->extractDataset($agent, $version, $limit);
+        $cases = $extractor->extractDataset($agent, $version, $limit, (bool) $this->option('reviewed'));
 
         foreach ($extractor->drainSkipReasons() as $reason => $count) {
             $this->line("  skipped {$count} × {$reason}");
