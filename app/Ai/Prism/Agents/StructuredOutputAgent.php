@@ -54,8 +54,6 @@ The data may already be in the format you need, or it may require some transform
 If the data requires transformation, stay as true to the original data as possible while adhering to the schema provided. Copy free-text fields (such as reasoning, observation, recommendation, testing, and feedback) verbatim from the source data — do not rephrase, summarize, or "improve" the wording, even if it seems terse or informal.
 
 If a field expects an array and there is nothing to report, use an empty array. Never use null for an array field.
-
-If an item in the data puts several values in a field that holds only one, such as "number": "33 and 34", output a separate item for each value, in the order given, copying every other field of the item verbatim into each one. Never keep only the first value.
 INSTRUCTIONS;
     }
 

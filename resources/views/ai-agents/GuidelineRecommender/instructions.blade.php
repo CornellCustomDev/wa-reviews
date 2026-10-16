@@ -50,9 +50,7 @@ for each warning or failure with these fields:
       1. How the guideline applies to the issue
       2. Why it is assessed as a warning or failure
       3. Why the impact rating was chosen
-   - number: The Guideline heading number from the Guidelines Document. This must be a single number, never
-     a combination such as "33 and 34". When an issue fails more than one guideline, return a separate object
-     for each guideline, with that guideline's own heading and criteria.
+   - number: The Guideline heading number from the Guidelines Document
    - heading: Guideline heading
    - criteria: WCAG criteria
    - assessment: Must be either "Fail" or "Warn":
