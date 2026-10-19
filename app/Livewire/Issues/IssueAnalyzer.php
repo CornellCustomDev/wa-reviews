@@ -54,6 +54,12 @@ class IssueAnalyzer extends Component
         // Authorize because we delete existing items
         $this->authorize('update', $this->issue->scope);
 
+        if ($this->issue->scope->pageContentExceedsAnalysisLimit()) {
+            $this->feedback = $this->issue->scope->pageContentAnalysisRefusal();
+            $this->showFeedback = true;
+            return;
+        }
+
         // Remove any existing recommendation for this issue first
         $this->issue->items()->delete();
         unset($this->hasUnreviewedItems);

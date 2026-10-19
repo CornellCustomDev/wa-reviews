@@ -1,5 +1,8 @@
 <?php
 
+use App\Enums\ChatProfile;
+use App\Services\CornellAI\ApiGatewayChatService;
+
 return [
 
     /*
@@ -13,7 +16,7 @@ return [
     | - \App\Services\CornellAI\OpenAIChatService::class
     |
     */
-    'ai_service' => env('AI_SERVICE', \App\Services\CornellAI\ApiGatewayChatService::class),
+    'ai_service' => env('AI_SERVICE', ApiGatewayChatService::class),
     'laragent_profile' => env('LARAGENT_PROFILE', 'default'),
     'prism_provider' => env('PRISM_PROVIDER', 'cornell'),
 
@@ -64,6 +67,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Page Content Analysis Limit
+    |--------------------------------------------------------------------------
+    |
+    | Stored page content larger than this many characters is refused before a
+    | model is called, rather than failing mid-stream with a context-window
+    | error from the gateway. Measured in characters because no tokenizer is
+    | needed to check it; this markup runs about 2.8 characters per token, so
+    | 250,000 characters is roughly 90,000 tokens and leaves ample headroom
+    | inside a 128,000-token window for the prompt and the response.
+    |
+    | See docs/oversized-page-content.md.
+    |
+    */
+    'page_content_char_limit' => env('AI_PAGE_CONTENT_CHAR_LIMIT', 250_000),
+
+    /*
+    |--------------------------------------------------------------------------
     | Chat Profiles
     |--------------------------------------------------------------------------
     |
@@ -71,16 +91,16 @@ return [
     |
     */
     'profiles' => [
-        \App\Enums\ChatProfile::Reasoning->value => [
+        ChatProfile::Reasoning->value => [
             'model' => env('AI_MODEL_REASONING', 'openai.o4-mini'),
         ],
-        \App\Enums\ChatProfile::Chat->value => [
+        ChatProfile::Chat->value => [
             'model' => env('AI_MODEL_CHAT', 'openai.gpt-4.1-mini'),
         ],
-        \App\Enums\ChatProfile::Task->value => [
+        ChatProfile::Task->value => [
             'model' => env('AI_MODEL_TASK', 'openai.gpt-4o-mini'),
         ],
-        \App\Enums\ChatProfile::Default->value => [
+        ChatProfile::Default->value => [
             'model' => env('AI_MODEL_DEFAULT', 'openai.gpt-4.1-mini'),
         ],
     ]

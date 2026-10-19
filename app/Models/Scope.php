@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\Agents;
 use App\Enums\GuidelineStatus;
-use App\Models\Comment;
 use App\Services\SiteImprove\SiteimproveService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Log;
 
 class Scope extends Model
 {
@@ -97,6 +97,56 @@ class Scope extends Model
         return $this->currentPage?->getPageContent()
             ?? $this->latestPage?->getPageContent()
             ?? null;
+    }
+
+    /**
+     * The size of the stored page content in bytes, without reading it.
+     */
+    public function getPageContentSize(): int
+    {
+        return $this->currentPage?->getPageContentSize()
+            ?? $this->latestPage?->getPageContentSize()
+            ?? 0;
+    }
+
+    /**
+     * Whether the stored page is too large to send to a model.
+     *
+     * Oversized pages otherwise fail mid-stream with a context-window error
+     * from the gateway, after the user has already waited on the request.
+     * See docs/oversized-page-content.md.
+     */
+    public function pageContentExceedsAnalysisLimit(): bool
+    {
+        return $this->getPageContentSize() > config('cornell_ai.page_content_char_limit');
+    }
+
+    /**
+     * A message explaining that the page is too large to analyze, or null when
+     * it is within the limit.
+     *
+     * The refusal is logged because the count of real user encounters is what
+     * would justify building the content minimizing described in
+     * docs/oversized-page-content.md.
+     */
+    public function pageContentAnalysisRefusal(): ?string
+    {
+        if (! $this->pageContentExceedsAnalysisLimit()) {
+            return null;
+        }
+
+        $size = $this->getPageContentSize();
+
+        Log::warning('AI analysis refused: page content exceeds the analysis limit', [
+            'scope_id' => $this->id,
+            'url' => $this->url,
+            'size' => $size,
+            'limit' => config('cornell_ai.page_content_char_limit'),
+        ]);
+
+        return 'The retrieved content for this page is too large for AI analysis ('
+            .number_format($size / 1_048_576, 1).' MB). '
+            .'Narrowing the scope to a smaller page will allow analysis.';
     }
 
     /**
