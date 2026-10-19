@@ -38,7 +38,7 @@ The useful options:
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |
 | `--reviewed` | When extracting, keep only cases a reviewer accepted, modified or rejected. Use it for the recommender, where most past runs were never triaged and F1 otherwise rests on a handful of cases. |
-| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones: zero loss on every fidelity check for StructuredOutput (plus 10% on `completed`), and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
+| `--margins=` | JSON of how much loss you will tolerate per metric. A candidate defaults to its baseline's margins; a new baseline defaults to the agent's standard ones: zero loss on every fidelity check for StructuredOutput (plus 10% on `completed`), and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
 
 A run records the commit it replayed, with `-dirty` when tracked files had
 uncommitted changes. To test a prompt change on its own, replay the same model

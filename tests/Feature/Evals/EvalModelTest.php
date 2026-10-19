@@ -175,6 +175,34 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileDoesNotExist($this->reportPath);
     }
 
+    public function test_a_new_baseline_registers_the_standard_margins_rather_than_the_previous_baselines(): void
+    {
+        Prism::fake([$this->structuredFake()]);
+        $this->structuredOutputCase('eval-model-rebaseline-margins');
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-rebaseline-margins',
+            'is_baseline' => true,
+            'margins' => ['schema_valid' => ['margin' => 0.1]],
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--baseline' => true,
+            '--dataset-version' => 'eval-model-rebaseline-margins',
+            '--repeats' => 1,
+        ])->assertSuccessful();
+
+        $replacement = EvalRun::latest('id')->firstOrFail();
+
+        // Stored as JSON, so a zero margin reads back as an integer.
+        $this->assertSame([
+            'completed' => ['margin' => 0.1],
+            'schema_valid' => ['margin' => 0],
+            'field_match_rate' => ['margin' => 0],
+            'feedback_match' => ['margin' => 0],
+            'guideline_ids_exact' => ['margin' => 0],
+        ], $replacement->margins);
+    }
+
     public function test_a_baseline_replay_that_errors_on_every_call_does_not_displace_the_current_baseline(): void
     {
         // A case with nothing to transform errors before any model is called.

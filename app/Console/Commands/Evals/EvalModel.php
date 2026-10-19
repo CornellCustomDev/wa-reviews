@@ -46,7 +46,7 @@ class EvalModel extends Command
         {--limit=20 : Cases to extract when the agent has no dataset yet.}
         {--reviewed : When extracting, keep only cases a reviewer triaged, so recommender F1 rests on more evidence.}
         {--dataset-version= : The frozen question set to use. Defaults to the agent\'s most recent one, extracting a new one if there is none.}
-        {--margins= : JSON of non-inferiority margins per metric. Defaults to the baseline\'s margins, then to the agent\'s standard ones.}
+        {--margins= : JSON of non-inferiority margins per metric. A candidate defaults to its baseline\'s margins; a new baseline to the agent\'s standard ones.}
         {--label= : Name for the run. Defaults to the model.}
         {--out= : Where to write the report. Defaults to storage/eval-report-<model>-<date>-<run>.md.}
         {--dry-run : Show what would run without calling a model or writing anything.}';
@@ -126,7 +126,9 @@ class EvalModel extends Command
                 return self::SUCCESS;
             }
 
-            $run = $this->replay($runner, $cases, $profile, $model, null, $this->margins($agent, $baseline), asBaseline: true);
+            // A new baseline registers today's standard margins rather than
+            // the outgoing baseline's, so a changed default takes effect.
+            $run = $this->replay($runner, $cases, $profile, $model, null, $this->margins($agent, null), asBaseline: true);
 
             if ($run->status === EvalRunStatus::Failed) {
                 return self::FAILURE;
