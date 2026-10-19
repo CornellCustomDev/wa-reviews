@@ -186,6 +186,13 @@ class EvalModel extends Command
     {
         $agentId = Agent::findAgent($agent)?->getKey();
         $version = $this->option('dataset-version') ?: $this->latestDatasetVersion($agentId) ?? $this->newDatasetVersion();
+
+        if ($this->heldByAnotherAgent($version, $agentId)) {
+            $this->error("Dataset \"{$version}\" already holds another agent's cases. A dataset version belongs to one agent, so its baseline is that agent's; choose a different --dataset-version.");
+
+            return null;
+        }
+
         $cases = $this->casesIn($version, $agentId);
 
         if ($cases->isNotEmpty()) {
@@ -231,6 +238,19 @@ class EvalModel extends Command
             ->where('agent_id', $agentId)
             ->orderBy('id')
             ->get();
+    }
+
+    /**
+     * Baselines are found by dataset version alone, so a version shared by two
+     * agents would hand one agent the other's baseline and margins. New
+     * versions are always unique; only a named `--dataset-version` can collide.
+     */
+    private function heldByAnotherAgent(string $version, ?int $agentId): bool
+    {
+        return EvalCase::query()
+            ->where('dataset_version', $version)
+            ->where('agent_id', '!=', $agentId)
+            ->exists();
     }
 
     private function latestDatasetVersion(?int $agentId): ?string

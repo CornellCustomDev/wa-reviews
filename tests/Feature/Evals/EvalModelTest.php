@@ -258,6 +258,28 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileDoesNotExist($this->reportPath);
     }
 
+    public function test_a_dataset_version_holding_another_agents_cases_is_rejected(): void
+    {
+        Prism::fake([]);
+        $this->recommenderCase('eval-model-shared');
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-shared',
+            'is_baseline' => true,
+        ]);
+        $runs = EvalRun::count();
+
+        $this->artisan('ai:eval', [
+            '--model' => 'candidate-task',
+            '--dataset-version' => 'eval-model-shared',
+            '--repeats' => 1,
+            '--out' => $this->reportPath,
+        ])->assertFailed();
+
+        $this->assertSame(1, EvalCase::where('dataset_version', 'eval-model-shared')->count(), 'No StructuredOutput cases are extracted into the recommender\'s dataset.');
+        $this->assertSame($runs, EvalRun::count());
+        $this->assertFileDoesNotExist($this->reportPath);
+    }
+
     public function test_an_unsupported_agent_is_rejected(): void
     {
         $this->artisan('ai:eval', ['--agent' => 'ModelChatAgent', '--model' => 'x'])->assertFailed();

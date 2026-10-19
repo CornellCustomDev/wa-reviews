@@ -75,6 +75,19 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(0.0, $scores['f1_lenient']);
     }
 
+    public function test_f1_is_undefined_when_no_guideline_was_expected(): void
+    {
+        [$rejected] = $this->guidelineIds(1);
+
+        $case = $this->recommenderCase(['rejected_guideline_ids' => [$rejected]]);
+
+        $scores = $this->grade($case, [$rejected]);
+
+        $this->assertSame(0.0, $scores['precision_strict']);
+        $this->assertNull($scores['recall_strict']);
+        $this->assertNull($scores['f1_strict']);
+    }
+
     public function test_pre_existing_guidelines_are_excluded_rather_than_penalised(): void
     {
         [$accepted, $preExisting] = $this->guidelineIds(2);

@@ -139,7 +139,10 @@ mean, candidate mean, the difference, and a 95% confidence interval for it.
 - `repeat sd` is how much the same model varied when asked the same question
   twice. A difference smaller than that is noise.
 - The **margin** column is the loss you agreed to tolerate before the run.
-  `fail` means the interval crossed it. Margins are recorded on the run before
+  `pass` means the interval stayed inside it. `fail` means it crossed it and
+  lies entirely on the losing side of zero. An interval that crosses the
+  margin but still reaches zero is `inconclusive`: more cases are needed, not
+  a different model. Margins are recorded on the run before
   it executes so the goalposts cannot move afterwards.
 - The last table lists the cases where the candidate lost most ground, so a
   regression can be read rather than inferred from an average.

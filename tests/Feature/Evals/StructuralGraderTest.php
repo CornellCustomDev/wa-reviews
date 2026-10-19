@@ -26,6 +26,36 @@ class StructuralGraderTest extends FeatureTestCase
         $this->assertContains('guidelines is not a list', $scores['schema_issues']);
     }
 
+    public function test_a_guideline_field_of_the_wrong_type_fails_schema_validity(): void
+    {
+        $scores = $this->grade(['guidelines' => [$this->guideline(['target' => ['nav', 'footer'], 'number' => '12'])], 'feedback' => 'ok']);
+
+        $this->assertFalse($scores['schema_valid']);
+        $this->assertSame([
+            'guideline 0: target is not of type string',
+            'guideline 0: number is not of type integer',
+        ], $scores['schema_issues']);
+    }
+
+    public function test_fields_the_schema_does_not_declare_fail_schema_validity(): void
+    {
+        $scores = $this->grade(['guidelines' => [$this->guideline(['confidence' => 0.9])], 'feedback' => 'ok', 'notes' => 'extra']);
+
+        $this->assertFalse($scores['schema_valid']);
+        $this->assertSame([
+            'unexpected field notes',
+            'guideline 0: unexpected field confidence',
+        ], $scores['schema_issues']);
+    }
+
+    public function test_a_complete_guideline_of_the_declared_types_is_schema_valid(): void
+    {
+        $scores = $this->grade(['guidelines' => [$this->guideline()], 'feedback' => 'ok']);
+
+        $this->assertTrue($scores['schema_valid']);
+        $this->assertSame([], $scores['schema_issues']);
+    }
+
     public function test_an_empty_list_with_feedback_is_schema_valid(): void
     {
         $scores = $this->grade(['guidelines' => [], 'feedback' => 'Nothing to report.']);
@@ -67,5 +97,28 @@ class StructuralGraderTest extends FeatureTestCase
         ]);
 
         return app(StructuralGrader::class)->grade($case, $result);
+    }
+
+    /**
+     * A guideline with every schema field populated with a value of its declared type.
+     *
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function guideline(array $overrides = []): array
+    {
+        return [
+            'target' => 'Main navigation',
+            'reasoning' => 'The images carry meaning.',
+            'number' => 12,
+            'heading' => 'Images need alt text',
+            'criteria' => '1.1.1 Non-text Content',
+            'assessment' => 'Fail',
+            'observation' => 'The logo has no alt attribute.',
+            'recommendation' => 'Add descriptive alt text.',
+            'testing' => 'Inspect the img element.',
+            'impact' => 'Serious',
+            ...$overrides,
+        ];
     }
 }

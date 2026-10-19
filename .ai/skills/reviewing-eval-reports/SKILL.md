@@ -79,8 +79,10 @@ failing one is not evidence of a bad one.
   `baseline_jaccard` drift, `schema_issues`) is still on the `eval_results`
   row, just not in the table.
 - `margin` on a metrics-table row is the pre-registered non-inferiority
-  threshold (`eval_runs.margins`); `fail` means the CI crossed that margin,
-  not necessarily a large practical difference.
+  threshold (`eval_runs.margins`); `fail` means the CI crossed that margin
+  and excludes zero on the losing side, not necessarily a large practical
+  difference. A CI that crosses the margin but still spans zero is
+  `inconclusive`, which makes the overall verdict inconclusive, not failing.
 - `repeat sd` is the same model's variance across repeats of the same case —
   a diff smaller than that is noise.
 - `ai:eval-report --run=X --baseline=Y --regrade` re-scores both runs with
