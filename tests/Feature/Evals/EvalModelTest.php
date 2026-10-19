@@ -280,6 +280,34 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileDoesNotExist($this->reportPath);
     }
 
+    public function test_without_a_model_it_suggests_the_gateway_models_past_models_and_production(): void
+    {
+        Prism::fake([]);
+        config()->set('cornell_ai.api_models', ['gateway-model-b', 'gateway-model-a']);
+        // The suggestions read every past run, so only this test's run may exist.
+        EvalRun::query()->delete();
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-suggest',
+            'models' => ['provider' => 'cornell', 'profiles' => [
+                ChatProfile::Chat->value => 'past-chat',
+                ChatProfile::Task->value => 'gateway-model-a',
+            ]],
+        ]);
+        $this->structuredOutputCase('eval-model-suggest');
+
+        $this->artisan('ai:eval', [
+            '--dataset-version' => 'eval-model-suggest',
+            '--dry-run' => true,
+        ])
+            ->expectsChoice(
+                'Which model do you want to test?',
+                'gateway-model-b',
+                ['gateway-model-a', 'gateway-model-b', 'past-chat', 'production-task'],
+                strict: true,
+            )
+            ->assertSuccessful();
+    }
+
     public function test_an_unsupported_agent_is_rejected(): void
     {
         $this->artisan('ai:eval', ['--agent' => 'ModelChatAgent', '--model' => 'x'])->assertFailed();

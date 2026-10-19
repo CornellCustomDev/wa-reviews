@@ -291,10 +291,15 @@ class EvalModel extends Command
         return $agent === Agents::GuidelineRecommender ? ChatProfile::Chat->value : ChatProfile::Task->value;
     }
 
+    /**
+     * Offers the models the gateway lists, any model a past run used, and the
+     * production model. Any other name can still be typed.
+     */
     private function askForModel(string $productionModel): string
     {
-        $seen = EvalRun::query()->pluck('models')
+        $suggestions = EvalRun::query()->pluck('models')
             ->flatMap(fn ($models) => array_values((array) data_get($models, 'profiles', [])))
+            ->merge(config('cornell_ai.api_models', []))
             ->push($productionModel)
             ->filter()
             ->unique()
@@ -304,7 +309,7 @@ class EvalModel extends Command
 
         return suggest(
             label: 'Which model do you want to test?',
-            options: $seen,
+            options: $suggestions,
             required: true,
             hint: "Production currently uses {$productionModel}.",
         );
