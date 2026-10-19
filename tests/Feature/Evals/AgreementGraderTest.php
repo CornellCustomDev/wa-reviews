@@ -61,6 +61,33 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(1, $scores['scoreable_count']);
     }
 
+    public function test_returning_nothing_scoreable_on_a_case_with_expected_guidelines_scores_zero_f1(): void
+    {
+        [$accepted, $novel] = $this->guidelineIds(2);
+
+        $case = $this->recommenderCase(['accepted_guideline_ids' => [$accepted]]);
+
+        $scores = $this->grade($case, [$novel]);
+
+        $this->assertNull($scores['precision_strict']);
+        $this->assertSame(0.0, $scores['recall_strict']);
+        $this->assertSame(0.0, $scores['f1_strict'], 'An empty answer must not drop the case from the F1 comparison.');
+        $this->assertSame(0.0, $scores['f1_lenient']);
+    }
+
+    public function test_f1_is_undefined_when_no_guideline_was_expected(): void
+    {
+        [$rejected] = $this->guidelineIds(1);
+
+        $case = $this->recommenderCase(['rejected_guideline_ids' => [$rejected]]);
+
+        $scores = $this->grade($case, [$rejected]);
+
+        $this->assertSame(0.0, $scores['precision_strict']);
+        $this->assertNull($scores['recall_strict']);
+        $this->assertNull($scores['f1_strict']);
+    }
+
     public function test_pre_existing_guidelines_are_excluded_rather_than_penalised(): void
     {
         [$accepted, $preExisting] = $this->guidelineIds(2);

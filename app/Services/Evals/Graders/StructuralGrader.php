@@ -113,10 +113,22 @@ class StructuralGrader
             $issues[] = 'feedback is missing or not a string';
         }
 
+        // Production asks for `additionalProperties: false` at both levels, but
+        // only strict mode enforces it, and not every provider honours that.
+        $payloadFields = array_keys(GuidelinesAnalyzerService::getRecommendedGuidelinesSchema()['properties']);
+
+        foreach (array_diff(array_keys($payload), $payloadFields) as $field) {
+            $issues[] = "unexpected field $field";
+        }
+
         $required = GuidelinesAnalyzerService::ISSUE_SCHEMA['required'];
         $properties = GuidelinesAnalyzerService::ISSUE_SCHEMA['properties'];
 
         foreach ($guidelines as $index => $guideline) {
+            foreach (array_diff(array_keys($guideline), array_keys($properties)) as $field) {
+                $issues[] = "guideline $index: unexpected field $field";
+            }
+
             foreach ($required as $field) {
                 if (($guideline[$field] ?? null) === null || $guideline[$field] === '') {
                     $issues[] = "guideline $index: missing $field";
@@ -127,13 +139,38 @@ class StructuralGrader
                 $allowed = $definition['enum'] ?? null;
                 $value = $guideline[$field] ?? null;
 
-                if ($allowed && $value !== null && ! in_array($value, $allowed, true)) {
+                if ($value === null) {
+                    continue;
+                }
+
+                if (! $this->matchesType($value, $definition['type'])) {
+                    $issues[] = "guideline $index: $field is not of type {$definition['type']}";
+                } elseif ($allowed && ! in_array($value, $allowed, true)) {
                     $issues[] = "guideline $index: $field is not one of ".implode('|', $allowed);
                 }
             }
         }
 
         return $issues;
+    }
+
+    /**
+     * Whether a decoded JSON value has the JSON Schema type the property
+     * declares. `mapResponseToItemArray()` uses the fields as they come, so a
+     * list in place of a string fails in `htmlentities()` rather than being
+     * coerced.
+     */
+    private function matchesType(mixed $value, string $type): bool
+    {
+        return match ($type) {
+            'string' => is_string($value),
+            'integer' => is_int($value),
+            'number' => is_int($value) || is_float($value),
+            'boolean' => is_bool($value),
+            'array' => is_array($value) && array_is_list($value),
+            'object' => is_array($value) || is_object($value),
+            default => true,
+        };
     }
 
     /**

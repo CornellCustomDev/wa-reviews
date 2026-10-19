@@ -278,10 +278,20 @@ class AgreementGrader
         ];
     }
 
+    /**
+     * Undefined only when there was nothing to find. Precision is also
+     * undefined when nothing scoreable came back, but if a reviewer expected
+     * guidelines the model found none of them, so that is an F1 of zero:
+     * dropping the case would let an empty answer dodge the hardest cases.
+     */
     private function f1(?float $precision, ?float $recall): ?float
     {
-        if ($precision === null || $recall === null || $precision + $recall === 0.0) {
-            return $precision === null || $recall === null ? null : 0.0;
+        if ($recall === null) {
+            return null;
+        }
+
+        if ($precision === null || $precision + $recall === 0.0) {
+            return 0.0;
         }
 
         return round(2 * $precision * $recall / ($precision + $recall), 4);
