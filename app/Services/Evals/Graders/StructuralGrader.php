@@ -52,7 +52,7 @@ class StructuralGrader
             'guideline_ids_returned' => count($numbers['guideline_ids']),
             'unknown_guideline_count' => $this->unknownGuidelineCount($numbers['guideline_ids']),
             'malformed_number_count' => count($numbers['malformed_numbers']),
-            'feedback_present' => trim((string) ($payload['feedback'] ?? '')) !== '',
+            'feedback_present' => is_string($payload['feedback'] ?? null) && trim($payload['feedback']) !== '',
         ];
 
         if ($this->agentOf($case) === Agents::GuidelineRecommender) {

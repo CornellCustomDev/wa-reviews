@@ -48,7 +48,9 @@ class EvalModelTest extends FeatureTestCase
     {
         // Two cases, one repeat, two runs: four model calls in all.
         Prism::fake(array_fill(0, 4, $this->structuredFake()));
-        ChatHistory::factory()->structuredOutput()->count(2)->create();
+        // Distinct inputs, or deduplication would leave one case.
+        ChatHistory::factory()->structuredOutput('Guideline 4 fails: the logo has no alt text.')->create();
+        ChatHistory::factory()->structuredOutput('Guideline 4 fails: the hero image has no alt text.')->create();
 
         $this->artisan('ai:eval', [
             '--model' => 'candidate-task',

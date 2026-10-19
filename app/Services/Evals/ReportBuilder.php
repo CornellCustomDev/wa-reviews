@@ -489,6 +489,27 @@ class ReportBuilder
             $warnings[] = 'Both runs used the same models; any difference here is sampling noise.';
         }
 
+        // A reused baseline is never refreshed automatically: rebaselining is a
+        // deliberate step, so the report says when the two runs' inputs differ.
+        if ($candidate->git_sha && $baseline->git_sha && $candidate->git_sha !== $baseline->git_sha) {
+            $warnings[] = sprintf(
+                'The runs used different code (baseline %s, candidate %s). A prompt or grader change since the baseline would show up here as a model difference; re-baseline with ai:eval --baseline to rule that out.',
+                $baseline->git_sha,
+                $candidate->git_sha,
+            );
+        }
+
+        $baselineDay = ($baseline->started_at ?? $baseline->created_at)?->toDateString();
+        $candidateDay = ($candidate->started_at ?? $candidate->created_at)?->toDateString();
+
+        if ($baselineDay && $candidateDay && $baselineDay !== $candidateDay) {
+            $warnings[] = sprintf(
+                'The baseline ran on %s and the candidate on %s. Stored pages and guidelines may have changed in between.',
+                $baselineDay,
+                $candidateDay,
+            );
+        }
+
         if (($candidate->repeats ?? 1) < 2) {
             $warnings[] = 'Single repeat: within-model variance is unmeasured, so a small difference cannot be distinguished from noise.';
         }

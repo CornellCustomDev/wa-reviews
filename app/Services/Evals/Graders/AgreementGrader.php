@@ -66,7 +66,9 @@ class AgreementGrader
      *
      * Two variants are always reported side by side because `modified` is
      * ambiguous: it covers both "right guideline, reworded" and "half wrong".
-     * Strict counts only `accepted` as a hit; lenient also counts `modified`.
+     * Strict counts `accepted` and `missed` as hits; lenient also counts
+     * `modified`. A missed guideline is one a reviewer added after the model
+     * left it out, so a candidate that finds it is right.
      *
      * @return array<string, mixed>
      */
@@ -101,11 +103,11 @@ class AgreementGrader
         // An id no reviewer ever saw is not evidence either way — the historical
         // model simply never offered it. Counting it as a false positive would
         // punish a candidate for surfacing something new.
-        $labelled = array_merge($accepted, $modified, $rejected);
+        $labelled = array_merge($accepted, $modified, $rejected, $missed);
         $scoreable = array_values(array_intersect($judgeable, $labelled));
 
-        $strict = $this->rates($scoreable, $accepted, array_merge($modified, $rejected), $missed);
-        $lenient = $this->rates($scoreable, array_merge($accepted, $modified), $rejected, $missed);
+        $strict = $this->rates($scoreable, array_merge($accepted, $missed), array_merge($modified, $rejected));
+        $lenient = $this->rates($scoreable, array_merge($accepted, $modified, $missed), $rejected);
 
         return [
             'agreement_scored' => true,
@@ -241,23 +243,21 @@ class AgreementGrader
 
     /**
      * Precision over the ids a reviewer actually judged, recall over the ids a
-     * reviewer endorsed — including the guidelines they added themselves, which
-     * the model should have surfaced.
+     * reviewer endorsed. The positives include the guidelines reviewers added
+     * themselves, which the model should have surfaced: returning one is a hit,
+     * leaving it out a miss.
      *
      * @param  array<int, int>  $scoreable
      * @param  array<int, int>  $positives
      * @param  array<int, int>  $negatives
-     * @param  array<int, int>  $missed
      * @return array{precision: ?float, recall: ?float, f1: ?float, true_positives: int, false_positives: int, false_negatives: int}
      */
-    private function rates(array $scoreable, array $positives, array $negatives, array $missed): array
+    private function rates(array $scoreable, array $positives, array $negatives): array
     {
         $truePositives = count(array_intersect($scoreable, $positives));
         $falsePositives = count(array_intersect($scoreable, $negatives));
 
-        // A miss is a false negative by construction: it is a guideline a human
-        // recorded that the model did not return.
-        $expected = array_values(array_unique(array_merge($positives, $missed)));
+        $expected = array_values(array_unique($positives));
         $falseNegatives = count(array_diff($expected, $scoreable));
 
         $precision = $truePositives + $falsePositives === 0
@@ -301,17 +301,27 @@ class AgreementGrader
      * The ids production would have stored, so grading sees what a reviewer
      * would have seen: invalid ids never reach an issue row.
      *
+     * Each `number` is checked as returned. A combined value such as "35, 36"
+     * cannot be stored as a guideline id, so it earns no credit here even
+     * though `RecommendationParser` can recover both ids for diagnostics.
+     *
      * @return array<int, int>
      */
     private function returnedGuidelineIds(EvalResult $result): array
     {
         $payload = is_array($result->output['structured'] ?? null) ? $result->output['structured'] : null;
         $guidelines = is_array($payload['guidelines'] ?? null) ? $payload['guidelines'] : [];
+        $ids = [];
 
-        return array_values(array_filter(
-            RecommendationParser::fromGuidelines($guidelines)['guideline_ids'],
-            fn (int $id) => GuidelinesAnalyzerService::isValidGuidelineId($id)
-        ));
+        foreach ($guidelines as $guideline) {
+            $number = (is_array($guideline) || is_object($guideline)) ? ((array) $guideline)['number'] ?? null : null;
+
+            if (GuidelinesAnalyzerService::isValidGuidelineId($number)) {
+                $ids[] = (int) $number;
+            }
+        }
+
+        return $ids;
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\Agents\StructuredOutputAgent;
 use App\Ai\Prism\PrismAction;
 use App\Ai\Prism\PrismSchema;
+use App\Ai\Prism\Tools\ScratchPadTool;
 use App\Enums\Agents;
 use App\Enums\EvalRunStatus;
 use App\Models\EvalCase;
@@ -25,6 +26,7 @@ use InvalidArgumentException;
 use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Text\Response as TextResponse;
+use Prism\Prism\Tool;
 use Prism\Prism\ValueObjects\Usage;
 use RuntimeException;
 use Throwable;
@@ -34,7 +36,9 @@ use Throwable;
  *
  * Every replay runs inside a transaction that is always rolled back, so the
  * chat history each agent writes and any issue a tool creates leave no residue.
- * Results are buffered in memory and persisted only after the rollback.
+ * The one tool that writes outside the database, the recommender's scratch
+ * pad, is swapped for `ReplayScratchPadTool`. Results are buffered in memory
+ * and persisted only after the rollback.
  */
 class EvalRunner
 {
@@ -259,6 +263,11 @@ class EvalRunner
 
         $agent = GuidelineRecommenderAgent::for($scope)
             ->withPrompt((string) ($case->input['prompt'] ?? ''));
+
+        $agent->withTools(array_map(
+            fn (Tool $tool) => $tool instanceof ScratchPadTool ? new ReplayScratchPadTool : $tool,
+            $agent->toRequest()->tools()
+        ));
 
         $response = $this->streamToResponse($agent);
 

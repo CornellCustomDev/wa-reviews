@@ -253,6 +253,40 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertStringContainsString('same models', implode(' ', $report['warnings']));
     }
 
+    public function test_it_warns_when_the_baseline_ran_on_other_code_or_another_day(): void
+    {
+        $cases = $this->cases(2);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new');
+        $baseline->update(['git_sha' => 'aaaa111', 'started_at' => '2026-10-01 09:00:00']);
+        $candidate->update(['git_sha' => 'bbbb222', 'started_at' => '2026-10-19 09:00:00']);
+
+        $this->makeResults($baseline, $cases, [0.5, 0.5]);
+        $this->makeResults($candidate, $cases, [0.5, 0.5]);
+
+        $warnings = implode(' ', $this->build($candidate, $baseline)['warnings']);
+
+        $this->assertStringContainsString('different code (baseline aaaa111, candidate bbbb222)', $warnings);
+        $this->assertStringContainsString('baseline ran on 2026-10-01 and the candidate on 2026-10-19', $warnings);
+    }
+
+    public function test_it_raises_no_staleness_warning_for_runs_on_the_same_code_and_day(): void
+    {
+        $cases = $this->cases(2);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new');
+        $baseline->update(['git_sha' => 'aaaa111', 'started_at' => '2026-10-19 09:00:00']);
+        $candidate->update(['git_sha' => 'aaaa111', 'started_at' => '2026-10-19 15:00:00']);
+
+        $this->makeResults($baseline, $cases, [0.5, 0.5]);
+        $this->makeResults($candidate, $cases, [0.5, 0.5]);
+
+        $warnings = implode(' ', $this->build($candidate, $baseline)['warnings']);
+
+        $this->assertStringNotContainsString('different code', $warnings);
+        $this->assertStringNotContainsString('baseline ran on', $warnings);
+    }
+
     public function test_it_lists_the_worst_per_case_regressions(): void
     {
         $cases = $this->cases(4);

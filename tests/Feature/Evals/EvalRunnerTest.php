@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Evals;
 
+use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Enums\Agents;
 use App\Enums\ChatProfile;
 use App\Enums\EvalRunStatus;
@@ -14,12 +15,14 @@ use App\Models\Issue;
 use App\Models\Scope;
 use App\Models\User;
 use App\Services\Evals\EvalRunner;
+use App\Services\Evals\ReplayScratchPadTool;
 use Illuminate\Database\Eloquent\Collection;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\StructuredResponseFake;
 use Prism\Prism\Testing\TextResponseFake;
 use Prism\Prism\Testing\TextStepFake;
+use Prism\Prism\Tool;
 use Prism\Prism\ValueObjects\Meta;
 use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\Usage;
@@ -109,6 +112,38 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertSame(1, $result->score('tool_call_count'));
         $this->assertFalse($result->score('max_steps_hit'));
         $this->assertSame($histories, ChatHistory::count(), 'Both the recommender and the nested transform writes are discarded.');
+    }
+
+    public function test_a_recommender_replay_keeps_its_tools_but_cannot_write_the_scratch_pad(): void
+    {
+        $fake = Prism::fake([
+            TextResponseFake::make()
+                ->withSteps(collect([TextStepFake::make()->withText('Guideline 9001 fails.')]))
+                ->withFinishReason(FinishReason::Stop)
+                ->withMeta(new Meta('fake', 'fake')),
+            $this->structuredFake(),
+        ]);
+        $case = $this->recommenderCase();
+        $productionTools = GuidelineRecommenderAgent::for(Scope::findOrFail($case->input['scope_id']))
+            ->withPrompt('Any prompt')
+            ->toRequest()
+            ->tools();
+
+        app(EvalRunner::class)->runCase($this->evalRun(), $case);
+
+        $fake->assertRequest(function (array $requests) use ($productionTools) {
+            $replayTools = $requests[0]->tools();
+
+            $this->assertSame(
+                array_map(fn (Tool $tool) => $tool->name(), $productionTools),
+                array_map(fn (Tool $tool) => $tool->name(), $replayTools),
+                'The model is offered exactly the tools production offers.'
+            );
+
+            $scratchPads = array_values(array_filter($replayTools, fn (Tool $tool) => $tool->name() === 'scratch_pad'));
+            $this->assertCount(1, $scratchPads);
+            $this->assertInstanceOf(ReplayScratchPadTool::class, $scratchPads[0]);
+        });
     }
 
     public function test_a_stream_error_is_recorded_without_attempting_the_transform(): void
