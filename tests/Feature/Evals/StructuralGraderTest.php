@@ -64,6 +64,26 @@ class StructuralGraderTest extends FeatureTestCase
         $this->assertSame([], $scores['schema_issues']);
     }
 
+    public function test_combined_numbers_are_counted_from_the_recommenders_own_text(): void
+    {
+        $text = json_encode(['guidelines' => [
+            ['number' => '33 and 34'],
+            ['number' => '35, 36'],
+            ['number' => '45'],
+        ]]);
+        $collapsed = ['guidelines' => [['number' => 33], ['number' => 35], ['number' => 45]], 'feedback' => ''];
+
+        $case = EvalCase::factory()->create(['dataset_version' => 'structural-test']);
+        $result = EvalResult::factory()->create([
+            'eval_case_id' => $case->id,
+            'output' => ['text' => $text, 'structured' => $collapsed],
+        ]);
+
+        $scores = app(StructuralGrader::class)->grade($case, $result);
+
+        $this->assertSame(2, $scores['combined_number_count'], 'Counted before StructuredOutput collapses them.');
+    }
+
     /**
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>

@@ -37,14 +37,20 @@ class StructuralGrader
             'finished_stop' => $result->finish_reason === 'Stop',
             'latency_ms' => $result->latency_ms,
             'prompt_tokens' => data_get($result->usage, 'promptTokens'),
+            'cached_prompt_tokens' => data_get($result->usage, 'cachedPromptTokens'),
             'completion_tokens' => data_get($result->usage, 'completionTokens'),
+            'reasoning_tokens' => data_get($result->usage, 'reasoningTokens'),
             'text_present' => trim((string) ($output['text'] ?? '')) !== '',
 
             // A null payload means the transformation to structured output never
             // produced anything usable — the failure production surfaces to the
             // reviewer as an error message instead of recommendations.
             'structured_transform_ok' => $payload !== null,
-            'schema_valid' => $payload !== null && $schemaIssues === [],
+
+            // A call that never came back (a timeout, a gateway error) says
+            // nothing about the shape a model answers in. `completed` already
+            // counts it, so it is left out here rather than counted twice.
+            'schema_valid' => $result->failed() ? null : $payload !== null && $schemaIssues === [],
             'schema_issue_count' => count($schemaIssues),
             'schema_issues' => $schemaIssues,
 
@@ -61,6 +67,12 @@ class StructuralGrader
             $scores['steps'] = $steps;
             $scores['max_steps_hit'] = $steps >= self::MAX_STEPS;
             $scores['tool_call_count'] = count($result->tool_calls ?? []);
+
+            // Read from the recommender's own text, before StructuredOutput has
+            // had a chance to repair or collapse a combined number.
+            $scores['combined_number_count'] = $result->failed()
+                ? null
+                : count(RecommendationParser::combinedNumbers($output['text'] ?? null));
         }
 
         return $scores;

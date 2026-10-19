@@ -14,6 +14,10 @@ use App\Services\Evals\EvalRunner;
 use App\Services\Evals\ReportBuilder;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Client\Events\ConnectionFailed;
+use Illuminate\Http\Client\Events\RequestSending;
+use Illuminate\Http\Client\Events\ResponseReceived;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
@@ -36,11 +40,13 @@ class EvalModel extends Command
         {--agent=StructuredOutput : The AI feature to evaluate: StructuredOutput (cheap) or GuidelineRecommender (large pages, slow).}
         {--model= : The candidate model. Prompted for when omitted.}
         {--profile= : Which chat profile the model replaces, chat or task. Defaults to the profile the agent reads, so only one thing changes.}
+        {--effort= : Reasoning effort (minimal, low, medium or high) for the profile being replaced. Defaults to the model\'s own.}
         {--baseline : Replay this model (default: the configured production model) as the new baseline instead of as a candidate.}
         {--repeats=2 : Replays per case. Two or more separates a model difference from sampling noise.}
         {--limit=20 : Cases to extract when the agent has no dataset yet.}
+        {--reviewed : When extracting, keep only cases a reviewer triaged, so recommender F1 rests on more evidence.}
         {--dataset-version= : The frozen question set to use. Defaults to the agent\'s most recent one, extracting a new one if there is none.}
-        {--margins= : JSON of non-inferiority margins per metric. Defaults to the baseline\'s margins, then to the agent\'s standard ones.}
+        {--margins= : JSON of non-inferiority margins per metric. A candidate defaults to its baseline\'s margins; a new baseline to the agent\'s standard ones.}
         {--label= : Name for the run. Defaults to the model.}
         {--out= : Where to write the report. Defaults to storage/eval-report-<model>-<date>-<run>.md.}
         {--dry-run : Show what would run without calling a model or writing anything.}';
@@ -56,10 +62,15 @@ class EvalModel extends Command
      * could otherwise rewrite the summary or append an invented guideline while
      * copying every other field perfectly.
      *
+     * Calls that never came back are gated apart from those checks, and with
+     * room for one: a single gateway timeout moves a 20-case mean by 0.025, so
+     * a zero margin would fail a model for the network rather than its answers.
+     *
      * @var array<string, array<string, array{margin: float}>>
      */
     private const array DEFAULT_MARGINS = [
         Agents::StructuredOutput->value => [
+            'completed' => ['margin' => 0.1],
             'schema_valid' => ['margin' => 0.0],
             'field_match_rate' => ['margin' => 0.0],
             'feedback_match' => ['margin' => 0.0],
@@ -71,9 +82,20 @@ class EvalModel extends Command
         ],
     ];
 
+    /**
+     * @var list<string>
+     */
+    private const array EFFORTS = ['minimal', 'low', 'medium', 'high'];
+
     public function handle(CaseExtractor $extractor, EvalRunner $runner, ReportBuilder $builder): int
     {
         $agent = Agents::tryFrom((string) $this->option('agent'));
+
+        if ($this->option('effort') && ! in_array($this->option('effort'), self::EFFORTS, true)) {
+            $this->error(sprintf('Unsupported effort "%s". Supported: %s.', $this->option('effort'), implode(', ', self::EFFORTS)));
+
+            return self::FAILURE;
+        }
 
         if (! $agent || ! in_array($agent->value, CaseExtractor::SUPPORTED_AGENTS, true)) {
             $this->error(sprintf('Unsupported agent "%s". Supported: %s.', $this->option('agent'), implode(', ', CaseExtractor::SUPPORTED_AGENTS)));
@@ -104,7 +126,9 @@ class EvalModel extends Command
                 return self::SUCCESS;
             }
 
-            $run = $this->replay($runner, $cases, $profile, $model, null, $this->margins($agent, $baseline), asBaseline: true);
+            // A new baseline registers today's standard margins rather than
+            // the outgoing baseline's, so a changed default takes effect.
+            $run = $this->replay($runner, $cases, $profile, $model, null, $this->margins($agent, null), asBaseline: true);
 
             if ($run->status === EvalRunStatus::Failed) {
                 return self::FAILURE;
@@ -189,7 +213,7 @@ class EvalModel extends Command
 
         $this->components->info("No {$agent->value} cases in dataset \"{$version}\" yet; extracting up to {$limit}.");
 
-        $cases = $extractor->extractDataset($agent, $version, $limit);
+        $cases = $extractor->extractDataset($agent, $version, $limit, (bool) $this->option('reviewed'));
 
         foreach ($extractor->drainSkipReasons() as $reason => $count) {
             $this->line("  skipped {$count} × {$reason}");
@@ -269,10 +293,15 @@ class EvalModel extends Command
         return $agent === Agents::GuidelineRecommender ? ChatProfile::Chat->value : ChatProfile::Task->value;
     }
 
+    /**
+     * Offers the models the gateway lists, any model a past run used, and the
+     * production model. Any other name can still be typed.
+     */
     private function askForModel(string $productionModel): string
     {
-        $seen = EvalRun::query()->pluck('models')
+        $suggestions = EvalRun::query()->pluck('models')
             ->flatMap(fn ($models) => array_values((array) data_get($models, 'profiles', [])))
+            ->merge(config('cornell_ai.api_models', []))
             ->push($productionModel)
             ->filter()
             ->unique()
@@ -282,7 +311,7 @@ class EvalModel extends Command
 
         return suggest(
             label: 'Which model do you want to test?',
-            options: $seen,
+            options: $suggestions,
             required: true,
             hint: "Production currently uses {$productionModel}.",
         );
@@ -331,6 +360,10 @@ class EvalModel extends Command
 
         $snapshot['profiles'][$profile] = $model;
 
+        if ($effort = $this->option('effort')) {
+            $snapshot['reasoning_effort'] = [$profile => $effort];
+        }
+
         return $snapshot;
     }
 
@@ -350,6 +383,10 @@ class EvalModel extends Command
 
         foreach ($models['profiles'] as $name => $profileModel) {
             $this->components->twoColumnDetail("  {$name}", $name === $profile ? "<options=bold>{$profileModel}</>" : $profileModel);
+        }
+
+        foreach ($models['reasoning_effort'] ?? [] as $name => $effort) {
+            $this->components->twoColumnDetail("  {$name} reasoning effort", $effort);
         }
 
         if ($cases->first()?->agent?->name === Agents::GuidelineRecommender->value) {
@@ -376,7 +413,11 @@ class EvalModel extends Command
         $this->newLine();
         $this->components->info("Replaying run {$run->getKey()} — {$run->label}");
 
-        $failures = $runner->replay($run, $cases, function (EvalCase $case, EvalResult $result) {
+        $stopLogging = $this->logHttpRequests($requestNumber);
+
+        $failures = $runner->replay($run, $cases, function (EvalCase $case, EvalResult $result) use (&$requestNumber) {
+            $requestNumber = 0;
+
             $this->line(sprintf(
                 '  case %d/%d — %s %dms%s',
                 $case->getKey(),
@@ -386,6 +427,8 @@ class EvalModel extends Command
                 $result->failed() ? ': '.$result->error : ($result->score('schema_valid') ? ' schema ok' : ' SCHEMA INVALID'),
             ));
         });
+
+        $stopLogging();
 
         $this->components->twoColumnDetail('  errors', "{$failures} / ".($cases->count() * $run->repeats));
 
@@ -400,12 +443,67 @@ class EvalModel extends Command
         return $run;
     }
 
+    /**
+     * Print every HTTP request a replay makes, so a failure can be placed: on
+     * the first request of a case or deep into its tool loop, and how long the
+     * gateway took to answer before it did.
+     *
+     * Streaming responses report the time to the first byte, which is the wait
+     * the request timeout bounds, not the length of the whole stream. The
+     * request lines come before the case's summary line, and the count restarts
+     * with each case.
+     *
+     * @param  int|null  $requestNumber  Set to the running request count; reset by the caller after each case.
+     * @return callable(): void Stops the logging.
+     */
+    private function logHttpRequests(?int &$requestNumber): callable
+    {
+        $active = true;
+        $requestNumber = 0;
+        $startedAt = null;
+
+        $this->line(sprintf('  request timeout: %ss', config('prism.request_timeout')));
+
+        Event::listen(RequestSending::class, function () use (&$active, &$requestNumber, &$startedAt) {
+            if ($active) {
+                $requestNumber++;
+                $startedAt = microtime(true);
+            }
+        });
+
+        Event::listen(ResponseReceived::class, function (ResponseReceived $event) use (&$active, &$requestNumber, &$startedAt) {
+            if ($active && $startedAt !== null) {
+                $this->line(sprintf('    request %d — HTTP %d after %.1fs', $requestNumber, $event->response->status(), microtime(true) - $startedAt));
+            }
+        });
+
+        Event::listen(ConnectionFailed::class, function (ConnectionFailed $event) use (&$active, &$requestNumber, &$startedAt) {
+            if ($active && $startedAt !== null) {
+                $this->line(sprintf('    request %d — FAILED after %.1fs: %s', $requestNumber, microtime(true) - $startedAt, $event->exception->getMessage()));
+            }
+        });
+
+        return function () use (&$active) {
+            $active = false;
+        };
+    }
+
+    /**
+     * The commit the run replays, marked `-dirty` when tracked files differ
+     * from it: an uncommitted prompt change is otherwise invisible on the run.
+     */
     private function gitSha(): ?string
     {
         try {
             $result = Process::run('git rev-parse --short HEAD');
 
-            return $result->successful() ? trim($result->output()) : null;
+            if (! $result->successful()) {
+                return null;
+            }
+
+            $modified = Process::run('git diff --quiet HEAD')->exitCode() === 1;
+
+            return trim($result->output()).($modified ? '-dirty' : '');
         } catch (Throwable) {
             return null;
         }

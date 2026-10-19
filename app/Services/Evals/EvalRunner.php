@@ -152,8 +152,11 @@ class EvalRunner
     /**
      * Point the chat profiles at this run's models.
      *
-     * Both agents read `config('cornell_ai.profiles')` inside their
-     * constructors, so overriding config is the whole of the model swap.
+     * Both agents read `config('cornell_ai.profiles')` and the profile's
+     * reasoning effort inside their constructors, so overriding config is the
+     * whole of the model swap. A run that names no effort clears any the
+     * environment configures, so the effort is always part of what the run
+     * recorded.
      *
      * @param  array<string, mixed>  $models
      */
@@ -165,6 +168,7 @@ class EvalRunner
 
         foreach ($models['profiles'] ?? [] as $profile => $model) {
             config()->set("cornell_ai.profiles.$profile.model", $model);
+            config()->set("cornell_ai.profiles.$profile.reasoning_effort", $models['reasoning_effort'][$profile] ?? null);
         }
     }
 
@@ -239,7 +243,7 @@ class EvalRunner
                 'structured_error' => $decoded['error'],
                 'guideline_ids' => $this->guidelineIds($decoded['payload'], $response->text),
             ],
-            'usage' => $this->usageArray($response->usage),
+            'usage' => $this->usageArray($response->usage, promptExcludesCache: true),
             'finish_reason' => $response->finishReason?->name,
             'tool_calls' => [],
             'error' => null,
@@ -402,17 +406,26 @@ class EvalRunner
     }
 
     /**
-     * @return array<string, int|null>|null
+     * Token usage with `promptTokens` always the full input, cached or not.
+     *
+     * Prism's OpenAI text and structured handlers subtract cached tokens from
+     * `promptTokens`, while its stream handler does not. Left alone, an OpenAI
+     * model replaying a case it has just seen reports a fraction of its input,
+     * and a provider that reports no cache looks dearer by comparison.
+     *
+     * @return array{promptTokens: int, completionTokens: int, cachedPromptTokens: int|null, reasoningTokens: int|null}|null
      */
-    private function usageArray(?Usage $usage): ?array
+    private function usageArray(?Usage $usage, bool $promptExcludesCache = false): ?array
     {
         if (! $usage) {
             return null;
         }
 
         return [
-            'promptTokens' => $usage->promptTokens,
+            'promptTokens' => $usage->promptTokens + ($promptExcludesCache ? (int) $usage->cacheReadInputTokens : 0),
             'completionTokens' => $usage->completionTokens,
+            'cachedPromptTokens' => $usage->cacheReadInputTokens,
+            'reasoningTokens' => $usage->thoughtTokens,
         ];
     }
 }

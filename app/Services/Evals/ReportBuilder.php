@@ -2,6 +2,7 @@
 
 namespace App\Services\Evals;
 
+use App\Enums\Agents;
 use App\Enums\MetricDirection;
 use App\Models\EvalCase;
 use App\Models\EvalRun;
@@ -188,7 +189,11 @@ class ReportBuilder
      */
     private function describeModels(array $run): string
     {
-        $models = collect($run['models'])->map(fn ($model, $profile) => "$profile: $model")->implode(', ');
+        $models = collect($run['models'])->map(function ($model, $profile) use ($run) {
+            $effort = $run['reasoning_effort'][$profile] ?? null;
+
+            return $effort ? "$profile: $model (effort: $effort)" : "$profile: $model";
+        })->implode(', ');
 
         return $models === '' ? 'unknown' : $models;
     }
@@ -486,7 +491,13 @@ class ReportBuilder
         }
 
         if ($candidate->models === $baseline->models) {
-            $warnings[] = 'Both runs used the same models; any difference here is sampling noise.';
+            $warnings[] = $candidate->git_sha && $baseline->git_sha && $candidate->git_sha !== $baseline->git_sha
+                ? sprintf(
+                    'Both runs used the same models, so a difference here comes from the code or prompts at %s versus %s, or from sampling noise.',
+                    $candidate->git_sha,
+                    $baseline->git_sha,
+                )
+                : 'Both runs used the same models; any difference here is sampling noise.';
         }
 
         if (($candidate->repeats ?? 1) < 2) {
@@ -497,7 +508,31 @@ class ReportBuilder
             $warnings[] = 'No margins were registered on the candidate run, so no pass/fail verdict can be issued.';
         }
 
+        $uncachedRuns = array_filter([$baseline, $candidate], fn (EvalRun $run) => $this->predatesCachedTokenCounting($run));
+
+        if ($uncachedRuns !== []) {
+            $warnings[] = sprintf(
+                '`prompt_tokens` on run %s left out cached input, so it understates any model that reused a cached prompt. Re-run to compare token counts.',
+                implode(' and ', array_map(fn (EvalRun $run) => $run->getKey(), $uncachedRuns)),
+            );
+        }
+
         return $warnings;
+    }
+
+    /**
+     * StructuredOutput runs recorded before `EvalRunner` counted cached input
+     * carry no `cachedPromptTokens`, and their stored prompt counts cannot be
+     * repaired. Recommender runs are unaffected: they stream, and Prism's
+     * stream handler always counted cached input.
+     */
+    private function predatesCachedTokenCounting(EvalRun $run): bool
+    {
+        return $run->results()
+            ->whereNotNull('usage')
+            ->whereHas('evalCase.agent', fn ($query) => $query->where('name', Agents::StructuredOutput->value))
+            ->get(['usage'])
+            ->contains(fn ($result) => is_array($result->usage) && ! array_key_exists('cachedPromptTokens', $result->usage));
     }
 
     /**
@@ -513,6 +548,7 @@ class ReportBuilder
             'repeats' => $run->repeats,
             'models' => data_get($run->models, 'profiles', []),
             'provider' => data_get($run->models, 'provider'),
+            'reasoning_effort' => data_get($run->models, 'reasoning_effort', []),
             'git_sha' => $run->git_sha,
             'results' => $run->results()->count(),
             'errors' => $run->results()->whereNotNull('error')->count(),

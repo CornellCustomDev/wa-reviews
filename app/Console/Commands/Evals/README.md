@@ -37,7 +37,13 @@ The useful options:
 | `--baseline` | Replay the model as the new baseline instead. Do this when the production model or its prompt changes. Without `--model` it uses the configured production model. |
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |
-| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones: zero loss on every fidelity check for StructuredOutput, and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
+| `--reviewed` | When extracting, keep only cases a reviewer accepted, modified or rejected. Use it for the recommender, where most past runs were never triaged and F1 otherwise rests on a handful of cases. |
+| `--margins=` | JSON of how much loss you will tolerate per metric. A candidate defaults to its baseline's margins; a new baseline defaults to the agent's standard ones: zero loss on every fidelity check for StructuredOutput (plus 10% on `completed`), and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
+
+A run records the commit it replayed, with `-dirty` when tracked files had
+uncommitted changes. To test a prompt change on its own, replay the same model
+against the baseline after changing only the prompt, and commit the change
+first so the two runs can be told apart.
 
 `ai:eval-report --run=<id> --baseline=<id>` re-reads any two past runs, and
 `--regrade` re-scores them first after a grader change. Grading never calls a
@@ -81,11 +87,24 @@ The two agents do different jobs, so they are held to different references.
 **StructuredOutput** exists to reshape the recommender's text into the schema
 without altering it, so the case's own input is the ground truth:
 
+- `completed`: the call came back at all. A gateway timeout counts here and
+  nowhere else, with room for one, so a network blip does not fail a model.
 - `schema_valid`: the answer came back in the shape production needs.
 - `field_match_rate`: share of fields carried through unchanged. Anything
   below 1.0 means the model rewrote content it was told to copy.
 - `feedback_match`: the summary text was carried through verbatim.
 - `guideline_ids_exact`: the same guidelines, no additions, drops or repeats.
+
+Some inputs are recommender answers cut off at the length limit, so they are
+JSON that stops mid-guideline. Those are graded on guideline numbers alone:
+leaving out the guideline the cut fell in is faithful, while inventing one to
+fill the gap or dropping a complete one is not. Inputs that are prose (the
+recommender asking for more of the page) are not scored. Guidelines the
+recommender judged `Pass` are never expected back, because the schema only
+takes `Fail` or `Warn`. A reference entry naming several guidelines, such as
+`"number": "33 and 34"`, is expected back as one entry per guideline; an
+answer that passes the combined number through or keeps only the first has
+lost a guideline, because production cannot store a combined number.
 
 **GuidelineRecommender** is graded against the reviewer marks:
 
@@ -99,8 +118,16 @@ without altering it, so the case's own input is the ground truth:
   is neither punished nor credited for surfacing something new.
 - `finished_stop` and `completed` catch a model that errors or runs out of
   room on large pages.
+- `combined_number_count`: entries in the recommender's own answer that name
+  several guidelines at once, such as `"33 and 34"`. Production cannot store
+  them, so each is a finding a reviewer may never see. It is read before
+  StructuredOutput reshapes the answer.
 
-Both agents also report latency and token counts.
+Both agents also report latency and token counts. `prompt_tokens` is the
+whole input, cached or not, so providers that cache and providers that don't
+compare fairly; the cached share is kept as `cached_prompt_tokens` on each
+result. Runs recorded before this was fixed understate OpenAI input, and the
+report says so.
 
 ## Reading the report
 
