@@ -12,7 +12,7 @@ cases in evaluation dataset v2, using the page content currently on disk:
 | 689,247 chars | 685, 704 |
 | 507,335 chars | 673 |
 
-Five of forty cases estimate above a 128k-token context window and three above
+Six of forty cases estimate above a 128k-token context window and three above
 400k tokens — roughly **15% of the recommender arm**. This markup runs about
 **2.8 characters per token**, not the usual 4.
 
