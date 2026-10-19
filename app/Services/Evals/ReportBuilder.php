@@ -328,6 +328,11 @@ class ReportBuilder
      * near edge of the confidence interval: for a metric we want high, the lower
      * bound must stay above `-margin`.
      *
+     * Missing that is not by itself a failure. An interval that still reaches
+     * zero has not shown the candidate to be worse at all, only that the cases
+     * were too few to rule it out, so it is inconclusive. It fails only once
+     * the whole interval sits on the losing side of zero.
+     *
      * @param  array{ci_low: ?float, ci_high: ?float}  $bootstrap
      * @return array{margin: ?float, verdict: string}
      */
@@ -345,11 +350,18 @@ class ReportBuilder
             return ['margin' => $margin, 'verdict' => 'insufficient data'];
         }
 
-        $withinMargin = $direction === MetricDirection::HigherBetter
-            ? $bootstrap['ci_low'] >= -$margin
-            : $bootstrap['ci_high'] <= $margin;
+        // Oriented so a loss is always negative, whichever way the metric points.
+        [$nearEdge, $farEdge] = $direction === MetricDirection::HigherBetter
+            ? [$bootstrap['ci_low'], $bootstrap['ci_high']]
+            : [-$bootstrap['ci_high'], -$bootstrap['ci_low']];
 
-        return ['margin' => $margin, 'verdict' => $withinMargin ? 'pass' : 'fail'];
+        $verdict = match (true) {
+            $nearEdge >= -$margin => 'pass',
+            $farEdge < 0 => 'fail',
+            default => 'inconclusive',
+        };
+
+        return ['margin' => $margin, 'verdict' => $verdict];
     }
 
     /**
@@ -369,9 +381,9 @@ class ReportBuilder
             }
         }
 
-        return in_array('insufficient data', array_column($assessed, 'verdict'), true)
-            ? 'inconclusive'
-            : 'pass';
+        return array_intersect(['insufficient data', 'inconclusive'], array_column($assessed, 'verdict')) === []
+            ? 'pass'
+            : 'inconclusive';
     }
 
     /**

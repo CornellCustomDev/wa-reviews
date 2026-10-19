@@ -114,6 +114,61 @@ class ReportBuilderTest extends FeatureTestCase
         $this->assertSame('pass', $report['metrics']['f1_strict']['verdict'], 'Non-inferiority allows a small agreed loss.');
     }
 
+    public function test_an_interval_reaching_past_the_margin_but_spanning_zero_is_inconclusive(): void
+    {
+        $cases = $this->cases(6);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new', margins: ['f1_strict' => ['margin' => 0.02]]);
+
+        $this->makeResults($baseline, $cases, [0.8, 0.8, 0.8, 0.8, 0.8, 0.8]);
+        $this->makeResults($candidate, $cases, [0.4, 1.0, 0.5, 1.0, 0.6, 1.0]);
+
+        $report = $this->build($candidate, $baseline);
+        $metric = $report['metrics']['f1_strict'];
+
+        $this->assertLessThan(-0.02, $metric['ci_low']);
+        $this->assertGreaterThan(0, $metric['ci_high']);
+        $this->assertSame('inconclusive', $metric['verdict'], 'Too few cases to rule out a loss is not evidence of one.');
+        $this->assertSame('inconclusive', $report['verdict']);
+    }
+
+    public function test_an_interval_past_the_margin_that_excludes_zero_fails(): void
+    {
+        $cases = $this->cases(6);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new', margins: ['f1_strict' => ['margin' => 0.05]]);
+
+        $this->makeResults($baseline, $cases, [0.8, 0.8, 0.8, 0.8, 0.8, 0.8]);
+        $this->makeResults($candidate, $cases, [0.79, 0.75, 0.70, 0.78, 0.72, 0.76]);
+
+        $report = $this->build($candidate, $baseline);
+        $metric = $report['metrics']['f1_strict'];
+
+        $this->assertLessThan(-0.05, $metric['ci_low']);
+        $this->assertGreaterThan(-0.05, $metric['ci_high'], 'Not the whole interval is beyond the margin.');
+        $this->assertLessThan(0, $metric['ci_high']);
+        $this->assertSame('fail', $metric['verdict'], 'Every plausible difference is a loss, and it may exceed the margin.');
+    }
+
+    public function test_a_lower_is_better_interval_spanning_zero_is_inconclusive(): void
+    {
+        $cases = $this->cases(6);
+        $baseline = $this->evalRun('old');
+        $candidate = $this->evalRun('new', margins: ['latency_ms' => ['margin' => 100]]);
+
+        foreach (array_map(null, $cases, [600, 1500, 700, 1400, 800, 1300]) as [$case, $latency]) {
+            $this->makeResult($baseline, $case, ['latency_ms' => 1000]);
+            $this->makeResult($candidate, $case, ['latency_ms' => $latency]);
+        }
+
+        $report = $this->build($candidate, $baseline);
+        $metric = $report['metrics']['latency_ms'];
+
+        $this->assertGreaterThan(100, $metric['ci_high']);
+        $this->assertLessThan(0, $metric['ci_low']);
+        $this->assertSame('inconclusive', $metric['verdict']);
+    }
+
     public function test_a_lower_is_better_metric_is_judged_on_the_other_tail(): void
     {
         $cases = $this->cases(4);
