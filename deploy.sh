@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # We need to force the PHP version, otherwise it uses the system default PHP version
-PHP="/usr/local/bin/ea-php84"
+PHP="/usr/local/bin/ea-php83"
 
 usage="Usage: deploy -gomfcvq | --all [--prune] [-h|--help]";
 
