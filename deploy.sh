@@ -100,22 +100,22 @@ if [ $git ]; then
 fi
 if [ $migrate ]; then
   echo "Running artisan migrate..."
-  $PHP artisan migrate $migrate_opts || exit 1
+  php artisan migrate $migrate_opts || exit 1
 fi
 if [ $config ]; then
   echo "Running artisan config:cache..."
-  $PHP artisan config:cache || exit 1
+  php artisan config:cache || exit 1
 fi
 if [ $views ]; then
   echo "Running artisan view:clear..."
-  $PHP artisan view:clear || exit 1
+  php artisan view:clear || exit 1
 fi
 if [ $optimize ]; then
   echo "Running artisan optimize..."
-  $PHP artisan optimize:clear || exit 1
-  $PHP artisan optimize || exit 1
+  php artisan optimize:clear || exit 1
+  php artisan optimize || exit 1
 fi
 if [ $queue ]; then
   echo "Running artisan queue:restart..."
-  $PHP artisan queue:restart || exit 1
+  php artisan queue:restart || exit 1
 fi
