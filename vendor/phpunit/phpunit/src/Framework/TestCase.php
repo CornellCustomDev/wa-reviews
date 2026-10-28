@@ -501,7 +501,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
             if ($this->inIsolation) {
                 // @codeCoverageIgnoreStart
-                $this->invokeBeforeClassHookMethods($hookMethods, $emitter);
+                $this->invokeBeforeClassHookMethods($hookMethods);
                 // @codeCoverageIgnoreEnd
             }
 
@@ -612,6 +612,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
             /** @phpstan-ignore catch.neverThrown */
         } catch (Throwable $e) {
+            $this->status = TestStatus::error($e->getMessage());
+
             Event\Facade::emitter()->testErrored(
                 $this->valueObjectForEvents(),
                 Event\Code\ThrowableBuilder::from($e),
@@ -626,7 +628,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
                 if ($this->inIsolation) {
                     // @codeCoverageIgnoreStart
-                    $this->invokeAfterClassHookMethods($hookMethods, $emitter);
+                    $this->invokeAfterClassHookMethods($hookMethods);
                     // @codeCoverageIgnoreEnd
                 }
             }
@@ -1483,7 +1485,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
             return true;
         }
 
-        $passedTests = PassedTests::instance();
+        $passedTests         = PassedTests::instance();
+        $dependsOnLargerTest = false;
 
         foreach ($this->dependencies as $dependency) {
             if (!$dependency->isValid()) {
@@ -1523,16 +1526,11 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
             }
 
             if ($passedTests->isGreaterThan($dependencyTarget, $this->size())) {
-                Event\Facade::emitter()->testConsideredRisky(
-                    $this->valueObjectForEvents(),
-                    'This test depends on a test that is larger than itself',
-                );
-
-                return true;
+                $dependsOnLargerTest = true;
             }
 
             if (!$passedTests->hasReturnValue($dependencyTarget)) {
-                return true;
+                continue;
             }
 
             $returnValue = $passedTests->returnValue($dependencyTarget);
@@ -1550,6 +1548,17 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         }
 
         $this->testValueObjectForEvents = null;
+
+        // This is done after all dependencies have been resolved so that a
+        // test that is skipped because another of its dependencies did not
+        // pass is not also considered risky, and so that a test that depends
+        // on more than one larger test is only considered risky once
+        if ($dependsOnLargerTest) {
+            Event\Facade::emitter()->testConsideredRisky(
+                $this->valueObjectForEvents(),
+                'This test depends on a test that is larger than itself',
+            );
+        }
 
         return true;
     }
@@ -1655,7 +1664,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $message = 'Test code or tested code removed error handlers other than its own';
             }
 
-            foreach ($activeErrorHandlers as $handler) {
+            $numberOfActiveErrorHandlers = count($activeErrorHandlers);
+
+            for ($i = 0; $i < $numberOfActiveErrorHandlers; $i++) {
                 restore_error_handler();
             }
 
@@ -1682,7 +1693,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                 $message = 'Test code or tested code removed exception handlers other than its own';
             }
 
-            foreach ($activeExceptionHandlers as $handler) {
+            $numberOfActiveExceptionHandlers = count($activeExceptionHandlers);
+
+            for ($i = 0; $i < $numberOfActiveExceptionHandlers; $i++) {
                 restore_exception_handler();
             }
 
@@ -2093,17 +2106,9 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
      *
      * @codeCoverageIgnore
      */
-    private function invokeBeforeClassHookMethods(array $hookMethods, Event\Emitter $emitter): void
+    private function invokeBeforeClassHookMethods(array $hookMethods): void
     {
-        $this->invokeHookMethods(
-            $hookMethods['beforeClass'],
-            $emitter,
-            'beforeFirstTestMethodCalled',
-            'beforeFirstTestMethodErrored',
-            'beforeFirstTestMethodFailed',
-            'beforeFirstTestMethodFinished',
-            false,
-        );
+        $this->invokeHookMethodsWithoutEmittingEvents($hookMethods['beforeClass']);
     }
 
     /**
@@ -2181,34 +2186,22 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
      *
      * @codeCoverageIgnore
      */
-    private function invokeAfterClassHookMethods(array $hookMethods, Event\Emitter $emitter): void
+    private function invokeAfterClassHookMethods(array $hookMethods): void
     {
-        $this->invokeHookMethods(
-            $hookMethods['afterClass'],
-            $emitter,
-            'afterLastTestMethodCalled',
-            'afterLastTestMethodErrored',
-            'afterLastTestMethodFailed',
-            'afterLastTestMethodFinished',
-            false,
-        );
+        $this->invokeHookMethodsWithoutEmittingEvents($hookMethods['afterClass']);
     }
 
     /**
-     * @param 'afterLastTestMethodCalled'|'afterTestMethodCalled'|'beforeFirstTestMethodCalled'|'beforeTestMethodCalled'|'postConditionCalled'|'preConditionCalled'             $calledMethod
-     * @param 'afterLastTestMethodErrored'|'afterTestMethodErrored'|'beforeFirstTestMethodErrored'|'beforeTestMethodErrored'|'postConditionErrored'|'preConditionErrored'       $erroredMethod
-     * @param 'afterLastTestMethodFailed'|'afterTestMethodFailed'|'beforeFirstTestMethodFailed'|'beforeTestMethodFailed'|'postConditionFailed'|'preConditionFailed'             $failedMethod
-     * @param 'afterLastTestMethodFinished'|'afterTestMethodFinished'|'beforeFirstTestMethodFinished'|'beforeTestMethodFinished'|'postConditionFinished'|'preConditionFinished' $finishedMethod
+     * @param 'afterTestMethodCalled'|'beforeTestMethodCalled'|'postConditionCalled'|'preConditionCalled'         $calledMethod
+     * @param 'afterTestMethodErrored'|'beforeTestMethodErrored'|'postConditionErrored'|'preConditionErrored'     $erroredMethod
+     * @param 'afterTestMethodFailed'|'beforeTestMethodFailed'|'postConditionFailed'|'preConditionFailed'         $failedMethod
+     * @param 'afterTestMethodFinished'|'beforeTestMethodFinished'|'postConditionFinished'|'preConditionFinished' $finishedMethod
      *
      * @throws Throwable
      */
-    private function invokeHookMethods(HookMethodCollection $hookMethods, Event\Emitter $emitter, string $calledMethod, string $erroredMethod, string $failedMethod, string $finishedMethod, bool $forTestCase = true): void
+    private function invokeHookMethods(HookMethodCollection $hookMethods, Event\Emitter $emitter, string $calledMethod, string $erroredMethod, string $failedMethod, string $finishedMethod): void
     {
-        if ($forTestCase) {
-            $test = $this->valueObjectForEvents();
-        } else {
-            $test = static::class;
-        }
+        $test = $this->valueObjectForEvents();
 
         $methodsInvoked = [];
 
@@ -2236,19 +2229,21 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
             $methodsInvoked[] = $methodInvoked;
 
-            if (isset($t) && !$t instanceof SkippedTest) {
-                if ($t instanceof AssertionFailedError) {
-                    $method = $failedMethod;
-                } else {
-                    $method = $erroredMethod;
-                }
+            if (isset($t)) {
+                if (!$t instanceof SkippedTest) {
+                    if ($t instanceof AssertionFailedError) {
+                        $method = $failedMethod;
+                    } else {
+                        $method = $erroredMethod;
+                    }
 
-                /** @phpstan-ignore method.dynamicName */
-                $emitter->{$method}(
-                    $test,
-                    $methodInvoked,
-                    Event\Code\ThrowableBuilder::from($t),
-                );
+                    /** @phpstan-ignore method.dynamicName */
+                    $emitter->{$method}(
+                        $test,
+                        $methodInvoked,
+                        Event\Code\ThrowableBuilder::from($t),
+                    );
+                }
 
                 break;
             }
@@ -2264,6 +2259,29 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
 
         if (isset($t)) {
             throw $t;
+        }
+    }
+
+    /**
+     * The before-first-test methods and after-last-test methods of a test that
+     * runs in process isolation are called again in the child process, as part
+     * of running that test. The test runner calls them for the test class in
+     * its own process and reports that it does. In the child process, they are
+     * part of the test, so their outcome is the outcome of the test.
+     *
+     * @throws Throwable
+     *
+     * @codeCoverageIgnore
+     */
+    private function invokeHookMethodsWithoutEmittingEvents(HookMethodCollection $hookMethods): void
+    {
+        foreach ($hookMethods->methodNamesSortedByPriority() as $methodName) {
+            if ($this->methodDoesNotExistOrIsDeclaredInTestCase($methodName)) {
+                continue;
+            }
+
+            /** @phpstan-ignore method.dynamicName */
+            $this->{$methodName}();
         }
     }
 

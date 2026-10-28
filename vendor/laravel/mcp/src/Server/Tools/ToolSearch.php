@@ -77,7 +77,7 @@ class ToolSearch
                     $score += str_contains($schemaText, $term) ? 1 : 0;
                 }
 
-                $annotations = $definition['annotations'] ?? [];
+                $annotations = $tool->annotations();
 
                 return [
                     'index' => $index,
@@ -86,7 +86,7 @@ class ToolSearch
                         'name' => $tool->name(),
                         'description' => $tool->description(),
                         'inputSchema' => $schema,
-                        ...is_array($annotations) && $annotations !== [] ? ['annotations' => $annotations] : [],
+                        ...$annotations !== [] ? ['annotations' => $annotations] : [],
                     ],
                 ];
             })
@@ -192,7 +192,7 @@ class ToolSearch
                 return ['notifications' => [], 'result' => $this->failedResult("Tool [{$name}] is not available.")];
             }
 
-            $toolResponses = (new ToolInvoker)->invoke($tool, $request);
+            $toolResponses = (new ToolInvoker(mirrorStructuredContent: false))->invoke($tool, $request);
             $toolResponses = $toolResponses instanceof JsonRpcResponse ? [$toolResponses] : $toolResponses;
             $notifications = [];
             $result = null;

@@ -121,7 +121,7 @@ class Registrar
         );
     }
 
-    public function oauthRoutes(string $oauthPrefix = 'oauth'): void
+    public function oauthRoutes(string $oauthPrefix = 'oauth', bool $registration = true): void
     {
         static::ensureMcpScope();
         $hasExactProtectedResourceRoute = $this->hasGetRoute('.well-known/oauth-protected-resource');
@@ -149,7 +149,10 @@ class Registrar
             ->where('path', '.*')
             ->name('mcp.oauth.authorization-server.nested');
 
-        Router::post($oauthPrefix.'/register', OAuthRegisterController::class);
+        if ($registration) {
+            Router::post($oauthPrefix.'/register', OAuthRegisterController::class)
+                ->name('mcp.oauth.register');
+        }
     }
 
     /**
@@ -157,16 +160,17 @@ class Registrar
      */
     protected static function authorizationServerMetadata(string $oauthPrefix): array
     {
-        return [
+        return array_filter([
             'issuer' => config('mcp.authorization_server') ?? url('/'),
             'authorization_endpoint' => route('passport.authorizations.authorize'),
             'token_endpoint' => route('passport.token'),
-            'registration_endpoint' => url($oauthPrefix.'/register'),
+            'registration_endpoint' => Router::has('mcp.oauth.register') ? route('mcp.oauth.register') : null,
             'response_types_supported' => ['code'],
             'code_challenge_methods_supported' => ['S256'],
             'scopes_supported' => [self::OAUTH_SCOPE],
             'grant_types_supported' => ['authorization_code', 'refresh_token'],
-        ];
+            'token_endpoint_auth_methods_supported' => ['none', 'client_secret_basic', 'client_secret_post'],
+        ], fn (mixed $value): bool => $value !== null);
     }
 
     /**

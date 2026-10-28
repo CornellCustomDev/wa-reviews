@@ -200,6 +200,7 @@ class HandleComponents extends Mechanism
             if (! is_array($call)
                 || ! is_string($call['method'] ?? null)
                 || ! is_array($call['params'] ?? null)
+                || ! Utils::hasUnambiguousParameterKeys($call['params'])
             ) {
                 if (config('app.debug')) throw new \InvalidArgumentException('Invalid Livewire call structure: each call must contain [method] (string) and [params] (array).');
 
@@ -330,12 +331,14 @@ class HandleComponents extends Mechanism
 
             $viewContext = new ViewContext;
 
-            $html = $view->render(function ($view) use ($viewContext) {
-                // Extract leftover slots, sections, and pushes before they get flushed...
-                $viewContext->extractFromEnvironment($view->getFactory());
-            });
-
-            $revertA(); $revertB();
+            try {
+                $html = $view->render(function ($view) use ($viewContext) {
+                    // Extract leftover slots, sections, and pushes before they get flushed...
+                    $viewContext->extractFromEnvironment($view->getFactory());
+                });
+            } finally {
+                $revertA(); $revertB();
+            }
 
             $html = Utils::insertAttributesIntoHtmlRoot($html, [
                 'wire:id' => $component->getId(),
@@ -381,9 +384,11 @@ class HandleComponents extends Mechanism
     {
         array_push(static::$renderStack, $component);
 
-        return tap($callback(), function () {
+        try {
+            return $callback();
+        } finally {
             array_pop(static::$renderStack);
-        });
+        }
     }
 
     protected function updateProperties($component, $updates, $data, $context)
@@ -455,7 +460,12 @@ class HandleComponents extends Mechanism
         if (empty($segments)) {
             $this->setComponentPropertyAwareOfTypes($component, $property, $value);
         } else {
-            $propertyValue = $component->$property;
+            // An uninitialized typed property has no value to drill into. Start from
+            // an empty structure, like missing nested keys below, so the assignment
+            // runs through the usual typed property handling instead of throwing...
+            $propertyValue = Utils::propertyIsTypedAndUninitialized($component, $property)
+                ? []
+                : $component->$property;
 
             $this->setComponentPropertyAwareOfTypes($component, $property,
                 $this->recursivelySetValue($property, $propertyValue, $value, $segments, 0, $context)
