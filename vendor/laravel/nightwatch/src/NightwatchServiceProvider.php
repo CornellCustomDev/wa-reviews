@@ -81,6 +81,7 @@ use Throwable;
 
 use function class_exists;
 use function defined;
+use function gethostname;
 use function hash;
 use function microtime;
 use function substr;
@@ -228,7 +229,7 @@ final class NightwatchServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AgentCommand::class, fn () => new AgentCommand(
             token: $this->nightwatchConfig['token'] ?? null,
-            server: $this->nightwatchConfig['server'] ?? null,
+            server: $this->nightwatchConfig['server'] ?? (string) gethostname(),
             ingestUri: $this->nightwatchConfig['ingest']['uri'] ?? null,
         ));
     }
@@ -271,8 +272,8 @@ final class NightwatchServiceProvider extends ServiceProvider
                 ),
                 captureExceptionSourceCode: (bool) ($this->nightwatchConfig['capture_exception_source_code'] ?? true),
                 captureRequestPayload: (bool) ($this->nightwatchConfig['capture_request_payload'] ?? false),
-                redactPayloadFields: $this->nightwatchConfig['redact_payload_fields'] ?? ['_token', 'password', 'password_confirmation'],
-                redactHeaders: $this->nightwatchConfig['redact_headers'] ?? ['Authorization', 'Cookie', 'Proxy-Authorization', 'X-XSRF-TOKEN'],
+                redactPayloadFields: $this->nightwatchConfig['redact_payload_fields'] ?? ['_token', 'password', 'password_confirmation', 'current_password'],
+                redactHeaders: $this->nightwatchConfig['redact_headers'] ?? ['Authorization', 'Cookie', 'Proxy-Authorization', 'X-CSRF-TOKEN', 'X-XSRF-TOKEN'],
                 container: $this->app,
             ),
             executionState: $executionState,
@@ -540,7 +541,7 @@ final class NightwatchServiceProvider extends ServiceProvider
                 id: $trace,
                 currentExecutionStageStartedAtMicrotime: $this->timestamp,
                 deploy: $this->nightwatchConfig['deployment'] ?? '',
-                server: $this->nightwatchConfig['server'] ?? '',
+                server: $this->nightwatchConfig['server'] ?? (string) gethostname(),
                 user: $this->userProvider(),
             );
         } else {
@@ -558,7 +559,7 @@ final class NightwatchServiceProvider extends ServiceProvider
                 id: $trace,
                 currentExecutionStageStartedAtMicrotime: $this->timestamp,
                 deploy: $this->nightwatchConfig['deployment'] ?? '',
-                server: $this->nightwatchConfig['server'] ?? '',
+                server: $this->nightwatchConfig['server'] ?? (string) gethostname(),
                 user: $this->userProvider(),
             );
         }
