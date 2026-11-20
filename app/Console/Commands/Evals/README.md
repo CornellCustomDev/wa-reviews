@@ -27,6 +27,11 @@ Later candidates reuse the same question set and baseline, so each one is a
 single command. Add `--dry-run` first to see what would run without calling a
 model.
 
+The baseline is never refreshed for you. Re-run it with `--baseline` after a
+prompt, code or stored-page change, or the comparison will credit that change
+to the model. The report warns when the baseline ran on different code or on
+a different day.
+
 The useful options:
 
 | Option | What it does |
@@ -34,11 +39,11 @@ The useful options:
 | `--agent=` | `StructuredOutput` (default, cheap) or `GuidelineRecommender` (large pages, slow). |
 | `--model=` | The candidate. Prompted for when omitted. |
 | `--profile=` | Which chat profile the model replaces, `task` or `chat`. Defaults to the one the agent reads, so a run changes one thing. |
-| `--baseline` | Replay the model as the new baseline instead. Do this when the production model or its prompt changes. Without `--model` it uses the configured production model. |
+| `--baseline` | Replay the model as the new baseline instead. Do this when the production model, its prompt, the code or the stored pages change. Without `--model` it uses the configured production model. |
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |
 | `--reviewed` | When extracting, keep only cases a reviewer accepted, modified or rejected. Use it for the recommender, where most past runs were never triaged and F1 otherwise rests on a handful of cases. |
-| `--margins=` | JSON of how much loss you will tolerate per metric. A candidate defaults to its baseline's margins; a new baseline defaults to the agent's standard ones: zero loss on every fidelity check for StructuredOutput (plus 10% on `completed`), and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
+| `--margins=` | JSON of how much loss you will tolerate per metric. A candidate defaults to its baseline's margins; a new baseline defaults to the agent's standard ones: zero loss on every fidelity check for StructuredOutput (plus 10% on `completed`), and on `finished_stop` (5%), `schema_valid` (zero loss) and `f1_strict` (2%) for the recommender. |
 
 A run records the commit it replayed, with `-dirty` when tracked files had
 uncommitted changes. To test a prompt change on its own, replay the same model
@@ -77,7 +82,8 @@ Vocabulary you'll see:
 old runs happened under different prompts, a different AI library version, and
 a different set of guidelines. The old history is only used to build the
 questions and collect the reviewer marks. Comparison is always run against run,
-on the same day, against the same database.
+against the same database. Keeping the baseline current is up to you; see
+above.
 
 ## What the two agents are graded on
 

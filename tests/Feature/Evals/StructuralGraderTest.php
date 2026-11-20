@@ -56,6 +56,15 @@ class StructuralGraderTest extends FeatureTestCase
         $this->assertSame([], $scores['schema_issues']);
     }
 
+    public function test_feedback_that_is_not_a_string_is_scored_as_a_schema_failure_rather_than_crashing(): void
+    {
+        $scores = $this->grade(['guidelines' => [], 'feedback' => ['not', 'a', 'string']]);
+
+        $this->assertFalse($scores['schema_valid']);
+        $this->assertSame(['feedback is missing or not a string'], $scores['schema_issues']);
+        $this->assertFalse($scores['feedback_present']);
+    }
+
     public function test_an_empty_list_with_feedback_is_schema_valid(): void
     {
         $scores = $this->grade(['guidelines' => [], 'feedback' => 'Nothing to report.']);

@@ -29,7 +29,12 @@ class StructuralGrader
         $output = $result->output ?? [];
         $payload = is_array($output['structured'] ?? null) ? $output['structured'] : null;
         $guidelines = $this->guidelines($payload);
-        $schemaIssues = $payload === null ? [] : $this->schemaIssues($payload, $guidelines);
+        // The runner records object-for-list mix-ups separately, because the
+        // stored payload can no longer tell `{}` from `[]`.
+        $schemaIssues = $payload === null ? [] : array_values(array_unique([
+            ...$this->schemaIssues($payload, $guidelines),
+            ...(array) ($output['container_issues'] ?? []),
+        ]));
         $numbers = RecommendationParser::fromGuidelines($guidelines);
 
         $scores = [
@@ -58,7 +63,7 @@ class StructuralGrader
             'guideline_ids_returned' => count($numbers['guideline_ids']),
             'unknown_guideline_count' => $this->unknownGuidelineCount($numbers['guideline_ids']),
             'malformed_number_count' => count($numbers['malformed_numbers']),
-            'feedback_present' => trim((string) ($payload['feedback'] ?? '')) !== '',
+            'feedback_present' => is_string($payload['feedback'] ?? null) && trim($payload['feedback']) !== '',
         ];
 
         if ($this->agentOf($case) === Agents::GuidelineRecommender) {

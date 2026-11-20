@@ -66,6 +66,11 @@ class EvalModel extends Command
      * room for one: a single gateway timeout moves a 20-case mean by 0.025, so
      * a zero margin would fail a model for the network rather than its answers.
      *
+     * The recommender is gated on schema validity as well as agreement. A
+     * replay skips the callback that stores issues, so an answer production
+     * could not store (a list where a string belongs, say) would otherwise
+     * still earn full F1 for naming the right guideline.
+     *
      * @var array<string, array<string, array{margin: float}>>
      */
     private const array DEFAULT_MARGINS = [
@@ -78,6 +83,7 @@ class EvalModel extends Command
         ],
         Agents::GuidelineRecommender->value => [
             'finished_stop' => ['margin' => 0.05],
+            'schema_valid' => ['margin' => 0.0],
             'f1_strict' => ['margin' => 0.02],
         ],
     ];
@@ -281,16 +287,29 @@ class EvalModel extends Command
      * The profile the candidate model replaces. Only one profile moves per
      * run so a difference can be attributed: the recommender's own calls use
      * Chat, and StructuredOutput (nested or standalone) uses Task.
+     *
+     * A profile the agent never reads is refused: the candidate would be
+     * recorded on the run while every request still went to the baseline's
+     * model, and the comparison could pass without testing it.
      */
     private function profile(Agents $agent): string
     {
+        $readable = $agent === Agents::GuidelineRecommender
+            ? [ChatProfile::Chat->value, ChatProfile::Task->value]
+            : [ChatProfile::Task->value];
+
         $requested = $this->option('profile');
 
-        if ($requested) {
-            return (ChatProfile::tryFrom($requested) ?? throw new InvalidArgumentException("Unknown profile \"{$requested}\"; use chat or task."))->value;
+        if ($requested && ! in_array($requested, $readable, true)) {
+            throw new InvalidArgumentException(sprintf(
+                '%s does not read the "%s" profile; use %s.',
+                $agent->value,
+                $requested,
+                implode(' or ', $readable),
+            ));
         }
 
-        return $agent === Agents::GuidelineRecommender ? ChatProfile::Chat->value : ChatProfile::Task->value;
+        return $requested ?: $readable[0];
     }
 
     /**

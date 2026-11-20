@@ -61,7 +61,41 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(1, $scores['scoreable_count']);
     }
 
-    public function test_an_answer_that_finds_nothing_reviewers_endorsed_scores_zero_rather_than_dropping_out(): void
+    public function test_returning_a_guideline_a_reviewer_had_to_add_counts_as_a_hit(): void
+    {
+        [$accepted, $missed] = $this->guidelineIds(2);
+
+        $case = $this->recommenderCase([
+            'accepted_guideline_ids' => [$accepted],
+            'missed_guideline_ids' => [$missed],
+        ]);
+
+        $scores = $this->grade($case, [$accepted, $missed]);
+
+        $this->assertSame(2, $scores['scoreable_count']);
+        $this->assertSame(1.0, $scores['precision_strict']);
+        $this->assertSame(1.0, $scores['recall_strict'], 'Finding what the reviewer added by hand is the improvement a candidate is for.');
+        $this->assertSame(0, $scores['false_negatives_strict']);
+        $this->assertSame(1.0, $scores['f1_lenient']);
+    }
+
+    public function test_a_combined_guideline_number_earns_no_credit_because_production_cannot_store_it(): void
+    {
+        [$first, $second] = $this->guidelineIds(2);
+
+        $case = $this->recommenderCase(['accepted_guideline_ids' => [$first, $second]]);
+
+        $scores = $this->gradeStructured($case, [
+            'guidelines' => [['number' => "$first, $second", 'heading' => 'Combined']],
+            'feedback' => 'Replayed.',
+        ]);
+
+        $this->assertSame(0, $scores['returned_count']);
+        $this->assertSame(0.0, $scores['recall_strict']);
+        $this->assertSame(0.0, $scores['f1_strict']);
+    }
+
+    public function test_returning_nothing_scoreable_on_a_case_with_expected_guidelines_scores_zero_f1(): void
     {
         [$accepted] = $this->guidelineIds(1);
 
@@ -86,6 +120,21 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertSame(0.0, $scores['precision_strict']);
         $this->assertNull($scores['recall_strict']);
         $this->assertNull($scores['f1_strict']);
+    }
+
+    public function test_a_guideline_returned_twice_is_scored_once(): void
+    {
+        [$accepted, $rejected] = $this->guidelineIds(2);
+
+        $case = $this->recommenderCase([
+            'accepted_guideline_ids' => [$accepted],
+            'rejected_guideline_ids' => [$rejected],
+        ]);
+
+        $scores = $this->grade($case, [$accepted, $accepted, $rejected]);
+
+        $this->assertSame(2, $scores['returned_count']);
+        $this->assertSame(0.5, $scores['precision_strict'], 'Naming the accepted guideline twice finds nothing new.');
     }
 
     public function test_pre_existing_guidelines_are_excluded_rather_than_penalised(): void

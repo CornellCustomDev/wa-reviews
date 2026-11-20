@@ -8,9 +8,9 @@ class AgentDetector
 {
     public const AGENT_ENV_VARS = [
         'CURSOR_AGENT' => KnownAgent::Cursor,
-        // Grok runs Claude Code plugins and may expose Claude Code's env vars, so it must come before them.
         'GROK_PLUGIN_ROOT' => KnownAgent::Grok,
         'GROK_PLUGIN_DATA' => KnownAgent::Grok,
+        'QWEN_CODE' => KnownAgent::QwenCode,
         'GEMINI_CLI' => KnownAgent::Gemini,
         'CODEX_SANDBOX' => KnownAgent::Codex,
         'CODEX_CI' => KnownAgent::Codex,
@@ -38,32 +38,30 @@ class AgentDetector
         'CLINE_ACTIVE' => KnownAgent::Cline,
         'GOOSE_TERMINAL' => KnownAgent::Goose,
         'OPENCLAW_SHELL' => KnownAgent::OpenClaw,
+        'ZCODE_ENV' => KnownAgent::ZCode,
+        'CRUSH' => KnownAgent::Crush,
+        'WINDSURF_CASCADE_TERMINAL' => KnownAgent::Windsurf,
     ];
 
     public static function detect(): AgentResult
     {
-        return self::fromAiAgentEnvVar()
-            ?? self::fromKnownEnvVars()
-            ?? self::fromFileSystem()
+        return static::fromAiAgentEnvVar()
+            ?? static::fromKnownEnvVars()
+            ?? static::fromCompoundEnvVars()
+            ?? static::fromFileSystem()
             ?? AgentResult::noAgent();
     }
 
     protected static function fromAiAgentEnvVar(): ?AgentResult
     {
-        $aiAgent = getenv('AI_AGENT');
-
-        if ($aiAgent === false) {
-            return null;
-        }
-
-        $aiAgent = trim($aiAgent);
+        $aiAgent = trim((string) getenv('AI_AGENT'));
 
         if ($aiAgent === '') {
             return null;
         }
 
         return AgentResult::forAgent(match (true) {
-            in_array($aiAgent, ['github-copilot', 'github-copilot-cli']) => KnownAgent::Copilot,
+            in_array($aiAgent, ['github-copilot', 'github-copilot-cli'], true) => KnownAgent::Copilot,
             str_starts_with($aiAgent, 'claude-code') => KnownAgent::Claude,
             default => $aiAgent,
         });
@@ -76,13 +74,52 @@ class AgentDetector
                 continue;
             }
 
-            return AgentResult::forAgent(match ($agent) {
-                KnownAgent::Claude => getenv('CLAUDE_CODE_IS_COWORK') !== false ? KnownAgent::Cowork : KnownAgent::Claude,
-                default => $agent,
-            });
+            if ($agent === KnownAgent::Claude && getenv('CLAUDE_CODE_IS_COWORK') !== false) {
+                $agent = KnownAgent::Cowork;
+            }
+
+            return AgentResult::forAgent($agent);
         }
 
         return null;
+    }
+
+    protected static function fromCompoundEnvVars(): ?AgentResult
+    {
+        $termProgram = getenv('TERM_PROGRAM');
+
+        if ($termProgram === 'zed'
+            && getenv('PAGER') === ''
+            && getenv('GIT_PAGER') === 'cat'
+            && static::isRunningInCli()) {
+            return AgentResult::forAgent(KnownAgent::Zed);
+        }
+
+        if ($termProgram === 'kiro'
+            && static::isRunningInCli()
+            && ! static::isInteractiveTerminal()) {
+            return AgentResult::forAgent(KnownAgent::Kiro);
+        }
+
+        if (getenv('COPILOT_AGENT_SESSION_ID') !== false && getenv('GITHUB_ACTIONS') !== false) {
+            return AgentResult::forAgent(KnownAgent::Copilot);
+        }
+
+        if (getenv('HOME') === '/home/jules' && getenv('USER') === 'swebot') {
+            return AgentResult::forAgent(KnownAgent::Jules);
+        }
+
+        return null;
+    }
+
+    protected static function isInteractiveTerminal(): bool
+    {
+        return defined('STDOUT') && is_resource(STDOUT) && stream_isatty(STDOUT);
+    }
+
+    protected static function isRunningInCli(): bool
+    {
+        return PHP_SAPI === 'cli';
     }
 
     protected static function fromFileSystem(): ?AgentResult

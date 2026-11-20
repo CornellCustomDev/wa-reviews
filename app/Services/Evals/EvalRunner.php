@@ -6,6 +6,7 @@ use App\Ai\Prism\Agents\GuidelineRecommenderAgent;
 use App\Ai\Prism\Agents\StructuredOutputAgent;
 use App\Ai\Prism\PrismAction;
 use App\Ai\Prism\PrismSchema;
+use App\Ai\Prism\Tools\ScratchPadTool;
 use App\Enums\Agents;
 use App\Enums\EvalRunStatus;
 use App\Models\EvalCase;
@@ -25,6 +26,7 @@ use InvalidArgumentException;
 use Prism\Prism\Contracts\Schema;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Text\Response as TextResponse;
+use Prism\Prism\Tool;
 use Prism\Prism\ValueObjects\Usage;
 use RuntimeException;
 use Throwable;
@@ -34,7 +36,9 @@ use Throwable;
  *
  * Every replay runs inside a transaction that is always rolled back, so the
  * chat history each agent writes and any issue a tool creates leave no residue.
- * Results are buffered in memory and persisted only after the rollback.
+ * The one tool that writes outside the database, the recommender's scratch
+ * pad, is swapped for `ReplayScratchPadTool`. Results are buffered in memory
+ * and persisted only after the rollback.
  */
 class EvalRunner
 {
@@ -241,6 +245,7 @@ class EvalRunner
                 'text' => $response->text,
                 'structured' => $decoded['payload'],
                 'structured_error' => $decoded['error'],
+                'container_issues' => $decoded['container_issues'],
                 'guideline_ids' => $this->guidelineIds($decoded['payload'], $response->text),
             ],
             'usage' => $this->usageArray($response->usage, promptExcludesCache: true),
@@ -264,6 +269,11 @@ class EvalRunner
         $agent = GuidelineRecommenderAgent::for($scope)
             ->withPrompt((string) ($case->input['prompt'] ?? ''));
 
+        $agent->withTools(array_map(
+            fn (Tool $tool) => $tool instanceof ScratchPadTool ? new ReplayScratchPadTool : $tool,
+            $agent->toRequest()->tools()
+        ));
+
         $response = $this->streamToResponse($agent);
 
         // Production stores the history before transforming, and the nested
@@ -277,7 +287,7 @@ class EvalRunner
         $streamErrored = $response->finishReason === FinishReason::Error;
 
         $transform = $streamErrored
-            ? ['payload' => null, 'error' => null]
+            ? ['payload' => null, 'error' => null, 'container_issues' => []]
             : $this->transformRecommendation($response, $scope);
 
         return [
@@ -285,6 +295,7 @@ class EvalRunner
                 'text' => $response->text,
                 'structured' => $transform['payload'],
                 'structured_error' => $transform['error'],
+                'container_issues' => $transform['container_issues'],
                 'guideline_ids' => $this->guidelineIds($transform['payload'], $response->text),
                 'steps' => $response->steps->count(),
             ],
@@ -332,29 +343,63 @@ class EvalRunner
     private function transformRecommendation(TextResponse $response, Model $context): array
     {
         try {
+            $decoded = $this->getStructuredResponse($response, $this->recommendedGuidelinesSchema(), $context);
+
             return [
-                'payload' => $this->toArray(
-                    $this->getStructuredResponse($response, $this->recommendedGuidelinesSchema(), $context)
-                ),
+                'payload' => $this->toArray($decoded),
                 'error' => null,
+                'container_issues' => $this->containerIssues($decoded),
             ];
         } catch (Throwable $e) {
-            return ['payload' => null, 'error' => Str::limit($e->getMessage(), 1000)];
+            return ['payload' => null, 'error' => Str::limit($e->getMessage(), 1000), 'container_issues' => []];
         }
     }
 
     /**
-     * @return array{payload: array<string, mixed>|null, error: string|null}
+     * @return array{payload: array<string, mixed>|null, error: string|null, container_issues: array<int, string>}
      */
     private function decodeStructured(?string $text): array
     {
-        $decoded = json_decode((string) $text, true);
+        $decoded = json_decode((string) $text);
 
-        if (! is_array($decoded)) {
-            return ['payload' => null, 'error' => 'Error parsing structured output: '.json_last_error_msg()];
+        if (! is_array($decoded) && ! is_object($decoded)) {
+            return ['payload' => null, 'error' => 'Error parsing structured output: '.json_last_error_msg(), 'container_issues' => []];
         }
 
-        return ['payload' => $decoded, 'error' => null];
+        return ['payload' => $this->toArray($decoded), 'error' => null, 'container_issues' => $this->containerIssues($decoded)];
+    }
+
+    /**
+     * Where the answer uses a JSON object in place of a list, or the reverse.
+     *
+     * The stored payload is an associative array, in which `{}` and `[]` are
+     * the same empty array, so the distinction has to be read here, before the
+     * conversion, and recorded beside the payload for grading and re-grading.
+     * Production keeps the objects: `{"guidelines": {}}` reaches
+     * `GuidelineRecommenderCallback::handle(array $guidelines)` as an object
+     * and fails there.
+     *
+     * @return array<int, string>
+     */
+    private function containerIssues(mixed $decoded): array
+    {
+        if (! is_object($decoded)) {
+            return ['payload is not an object'];
+        }
+
+        $guidelines = $decoded->guidelines ?? null;
+
+        if ($guidelines === null) {
+            return [];
+        }
+
+        if (! is_array($guidelines)) {
+            return ['guidelines is not a list'];
+        }
+
+        $lists = count(array_filter($guidelines, is_array(...)));
+
+        return $lists === 0 ? [] : [sprintf('guidelines has %d entries that are not objects', $lists)];
     }
 
     private function recommendedGuidelinesSchema(): Schema

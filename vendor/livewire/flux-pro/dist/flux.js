@@ -6857,24 +6857,24 @@ ${useLayer ? "}" : ""}
         highlightInputContents(this.meridiemInput);
       });
     }
-    // Not all locales have the same width meridiem, like US is `AM`, Canada is `a.m.`, and Japan is `午後`.
-    // Alphabetic scripts (Latin, Greek, etc.) use ch units since character widths are similar to `0`.
-    // CJK, Hangul, and other wide scripts are measured from a rendered span instead...
+    // Not all locales have the same width meridiem, like US is `AM`, Canada is `a.m.`, and Japan is `午後`,
+    // and the input's font may be proportional rather than monospace, so measure the rendered text. Measure
+    // again once web fonts have loaded, as a fallback font may have been used for the first measurement...
     setMeridiemWidthBasedOnLocale() {
       let meridiem = getLocalisedMeridiem(12, this.picker.config.locale);
       if (!meridiem) return;
-      let isAlphabetic = /^[\u0000-\u024F\u0370-\u03FF\u1E00-\u1EFF\s.]+$/.test(meridiem);
-      if (isAlphabetic) {
-        this.meridiemInput.style.width = `calc(${meridiem.length}ch + 2px)`;
-        return;
-      }
-      let span = document.createElement("span");
-      span.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap";
-      span.style.font = getComputedStyle(this.meridiemInput).font;
-      span.textContent = meridiem;
-      document.body.appendChild(span);
-      this.meridiemInput.style.width = `${span.getBoundingClientRect().width}px`;
-      span.remove();
+      let measure = () => {
+        let span = document.createElement("span");
+        span.style.cssText = "position:absolute;visibility:hidden;white-space:nowrap";
+        let style = getComputedStyle(this.meridiemInput);
+        ["fontFamily", "fontSize", "fontWeight", "fontStyle", "letterSpacing"].forEach((property) => span.style[property] = style[property]);
+        span.textContent = meridiem;
+        document.body.appendChild(span);
+        this.meridiemInput.style.width = `${Math.ceil(span.getBoundingClientRect().width) + 2}px`;
+        span.remove();
+      };
+      measure();
+      document.fonts?.ready.then(measure);
     }
   };
   function initCursorSelectionListeners(input) {
@@ -8970,7 +8970,7 @@ ${useLayer ? "}" : ""}
   // js/calendar/index.js
   var UICalendar = class extends UIElement {
     boot() {
-      let elDrivingConfig = this.closest("ui-date-picker") || this;
+      let elDrivingConfig = this.closest("ui-date-picker, ui-datetime-picker") || this;
       this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
       let [months, onMonthsChange] = responsiveMonthsAttributeValue(this, elDrivingConfig);
       this.observable = new Observable2();
@@ -8995,7 +8995,7 @@ ${useLayer ? "}" : ""}
       this.selectable = Selectable3.createFromValueStringAttribute(elDrivingConfig.getAttribute("value"), this.config, this.observable);
       this.metadata = new DateMetadata(this.observable);
       this.validator = new Validator(this.selectable, this.metadata, this.config);
-      let openToDate = elDrivingConfig.hasAttribute("open-to") && (elDrivingConfig.hasAttribute("force-open-to") || this.selectable.lowerBound() === null) ? this.getOpenTo(elDrivingConfig) : this.selectable.lowerBound(() => DateValue.today());
+      let openToDate = (elDrivingConfig.hasAttribute("open-to") && (elDrivingConfig.hasAttribute("force-open-to") || this.selectable.lowerBound() === null) ? this.getOpenTo(elDrivingConfig) : null) || this.selectable.lowerBound(() => DateValue.today());
       this.viewState = new CalendarViewState(openToDate.getMonth(), openToDate.getYear(), this.config, this.observable);
       this._disableable = new Disableable(this, {
         disableWithParent: false
@@ -9031,7 +9031,7 @@ ${useLayer ? "}" : ""}
         this.dispatchEvent(new Event("navigate", { bubbles: false, cancelable: true }));
       });
       queueMicrotask(() => {
-        this.closest("ui-date-picker")?.bootWithCalendar(this);
+        this.closest("ui-date-picker, ui-datetime-picker")?.bootWithCalendar(this);
       });
       let observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -9050,6 +9050,7 @@ ${useLayer ? "}" : ""}
     getOpenTo(el) {
       if (!el.hasAttribute("open-to")) return;
       let openTo = el.getAttribute("open-to");
+      if (openTo !== "today" && !/^\d{4}-\d{2}-\d{2}/.test(openTo)) return null;
       openTo = openTo === "today" ? DateValue.today() : DateValue.fromIsoDateString(openTo);
       if (!this.validator.isBetweenMinMax(openTo)) {
         return this.config.min;
@@ -9084,13 +9085,16 @@ ${useLayer ? "}" : ""}
       ];
     }
     getUnavailableDates(el) {
-      return el.hasAttribute("unavailable") ? el.getAttribute("unavailable").split(",").map((i) => DateValue.fromIsoDateString(i.trim())) : [];
+      if (!el.hasAttribute("unavailable")) return [];
+      let dates = el.getAttribute("unavailable").split(",").map((i) => i.trim());
+      if (el.localName === "ui-datetime-picker") dates = dates.filter((i) => /^\d{4}-\d{2}-\d{2}$/.test(i));
+      return dates.map((i) => DateValue.fromIsoDateString(i));
     }
     getMinDate(el) {
-      return el.hasAttribute("min") ? el.getAttribute("min") === "today" ? DateValue.today() : DateValue.fromIsoDateString(el.getAttribute("min")) : null;
+      return el.hasAttribute("min") ? ["today", "now"].includes(el.getAttribute("min")) ? DateValue.today() : DateValue.fromIsoDateString(el.getAttribute("min")) : null;
     }
     getMaxDate(el) {
-      return el.hasAttribute("max") ? el.getAttribute("max") === "today" ? DateValue.today() : DateValue.fromIsoDateString(el.getAttribute("max")) : null;
+      return el.hasAttribute("max") ? ["today", "now"].includes(el.getAttribute("max")) ? DateValue.today() : DateValue.fromIsoDateString(el.getAttribute("max")) : null;
     }
   };
   var UICalendarPrevious = class extends UIElement {
@@ -10443,6 +10447,537 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         dialogable.setState(false);
       }
     });
+  }
+
+  // js/datetime-picker.js
+  var UIDatetimePicker = class extends UIControl {
+    bootWithCalendar(calendar) {
+      this.calendar = calendar;
+      this.isRange = calendar.config.mode === CalendarModes.RANGE;
+      this.config = {
+        locale: calendar.config.locale,
+        timeFormat: this.hasAttribute("time-format") ? this.getAttribute("time-format") : "auto",
+        interval: this.hasAttribute("interval") ? parseInt(this.getAttribute("interval")) : 30
+      };
+      this.readConfig();
+      this.selection = parseSelection(this.getAttribute("value"), this.isRange);
+      this.onSelections = [];
+      this._disableable = new Disableable(this);
+      this._disableable.onInitAndChange((disabled) => {
+        this.calendar.disabled = disabled;
+      });
+      this._controllable = new Controllable(this, { bubbles: true });
+      this.calendar.addEventListener("input", (e) => e.stopPropagation());
+      this.calendar.addEventListener("change", (e) => e.stopPropagation());
+      let detangled = detangle();
+      this._controllable.initial((initial) => initial && this.setValue(initial));
+      this._controllable.getter(() => this.getValue());
+      this._controllable.setter(detangled((value3) => this.setValueFromOutside(value3)));
+      this.detangled = detangled;
+      this._submittable = new Submittable(this, {
+        name: this.getAttribute("name"),
+        value: this.getValue()
+      });
+      this.onSelection(detangled(() => this._controllable.dispatch()));
+      this.onSelection(() => this._submittable.update(this.getValue()));
+      this.querySelector("ui-selected-datetime")?.bootWithPicker(this);
+      let dialog = this.querySelector("dialog");
+      let trigger = this.trigger();
+      if (!dialog) return;
+      if (!trigger) return console.warn("Datetime picker is missing a trigger button");
+      this.dialog = dialog;
+      setAttribute2(trigger, "aria-haspopup", "dialog");
+      setAttribute2(trigger, "aria-controls", assignId(dialog, "datetime-picker"));
+      this._disableable.onInitAndChange((disabled) => {
+        disabled ? setAttribute2(trigger, "disabled", "") : removeAttribute(trigger, "disabled");
+      });
+      this._dialogable = new Dialogable(dialog, {
+        clickOutside: !this.hasAttribute("disable-click-outside"),
+        triggers: [trigger]
+      });
+      this._closeable = new Closeable(this);
+      this._closeable.onClose(() => this._dialogable.hide());
+      this._anchorable = new Anchorable(dialog, {
+        reference: trigger,
+        position: this.hasAttribute("position") ? this.getAttribute("position") : void 0,
+        gap: this.hasAttribute("gap") ? this.getAttribute("gap") : void 0,
+        offset: this.hasAttribute("offset") ? this.getAttribute("offset") : void 0
+      });
+      on(trigger, "click", () => this._dialogable.toggle());
+      on(trigger, "keydown", (e) => {
+        if (!["ArrowDown", "ArrowUp"].includes(e.key) || this._dialogable.getState()) return;
+        this._dialogable.setState(true);
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      });
+      let { lock, unlock } = lockScroll(dialog);
+      let refresh = () => {
+        let open = this._dialogable.getState();
+        [this, dialog, trigger].forEach((el) => open ? setAttribute2(el, "data-open", "") : removeAttribute(el, "data-open"));
+        setAttribute2(trigger, "aria-expanded", open ? "true" : "false");
+      };
+      refresh();
+      this._dialogable.onChange(() => {
+        refresh();
+        if (this._dialogable.getState()) {
+          this._anchorable.reposition();
+          lock();
+          this.resetPending();
+          this.dispatchEvent(new Event("open", { bubbles: false, cancelable: false }));
+        } else {
+          this._anchorable.cleanup();
+          unlock();
+          this.dispatchEvent(new Event("close", { bubbles: false, cancelable: false }));
+        }
+      });
+      let onTimeChange = () => {
+        this.renderPending();
+        this.commitWithoutConfirmation();
+      };
+      let listEl = dialog.querySelector("[data-flux-datetime-picker-times]");
+      let pickerEls = Array.from(dialog.querySelectorAll("ui-time-picker[data-flux-datetime-picker-time]"));
+      let pickerFor = (role) => pickerEls.find((el) => el.getAttribute("data-flux-datetime-picker-time") === role) || null;
+      if (this.isRange) {
+        this.times = { start: timePickerSource(pickerFor("start"), onTimeChange), end: timePickerSource(pickerFor("end"), onTimeChange) };
+      } else {
+        let list, picker;
+        list = listEl && timeListSource(listEl, this.config, () => {
+          picker?.set(list.get());
+          this.renderPending();
+          this.commitWithoutConfirmation({ close: true });
+        });
+        picker = pickerFor("single") && timePickerSource(pickerFor("single"), () => {
+          list?.set(picker.get());
+          onTimeChange();
+        });
+        this.times = { single: combineTimeSources([list, picker].filter(Boolean)) };
+      }
+      this.calendar.observable.subscribe(ObservableTrigger2.SELECTION, () => {
+        this.applyDefaultTimes();
+        this.renderPending();
+        this.commitWithoutConfirmation();
+      });
+      this.isRange && this.calendar.observable.subscribe(ObservableTrigger2.ACTIVATION, () => {
+        this.applyDefaultTimes();
+        this.renderPending();
+      });
+      let observer = new MutationObserver((mutations) => {
+        let names = mutations.map((mutation) => mutation.attributeName);
+        if (names.includes("value")) this.detangled(() => this.setValueFromOutside(this.getAttribute("value")))();
+        if (names.some((name) => ["min", "max", "min-time", "max-time", "unavailable", "open-to", "default-time"].includes(name))) {
+          this.readConfig();
+          this.renderPending();
+        }
+      });
+      observer.observe(this, { attributes: true });
+      this.onUnmount(() => observer.disconnect());
+      this.selectButton = dialog.querySelector("[data-flux-datetime-picker-select]");
+      this.selectButton && on(this.selectButton, "click", () => this.commit());
+      this.resetPending();
+    }
+    unmount() {
+      if (this._dialogable?.getState()) {
+        let { unlock } = lockScroll();
+        unlock();
+      }
+    }
+    onSelection(callback) {
+      this.onSelections.push(callback);
+    }
+    getValue() {
+      return serializeSelection(this.selection, this.isRange);
+    }
+    setValue(value3) {
+      this.setSelection(parseSelection(value3, this.isRange));
+    }
+    // A value set from outside (like Livewire normalizing it on the server) replaces whatever
+    // is pending, so the open dialog doesn't later commit a stale selection...
+    setValueFromOutside(value3) {
+      let before = JSON.stringify(this.getValue());
+      this.setValue(value3);
+      if (this._dialogable?.getState() && JSON.stringify(this.getValue()) !== before) this.resetPending();
+    }
+    setSelection(selection) {
+      let before = JSON.stringify(this.getValue());
+      this.selection = selection;
+      if (JSON.stringify(this.getValue()) === before) return;
+      this.onSelections.forEach((callback) => callback());
+    }
+    // Copy the committed value back into the calendar and time sources, discarding
+    // anything the user did since the dialog was last opened...
+    resetPending() {
+      if (!this.times) return;
+      this.resetting = true;
+      this.readConfig();
+      let selection = this.selection;
+      if (this.isRange) {
+        this.calendar.selectable.setValue(selection ? { start: selection.start.date, end: selection.end.date } : null);
+        this.times.start.set(selection?.start.time ?? null);
+        this.times.end.set(selection?.end.time ?? null);
+      } else {
+        this.calendar.selectable.setValue(selection?.date ?? null);
+        this.times.single.set(selection?.time ?? null);
+      }
+      let date = selection ? DateValue.fromIsoDateString(this.isRange ? selection.start.date : selection.date) : null;
+      if (!date && this.hasAttribute("open-to")) date = this.calendar.getOpenTo(this);
+      if (!date) date = this.calendar.config.min && DateValue.today().isBefore(this.calendar.config.min) ? this.calendar.config.min : DateValue.today();
+      this.calendar.viewState.setDate(date);
+      this.renderPending();
+      this.times.single?.scrollToSelected?.();
+      this.resetting = false;
+    }
+    readConfig() {
+      let openTo = parseBound(this.getAttribute("open-to"));
+      let defaultTimes = (this.getAttribute("default-time") || "").split("/").map((i) => parseTime(i)).map((i) => i === null ? null : minutesToTime(i));
+      Object.assign(this.config, {
+        min: parseBound(this.getAttribute("min")),
+        max: parseBound(this.getAttribute("max")),
+        minTime: parseTime(this.getAttribute("min-time")),
+        maxTime: parseTime(this.getAttribute("max-time")),
+        unavailable: parseUnavailable(this.getAttribute("unavailable")),
+        openToTime: parseTime(openTo?.time ?? this.getAttribute("open-to")),
+        defaultTimes: { start: defaultTimes[0], end: defaultTimes[1] ?? defaultTimes[0] }
+      });
+    }
+    // Fill in the `default-time` as soon as a date is picked, so a time doesn't have to be chosen...
+    applyDefaultTimes() {
+      if (!this.times) return;
+      let { start, end } = this.config.defaultTimes;
+      let pending = this.pending();
+      if (this.isRange) {
+        if (start && pending.start.date && !pending.start.time) this.times.start.set(start);
+        if (end && pending.end.date && !pending.end.time) this.times.end.set(end);
+      } else if (start && pending.date && !pending.time) {
+        this.times.single.set(start);
+      }
+    }
+    pending() {
+      let selectable = this.calendar.selectable;
+      if (this.isRange) {
+        let value3 = selectable.getValue();
+        return {
+          start: { date: value3?.start ?? selectable.lowerBound(null)?.toIsoDateString() ?? null, time: this.times.start.get() },
+          end: { date: value3?.end ?? null, time: this.times.end.get() }
+        };
+      }
+      return { date: selectable.getValue(), time: this.times.single.get() };
+    }
+    pendingStatus(pending = this.pending()) {
+      let parts = this.isRange ? [pending.start, pending.end] : [pending];
+      if (parts.some((part) => !part.date || !part.time)) return "incomplete";
+      if (parts.some((part) => !this.isAvailable(part))) return "unavailable";
+      if (this.isRange && stamp(pending.start) >= stamp(pending.end)) return "reversed";
+      return "complete";
+    }
+    isAvailable({ date, time }) {
+      let { min: min2, max: max2 } = this.config;
+      if (min2 && date < min2.date) return false;
+      if (max2 && date > max2.date) return false;
+      return !isBlocked(this.blockedTimesFor(date), timeInMinutes(time));
+    }
+    // Every range of minutes in the day that can't be picked on a given date: the daily `min-time`/
+    // `max-time` window, `unavailable` times and slots, and the times past `min`/`max` on the
+    // boundary dates. The date may be null when none has been picked yet...
+    blockedTimesFor(date) {
+      let { min: min2, max: max2, minTime, maxTime, unavailable } = this.config;
+      let blocked = [...unavailable.daily, ...unavailable.slots[date] || []];
+      if (minTime !== null) blocked.push([0, minTime - 1]);
+      if (maxTime !== null) blocked.push([maxTime + 1, 1439]);
+      if (min2?.time && date === min2.date) blocked.push([0, timeInMinutes(min2.time) - 1]);
+      if (max2?.time && date === max2.date) blocked.push([timeInMinutes(max2.time) + 1, 1439]);
+      return blocked.filter(([from, to]) => from <= to);
+    }
+    renderPending() {
+      if (!this.times) return;
+      let pending = this.pending();
+      let status = this.pendingStatus(pending);
+      if (this.isRange) {
+        this.times.start.restrict(this.blockedTimesFor(pending.start.date));
+        this.times.end.restrict(this.blockedTimesFor(pending.end.date));
+      } else {
+        this.times.single.restrict(this.blockedTimesFor(pending.date));
+      }
+      let errorEl = this.dialog.querySelector("[data-flux-datetime-picker-error]");
+      if (errorEl) status === "reversed" ? removeAttribute(errorEl, "hidden") : setAttribute2(errorEl, "hidden", "");
+      if (this.selectButton) status === "complete" ? removeAttribute(this.selectButton, "disabled") : setAttribute2(this.selectButton, "disabled", "");
+    }
+    // Like the date picker, the select button is only shown when it's needed: for ranges, typed
+    // times, `with-confirmation`, and on mobile. Without it, the value updates as soon as the
+    // pending selection is complete...
+    requiresConfirmation() {
+      return !!this.selectButton && this.selectButton.getBoundingClientRect().width > 0;
+    }
+    commitWithoutConfirmation({ close = false } = {}) {
+      if (this.resetting || this.requiresConfirmation()) return;
+      let pending = this.pending();
+      if (this.pendingStatus(pending) !== "complete") return;
+      this.setSelection(pending);
+      close && this._dialogable.hide();
+    }
+    commit() {
+      let pending = this.pending();
+      if (this.pendingStatus(pending) !== "complete") return;
+      this.setSelection(pending);
+      this._dialogable.hide();
+    }
+    // The trigger's label as a list of text parts, with the joining words ("at", "–") muted...
+    displayParts() {
+      if (!this.selection) return null;
+      let { locale, timeFormat } = this.config;
+      return this.isRange ? rangeDisplayParts(this.selection.start, this.selection.end, locale, timeFormat) : singleDisplayParts(this.selection, locale, timeFormat);
+    }
+    clear() {
+      this.setSelection(null);
+      this.dispatchEvent(new CustomEvent("clear", { bubbles: false }));
+    }
+    open() {
+      this._dialogable.setState(true);
+    }
+    close() {
+      this._dialogable.setState(false);
+    }
+    trigger() {
+      return Array.from(this.querySelectorAll("button, ui-button")).find((el) => !el.closest("dialog")) || null;
+    }
+  };
+  var UISelectedDatetime = class extends UIElement {
+    bootWithPicker(picker) {
+      this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
+      this.templates = {
+        placeholder: this.querySelector('template[name="placeholder"]'),
+        datetime: this.querySelector('template[name="datetime"]'),
+        separator: this.querySelector('template[name="separator"]')
+      };
+      picker.onSelection(() => this.render(picker));
+      this.render(picker);
+    }
+    render(picker) {
+      this.cleanup?.();
+      let parts = picker.displayParts();
+      if (parts) {
+        let fragment = document.createDocumentFragment();
+        parts.forEach(({ text, muted }) => fragment.append(
+          muted && this.templates.separator ? hydrateTemplate(this.templates.separator, { slots: { default: text } }) : document.createTextNode(text)
+        ));
+        this.cleanup = renderTemplate(this.templates.datetime, (hydrate) => hydrate({ slots: { default: fragment } }))?.cleanup;
+      } else {
+        this.cleanup = renderTemplate(this.templates.placeholder, (hydrate) => hydrate({ slots: {} }))?.cleanup;
+      }
+    }
+  };
+  element("datetime-picker", UIDatetimePicker);
+  element("selected-datetime", UISelectedDatetime);
+  function timePickerSource(el, onChange) {
+    if (!el) throw new Error("Datetime picker is missing a time picker");
+    on(el, "input", (e) => {
+      e.stopPropagation();
+      onChange();
+    });
+    on(el, "change", (e) => e.stopPropagation());
+    return {
+      get: () => el.value || null,
+      set: (value3) => {
+        el.value = value3;
+      },
+      restrict: (blocked) => {
+        let unavailable = blocked.map(([from, to]) => from === to ? minutesToTime(from) : `${minutesToTime(from)}-${minutesToTime(to)}`).join(",");
+        if (unavailable === (el.getAttribute("unavailable") || "")) return;
+        unavailable ? setAttribute2(el, "unavailable", unavailable) : removeAttribute(el, "unavailable");
+      }
+    };
+  }
+  function combineTimeSources(sources) {
+    return {
+      get: () => sources[0].get(),
+      set: (value3) => sources.forEach((source) => source.set(value3)),
+      restrict: (bounds) => sources.forEach((source) => source.restrict(bounds)),
+      scrollToSelected: () => sources.forEach((source) => source.scrollToSelected?.())
+    };
+  }
+  function timeListSource(listEl, config, onChange) {
+    let template = listEl.querySelector('template[name="option"]');
+    let value3 = null;
+    let options = [];
+    setAttribute2(listEl, "role", "listbox");
+    renderTemplate(template, (hydrate) => {
+      let { interval, timeFormat, locale, minTime, maxTime } = config;
+      let min2 = minTime !== null ? minutesToTime(minTime) : void 0;
+      let max2 = maxTime !== null ? minutesToTime(maxTime) : void 0;
+      options = generateTimes({ interval, timeFormat, locale, min: min2, max: max2 }).map(({ value: value4, label }) => {
+        let option = hydrate({ attrs: { "data-time": value4, "role": "option", "tabindex": "-1" }, slots: { default: label } });
+        assignId(option, "option");
+        return option;
+      });
+      return [...options];
+    });
+    let enabled = () => options.filter((option) => !option.hasAttribute("disabled"));
+    let selected = () => options.find((option) => option.getAttribute("data-time") === value3) || null;
+    let nearestToNow = () => {
+      let target = config.openToTime ?? (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes();
+      return enabled().filter((option) => timeInMinutes(option.getAttribute("data-time")) <= target).pop() || enabled()[0] || null;
+    };
+    let sync = () => {
+      options.forEach((option) => {
+        let isSelected = option.getAttribute("data-time") === value3;
+        isSelected ? setAttribute2(option, "data-selected", "") : removeAttribute(option, "data-selected");
+        setAttribute2(option, "aria-selected", isSelected ? "true" : "false");
+      });
+      let stop = selected() && !selected().hasAttribute("disabled") ? selected() : nearestToNow();
+      options.forEach((option) => setAttribute2(option, "tabindex", option === stop ? "0" : "-1"));
+    };
+    on(listEl, "click", (e) => {
+      let option = e.target.closest("[data-time]");
+      if (!option || option.hasAttribute("disabled")) return;
+      value3 = option.getAttribute("data-time");
+      sync();
+      onChange();
+    });
+    on(listEl, "keydown", (e) => {
+      let current = e.target.closest("[data-time]");
+      if (!current) return;
+      let available = enabled();
+      let index = available.indexOf(current);
+      let target = {
+        ArrowDown: available[index + 1],
+        ArrowUp: available[index - 1],
+        Home: available[0],
+        End: available[available.length - 1]
+      }[e.key];
+      if (!(e.key in { ArrowDown: 1, ArrowUp: 1, Home: 1, End: 1 })) return;
+      e.preventDefault();
+      e.stopPropagation();
+      target?.focus({ preventScroll: false });
+    });
+    sync();
+    return {
+      get: () => value3,
+      set: (time) => {
+        value3 = time;
+        sync();
+      },
+      restrict: (blocked) => {
+        options.forEach((option) => {
+          let disabled = isBlocked(blocked, timeInMinutes(option.getAttribute("data-time")));
+          disabled ? setAttribute2(option, "disabled", "") : removeAttribute(option, "disabled");
+        });
+        sync();
+      },
+      scrollToSelected: () => {
+        let target = selected() || nearestToNow();
+        if (!target) return;
+        requestAnimationFrame(() => {
+          listEl.scrollTop = target.offsetTop - target.offsetHeight * 2;
+        });
+      }
+    };
+  }
+  var datetimePattern = /^(\d{4}-\d{2}-\d{2})(?:[T\s](\d{1,2}):(\d{2}))?/;
+  function parseDatetime(value3) {
+    if (!value3 || typeof value3 !== "string") return null;
+    let match = value3.trim().match(datetimePattern);
+    if (!match) return null;
+    let [, date, hours = "0", minutes = "00"] = match;
+    return { date, time: `${hours.padStart(2, "0")}:${minutes}` };
+  }
+  function parseSelection(value3, isRange) {
+    if (!isRange) return parseDatetime(value3);
+    if (typeof value3 === "string") {
+      let [start2, end2] = value3.split("/");
+      value3 = { start: start2, end: end2 };
+    }
+    let start = parseDatetime(value3?.start);
+    let end = parseDatetime(value3?.end);
+    return start && end ? { start, end } : null;
+  }
+  function serializeSelection(selection, isRange) {
+    if (!selection) return null;
+    return isRange ? { start: stamp(selection.start), end: stamp(selection.end) } : stamp(selection);
+  }
+  function parseBound(value3) {
+    if (!value3) return null;
+    if (value3 === "today") return { date: DateValue.today().toIsoDateString(), time: null };
+    if (value3 === "now") {
+      let now = /* @__PURE__ */ new Date();
+      return { date: DateValue.fromDate(now).toIsoDateString(), time: minutesToTime(now.getHours() * 60 + now.getMinutes()) };
+    }
+    let match = value3.trim().match(datetimePattern);
+    if (!match) return null;
+    let [, date, hours, minutes] = match;
+    return { date, time: hours ? `${hours.padStart(2, "0")}:${minutes}` : null };
+  }
+  function parseTime(value3) {
+    let match = value3?.trim().match(/^(\d{1,2}):(\d{2})$/);
+    return match ? Number(match[1]) * 60 + Number(match[2]) : null;
+  }
+  function parseUnavailable(value3) {
+    let daily = [];
+    let slots = {};
+    (value3 || "").split(",").map((i) => i.trim()).filter(Boolean).forEach((entry) => {
+      let match = entry.match(/^(?:(\d{4}-\d{2}-\d{2})[T\s])?(\d{1,2}:\d{2})(?::\d{2})?(?:-(\d{1,2}:\d{2})(?::\d{2})?)?$/);
+      if (!match) return;
+      let [, date, from, to] = match;
+      let range = [timeInMinutes(from), timeInMinutes(to ?? from)];
+      date ? (slots[date] ??= []).push(range) : daily.push(range);
+    });
+    return { daily, slots };
+  }
+  function isBlocked(blocked, minutes) {
+    return blocked.some(([from, to]) => minutes >= from && minutes <= to);
+  }
+  function stamp({ date, time }) {
+    return `${date}T${time}`;
+  }
+  function minutesToTime(minutes) {
+    return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
+  }
+  function toWallClockDate({ date, time }) {
+    let [year, month, day] = date.split("-").map(Number);
+    let [hours, minutes] = time.split(":").map(Number);
+    return new Date(Date.UTC(year, month - 1, day, hours, minutes));
+  }
+  var hour12For = (timeFormat) => ({ "12-hour": true, "24-hour": false })[timeFormat];
+  function singleDisplayParts(datetime, locale, timeFormat) {
+    let date = toWallClockDate(datetime);
+    let hour12 = hour12For(timeFormat);
+    let joiner = dateTimeJoiner(locale);
+    if (!joiner) {
+      return [{ text: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "numeric", hour12, timeZone: "UTC" }).format(date) }];
+    }
+    return [
+      { text: new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(date) },
+      { text: joiner, muted: true },
+      { text: new Intl.DateTimeFormat(locale, { hour: "numeric", minute: "numeric", hour12, timeZone: "UTC" }).format(date) }
+    ];
+  }
+  function dateTimeJoiner(locale) {
+    let parts = new Intl.DateTimeFormat(locale, { dateStyle: "long", timeStyle: "short" }).formatToParts(new Date(2024, 0, 1, 12));
+    let timeIndex = parts.findIndex((part) => ["hour", "dayPeriod"].includes(part.type));
+    let literal = parts[timeIndex - 1];
+    if (literal?.type !== "literal" || !/^\s+\p{L}+\s+$/u.test(literal.value)) return null;
+    return literal.value;
+  }
+  function rangeDisplayParts(start, end, locale, timeFormat) {
+    let currentYear = (/* @__PURE__ */ new Date()).getFullYear();
+    let showYear = Number(start.date.slice(0, 4)) !== currentYear || Number(end.date.slice(0, 4)) !== currentYear;
+    let formatter = new Intl.DateTimeFormat(locale, {
+      month: "short",
+      day: "numeric",
+      ...showYear ? { year: "numeric" } : {},
+      hour: "numeric",
+      minute: "numeric",
+      hour12: hour12For(timeFormat),
+      timeZone: "UTC"
+    });
+    let parts = formatter.formatRangeToParts(toWallClockDate(start), toWallClockDate(end));
+    let lastStart = parts.findLastIndex((part) => part.source === "startRange");
+    let firstEnd = parts.findIndex((part) => part.source === "endRange");
+    return parts.reduce((carry, part, index) => {
+      let muted = part.source === "shared" && part.type === "literal" && index > lastStart && index < firstEnd && /\S/.test(part.value);
+      let previous = carry[carry.length - 1];
+      if (previous && !previous.muted && !muted) previous.text += part.value;
+      else carry.push({ text: part.value, muted });
+      return carry;
+    }, []);
   }
 
   // js/composer.js
@@ -13352,7 +13887,7 @@ ui-date-picker input[type="date"]::-webkit-calendar-picker-indicator {
         control.focus();
       } else if (control.localName === "input" && ["file"].includes(control.type)) {
         control.click();
-      } else if (["ui-select", "ui-date-picker", "ui-time-picker", "ui-otp", "ui-color-picker"].includes(control.localName)) {
+      } else if (["ui-select", "ui-date-picker", "ui-datetime-picker", "ui-time-picker", "ui-otp", "ui-color-picker"].includes(control.localName)) {
         control.trigger()?.focus();
       } else if (["ui-editor"].includes(control.localName)) {
         control.focus();
