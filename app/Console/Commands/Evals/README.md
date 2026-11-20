@@ -39,6 +39,7 @@ The useful options:
 | `--agent=` | `StructuredOutput` (default, cheap) or `GuidelineRecommender` (large pages, slow). |
 | `--model=` | The candidate. Prompted for when omitted. |
 | `--profile=` | Which chat profile the model replaces, `task` or `chat`. Defaults to the one the agent reads, so a run changes one thing. |
+| `--effort=` | Reasoning effort for the profile being replaced: `none`, `minimal`, `low`, `medium` or `high`. Which of these a model accepts varies. Omitted, the model uses its own default. It is recorded on the run and shown in the report. |
 | `--baseline` | Replay the model as the new baseline instead. Do this when the production model, its prompt, the code or the stored pages change. Without `--model` it uses the configured production model. |
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |

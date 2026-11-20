@@ -40,7 +40,7 @@ class EvalModel extends Command
         {--agent=StructuredOutput : The AI feature to evaluate: StructuredOutput (cheap) or GuidelineRecommender (large pages, slow).}
         {--model= : The candidate model. Prompted for when omitted.}
         {--profile= : Which chat profile the model replaces, chat or task. Defaults to the profile the agent reads, so only one thing changes.}
-        {--effort= : Reasoning effort (minimal, low, medium or high) for the profile being replaced. Defaults to the model\'s own.}
+        {--effort= : Reasoning effort (none, minimal, low, medium or high; which of these a model accepts varies) for the profile being replaced. Defaults to the model\'s own.}
         {--baseline : Replay this model (default: the configured production model) as the new baseline instead of as a candidate.}
         {--repeats=2 : Replays per case. Two or more separates a model difference from sampling noise.}
         {--limit=20 : Cases to extract when the agent has no dataset yet.}
@@ -91,7 +91,7 @@ class EvalModel extends Command
     /**
      * @var list<string>
      */
-    private const array EFFORTS = ['minimal', 'low', 'medium', 'high'];
+    private const array EFFORTS = ['none', 'minimal', 'low', 'medium', 'high'];
 
     public function handle(CaseExtractor $extractor, EvalRunner $runner, ReportBuilder $builder): int
     {
