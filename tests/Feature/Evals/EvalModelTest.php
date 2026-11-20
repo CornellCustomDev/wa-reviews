@@ -19,6 +19,7 @@ use Prism\Prism\Testing\TextResponseFake;
 use Prism\Prism\Testing\TextStepFake;
 use Prism\Prism\ValueObjects\Meta;
 use Prism\Prism\ValueObjects\ToolCall;
+use InvalidArgumentException;
 use Tests\Feature\FeatureTestCase;
 
 class EvalModelTest extends FeatureTestCase
@@ -165,6 +166,25 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame(EvalRunStatus::Failed, $failed->status);
         $this->assertFalse($failed->is_baseline);
         $this->assertTrue($previous->refresh()->is_baseline);
+    }
+
+    public function test_a_profile_the_agent_never_reads_is_refused_before_anything_runs(): void
+    {
+        $this->structuredOutputCase('eval-model-profile');
+        $runsBefore = EvalRun::count();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('StructuredOutput does not read the "chat" profile; use task.');
+
+        try {
+            $this->artisan('ai:eval', [
+                '--model' => 'candidate-chat',
+                '--profile' => ChatProfile::Chat->value,
+                '--dataset-version' => 'eval-model-profile',
+            ])->run();
+        } finally {
+            $this->assertSame($runsBefore, EvalRun::count());
+        }
     }
 
     public function test_a_recommender_candidate_replaces_the_chat_profile(): void

@@ -241,6 +241,7 @@ class EvalRunner
                 'text' => $response->text,
                 'structured' => $decoded['payload'],
                 'structured_error' => $decoded['error'],
+                'container_issues' => $decoded['container_issues'],
                 'guideline_ids' => $this->guidelineIds($decoded['payload'], $response->text),
             ],
             'usage' => $this->usageArray($response->usage),
@@ -282,7 +283,7 @@ class EvalRunner
         $streamErrored = $response->finishReason === FinishReason::Error;
 
         $transform = $streamErrored
-            ? ['payload' => null, 'error' => null]
+            ? ['payload' => null, 'error' => null, 'container_issues' => []]
             : $this->transformRecommendation($response, $scope);
 
         return [
@@ -290,6 +291,7 @@ class EvalRunner
                 'text' => $response->text,
                 'structured' => $transform['payload'],
                 'structured_error' => $transform['error'],
+                'container_issues' => $transform['container_issues'],
                 'guideline_ids' => $this->guidelineIds($transform['payload'], $response->text),
                 'steps' => $response->steps->count(),
             ],
@@ -337,29 +339,63 @@ class EvalRunner
     private function transformRecommendation(TextResponse $response, Model $context): array
     {
         try {
+            $decoded = $this->getStructuredResponse($response, $this->recommendedGuidelinesSchema(), $context);
+
             return [
-                'payload' => $this->toArray(
-                    $this->getStructuredResponse($response, $this->recommendedGuidelinesSchema(), $context)
-                ),
+                'payload' => $this->toArray($decoded),
                 'error' => null,
+                'container_issues' => $this->containerIssues($decoded),
             ];
         } catch (Throwable $e) {
-            return ['payload' => null, 'error' => Str::limit($e->getMessage(), 1000)];
+            return ['payload' => null, 'error' => Str::limit($e->getMessage(), 1000), 'container_issues' => []];
         }
     }
 
     /**
-     * @return array{payload: array<string, mixed>|null, error: string|null}
+     * @return array{payload: array<string, mixed>|null, error: string|null, container_issues: array<int, string>}
      */
     private function decodeStructured(?string $text): array
     {
-        $decoded = json_decode((string) $text, true);
+        $decoded = json_decode((string) $text);
 
-        if (! is_array($decoded)) {
-            return ['payload' => null, 'error' => 'Error parsing structured output: '.json_last_error_msg()];
+        if (! is_array($decoded) && ! is_object($decoded)) {
+            return ['payload' => null, 'error' => 'Error parsing structured output: '.json_last_error_msg(), 'container_issues' => []];
         }
 
-        return ['payload' => $decoded, 'error' => null];
+        return ['payload' => $this->toArray($decoded), 'error' => null, 'container_issues' => $this->containerIssues($decoded)];
+    }
+
+    /**
+     * Where the answer uses a JSON object in place of a list, or the reverse.
+     *
+     * The stored payload is an associative array, in which `{}` and `[]` are
+     * the same empty array, so the distinction has to be read here, before the
+     * conversion, and recorded beside the payload for grading and re-grading.
+     * Production keeps the objects: `{"guidelines": {}}` reaches
+     * `GuidelineRecommenderCallback::handle(array $guidelines)` as an object
+     * and fails there.
+     *
+     * @return array<int, string>
+     */
+    private function containerIssues(mixed $decoded): array
+    {
+        if (! is_object($decoded)) {
+            return ['payload is not an object'];
+        }
+
+        $guidelines = $decoded->guidelines ?? null;
+
+        if ($guidelines === null) {
+            return [];
+        }
+
+        if (! is_array($guidelines)) {
+            return ['guidelines is not a list'];
+        }
+
+        $lists = count(array_filter($guidelines, is_array(...)));
+
+        return $lists === 0 ? [] : [sprintf('guidelines has %d entries that are not objects', $lists)];
     }
 
     private function recommendedGuidelinesSchema(): Schema

@@ -122,6 +122,21 @@ class AgreementGraderTest extends FeatureTestCase
         $this->assertNull($scores['f1_strict']);
     }
 
+    public function test_a_guideline_returned_twice_is_scored_once(): void
+    {
+        [$accepted, $rejected] = $this->guidelineIds(2);
+
+        $case = $this->recommenderCase([
+            'accepted_guideline_ids' => [$accepted],
+            'rejected_guideline_ids' => [$rejected],
+        ]);
+
+        $scores = $this->grade($case, [$accepted, $accepted, $rejected]);
+
+        $this->assertSame(2, $scores['returned_count']);
+        $this->assertSame(0.5, $scores['precision_strict'], 'Naming the accepted guideline twice finds nothing new.');
+    }
+
     public function test_pre_existing_guidelines_are_excluded_rather_than_penalised(): void
     {
         [$accepted, $preExisting] = $this->guidelineIds(2);

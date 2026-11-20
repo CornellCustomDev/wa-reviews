@@ -42,7 +42,7 @@ The useful options:
 | `--baseline` | Replay the model as the new baseline instead. Do this when the production model, its prompt, the code or the stored pages change. Without `--model` it uses the configured production model. |
 | `--repeats=2` | How many times each question is asked. Two or more separates a real difference from the model simply answering differently. |
 | `--dataset-version=` | Which frozen question set to use. A new name extracts a new set. |
-| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones: zero loss on every fidelity check for StructuredOutput, and on `finished_stop` (5%) and `f1_strict` (2%) for the recommender. |
+| `--margins=` | JSON of how much loss you will tolerate per metric. Defaults to the baseline's margins, then to the agent's standard ones: zero loss on every fidelity check for StructuredOutput, and on `finished_stop` (5%), `schema_valid` (zero loss) and `f1_strict` (2%) for the recommender. |
 
 `ai:eval-report --run=<id> --baseline=<id>` re-reads any two past runs, and
 `--regrade` re-scores them first after a grader change. Grading never calls a

@@ -177,6 +177,38 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertFalse($result->score('schema_valid'));
     }
 
+    public function test_a_guidelines_object_in_place_of_a_list_is_schema_invalid_and_stays_so_on_regrade(): void
+    {
+        Prism::fake([
+            StructuredResponseFake::make()->withText('{"guidelines":{},"feedback":"ok"}'),
+        ]);
+
+        $runner = app(EvalRunner::class);
+        $run = $this->evalRun();
+        $result = $runner->runCase($run, $this->structuredOutputCase());
+
+        $this->assertSame([], $result->output['structured']['guidelines'], 'The stored payload alone cannot tell {} from [].');
+        $this->assertFalse($result->score('schema_valid'));
+        $this->assertContains('guidelines is not a list', $result->scores['schema_issues']);
+
+        $runner->regrade($run);
+
+        $this->assertFalse($result->refresh()->score('schema_valid'));
+    }
+
+    public function test_a_nested_transform_returning_a_guidelines_object_is_schema_invalid(): void
+    {
+        Prism::fake([
+            TextResponseFake::make()->withText('Guideline fails.')->withFinishReason(FinishReason::Stop),
+            StructuredResponseFake::make()->withText('{"guidelines":{},"feedback":"ok"}'),
+        ]);
+
+        $result = app(EvalRunner::class)->runCase($this->evalRun(), $this->recommenderCase());
+
+        $this->assertTrue($result->score('structured_transform_ok'));
+        $this->assertFalse($result->score('schema_valid'));
+    }
+
     public function test_an_unreplayable_case_is_recorded_as_an_error(): void
     {
         $case = $this->structuredOutputCase();

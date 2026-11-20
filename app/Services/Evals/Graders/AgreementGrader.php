@@ -321,7 +321,9 @@ class AgreementGrader
             }
         }
 
-        return $ids;
+        // Agreement is defined over a set. A guideline named twice finds
+        // nothing new, so it must not count twice towards precision.
+        return array_values(array_unique($ids));
     }
 
     /**
