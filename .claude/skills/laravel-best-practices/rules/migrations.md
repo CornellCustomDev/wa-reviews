@@ -2,11 +2,11 @@
 
 ## Generate Migrations with Artisan
 
-Use `lando php artisan make:migration` to generate the timestamped filename and migration structure.
+Use `php artisan make:migration` to generate the timestamped filename and migration structure.
 
 ```bash
-lando php artisan make:migration create_posts_table
-lando php artisan make:migration add_slug_to_posts_table
+php artisan make:migration create_posts_table
+php artisan make:migration add_slug_to_posts_table
 ```
 
 ## Define Foreign-Key Constraints Deliberately

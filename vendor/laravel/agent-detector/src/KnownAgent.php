@@ -27,6 +27,13 @@ enum KnownAgent: string
     case Cline = 'cline';
     case Goose = 'goose';
     case OpenClaw = 'openclaw';
+    case ZCode = 'zcode';
+    case QwenCode = 'qwen-code';
+    case Crush = 'crush';
+    case Windsurf = 'windsurf';
+    case Zed = 'zed';
+    case Kiro = 'kiro';
+    case Jules = 'jules';
 
     public function label(): string
     {
@@ -35,6 +42,9 @@ enum KnownAgent: string
             self::KiroCli => 'Kiro CLI',
             self::OpenClaw => 'OpenClaw',
             self::V0 => 'v0',
+            self::ZCode => 'ZCode',
+            self::QwenCode => 'Qwen Code',
+            self::Zed => 'Zed Agent',
             default => ucfirst($this->value),
         };
     }
