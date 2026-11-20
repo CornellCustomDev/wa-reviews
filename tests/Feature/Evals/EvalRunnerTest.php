@@ -15,8 +15,11 @@ use App\Models\Issue;
 use App\Models\Scope;
 use App\Models\User;
 use App\Services\Evals\EvalRunner;
+use App\Services\Evals\Graders\AgreementGrader;
+use App\Services\Evals\Graders\StructuralGrader;
 use App\Services\Evals\ReplayScratchPadTool;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Sleep;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\StructuredResponseFake;
@@ -213,6 +216,49 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertFalse($result->score('schema_valid'));
     }
 
+    public function test_a_rate_limited_case_is_replayed_after_a_wait_instead_of_recorded_as_an_error(): void
+    {
+        Sleep::fake();
+        $waits = [];
+        $runner = $this->runnerAnswering([
+            ['error' => 'You hit a provider rate limit. Details: []'],
+            ['error' => null, 'finish_reason' => 'Stop'],
+        ])->retryRateLimits(3, 60, function (EvalCase $case, int $seconds, int $retry) use (&$waits) {
+            $waits[] = [$seconds, $retry];
+        });
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertNull($result->error);
+        $this->assertSame('Stop', $result->finish_reason);
+        $this->assertSame(1, EvalResult::where('eval_run_id', $result->eval_run_id)->count(), 'Only the attempt that is kept is recorded.');
+        $this->assertSame([[60, 1]], $waits);
+        Sleep::assertSleptTimes(1);
+    }
+
+    public function test_a_case_still_rate_limited_after_the_last_retry_is_recorded_as_an_error(): void
+    {
+        Sleep::fake();
+        $runner = $this->runnerAnswering(array_fill(0, 3, ['error' => 'You hit a provider rate limit. Details: []']))
+            ->retryRateLimits(2, 60);
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertStringContainsString('rate limit', $result->error);
+        Sleep::assertSleptTimes(2);
+    }
+
+    public function test_an_error_that_is_not_a_rate_limit_is_not_retried(): void
+    {
+        Sleep::fake();
+        $runner = $this->runnerAnswering([['error' => 'Connection refused for URI https://example.test']]);
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertStringContainsString('Connection refused', $result->error);
+        Sleep::assertNeverSlept();
+    }
+
     public function test_an_unreplayable_case_is_recorded_as_an_error(): void
     {
         $case = $this->structuredOutputCase();
@@ -397,5 +443,36 @@ class EvalRunnerTest extends FeatureTestCase
                 ],
             ],
         ]);
+    }
+
+    /**
+     * A runner whose agent calls return these outcomes in turn, so retry
+     * behaviour can be tested without a provider that really rate limits.
+     *
+     * @param  array<int, array<string, mixed>>  $outcomes
+     */
+    private function runnerAnswering(array $outcomes): EvalRunner
+    {
+        return new class(app(StructuralGrader::class), app(AgreementGrader::class), $outcomes) extends EvalRunner
+        {
+            /**
+             * @param  array<int, array<string, mixed>>  $outcomes
+             */
+            public function __construct(StructuralGrader $structural, AgreementGrader $agreement, private array $outcomes)
+            {
+                parent::__construct($structural, $agreement);
+            }
+
+            protected function invokeAgent(EvalCase $case): array
+            {
+                return [
+                    'output' => null,
+                    'usage' => null,
+                    'finish_reason' => null,
+                    'tool_calls' => [],
+                    ...array_shift($this->outcomes),
+                ];
+            }
+        };
     }
 }

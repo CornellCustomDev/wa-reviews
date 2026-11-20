@@ -49,6 +49,7 @@ class EvalModel extends Command
         {--margins= : JSON of non-inferiority margins per metric. A candidate defaults to its baseline\'s margins; a new baseline to the agent\'s standard ones.}
         {--label= : Name for the run. Defaults to the model.}
         {--out= : Where to write the report. Defaults to storage/eval-report-<model>-<date>-<run>.md.}
+        {--rate-limit-wait=60 : Seconds to wait before retrying a call the provider rate limited, up to three times. 0 records the rate limit as an error instead.}
         {--dry-run : Show what would run without calling a model or writing anything.}';
 
     protected $description = 'Evaluate a candidate model against the production model on real past cases.';
@@ -433,6 +434,14 @@ class EvalModel extends Command
         $this->components->info("Replaying run {$run->getKey()} — {$run->label}");
 
         $stopLogging = $this->logHttpRequests($requestNumber);
+
+        $wait = max(0, (int) $this->option('rate-limit-wait'));
+
+        $runner->retryRateLimits($wait === 0 ? 0 : 3, $wait, function (EvalCase $case, int $seconds, int $retry, int $retries) use (&$requestNumber) {
+            $requestNumber = 0;
+
+            $this->line(sprintf('  case %d — rate limited; waiting %ds before retry %d of %d', $case->getKey(), $seconds, $retry, $retries));
+        });
 
         $failures = $runner->replay($run, $cases, function (EvalCase $case, EvalResult $result) use (&$requestNumber) {
             $requestNumber = 0;
