@@ -90,7 +90,14 @@ abstract class AbstractMultipartPart extends AbstractPart
 
     public function __serialize(): array
     {
-        return parent::__serialize() + ['boundary' => $this->boundary, 'parts' => $this->parts];
+        $data = parent::__serialize();
+
+        if (!method_exists($this, '__sleep')) {
+            $data['boundary'] = $this->boundary;
+            $data['parts'] = $this->parts;
+        }
+
+        return $data;
     }
 
     public function __unserialize(array $data): void

@@ -11,9 +11,6 @@
 
 namespace Symfony\Component\HttpKernel\Attribute;
 
-use Symfony\Component\ExpressionLanguage\Expression;
-use Symfony\Component\HttpFoundation\Request;
-
 /**
  * Describes the default HTTP cache headers on controllers.
  * Headers defined in the Cache attribute are ignored if they are already set
@@ -23,14 +20,9 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @author Fabien Potencier <fabien@symfony.com>
  */
-#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::TARGET_FUNCTION | \Attribute::IS_REPEATABLE)]
+#[\Attribute(\Attribute::TARGET_CLASS | \Attribute::TARGET_METHOD | \Attribute::TARGET_FUNCTION)]
 final class Cache
 {
-    /**
-     * @internal
-     */
-    public public(set) readonly array $variables;
-
     public function __construct(
         /**
          * The expiration date as a valid date for the strtotime() function.
@@ -74,28 +66,24 @@ final class Cache
         public array $vary = [],
 
         /**
-         * A value evaluated to compute the Last-Modified HTTP header.
+         * An expression to compute the Last-Modified HTTP header.
          *
-         * The value may be either an ExpressionLanguage expression or a Closure and
+         * The expression is evaluated by the ExpressionLanguage component, it
          * receives all the request attributes and the resolved controller arguments.
          *
-         * The result must be an instance of \DateTimeInterface.
-         *
-         * @var \DateTimeInterface|string|Expression|\Closure(array<string, mixed>, Request, ?object):\DateTimeInterface|null
+         * The result of the expression must be a DateTimeInterface.
          */
-        public \DateTimeInterface|string|Expression|\Closure|null $lastModified = null,
+        public ?string $lastModified = null,
 
         /**
-         * A value evaluated to compute the ETag HTTP header.
+         * An expression to compute the ETag HTTP header.
          *
-         * The value may be either an ExpressionLanguage expression or a Closure and
+         * The expression is evaluated by the ExpressionLanguage component, it
          * receives all the request attributes and the resolved controller arguments.
          *
          * The result must be a string that will be hashed.
-         *
-         * @var string|Expression|\Closure(array<string, mixed>, Request, ?object):string|null
          */
-        public string|Expression|\Closure|null $etag = null,
+        public ?string $etag = null,
 
         /**
          * max-stale Cache-Control header
@@ -126,18 +114,6 @@ final class Cache
          * @see https://datatracker.ietf.org/doc/html/rfc7234#section-5.2.2.3
          */
         public ?bool $noStore = null,
-
-        /**
-         * A value evaluated to determine whether the cache attribute should be applied.
-         *
-         * The value may be either an ExpressionLanguage expression or a Closure and
-         * receives all the request attributes and the resolved controller arguments.
-         *
-         * The result must be a boolean. If true the attribute is applied, if false it is ignored.
-         *
-         * @var bool|string|Expression|\Closure(array<string, mixed>, Request, ?object):bool
-         */
-        public bool|string|Expression|\Closure $if = true,
     ) {
     }
 }
