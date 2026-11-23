@@ -23,18 +23,22 @@ class LdapData
         public ?array $previousNetids,
         public ?array $previousEmplids,
         public array $ldapData = [],
-        public array $returnedData = []
+        public array $returnedData = [],
+        public ?array $academicColleges = null,
+        public string $domain = 'cornell.edu',
     ) {}
 
     /**
      * Create a new LdapData object from an array of LDAP data.
      *
      * See https://confluence.cornell.edu/display/IDM/Attributes
+     *
+     * @param  string  $domain  The domain of the directory the data came from, used for a fallback principalName
      */
-    public static function make(array $data): ?LdapData
+    public static function make(array $data, string $domain = 'cornell.edu'): ?LdapData
     {
         // Use preferred first name if it is not null, otherwise use givenName.
-        $firstName = ($data['cornelleduprefgivenname'] ?? null) ?: ($data['givenName'] ?? null);
+        $firstName = ($data['cornelleduprefgivenname'] ?? null) ?: ($data['givenname'] ?? null);
 
         // Use preferred last name if it is not null, otherwise use sn.
         $lastName = ($data['cornelleduprefsn'] ?? null) ?: ($data['sn'] ?? null);
@@ -56,6 +60,9 @@ class LdapData
         // Same for previousEmplids
         $previousEmplids = collect(explode(',', $data['cornelledupreviousemplids'] ?? ''))
             ->map(fn ($id) => trim($id))->filter()->all();
+
+        // Academic colleges can be a string, an array, or not set
+        $academicColleges = collect(($data['cornelleduacadcollege'] ?? null) ?: null)->toArray();
 
         // User may have exercised FERPA right to suppress name.
         if (empty($firstName) && empty($lastName)) {
@@ -84,7 +91,7 @@ class LdapData
         return new LdapData(
             uid: $data['uid'],
             principalName: $data['edupersonprincipalname']
-                ?? $data['uid'].'@cornell.edu',
+                ?? $data['uid'].'@'.$domain,
             emplid: $data['cornelleduemplid'] ?? '',
 
             firstName: $firstName,
@@ -106,6 +113,8 @@ class LdapData
             previousEmplids: $previousEmplids ?: null,
             ldapData: $ldapData,
             returnedData: $data,
+            academicColleges: $academicColleges ?: null,
+            domain: $domain,
         );
     }
 
@@ -126,11 +135,19 @@ class LdapData
     }
 
     /**
-     * Returns the primary email (netid@cornell.edu) if available, otherwise the alias email.
+     * Returns the primary email (netid@cornell.edu or cwid@med.cornell.edu).
      */
-    public function email(): string
+    public function primaryEmail(): string
     {
-        return $this->email ?: $this->principalName;
+        return $this->principalName;
+    }
+
+    /**
+     * Returns the mail attribute, which may be an alias of the primary email.
+     */
+    public function emailAlias(): ?string
+    {
+        return $this->email;
     }
 
     /**

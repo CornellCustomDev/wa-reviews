@@ -1,5 +1,7 @@
 <?php
 
+use CornellCustomDev\LaravelStarterKit\Ldap\LdapService;
+
 return [
     /*
     |----------------------------------------------------------------------
@@ -9,11 +11,8 @@ return [
     | The credentials used to connect to the LDAP server, which must be set
     | in the .env file.
     |
-    | Note that LDAP_USER must be a fully-qualified DN, so we append the
-    | default Cornell base DN for authorized users.
-    |
     */
-    'user' => env('LDAP_USER') ? env('LDAP_USER').',ou=Directory Administrators,o=Cornell University,c=US' : '',
+    'user' => env('LDAP_USER') ?? '',
     'pass' => env('LDAP_PASS') ?? '',
 
     /*
@@ -49,4 +48,27 @@ return [
     |
     */
     'debug' => env('LDAP_DEBUG', false),
+
+    /*
+    |----------------------------------------------------------------------
+    | Weill Cornell Medicine LDAP
+    |----------------------------------------------------------------------
+    |
+    | Settings for an LdapService that searches the Weill directory. The
+    | package does not bind this service; an application constructs it
+    | from these settings, for example as a singleton in its own service
+    | provider. See the README.
+    |
+    | WEILL_LDAP_USER is a fully-qualified bind DN.
+    |
+    */
+    'weill' => [
+        'user' => env('WEILL_LDAP_USER', ''),
+        'pass' => env('WEILL_LDAP_PASS', ''),
+        'server' => env('WEILL_LDAP_SERVER', ''),
+        'base_dn' => env('WEILL_LDAP_BASE_DN', 'ou=people,dc=weill,dc=cornell,dc=edu'),
+        'domain' => 'med.cornell.edu',
+        'id_attribute' => 'weillCornellEduCWID',
+        'attributes' => LdapService::WEILL_ATTRIBUTES,
+    ],
 ];

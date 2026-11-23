@@ -14,6 +14,17 @@ class LdapDataServiceProvider extends ServiceProvider
             path: __DIR__.'/../config/ldap.php',
             key: 'ldap',
         );
+
+        $this->app->singleton(
+            abstract: LdapService::class,
+            concrete: fn () => new LdapService(
+                server: config('ldap.server'),
+                user: config('ldap.user') ? 'uid='.config('ldap.user').',ou=Directory Administrators,o=Cornell University,c=US' : '',
+                pass: config('ldap.pass'),
+                baseDn: config('ldap.base_dn'),
+            ),
+        );
+        $this->app->alias(LdapService::class, 'ldap.cornell');
     }
 
     public function boot(): void

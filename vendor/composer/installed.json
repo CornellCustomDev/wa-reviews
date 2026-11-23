@@ -353,17 +353,17 @@
         },
         {
             "name": "cornell-custom-dev/laravel-ldap",
-            "version": "v1.0.0",
-            "version_normalized": "1.0.0.0",
+            "version": "v2.0.2",
+            "version_normalized": "2.0.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelLdap.git",
-                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37"
+                "reference": "49b3409289f8f7c2cea17d89380abf633403f38d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelLdap/zipball/a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
-                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelLdap/zipball/49b3409289f8f7c2cea17d89380abf633403f38d",
+                "reference": "49b3409289f8f7c2cea17d89380abf633403f38d",
                 "shasum": ""
             },
             "require": {
@@ -377,7 +377,7 @@
                 "php-mock/php-mock-phpunit": "^2.15",
                 "phpunit/phpunit": "^12.5"
             },
-            "time": "2026-05-19T17:36:31+00:00",
+            "time": "2026-11-03T17:40:30+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
@@ -424,7 +424,7 @@
             ],
             "description": "A Laravel package for connecting to Cornell LDAP resources",
             "support": {
-                "source": "https://github.com/CornellCustomDev/CD-LaravelLdap/tree/v1.0.0",
+                "source": "https://github.com/CornellCustomDev/CD-LaravelLdap/tree/v2.0.2",
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelLdap/issues"
             },
             "install-path": "../cornell-custom-dev/laravel-ldap"

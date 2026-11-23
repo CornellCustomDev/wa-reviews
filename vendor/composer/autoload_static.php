@@ -1402,6 +1402,7 @@ class ComposerStaticInit03db883e6dc7f16e3c3cdea8193c0edc
         'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataException' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-ldap/src/LdapDataException.php',
         'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-ldap/src/LdapDataServiceProvider.php',
         'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapSearch' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-ldap/src/LdapSearch.php',
+        'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapService' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-ldap/src/LdapService.php',
         'Cron\\AbstractField' => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron/AbstractField.php',
         'Cron\\CronExpression' => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron/CronExpression.php',
         'Cron\\DayOfMonthField' => __DIR__ . '/..' . '/dragonmantank/cron-expression/src/Cron/DayOfMonthField.php',

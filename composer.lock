@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4adaa6801b002a8f454ae56db31003b6",
+    "content-hash": "413fadf12853c41dd536003778496867",
     "packages": [
         {
             "name": "brick/math",
@@ -344,16 +344,16 @@
         },
         {
             "name": "cornell-custom-dev/laravel-ldap",
-            "version": "v1.0.0",
+            "version": "v2.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelLdap.git",
-                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37"
+                "reference": "49b3409289f8f7c2cea17d89380abf633403f38d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelLdap/zipball/a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
-                "reference": "a43c4bb8b1ad6b04eb67521de6e44624ebc9cf37",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelLdap/zipball/49b3409289f8f7c2cea17d89380abf633403f38d",
+                "reference": "49b3409289f8f7c2cea17d89380abf633403f38d",
                 "shasum": ""
             },
             "require": {
@@ -412,10 +412,10 @@
             ],
             "description": "A Laravel package for connecting to Cornell LDAP resources",
             "support": {
-                "source": "https://github.com/CornellCustomDev/CD-LaravelLdap/tree/v1.0.0",
+                "source": "https://github.com/CornellCustomDev/CD-LaravelLdap/tree/v2.0.2",
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelLdap/issues"
             },
-            "time": "2026-05-19T17:36:31+00:00"
+            "time": "2026-11-03T17:40:30+00:00"
         },
         {
             "name": "dflydev/dot-access-data",

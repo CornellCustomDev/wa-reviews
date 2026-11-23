@@ -587,6 +587,7 @@ return array(
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataException' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapDataException.php',
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapDataServiceProvider.php',
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapSearch' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapSearch.php',
+    'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapService' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapService.php',
     'Cron\\AbstractField' => $vendorDir . '/dragonmantank/cron-expression/src/Cron/AbstractField.php',
     'Cron\\CronExpression' => $vendorDir . '/dragonmantank/cron-expression/src/Cron/CronExpression.php',
     'Cron\\DayOfMonthField' => $vendorDir . '/dragonmantank/cron-expression/src/Cron/DayOfMonthField.php',
