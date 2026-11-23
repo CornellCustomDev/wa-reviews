@@ -5,6 +5,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/eval-report*.md
 #/vendor
 .env
 .env.backup
