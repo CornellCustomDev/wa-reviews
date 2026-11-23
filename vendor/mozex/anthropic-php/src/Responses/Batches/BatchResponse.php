@@ -14,7 +14,7 @@ use Anthropic\Testing\Responses\Concerns\Batches\Fakeable;
 /**
  * @implements ResponseContract<array{id: string, type: string, processing_status: string, request_counts: array{processing: int, succeeded: int, errored: int, canceled: int, expired: int}, created_at: string, expires_at: string, ended_at: ?string, cancel_initiated_at: ?string, archived_at: ?string, results_url: ?string}>
  */
-final class BatchResponse implements ResponseContract, ResponseHasMetaInformationContract
+class BatchResponse implements ResponseContract, ResponseHasMetaInformationContract
 {
     /**
      * @use ArrayAccessible<array{id: string, type: string, processing_status: string, request_counts: array{processing: int, succeeded: int, errored: int, canceled: int, expired: int}, created_at: string, expires_at: string, ended_at: ?string, cancel_initiated_at: ?string, archived_at: ?string, results_url: ?string}>
@@ -24,6 +24,9 @@ final class BatchResponse implements ResponseContract, ResponseHasMetaInformatio
     use Fakeable;
     use HasMetaInformation;
 
+    /**
+     * @param  array{id: string, type: string, processing_status: string, request_counts: array{processing: int, succeeded: int, errored: int, canceled: int, expired: int}, created_at: string, expires_at: string, ended_at: ?string, cancel_initiated_at: ?string, archived_at: ?string, results_url: ?string}  $attributes
+     */
     private function __construct(
         public readonly string $id,
         public readonly string $type,
@@ -36,6 +39,7 @@ final class BatchResponse implements ResponseContract, ResponseHasMetaInformatio
         public readonly ?string $archivedAt,
         public readonly ?string $resultsUrl,
         private readonly MetaInformation $meta,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -57,7 +61,17 @@ final class BatchResponse implements ResponseContract, ResponseHasMetaInformatio
             $attributes['archived_at'] ?? null,
             $attributes['results_url'] ?? null,
             $meta,
+            $attributes,
         );
+    }
+
+    /**
+     * Whether every request has finished: succeeded, errored, canceled or expired. A batch being canceled
+     * (`canceling`) hasn't ended yet.
+     */
+    public function isEnded(): bool
+    {
+        return $this->processingStatus === 'ended';
     }
 
     /**
@@ -65,7 +79,7 @@ final class BatchResponse implements ResponseContract, ResponseHasMetaInformatio
      */
     public function toArray(): array
     {
-        return [
+        return array_replace($this->attributes, [
             'id' => $this->id,
             'type' => $this->type,
             'processing_status' => $this->processingStatus,
@@ -76,6 +90,6 @@ final class BatchResponse implements ResponseContract, ResponseHasMetaInformatio
             'cancel_initiated_at' => $this->cancelInitiatedAt,
             'archived_at' => $this->archivedAt,
             'results_url' => $this->resultsUrl,
-        ];
+        ]);
     }
 }

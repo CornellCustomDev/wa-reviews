@@ -16,18 +16,22 @@ use Anthropic\Responses\Meta\MetaInformation;
  * - "canceled": no additional fields
  * - "expired": no additional fields
  */
-final class BatchResult
+class BatchResult
 {
+    /**
+     * @param  array{type: string, message?: array<string, mixed>, error?: array{type: string, message: string, request_id?: string|null}}  $attributes
+     */
     private function __construct(
         public readonly string $type,
         public readonly ?CreateResponse $message,
         public readonly ?BatchResultError $error,
+        protected readonly array $attributes,
     ) {}
 
     /**
      * Acts as static factory, and returns a new BatchResult instance.
      *
-     * @param  array{type: string, message?: array<string, mixed>, error?: array{type: string, request_id?: string, error: array{type: string, message: string}}}  $attributes
+     * @param  array{type: string, message?: array<string, mixed>, error?: array{type: string, request_id?: string|null, error: array{type: string, message: string}}|array{type: string, message: string, request_id?: string|null}}  $attributes
      */
     public static function from(array $attributes): self
     {
@@ -40,20 +44,27 @@ final class BatchResult
             $message = CreateResponse::from($messageData, MetaInformation::from([]));
         }
 
+        $payload = $attributes;
+
         if ($attributes['type'] === 'errored' && isset($attributes['error'])) {
-            $errorData = $attributes['error'];
-            $error = BatchResultError::from($errorData['error']);
+            $error = BatchResultError::from(self::flattenError($attributes['error']));
+
+            // kept once, flattened, in its place
+            $payload['error'] = $error->toArray();
+        } else {
+            unset($payload['error']);
         }
 
         return new self(
             $attributes['type'],
             $message,
             $error,
+            $payload,
         );
     }
 
     /**
-     * @return array{type: string, message?: array<string, mixed>, error?: array{type: string, message: string}}
+     * @return array{type: string, message?: array<string, mixed>, error?: array{type: string, message: string, request_id?: string|null}}
      */
     public function toArray(): array
     {
@@ -69,6 +80,26 @@ final class BatchResult
             $result['error'] = $this->error->toArray();
         }
 
-        return $result;
+        return array_replace($this->attributes, $result);
+    }
+
+    /**
+     * The API wraps an errored result's error (`{type: "error", error: {type, message}, request_id}`), while
+     * toArray() gives it flattened, with the wrapper's other keys (`request_id`) beside the type and message,
+     * so both build the same error. The wrapper's own `type` is always "error".
+     *
+     * @param  array{type: string, request_id?: string|null, error: array{type: string, message: string}}|array{type: string, message: string, request_id?: string|null}  $error
+     * @return array{type: string, message: string, request_id?: string|null}
+     */
+    protected static function flattenError(array $error): array
+    {
+        if (! isset($error['error'])) {
+            return $error;
+        }
+
+        $inner = $error['error'];
+        unset($error['type'], $error['error']);
+
+        return [...$inner, ...$error];
     }
 }

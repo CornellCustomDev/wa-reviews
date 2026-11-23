@@ -8,8 +8,12 @@ use Anthropic\Exceptions\ErrorException;
 use Anthropic\Exceptions\RateLimitException;
 use Anthropic\Exceptions\TransporterException;
 use Anthropic\Exceptions\UnserializableResponse;
+use Anthropic\Responses\Messages\CreateStreamedResponse;
+use Anthropic\Responses\Messages\StreamResponse;
+use Anthropic\ValueObjects\ClientSettings;
 use Anthropic\ValueObjects\Transporter\Payload;
 use Anthropic\ValueObjects\Transporter\Response;
+use Closure;
 use Psr\Http\Message\ResponseInterface;
 
 /**
@@ -34,6 +38,15 @@ interface TransporterContract
     public function requestContent(Payload $payload): string;
 
     /**
+     * Sends a request to any path, returning the status, the body (decoded when it's JSON) and the headers.
+     *
+     * @return Response<array<array-key, mixed>|string>
+     *
+     * @throws ErrorException|TransporterException|RateLimitException
+     */
+    public function requestRaw(Payload $payload): Response;
+
+    /**
      * Sends a stream request to a server.
      *
      * @throws ErrorException|RateLimitException
@@ -44,4 +57,24 @@ interface TransporterContract
      * Adds a custom header to the transporter.
      */
     public function addHeader(string $name, string $value): self;
+
+    /**
+     * What the transporter sends with every request: the base URI, the API version, the betas, the workspace, the
+     * retries and the timeouts the factory set, never a credential.
+     */
+    public function settings(): ClientSettings;
+
+    /**
+     * The factory's `withStreamCompletionHandler()`, which each Messages stream calls once it ends, fails or is dropped.
+     *
+     * @return (Closure(StreamResponse<CreateStreamedResponse>): void)|null
+     */
+    public function streamCompletionHandler(): ?Closure;
+
+    /**
+     * Returns a transporter whose requests also carry the given options, leaving this one unchanged.
+     *
+     * @param  array<array-key, mixed>  $options
+     */
+    public function withOptions(array $options): self;
 }

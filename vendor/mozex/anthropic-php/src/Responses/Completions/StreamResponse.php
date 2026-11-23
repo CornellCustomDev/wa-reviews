@@ -1,20 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Anthropic\Responses\Completions;
 
 use Anthropic\Contracts\ResponseStreamContract;
 use Anthropic\Exceptions\ErrorException;
+use Anthropic\Responses\Concerns\ReadsStreams;
 use Generator;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\StreamInterface;
 
 /**
  * @template TResponse
  *
  * @implements ResponseStreamContract<TResponse>
  */
-final class StreamResponse implements ResponseStreamContract
+class StreamResponse implements ResponseStreamContract
 {
+    use ReadsStreams;
+
     /**
      * Creates a new Stream Response instance.
      *
@@ -32,20 +36,18 @@ final class StreamResponse implements ResponseStreamContract
      */
     public function getIterator(): Generator
     {
-        while (! $this->response->getBody()->eof()) {
-            $line = $this->readLine($this->response->getBody());
-
-            if (! str_starts_with($line, 'data:')) {
-                continue;
-            }
-
-            $data = trim(substr($line, strlen('data:')));
-
-            /** @var array{type: string, error?: array{type: ?string, message: string|array<int, string>}} $response */
-            $response = json_decode($data, true, flags: JSON_THROW_ON_ERROR);
+        foreach ($this->readEvents($this->response->getBody()) as $data) {
+            /** @var array{type: string, error?: string|array{type: ?string, message: string|array<int, string>, details?: mixed}, request_id?: ?string} $response */
+            $response = json_decode(trim($data), true, flags: JSON_THROW_ON_ERROR);
 
             if (isset($response['error'])) {
-                throw new ErrorException($response['error'], $this->response);
+                $error = is_string($response['error']) ? ['message' => $response['error']] : $response['error'];
+
+                if (is_string($response['request_id'] ?? null)) {
+                    $error['request_id'] = $response['request_id'];
+                }
+
+                throw ErrorException::forType($error, $this->response);
             }
 
             if ($response['type'] !== 'completion') {
@@ -54,25 +56,5 @@ final class StreamResponse implements ResponseStreamContract
 
             yield $this->responseClass::from($response);
         }
-    }
-
-    /**
-     * Read a line from the stream.
-     */
-    private function readLine(StreamInterface $stream): string
-    {
-        $buffer = '';
-
-        while (! $stream->eof()) {
-            if ('' === ($byte = $stream->read(1))) {
-                return $buffer;
-            }
-            $buffer .= $byte;
-            if ($byte === "\n") {
-                break;
-            }
-        }
-
-        return $buffer;
     }
 }

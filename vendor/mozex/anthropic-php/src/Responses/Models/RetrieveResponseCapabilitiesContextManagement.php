@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Anthropic\Responses\Models;
 
-final class RetrieveResponseCapabilitiesContextManagement
+class RetrieveResponseCapabilitiesContextManagement
 {
     /**
      * @param  array<string, RetrieveResponseCapabilitySupport>  $strategies
+     * @param  array<string, bool|array{supported: bool}|null>  $attributes
      */
     private function __construct(
         public readonly bool $supported,
         public readonly array $strategies,
+        protected readonly array $attributes,
     ) {}
 
     /**
-     * @param  array<string, bool|array{supported: bool}>  $attributes
+     * @param  array<string, bool|array{supported: bool}|null>  $attributes
      */
     public static function from(array $attributes): self
     {
@@ -36,11 +38,12 @@ final class RetrieveResponseCapabilitiesContextManagement
         return new self(
             is_bool($supported) ? $supported : false,
             $strategies,
+            $attributes,
         );
     }
 
     /**
-     * @return array<string, bool|array{supported: bool}>
+     * @return array<string, bool|array{supported: bool}|null>
      */
     public function toArray(): array
     {
@@ -50,6 +53,6 @@ final class RetrieveResponseCapabilitiesContextManagement
             $result[$key] = $strategy->toArray();
         }
 
-        return $result;
+        return array_replace($this->attributes, $result);
     }
 }

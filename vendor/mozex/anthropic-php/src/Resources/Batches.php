@@ -11,10 +11,13 @@ use Anthropic\Responses\Batches\BatchResultResponse;
 use Anthropic\Responses\Batches\DeletedBatchResponse;
 use Anthropic\ValueObjects\Transporter\Payload;
 use Anthropic\ValueObjects\Transporter\Response;
+use Generator;
 
-final class Batches implements BatchesContract
+class Batches implements BatchesContract
 {
+    use Concerns\Paginates;
     use Concerns\Transportable;
+    use Concerns\WaitsForBatches;
 
     /**
      * Creates a Message Batch.
@@ -59,10 +62,22 @@ final class Batches implements BatchesContract
     {
         $payload = Payload::list('messages/batches', $parameters);
 
-        /** @var Response<array{data: array<int, array{id: string, type: string, processing_status: string, request_counts: array{processing: int, succeeded: int, errored: int, canceled: int, expired: int}, created_at: string, expires_at: string, ended_at: ?string, cancel_initiated_at: ?string, archived_at: ?string, results_url: ?string}>, first_id: string, last_id: string, has_more: bool}> $response */
+        /** @var Response<array{data: array<int, array{id: string, type: string, processing_status: string, request_counts: array{processing: int, succeeded: int, errored: int, canceled: int, expired: int}, created_at: string, expires_at: string, ended_at: ?string, cancel_initiated_at: ?string, archived_at: ?string, results_url: ?string}>, first_id?: string|null, last_id?: string|null, has_more: bool}> $response */
         $response = $this->transporter->requestObject($payload);
 
         return BatchListResponse::from($response->data(), $response->meta());
+    }
+
+    /**
+     * Lists every Message Batch, page by page: the client follows the cursor until the last page and yields one
+     * `BatchResponse` at a time. Nothing is requested until you loop over it.
+     *
+     * @param  array<string, mixed>  $parameters
+     * @return Generator<int, BatchResponse, mixed, void>
+     */
+    public function iterate(array $parameters = []): Generator
+    {
+        return $this->paginate($parameters, $this->list(...), fn (BatchListResponse $page): array => $page->data);
     }
 
     /**

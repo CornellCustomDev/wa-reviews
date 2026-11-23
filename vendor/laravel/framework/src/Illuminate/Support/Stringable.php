@@ -455,6 +455,26 @@ class Stringable implements JsonSerializable, ArrayAccess, BaseStringable
     }
 
     /**
+     * Determine if the given string is blank.
+     *
+     * @return bool
+     */
+    public function isBlank()
+    {
+        return blank($this->value);
+    }
+
+    /**
+     * Determine if the given string is not blank.
+     *
+     * @return bool
+     */
+    public function isNotBlank()
+    {
+        return ! $this->isBlank();
+    }
+
+    /**
      * Convert a string to kebab case.
      *
      * @return static
@@ -1168,7 +1188,7 @@ class Stringable implements JsonSerializable, ArrayAccess, BaseStringable
     /**
      * Execute the given callback if the string contains all array values.
      *
-     * @param  iterable<string>  $needles
+     * @param  array<string>  $needles
      * @param  callable  $callback
      * @param  callable|null  $default
      * @return static

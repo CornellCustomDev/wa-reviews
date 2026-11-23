@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Anthropic\Responses\Messages;
 
-final class CreateResponseContentCaller
+class CreateResponseContentCaller
 {
+    /**
+     * @param  array{type: string, tool_id?: string|null}  $attributes
+     */
     private function __construct(
         public readonly string $type,
         public readonly ?string $tool_id,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -19,11 +23,12 @@ final class CreateResponseContentCaller
         return new self(
             $attributes['type'],
             $attributes['tool_id'] ?? null,
+            $attributes,
         );
     }
 
     /**
-     * @return array{type: string, tool_id?: string}
+     * @return array{type: string, tool_id?: string|null}
      */
     public function toArray(): array
     {
@@ -35,6 +40,6 @@ final class CreateResponseContentCaller
             $result['tool_id'] = $this->tool_id;
         }
 
-        return $result;
+        return array_replace($this->attributes, $result);
     }
 }

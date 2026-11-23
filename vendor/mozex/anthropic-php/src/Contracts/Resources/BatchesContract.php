@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Anthropic\Contracts\Resources;
 
 use Anthropic\Responses\Batches\BatchListResponse;
 use Anthropic\Responses\Batches\BatchResponse;
 use Anthropic\Responses\Batches\BatchResultResponse;
 use Anthropic\Responses\Batches\DeletedBatchResponse;
+use Closure;
+use Generator;
 
 interface BatchesContract
 {
@@ -26,6 +30,14 @@ interface BatchesContract
     public function retrieve(string $id): BatchResponse;
 
     /**
+     * Retrieves a Message Batch every `$interval` seconds until it has ended, and returns it. With a `$timeout` in
+     * seconds, the last poll comes at the timeout, and the batch is returned as it was then: check `isEnded()`.
+     *
+     * @param  (Closure(int): void)|null  $sleep  sleeps the given seconds between polls; `sleep()` without it
+     */
+    public function wait(string $id, int $interval = 60, ?int $timeout = null, ?Closure $sleep = null): BatchResponse;
+
+    /**
      * Lists Message Batches.
      *
      * @see https://platform.claude.com/docs/en/api/messages/batches/list
@@ -33,6 +45,15 @@ interface BatchesContract
      * @param  array<string, mixed>  $parameters
      */
     public function list(array $parameters = []): BatchListResponse;
+
+    /**
+     * Lists every Message Batch, page by page: the client follows the cursor until the last page and yields one
+     * `BatchResponse` at a time. Nothing is requested until you loop over it.
+     *
+     * @param  array<string, mixed>  $parameters
+     * @return Generator<int, BatchResponse, mixed, void>
+     */
+    public function iterate(array $parameters = []): Generator;
 
     /**
      * Cancels a Message Batch.

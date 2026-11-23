@@ -1934,16 +1934,17 @@ function initFauxButton(el, isDisabled, action) {
 function getLocale() {
   return navigator?.language || document.documentElement.lang || "en-US";
 }
+function clearTemplate(template) {
+  let sibling = template?.nextElementSibling;
+  while (sibling && sibling.hasAttribute("data-appended")) {
+    let toRemove = sibling;
+    sibling = sibling.nextElementSibling;
+    toRemove.remove();
+  }
+}
 function renderTemplate(template, callback) {
   if (!template) return;
-  let cleanup = () => {
-    let sibling = template.nextElementSibling;
-    while (sibling && sibling.hasAttribute("data-appended")) {
-      let toRemove = sibling;
-      sibling = sibling.nextElementSibling;
-      toRemove.remove();
-    }
-  };
+  let cleanup = () => clearTemplate(template);
   cleanup();
   let hydrated = callback((slotsAndAttributes = { slots: {}, attrs: {} }) => {
     return hydrateTemplate(template, slotsAndAttributes);
@@ -1979,6 +1980,27 @@ function isSafari() {
 function isIOS() {
   return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 }
+var storage = {
+  get(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set(key, value3) {
+    try {
+      window.localStorage.setItem(key, value3);
+    } catch {
+    }
+  },
+  remove(key) {
+    try {
+      window.localStorage.removeItem(key);
+    } catch {
+    }
+  }
+};
 var Observable = class {
   constructor() {
     this.subscribers = [];
@@ -4150,8 +4172,8 @@ var Anchorable = class extends Mixin {
     });
     if (this.options().reference === null) return;
     if (this.options().position === null) return;
-    let [setPosition, cleanupDurablePositioning] = createDurablePositionSetter(this.el, { scrollY: this.options().scrollY });
-    let reposition = anchor(this.el, this.options().reference, setPosition, {
+    let [setStyles, cleanupDurableStyles] = createDurableStyleSetter(this.el);
+    let [reset, reposition] = anchor(this.el, this.options().reference, setStyles, {
       position: this.options().position,
       gap: this.options().gap,
       offset: this.options().offset,
@@ -4163,6 +4185,7 @@ var Anchorable = class extends Mixin {
     let cleanupAutoUpdate = () => {
     };
     this.reposition = (...args) => {
+      reset();
       if (this.options().auto) {
         cleanupAutoUpdate = autoUpdate(this.options().reference, this.el, reposition);
       } else {
@@ -4171,14 +4194,19 @@ var Anchorable = class extends Mixin {
     };
     this.cleanup = () => {
       cleanupAutoUpdate();
-      cleanupDurablePositioning();
+      cleanupDurableStyles();
     };
   }
 };
-function anchor(target, invoke, setPosition, { position, offset: offsetValue, gap, matchWidth, crossAxis, scrollY, onReferenceHidden }) {
-  let elMaxHeight = window.getComputedStyle(target).maxHeight;
-  elMaxHeight = elMaxHeight === "none" ? null : parseFloat(elMaxHeight);
-  return (event, forceX, forceY) => {
+function anchor(target, invoke, setStyles, { position, offset: offsetValue, gap, matchWidth, crossAxis, scrollY, onReferenceHidden }) {
+  let padding = 5;
+  let elMaxHeight;
+  let reset = () => {
+    setStyles({ maxHeight: "" });
+    elMaxHeight = window.getComputedStyle(target).maxHeight;
+    elMaxHeight = elMaxHeight === "none" ? null : parseFloat(elMaxHeight);
+  };
+  let reposition = (event, forceX, forceY) => {
     computePosition2(invoke, target, {
       strategy: useFixedStrategy ? "fixed" : "absolute",
       placement: compilePlacement(position, target),
@@ -4189,21 +4217,19 @@ function anchor(target, invoke, setPosition, { position, offset: offsetValue, ga
           mainAxis: Number(gap),
           alignmentAxis: Number(offsetValue)
         }),
-        flip2(),
-        shift2({ padding: 5, crossAxis }),
+        flip2({ padding }),
+        shift2({ padding, crossAxis }),
         size2({
-          padding: 5,
+          padding,
           apply({ rects, elements, availableHeight }) {
             if (matchWidth) {
-              Object.assign(elements.floating.style, {
-                width: `${rects.reference.width}px`
-              });
+              setStyles({ width: `${rects.reference.width}px` });
             }
             let maxHeight = elMaxHeight;
             if (maxHeight === null) {
               maxHeight = scrollY ? elements.floating.scrollHeight : elements.floating.offsetHeight;
             }
-            elements.floating.style.maxHeight = availableHeight > maxHeight ? "" : `${availableHeight}px`;
+            setStyles({ maxHeight: availableHeight > maxHeight ? "" : `${availableHeight}px` });
           }
         }),
         ...onReferenceHidden ? [hide2({ strategy: "referenceHidden" })] : []
@@ -4213,9 +4239,18 @@ function anchor(target, invoke, setPosition, { position, offset: offsetValue, ga
         onReferenceHidden();
         return;
       }
-      setPosition(forceX || x, forceY || y);
+      setStyles({
+        position: useFixedStrategy ? "fixed" : "absolute",
+        overflowY: scrollY ? "auto" : "hidden",
+        left: `${forceX || x}px`,
+        top: `${forceY || y}px`,
+        // This is required to reset the `popover` default styles, otherwise the dropdown appears in the middle of the screen...
+        right: "auto",
+        bottom: "auto"
+      });
     });
   };
+  return [reset, reposition];
 }
 function compilePlacement(anchor2, el) {
   let placement = anchor2.split(" ");
@@ -4229,31 +4264,18 @@ function compilePlacement(anchor2, el) {
   }
   return placement.join("-");
 }
-function createDurablePositionSetter(target, { scrollY = true }) {
-  let update = (x, y, width, height) => {
-    Object.assign(target.style, {
-      position: useFixedStrategy ? "fixed" : "absolute",
-      overflowY: scrollY ? "auto" : "hidden",
-      left: `${x}px`,
-      top: `${y}px`,
-      // This is required to reset the `popover` default styles, otherwise the dropdown appears in the middle of the screen...
-      right: "auto",
-      bottom: "auto",
-      width,
-      maxHeight: height
-    });
+function createDurableStyleSetter(target) {
+  let styles = {};
+  let observer = new MutationObserver(() => apply3());
+  let apply3 = () => {
+    observer.disconnect();
+    Object.assign(target.style, styles);
+    observer.observe(target, { attributeFilter: ["style"] });
   };
-  let lastX, lastY, lastWidth, lastHeight;
-  let observer = new MutationObserver(() => update(lastX, lastY, lastWidth, lastHeight));
   return [
-    (x, y) => {
-      lastX = x;
-      lastY = y;
-      lastWidth = target.style.width;
-      lastHeight = target.style.maxHeight;
-      observer.disconnect();
-      update(lastX, lastY, lastWidth, lastHeight);
-      observer.observe(target, { attributeFilter: ["style"] });
+    (newStyles) => {
+      Object.assign(styles, newStyles);
+      apply3();
     },
     () => {
       observer.disconnect();
@@ -6292,6 +6314,7 @@ var ObservableTrigger = class {
   static SELECTION = "selection";
   static ACTIVATION = "activation";
   static VIEW_CHANGE = "view-change";
+  static RESELECTION = "reselection";
 };
 var Selectable2 = class _Selectable {
   constructor(selection, config, observable) {
@@ -6303,7 +6326,7 @@ var Selectable2 = class _Selectable {
     let previousSelection = this.selection;
     this.selection = this.selection.select(value3, this.config);
     if (this.selection.shouldNotify(previousSelection)) this.observable.notify(ObservableTrigger.SELECTION);
-    else this.observable.notify(ObservableTrigger.ACTIVATION);
+    else this.observable.notify(ObservableTrigger.RESELECTION);
   }
   setValue(value3) {
     let previousSelection = this.selection;
@@ -6430,7 +6453,6 @@ var SingleSelection = class _SingleSelection extends Selection {
     return this._value;
   }
   select(value3) {
-    if (this._value === value3) return new NoneSelection();
     return new _SingleSelection(value3);
   }
   display(config) {
@@ -6551,10 +6573,10 @@ var UITimePickerTrigger = class extends UIElement {
         this._lastFocusedInput = null;
       }
     });
-    this.picker.observable.subscribe(ObservableTrigger.SELECTION, () => {
-      this.updateInputsFromSelectable(this.picker.selectable);
-    });
-    this.updateInputsFromSelectable(this.picker.selectable);
+    let sync = () => this.updateInputsFromSelectable(this.picker.selectable);
+    this.picker.observable.subscribe(ObservableTrigger.SELECTION, sync);
+    this.picker.observable.subscribe(ObservableTrigger.RESELECTION, sync);
+    sync();
   }
   focus() {
     if (this.hourInput) return this.hourInput.focus();
@@ -8137,6 +8159,7 @@ var ObservableTrigger2 = class {
   static SELECTION = 1;
   static ACTIVATION = 2;
   static VIEW_CHANGE = 3;
+  static RESELECTION = 4;
 };
 var Observable2 = class {
   constructor() {
@@ -8179,6 +8202,7 @@ var Selectable3 = class _Selectable {
     let previousSelection = this.selection;
     this.selection = this.selection.select(date, this.config);
     if (this.selection.shouldNotify(previousSelection)) this.observable.notify(ObservableTrigger2.SELECTION);
+    else if (this.selection.hasSelection()) this.observable.notify([ObservableTrigger2.ACTIVATION, ObservableTrigger2.RESELECTION]);
     else this.observable.notify(ObservableTrigger2.ACTIVATION);
   }
   activate(date) {
@@ -8272,6 +8296,9 @@ var DeferredSelectable = class {
     this._selection = this.selectable.selection;
     this.selectable.observable.subscribe(ObservableTrigger2.SELECTION, () => {
       this._blockSync() || this.sync();
+    });
+    this.selectable.observable.subscribe(ObservableTrigger2.RESELECTION, () => {
+      this._blockSync() || this.observable.notify(ObservableTrigger2.RESELECTION);
     });
     this._blockSync = () => {
     };
@@ -8369,7 +8396,6 @@ var SingleSelection2 = class _SingleSelection extends Selection2 {
     return true;
   }
   select(date) {
-    if (this._date.isSameDay(date)) return new NoneSelection2();
     return new _SingleSelection(date);
   }
   contains(date) {
@@ -9746,7 +9772,7 @@ var UIDatePickerTrigger = class extends UIControl {
         setAttribute2(this, "aria-labelledby", `${pickerLabelledBy} ${triggerLabelledBy}`);
       }
     });
-    this.picker.observable.subscribe(ObservableTrigger2.SELECTION, () => {
+    this.picker.observable.subscribe([ObservableTrigger2.SELECTION, ObservableTrigger2.RESELECTION], () => {
       this.updateInputsFromSelectable(this.picker.selectable);
     });
     this.updateInputsFromSelectable(this.picker.selectable);
@@ -10736,7 +10762,8 @@ var UIDatetimePicker = class extends UIControl {
     this._dialogable.setState(false);
   }
   trigger() {
-    return Array.from(this.querySelectorAll("button, ui-button")).find((el) => !el.closest("dialog")) || null;
+    let dialog = this.querySelector("dialog");
+    return Array.from(this.querySelectorAll("button, ui-button")).find((el) => !dialog?.contains(el)) || null;
   }
 };
 var UISelectedDatetime = class extends UIElement {
@@ -11844,7 +11871,7 @@ var UISidebar = class extends UIElement {
       }
     }
     if (this.config.persist && this.config.collapsible) {
-      this.state.collapsedDesktop = JSON.parse(localStorage.getItem("flux-sidebar-collapsed-desktop"));
+      this.state.collapsedDesktop = JSON.parse(storage.get("flux-sidebar-collapsed-desktop"));
     }
     this.removeAttribute("data-flux-sidebar-cloak");
     this.observable.subscribe(EVENTS.VIEWPORT_ENTER_DESKTOP, () => {
@@ -11869,19 +11896,28 @@ var UISidebar = class extends UIElement {
       this.state.collapsedDesktop = false;
       this.observable.notify(EVENTS.STATE_CHANGED);
     });
+    let mobileOpener = null;
     this.observable.subscribe(EVENTS.MOBILE_COLLAPSED, () => {
       this.state.collapsedMobile = true;
+      let opener = mobileOpener;
+      let hadFocus = this.contains(document.activeElement);
+      mobileOpener = null;
       this.observable.notify(EVENTS.STATE_CHANGED);
+      if (hadFocus && opener && !this.contains(opener)) {
+        opener.focus({ preventScroll: true });
+      }
     });
     this.observable.subscribe(EVENTS.MOBILE_EXPANDED, () => {
       this.state.collapsedMobile = false;
+      mobileOpener = document.activeElement;
       this.observable.notify(EVENTS.STATE_CHANGED);
     });
     this.observable.subscribe(EVENTS.STATE_CHANGED, () => {
       if (this.config.persist) {
-        localStorage.setItem("flux-sidebar-collapsed-desktop", JSON.stringify(this.state.collapsedDesktop));
+        storage.set("flux-sidebar-collapsed-desktop", JSON.stringify(this.state.collapsedDesktop));
       }
       this.updateDataAttributes(this);
+      this.config.collapsible && this.state.viewportMobile && this.state.collapsedMobile ? setAttribute2(this, "inert", "") : removeAndReleaseAttribute(this, "inert");
     });
     let viewportObserver = new ViewportResizeObserver(this.observable, this.config);
     this.onUnmount(() => viewportObserver.disconnect());
@@ -12331,7 +12367,7 @@ var UISlider = class extends UIElement {
   getValueFromX(x) {
     let min2 = this.config.min;
     let max2 = this.config.max;
-    let step = this.config.step;
+    let step2 = this.config.step;
     let trackRect = this.getBoundingClientRect();
     let thumbRect = this.thumbs[0].getBoundingClientRect();
     let trackPadding = thumbRect.width / 2;
@@ -12341,7 +12377,7 @@ var UISlider = class extends UIElement {
     let rescaled = clamp2(relativeX / trackWidth, 0, 1);
     rescaled = isRTL(this) ? 1 - rescaled : rescaled;
     let value3 = (max2 - min2) * rescaled + min2;
-    value3 = roundValueToStep(value3, step, min2);
+    value3 = roundValueToStep(value3, step2, min2);
     value3 = clamp2(value3, min2, max2);
     return value3;
   }
@@ -12371,8 +12407,8 @@ var UISlider = class extends UIElement {
     if (!this.hasAttribute("step")) {
       return 1;
     }
-    let step = parseFloat(this.getAttribute("step"));
-    return step <= 0 || isNaN(step) ? 1 : step;
+    let step2 = parseFloat(this.getAttribute("step"));
+    return step2 <= 0 || isNaN(step2) ? 1 : step2;
   }
   bigStep() {
     if (!this.hasAttribute("big-step")) {
@@ -12394,16 +12430,16 @@ var UISlider = class extends UIElement {
 function clamp2(value3, min2, max2) {
   return Math.min(Math.max(value3, min2), max2);
 }
-function roundValueToStep(value3, step, min2) {
+function roundValueToStep(value3, step2, min2) {
   let precision;
-  if (Math.abs(step) >= 1) {
-    precision = step.toString().split(".")[1]?.length || 0;
+  if (Math.abs(step2) >= 1) {
+    precision = step2.toString().split(".")[1]?.length || 0;
   } else {
-    let parts = step.toExponential().split("e-");
+    let parts = step2.toExponential().split("e-");
     let matissaDecimalPart = parts[0].split(".")[1];
     precision = (matissaDecimalPart ? matissaDecimalPart.length : 0) + parseInt(parts[1], 10);
   }
-  let nearest = Math.round((value3 - min2) / step) * step + min2;
+  let nearest = Math.round((value3 - min2) / step2) * step2 + min2;
   return Number(nearest.toFixed(precision));
 }
 element("slider", UISlider);
@@ -13179,8 +13215,8 @@ var UIColorPicker = class extends UIControl {
     });
     on(this.areaEl, "keydown", (event) => {
       if (this._disableable.isDisabled()) return;
-      let step = event.shiftKey ? 10 : 2;
-      let horizontalStep = isRTL(this) ? -step : step;
+      let step2 = event.shiftKey ? 10 : 2;
+      let horizontalStep = isRTL(this) ? -step2 : step2;
       let { s, v } = this.state.hsv;
       switch (event.key) {
         case "ArrowRight":
@@ -13190,10 +13226,10 @@ var UIColorPicker = class extends UIControl {
           s -= horizontalStep;
           break;
         case "ArrowUp":
-          v += step;
+          v += step2;
           break;
         case "ArrowDown":
-          v -= step;
+          v -= step2;
           break;
         case "Home":
           s = 0;
@@ -14208,17 +14244,23 @@ function generateChartObject(config) {
         }
         let segments = [];
         let currentSegment = [];
-        chart.data.forEach((datum) => {
+        let indexPoints = chart.dimensions.index.points;
+        chart.data.forEach((datum, i) => {
           if (!isDefined(datum[key])) {
             if (currentSegment.length) segments.push(currentSegment);
             currentSegment = [];
             return;
           }
-          let index = chart.dimensions.index.axis.scale(datum[chart.dimensions.index.key], { area: chart.dimensions.index.asArea }).center;
+          let index = indexPoints[i].center;
           let value3 = chart.dimensions.value.axis.scale(datum[key]).center;
           currentSegment.push({
             x: chart.horizontal ? value3 : index,
             y: chart.horizontal ? index : value3,
+            // A point's slot runs halfway to its neighbors, or to its own edge at either end...
+            slot: {
+              start: i === 0 ? indexPoints[i].start : (indexPoints[i - 1].center + index) / 2,
+              end: i === indexPoints.length - 1 ? indexPoints[i].end : (index + indexPoints[i + 1].center) / 2
+            },
             datum
           });
         });
@@ -14277,25 +14319,25 @@ function generateChartObject(config) {
               }];
             });
           },
+          segmentPath(segment, curve) {
+            if (curve === "step") return step(segment, chart.horizontal);
+            let points2 = segment.map((point) => [point.x, point.y]);
+            if (curve === "none") return noCurve(points2);
+            return smooth(points2, chart.horizontal ? "y" : "x");
+          },
           linePath(curve = "smooth") {
-            let createPath = {
-              smooth: (points2) => smooth(points2, chart.horizontal ? "y" : "x"),
-              none: noCurve
-            }[curve];
-            return this.segments.map((segment) => createPath(segment.map((point) => [point.x, point.y]))).filter(Boolean).join(" ");
+            return this.segments.map((segment) => this.segmentPath(segment, curve)).filter(Boolean).join(" ");
           },
           areaPath(curve = "smooth") {
-            let createPath = {
-              smooth: (points2) => smooth(points2, chart.horizontal ? "y" : "x"),
-              none: noCurve
-            }[curve];
             return this.segments.map((segment) => {
-              let linePath = createPath(segment.map((point) => [point.x, point.y]));
+              let linePath = this.segmentPath(segment, curve);
               if (!linePath) return "";
               let firstPoint = segment[0];
               let lastPoint = segment[segment.length - 1];
               let baseline = chart.dimensions.value.axis.scale(chart.dimensions.value.axis.domain[0]).center;
-              return chart.horizontal ? `${linePath} L${baseline},${lastPoint.y} L${baseline},${firstPoint.y} Z` : `${linePath} L${lastPoint.x},${baseline} L${firstPoint.x},${baseline} Z`;
+              let start = curve === "step" ? firstPoint.slot.start : chart.horizontal ? firstPoint.y : firstPoint.x;
+              let end = curve === "step" ? lastPoint.slot.end : chart.horizontal ? lastPoint.y : lastPoint.x;
+              return chart.horizontal ? `${linePath} L${baseline},${end} L${baseline},${start} Z` : `${linePath} L${end},${baseline} L${start},${baseline} Z`;
             }).filter(Boolean).join(" ");
           },
           points,
@@ -14882,8 +14924,8 @@ function generateTickValues(data, axis, domain) {
       );
     }
     if (tickValues.length > targetCount * 2) {
-      let step = Math.ceil(tickValues.length / targetCount);
-      tickValues = tickValues.filter((_, i) => i % step === 0);
+      let step2 = Math.ceil(tickValues.length / targetCount);
+      tickValues = tickValues.filter((_, i) => i % step2 === 0);
     }
   } else if (axis.type === "time") {
     let tickCount = axis.tickCount || data.length;
@@ -14895,8 +14937,8 @@ function generateTickValues(data, axis, domain) {
       tickValues.push(value3);
     });
     if (axis.tickCount && tickValues.length > axis.tickCount) {
-      const step = Math.ceil(tickValues.length / axis.tickCount);
-      tickValues = tickValues.filter((_, i) => i % step === 0);
+      const step2 = Math.ceil(tickValues.length / axis.tickCount);
+      tickValues = tickValues.filter((_, i) => i % step2 === 0);
     }
   }
   return tickValues;
@@ -14934,11 +14976,11 @@ function scaleCategorical(domain, range, values) {
       return void 0;
     }
     if (area) {
-      let step2 = (range[1] - range[0]) / (area ? count : count - 1);
-      let start = range[0] + index * step2;
-      let center = start + step2 / 2;
-      let end = start + step2;
-      return { start, center, end, width: step2 };
+      let step3 = (range[1] - range[0]) / (area ? count : count - 1);
+      let start = range[0] + index * step3;
+      let center = start + step3 / 2;
+      let end = start + step3;
+      return { start, center, end, width: step3 };
     }
     if (count === 1) {
       let point2 = range[0] + (range[1] - range[0]) / 2;
@@ -14949,8 +14991,8 @@ function scaleCategorical(domain, range, values) {
         width: 0
       };
     }
-    let step = (range[1] - range[0]) / (count - 1);
-    let point = range[0] + index * step;
+    let step2 = (range[1] - range[0]) / (count - 1);
+    let point = range[0] + index * step2;
     return {
       start: point,
       center: point,
@@ -15049,6 +15091,13 @@ function simpleCurve(points, smoothing = 0.05) {
 function noCurve(points) {
   return simpleCurve(points, 0);
 }
+function step(segment, horizontal) {
+  return segment.map((point, i) => {
+    let from = horizontal ? [point.x, point.slot.start] : [point.slot.start, point.y];
+    let to = horizontal ? [point.x, point.slot.end] : [point.slot.end, point.y];
+    return `${i === 0 ? "M" : "L"}${from} L${to}`;
+  }).join(" ");
+}
 function getBarPath(x, y, width, height, radius = null) {
   let topLeftRadius = radius?.topLeft ?? 0;
   let topRightRadius = radius?.topRight ?? 0;
@@ -15136,11 +15185,11 @@ function scaleTime(domain, range, values) {
     if (area) {
       let index = Math.floor(percent * count);
       index = Math.min(Math.max(0, index), count - 1);
-      let step = rangeDiff / count;
-      let start = range[0] + index * step;
-      let center = start + step / 2;
-      let end = start + step;
-      return { start, center, end, width: step };
+      let step2 = rangeDiff / count;
+      let start = range[0] + index * step2;
+      let center = start + step2 / 2;
+      let end = start + step2;
+      return { start, center, end, width: step2 };
     }
     let point = range[0] + percent * rangeDiff;
     return {
@@ -15480,8 +15529,10 @@ var UIChart = class extends UIElement {
     if (this._valueOnUnmount !== void 0 && this._valueOnUnmount !== this.getAttribute("value")) {
       this._data = this.hasAttribute("value") ? JSON.parse(this.getAttribute("value")) : [];
     }
-    this.querySelectorAll("[data-appended]").forEach((el) => el.remove());
     let svgTemplate = this.querySelector('template[name="svg"]');
+    clearTemplate(svgTemplate);
+    clearTemplate(this.querySelector('template[name="tooltip"]'));
+    clearTemplate(this.querySelector('template[name="summary"]'));
     let svg = hydrateTemplate(svgTemplate);
     svgTemplate.after(svg);
     this.init(svgTemplate, svg);
@@ -17240,6 +17291,7 @@ var UITabGroup = class _UITabGroup extends UIElement {
     for (let child of this.children) {
       if (child instanceof _UITabGroup) continue;
       if (child instanceof UITabs) continue;
+      if (!child.hasAttribute("name")) continue;
       callback(child, (forward) => {
         bailed = true;
         bailedReturn = forward;
@@ -17599,7 +17651,7 @@ document.addEventListener("alpine:init", () => {
   if (!applyAppearance) {
     applyAppearance = () => {
       window.Flux.appearance = null;
-      window.localStorage.removeItem("flux.appearance");
+      storage.remove("flux.appearance");
     };
   }
   let flux = Alpine.reactive({
@@ -17637,7 +17689,7 @@ document.addEventListener("alpine:init", () => {
         document.dispatchEvent(new CustomEvent("modal-close", { detail: {} }));
       } };
     },
-    appearance: window.localStorage.getItem("flux.appearance") || "system",
+    appearance: storage.get("flux.appearance") || "system",
     systemAppearanceChanged: 1,
     // A counter to trigger reactivity when the system appearance changes...
     get dark() {
@@ -17674,6 +17726,9 @@ document.addEventListener("alpine:init", () => {
     flux.systemAppearanceChanged++;
     applyAppearance(flux.appearance);
   });
+});
+document.addEventListener("alpine:init", () => {
+  let Alpine = window.Alpine;
   Alpine.data("fluxInputClearable", () => ({
     clear() {
       let input = this.$el.closest("[data-flux-input]").querySelector("input");

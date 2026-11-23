@@ -66,7 +66,7 @@ if ($variant === 'pills') {
     $iconVariant ??= 'outline';
 }
 
-if ($name) {
+if (isset($name)) {
     $attributes = $attributes->merge([
         'name' => $name,
         'wire:key' => $name,

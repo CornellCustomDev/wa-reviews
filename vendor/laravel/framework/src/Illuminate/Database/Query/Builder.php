@@ -551,7 +551,7 @@ class Builder implements BuilderContract
     public function from($table, $as = null)
     {
         if ($this->isQueryable($table)) {
-            return $this->fromSub($table, $as);
+            return $this->fromSub($table, $as ?? '');
         }
 
         $this->from = $as ? "{$table} as {$as}" : $table;
@@ -4370,9 +4370,12 @@ class Builder implements BuilderContract
         $this->applyBeforeQueryCallbacks();
 
         $values = (new Collection($values))->map(function ($value) {
+            if ($value instanceof Collection) {
+                $value = $value->all();
+            }
+
             if (! $value instanceof self && ! $value instanceof EloquentBuilder && ! $value instanceof Relation) {
                 return ['value' => $value, 'bindings' => match (true) {
-                    $value instanceof Collection => $value->all(),
                     $value instanceof UnitEnum => enum_value($value),
                     default => $value,
                 }];

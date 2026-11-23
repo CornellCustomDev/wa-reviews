@@ -14,24 +14,11 @@ trait Fakeable
     public static function fake(
         array $override = [],
         OverrideStrategy $strategy = OverrideStrategy::Merge,
-    ): static {
-        $class = str_replace('Anthropic\\Responses\\', 'Anthropic\\Testing\\Responses\\Fixtures\\', static::class).'Fixture';
+    ): self {
+        $class = str_replace('Anthropic\\Responses\\', 'Anthropic\\Testing\\Responses\\Fixtures\\', self::class).'Fixture';
 
-        return static::from(
-            self::buildAttributes($class::ATTRIBUTES, $override, $strategy),
+        return self::from(
+            $strategy->apply($class::ATTRIBUTES, $override),
         );
-    }
-
-    /**
-     * @param  array<string, mixed>  $original
-     * @param  array<string, mixed>  $override
-     * @return array<string, mixed>
-     */
-    private static function buildAttributes(array $original, array $override, OverrideStrategy $strategy = OverrideStrategy::Merge): array
-    {
-        return match ($strategy) {
-            OverrideStrategy::Replace => array_replace($original, $override),
-            OverrideStrategy::Merge => array_replace_recursive($original, $override),
-        };
     }
 }

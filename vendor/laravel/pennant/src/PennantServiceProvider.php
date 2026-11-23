@@ -4,6 +4,8 @@ namespace Laravel\Pennant;
 
 use Illuminate\Container\Container;
 use Illuminate\Foundation\Events\PublishingStubs;
+use Illuminate\Queue\Events\JobExceptionOccurred;
+use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Octane\Events\RequestReceived;
@@ -76,6 +78,8 @@ class PennantServiceProvider extends ServiceProvider
 
         $this->app['events']->listen([
             JobProcessed::class,
+            JobExceptionOccurred::class,
+            JobFailed::class,
         ], fn () => $this->app[FeatureManager::class]->flushCache());
 
         $this->app['events']->listen([
@@ -94,9 +98,7 @@ class PennantServiceProvider extends ServiceProvider
             __DIR__.'/../config/pennant.php' => config_path('pennant.php'),
         ], 'pennant-config');
 
-        $method = method_exists($this, 'publishesMigrations') ? 'publishesMigrations' : 'publishes';
-
-        $this->{$method}([
+        $this->publishesMigrations([
             __DIR__.'/../database/migrations' => $this->app->databasePath('migrations'),
         ], 'pennant-migrations');
     }

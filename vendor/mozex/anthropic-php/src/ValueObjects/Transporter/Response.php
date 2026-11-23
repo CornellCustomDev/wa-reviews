@@ -11,7 +11,7 @@ use Anthropic\Responses\Meta\MetaInformation;
  *
  * @internal
  */
-final class Response
+class Response
 {
     /**
      * Creates a new Response value object.
@@ -20,7 +20,8 @@ final class Response
      */
     private function __construct(
         private readonly array|string $data,
-        private readonly MetaInformation $meta
+        private readonly MetaInformation $meta,
+        private readonly int $status,
     ) {
         // ..
     }
@@ -32,11 +33,19 @@ final class Response
      * @param  array<array<string>>  $headers
      * @return Response<TData>
      */
-    public static function from(array|string $data, array $headers): self
+    public static function from(array|string $data, array $headers, int $status = 200): self
     {
         $meta = MetaInformation::from($headers);
 
-        return new self($data, $meta);
+        return new self($data, $meta, $status);
+    }
+
+    /**
+     * Returns the HTTP status code.
+     */
+    public function status(): int
+    {
+        return $this->status;
     }
 
     /**
