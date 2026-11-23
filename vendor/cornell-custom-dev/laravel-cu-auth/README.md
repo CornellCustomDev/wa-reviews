@@ -133,15 +133,19 @@ For `apache-shib`, IdP selection is configured in mod_shib instead; see the `ids
 
 ---
 
-### Local Testing (apache-shib)
-For local testing where mod_shib is not available, the `REMOTE_USER` environment variable can be set to simulate
-Shibboleth authentication. Note that `APP_ENV` must be set to "local" for this to work and the config cache must be cleared when `REMOTE_USER` is changed.
+### Local Testing
+For local testing without SSO, the `CU_AUTH_REMOTE_USER` environment variable can be set to simulate
+authentication as that NetID, with either `apache-shib` or `php-saml`. It is ignored when `APP_ENV` is "production",
+and the config cache must be cleared when it is changed.
 
 ```dotenv
 # File: .env
 APP_ENV=local
-REMOTE_USER=abc123
+CU_AUTH_REMOTE_USER=abc123
 ```
+
+`REMOTE_USER` also works, unless the web server sets `REMOTE_USER` itself: nginx and Caddy (for example, Laravel Herd
+or Valet) pass it to PHP as an empty value, which takes precedence over `.env`.
 
 ## Identity and Authorization
 

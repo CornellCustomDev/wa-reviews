@@ -82,6 +82,11 @@ class SamlIdentityManager implements IdentityManager
         /** @var RemoteIdentity|null $remoteIdentity */
         $remoteIdentity = session()->get('remoteIdentity');
 
+        // In non-production environments, the remote user override stands in for a SAML login.
+        if (empty($remoteIdentity) && $this->getRemoteUserOverride()) {
+            $remoteIdentity = $this->storeIdentity();
+        }
+
         return $remoteIdentity;
     }
 
@@ -323,6 +328,18 @@ class SamlIdentityManager implements IdentityManager
     {
         $idpEntityId = config('php-saml-toolkit.idp.entityId');
 
+        // A Cornell NetID identity for the remote user override, shaped like a SAML login.
+        if (empty($attributes) && $remoteUserOverride = $this->getRemoteUserOverride()) {
+            return RemoteIdentity::fromData(
+                idp: 'cit.cornell.edu',
+                uid: $remoteUserOverride,
+                data: ['REMOTE_USER' => $remoteUserOverride],
+                displayName: $remoteUserOverride,
+                eduPersonPrincipalName: $remoteUserOverride.'@cornell.edu',
+                mail: $remoteUserOverride.'@cornell.edu',
+            );
+        }
+
         if (empty($attributes)) {
             $samlSettings = config('php-saml-toolkit');
             if ($this->selectsIdp()) {
@@ -384,5 +401,13 @@ class SamlIdentityManager implements IdentityManager
         }
 
         return $mappedAttributes;
+    }
+
+    private function getRemoteUserOverride(): ?string
+    {
+        // If this is a local development environment, allow the local override.
+        return app()->isProduction()
+            ? null
+            : config('cu-auth.remote_user_override');
     }
 }

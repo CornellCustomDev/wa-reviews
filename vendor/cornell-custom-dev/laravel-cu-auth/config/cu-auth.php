@@ -38,12 +38,8 @@ return [
     | The default user variable is "REMOTE_USER", but this may differ depending
     | on how mod_shib is configured.
     |
-    | For local development without shibboleth, you can add
-    | REMOTE_USER=<netid> to your project .env file to log in as that user.
-    |
     */
     'apache_shib_user_variable' => env('APACHE_SHIB_USER_VARIABLE', 'REMOTE_USER'),
-    'remote_user_override' => env('REMOTE_USER'),
 
     /*
     |--------------------------------------------------------------------------
@@ -137,9 +133,15 @@ return [
     | Comma-separated list of users to allow in development environments.
     | APP_TESTERS_FIELD is the field on the user model to compare against.
     |
+    | For local development without SSO (apache-shib or php-saml), you can add
+    | CU_AUTH_REMOTE_USER=<netid> to your project .env file to log in as that
+    | user. It is ignored in production. REMOTE_USER=<netid> also works, unless
+    | the web server sets REMOTE_USER itself (nginx and Caddy pass it empty).
+    |
     */
     'app_testers' => env('APP_TESTERS', ''),
     'app_testers_field' => env('APP_TESTERS_FIELD', 'netid'),
+    'remote_user_override' => env('CU_AUTH_REMOTE_USER') ?: env('REMOTE_USER'),
 
     /*
     |--------------------------------------------------------------------------

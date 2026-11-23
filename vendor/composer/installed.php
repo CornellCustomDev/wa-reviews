@@ -3,7 +3,7 @@
         'name' => 'cornell-custom-dev/wa-reviews',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => 'b31ef1068e1bc31a7221669a72bd1f5794eaf9a7',
+        'reference' => 'fde235fe5a85f2bcf33c0cf388d70cbf2cbf6d6d',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -55,7 +55,7 @@
         'cornell-custom-dev/laravel-cu-auth' => array(
             'pretty_version' => 'dev-app-testers-login-redirect',
             'version' => 'dev-app-testers-login-redirect',
-            'reference' => '56f1191877afc0223aad0345d5e0d81ecfe36d6e',
+            'reference' => '7ff354a8fd001b30246e4a20ce32d60e66ee0cf7',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-cu-auth',
             'aliases' => array(),
@@ -73,7 +73,7 @@
         'cornell-custom-dev/wa-reviews' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => 'b31ef1068e1bc31a7221669a72bd1f5794eaf9a7',
+            'reference' => 'fde235fe5a85f2bcf33c0cf388d70cbf2cbf6d6d',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

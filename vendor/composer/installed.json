@@ -310,12 +310,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelCUAuth.git",
-                "reference": "56f1191877afc0223aad0345d5e0d81ecfe36d6e"
+                "reference": "7ff354a8fd001b30246e4a20ce32d60e66ee0cf7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/56f1191877afc0223aad0345d5e0d81ecfe36d6e",
-                "reference": "56f1191877afc0223aad0345d5e0d81ecfe36d6e",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/7ff354a8fd001b30246e4a20ce32d60e66ee0cf7",
+                "reference": "7ff354a8fd001b30246e4a20ce32d60e66ee0cf7",
                 "shasum": ""
             },
             "require": {
@@ -330,8 +330,8 @@
                 "orchestra/testbench": "^10.0|^11.0",
                 "phpunit/phpunit": "^11.5|^12.5"
             },
-            "time": "2026-11-23T17:10:14+00:00",
-            "published-time": "2026-11-23T17:20:39+00:00",
+            "time": "2026-11-23T21:01:32+00:00",
+            "published-time": "2026-11-23T21:06:18+00:00",
             "type": "library",
             "extra": {
                 "laravel": {
