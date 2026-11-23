@@ -53,9 +53,9 @@
             ),
         ),
         'cornell-custom-dev/laravel-cu-auth' => array(
-            'pretty_version' => 'v1.3.1',
-            'version' => '1.3.1.0',
-            'reference' => '86d2b68a43b5c8f206160b2c309ce0d05211b4bf',
+            'pretty_version' => 'dev-app-testers-login-redirect',
+            'version' => 'dev-app-testers-login-redirect',
+            'reference' => '56f1191877afc0223aad0345d5e0d81ecfe36d6e',
             'type' => 'library',
             'install_path' => __DIR__ . '/../cornell-custom-dev/laravel-cu-auth',
             'aliases' => array(),

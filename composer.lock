@@ -295,7 +295,7 @@
         },
         {
             "name": "cornell-custom-dev/laravel-cu-auth",
-            "version": "v1.3.1",
+            "version": "dev-app-testers-login-redirect",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelCUAuth.git",
@@ -303,8 +303,8 @@
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/86d2b68a43b5c8f206160b2c309ce0d05211b4bf",
-                "reference": "86d2b68a43b5c8f206160b2c309ce0d05211b4bf",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/56f1191877afc0223aad0345d5e0d81ecfe36d6e",
+                "reference": "56f1191877afc0223aad0345d5e0d81ecfe36d6e",
                 "shasum": ""
             },
             "require": {
@@ -338,7 +338,7 @@
             "description": "A Laravel package for authentication and identity management at Cornell University",
             "support": {
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/issues",
-                "source": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/tree/v1.3.1"
+                "source": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/tree/app-testers-login-redirect"
             },
             "time": "2026-09-11T17:47:58+00:00"
         },
@@ -11820,6 +11820,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "cornell-custom-dev/laravel-cu-auth": 20,
         "maestroerror/laragent": 20
     },
     "prefer-stable": true,

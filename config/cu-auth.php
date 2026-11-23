@@ -1,5 +1,7 @@
 <?php
 
+$is_production = env('APP_ENV') == 'production';
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -56,6 +58,76 @@ return [
     |
     */
     'cert-path' => storage_path(env('SAML_CERT_PATH', 'app/keys')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML IdP Metadata URLs
+    |--------------------------------------------------------------------------
+    |
+    | Metadata for the Cornell IdPs, used by `php artisan cu-auth:generate-keys`
+    | to retrieve IdP settings and certificates. Defaults to the production or
+    | test IdP based on APP_ENV.
+    |
+    */
+    'idp_metadata_urls' => [
+        'cornell' => env('SAML_METADATA_URL_CORNELL', $is_production
+            ? 'https://shibidp.cit.cornell.edu/idp/shibboleth'
+            : 'https://shibidp-test.cit.cornell.edu/idp/shibboleth'),
+        'weill' => env('SAML_METADATA_URL_WEILL', $is_production
+            ? 'https://login.weill.cornell.edu/idp/saml2/idp/metadata.php'
+            : 'https://login-test.weill.cornell.edu/idp/saml2/idp/metadata.php'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML IdP Selection Mode
+    |--------------------------------------------------------------------------
+    |
+    | How users get the IdP to log in with. Options are:
+    | - single: the one IdP in config/php-saml-toolkit.php
+    | - discovery: choose at a SAML discovery service (CIT idselect)
+    | - page: choose on this package's selection page (/sso/select)
+    |
+    */
+    'idp_selection_mode' => env('SAML_IDP_SELECTION', 'page'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML IdP Selection
+    |--------------------------------------------------------------------------
+    |
+    | Settings for each idp_selection_mode. 'idps' are the IdPs users can
+    | choose, keyed by 'idp_metadata_urls' above.
+    |
+    */
+    'idp_selection' => [
+        'discovery' => [
+            'idps' => ['cornell', 'weill'],
+
+            'url' => env('SAML_IDP_DISCOVERY_URL', $is_production
+                ? 'https://idselect.idm.cit.cornell.edu/idselect/select.html'
+                : 'https://idselect-test.idm.cit.cornell.edu/idselect/select.html'),
+        ],
+
+        'page' => [
+            'idps' => [
+                'cornell' => [
+                    'label' => 'Cornell NetID',
+                    'info_text' => 'More information about NetID',
+                    'info_url' => 'https://netid.cornell.edu/',
+                ],
+                'weill' => [
+                    'label' => 'Weill Cornell Medicine (CWID)',
+                    'info_text' => 'More information about WCM CWID',
+                    'info_url' => 'https://its.weill.cornell.edu/services/accounts-and-access/center-wide-id',
+                ],
+            ],
+
+            'heading' => env('SAML_IDP_SELECTION_HEADING', 'Select Your Cornell Login'),
+
+            'view' => env('SAML_IDP_SELECTION_VIEW', 'auth.select-login'),
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

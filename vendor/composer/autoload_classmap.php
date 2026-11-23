@@ -583,6 +583,8 @@ return array(
     'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\Concerns\\ChecksLocalLogin' => $vendorDir . '/cornell-custom-dev/laravel-cu-auth/src/Middleware/Concerns/ChecksLocalLogin.php',
     'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\ForceHttps' => $vendorDir . '/cornell-custom-dev/laravel-cu-auth/src/Middleware/ForceHttps.php',
     'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Middleware\\LivewireAuth' => $vendorDir . '/cornell-custom-dev/laravel-cu-auth/src/Middleware/LivewireAuth.php',
+    'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Saml\\IdpDiscovery' => $vendorDir . '/cornell-custom-dev/laravel-cu-auth/src/Saml/IdpDiscovery.php',
+    'CornellCustomDev\\LaravelStarterKit\\CUAuth\\View\\Components\\IdpSelection' => $vendorDir . '/cornell-custom-dev/laravel-cu-auth/src/View/Components/IdpSelection.php',
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapData' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapData.php',
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataException' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapDataException.php',
     'CornellCustomDev\\LaravelStarterKit\\Ldap\\LdapDataServiceProvider' => $vendorDir . '/cornell-custom-dev/laravel-ldap/src/LdapDataServiceProvider.php',

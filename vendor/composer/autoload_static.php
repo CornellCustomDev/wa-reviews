@@ -1375,6 +1375,8 @@ class ComposerStaticInit03db883e6dc7f16e3c3cdea8193c0edc
         'Composer\\Semver\\Comparator' => __DIR__ . '/..' . '/composer/semver/src/Comparator.php',
         'Composer\\Semver\\CompilingMatcher' => __DIR__ . '/..' . '/composer/semver/src/CompilingMatcher.php',
         'Composer\\Semver\\Constraint\\Bound' => __DIR__ . '/..' . '/composer/semver/src/Constraint/Bound.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\Saml\\IdpDiscovery' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-cu-auth/src/Saml/IdpDiscovery.php',
+        'CornellCustomDev\\LaravelStarterKit\\CUAuth\\View\\Components\\IdpSelection' => __DIR__ . '/..' . '/cornell-custom-dev/laravel-cu-auth/src/View/Components/IdpSelection.php',
         'Composer\\Semver\\Constraint\\Constraint' => __DIR__ . '/..' . '/composer/semver/src/Constraint/Constraint.php',
         'Composer\\Semver\\Constraint\\ConstraintInterface' => __DIR__ . '/..' . '/composer/semver/src/Constraint/ConstraintInterface.php',
         'Composer\\Semver\\Constraint\\MatchAllConstraint' => __DIR__ . '/..' . '/composer/semver/src/Constraint/MatchAllConstraint.php',
