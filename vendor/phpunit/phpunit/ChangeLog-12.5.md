@@ -2,6 +2,51 @@
 
 All notable changes of the PHPUnit 12.5 release series are documented in this file using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
+## [12.5.45] - 2026-11-19
+
+### Fixed
+
+* The baseline generated using `--generate-baseline` contains an issue once for each time it was triggered, for instance once for each data set of a test that uses a data provider, instead of once
+* A baseline is not applied to the issues that are triggered in a file that is not located in the directory of the baseline, or in a directory below it, for instance when the baseline is located in `build/baseline.xml` and the file in `src`
+* When `--log-junit php://stdout` is used, or `php://stdout` is configured for the JUnit XML logfile in the XML configuration file, and the test runner prints its regular output, the test runner ends with `An error occurred inside PHPUnit` after the JUnit XML was printed: the test results are not printed, code coverage reports and the baseline are not written, and the shell exit code is `255`
+* When `--log-junit php://stdout` is used together with `--stderr`, the JUnit XML is printed to the standard error stream
+
+## [12.5.44] - 2026-11-13
+
+### Fixed
+
+* When an order is configured on the command line, for instance using `--order-by random`, `defects` configured using the `executionOrder` attribute in the XML configuration file is still applied, and vice versa
+* `--fail-on-skipped` does not make the test runner exit with a shell exit code that indicates failure when a test class is skipped, for instance because its before-first-test method calls `markTestSkipped()`, although its tests are counted as skipped
+* `--stop-on-skipped` does not stop the test run when a test class is skipped, for instance because its before-first-test method calls `markTestSkipped()`
+* When PHPUnit is installed using Composer, code units in the `PHPUnit\` or `SebastianBergmann\` namespace that do not belong to PHPUnit or one of its dependencies are preloaded on startup, which leads to a fatal error when such a code unit depends on code that is not available
+* Code from `nikic/php-parser` and parts of the code from `phar-io/manifest` are not treated like code from PHPUnit's other dependencies, for instance stack frames from it are not filtered from stack traces
+
+## [12.5.43] - 2026-11-02
+
+### Changed
+
+* Issues whose message refers to an anonymous class could not be ignored using a baseline on PHP 8.6 (as of PHP 8.6, such messages contain the full name of the anonymous class: a NUL byte followed by the file, line, and a counter)
+* Make PHAR build reproducible across filesystems (files are now added to the PHAR sorted by their path instead of in the order in which the filesystem lists them)
+
+### Fixed
+
+* When `method()` is called for a method of a test double that cannot be configured, for instance because it does not exist, every subsequent invocation of a method of that test double fails with `Method name is not configured`
+* When a hook method of a test, for instance `setUp()`, marks the test as incomplete, the hook method is reported as failed
+* When an "after test" method, for instance `tearDown()`, marks a successful test as incomplete or skips it, the test is reported as failed
+* When a before-first-test method, for instance `setUpBeforeClass()`, calls `markTestIncomplete()`, each test of the test class is reported as failed instead of the test class being skipped as it is when `markTestSkipped()` is called
+* When an after-last-test method, for instance `tearDownAfterClass()`, calls `markTestIncomplete()` or `markTestSkipped()` after the tests of the test class have been run, this is reported as a failure, also for each test of the test class that is run in process isolation
+* A failed PHP assertion, made using `assert()`, in a hook method is reported as an error of that method instead of as a failure, and it is counted as an error instead of as a failure when that method is a before-first-test method or an after-last-test method
+* When an assertion fails in an "after test" method, for instance `tearDown()`, of a test that already failed, errored, or was marked as incomplete, a failure is reported in addition to the outcome of the test, so the test is counted more than once and `onNotSuccessfulTest()` is called with the failure from the "after test" method instead of the test's own
+* When a test fails because of an exception of a registered failure type, an error or a failure in an "after test" method, for instance `tearDown()`, is reported in addition to the test's failure, so the test is counted more than once
+* A test that fails because of an exception of a registered failure type is considered risky when it does not perform assertions or, when `requireCoverageMetadata="true"` is configured, when it does not define a code coverage target, unlike a test that fails because an assertion failed
+* The TestDox output does not show the failure of a before-first-test method or an after-last-test method, for instance an assertion failure in `setUpBeforeClass()`
+* Control characters and ANSI escape sequences in user-supplied strings are not made visible in the output of `--debug` and in the logfiles written by `--log-events-text` and `--log-events-verbose-text`
+* Groups configured for a test directory or test file using the `groups` attribute of `<directory>` or `<file>` in the XML configuration file are not assigned to PHPT tests, so `--group` and `--exclude-group` do not select them and `--list-groups` and `--list-tests-xml` report them as being in the `default` group or not at all
+
+### Removed
+
+* The library PHAR (`phpunit-library-X.Y.Z.phar`) is no longer built, it could not be loaded since PHPUnit 9.5.8
+
 ## [12.5.42] - 2026-10-27
 
 ### Fixed
@@ -372,6 +417,9 @@ All notable changes of the PHPUnit 12.5 release series are documented in this fi
 * [#6380](https://github.com/sebastianbergmann/phpunit/pull/6380): Allow `Throwable` in `expectExceptionObject()`
 * A PHPUnit notice is now emitted for test methods that create a mock object but do not configure an expectation for it
 
+[12.5.45]: https://github.com/sebastianbergmann/phpunit/compare/12.5.44...12.5.45
+[12.5.44]: https://github.com/sebastianbergmann/phpunit/compare/12.5.43...12.5.44
+[12.5.43]: https://github.com/sebastianbergmann/phpunit/compare/12.5.42...12.5.43
 [12.5.42]: https://github.com/sebastianbergmann/phpunit/compare/12.5.41...12.5.42
 [12.5.41]: https://github.com/sebastianbergmann/phpunit/compare/12.5.40...12.5.41
 [12.5.40]: https://github.com/sebastianbergmann/phpunit/compare/12.5.39...12.5.40

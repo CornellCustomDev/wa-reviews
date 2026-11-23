@@ -4,15 +4,50 @@ namespace Illuminate\Cache;
 
 use Illuminate\Cache\Events\CacheFlushed;
 use Illuminate\Cache\Events\CacheFlushing;
+use Illuminate\Cache\Events\RetrievingKey;
 use Illuminate\Redis\Connections\PhpRedisClusterConnection;
 use Illuminate\Redis\Connections\PhpRedisConnection;
 use Illuminate\Redis\Connections\PredisClusterConnection;
 use Illuminate\Redis\Connections\PredisConnection;
+use Illuminate\Support\Collection;
 
 use function Illuminate\Support\enum_value;
 
 class RedisTaggedCache extends TaggedCache
 {
+    /**
+     * Retrieve multiple items from the cache by key.
+     *
+     * Items not found in the cache will have a null value.
+     *
+     * @param  array  $keys
+     * @return array
+     */
+    public function many(array $keys)
+    {
+        $defaults = (new Collection($keys))
+            ->mapWithKeys(fn ($value, $key) => [is_string($key) ? $key : enum_value($value) => is_string($key) ? $value : null])
+            ->all();
+
+        $taggedKeys = [];
+
+        foreach (array_keys($defaults) as $key) {
+            $this->event(new RetrievingKey($this->getName(), $key));
+
+            $taggedKeys[$key] = $this->itemKey($key);
+        }
+
+        $values = $this->store->manyViaPipeline(array_values($taggedKeys));
+
+        $results = [];
+
+        foreach ($taggedKeys as $key => $taggedKey) {
+            $results[$key] = $this->handleManyResult($defaults, $key, $values[$taggedKey] ?? null);
+        }
+
+        return $results;
+    }
+
     /**
      * Store an item in the cache if the key does not exist.
      *
@@ -181,12 +216,6 @@ class RedisTaggedCache extends TaggedCache
 
         $cachePrefix = $redisPrefix.$this->store->getPrefix();
 
-        $cacheTags = [];
-
-        foreach ($this->tags->getNames() as $name) {
-            $cacheTags[] = $cachePrefix.$this->tags->tagId($name);
-        }
-
         $script = <<<'LUA'
             local prefix = table.remove(ARGV, 1)
 
@@ -202,17 +231,19 @@ class RedisTaggedCache extends TaggedCache
 
         $prefix = $this->store->getPrefix();
 
-        $entries = $this->tags->entries()
-            ->map(fn (string $key) => $prefix.$key)
-            ->chunk(1000);
+        foreach ($this->tags->getNames() as $name) {
+            $entries = (new RedisTagSet($this->store, [$name]))->entries()
+                ->map(fn (string $key) => $prefix.$key)
+                ->chunk(1000);
 
-        foreach ($entries as $keysToBeDeleted) {
-            $connection->eval(
-                $script,
-                count($keysToBeDeleted),
-                ...$keysToBeDeleted,
-                ...[str_replace('-', '%-', $cachePrefix), ...$cacheTags]
-            );
+            foreach ($entries as $keysToBeDeleted) {
+                $connection->eval(
+                    $script,
+                    count($keysToBeDeleted),
+                    ...$keysToBeDeleted,
+                    ...[str_replace('-', '%-', $cachePrefix), $cachePrefix.$this->tags->tagId($name)]
+                );
+            }
         }
 
         $this->event(new CacheFlushed($this->getName()));

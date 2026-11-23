@@ -160,11 +160,11 @@ if (isset($unavailable)) {
                     <thead>
                         <tr class="flex w-full">
                             <?php if ($weekNumbers): ?>
-                                <th scope="col" class="{{ $sizeClasses }} text-sm font-medium text-zinc-500 dark:text-zinc-300 flex items-center"><div class="w-full">#</div></th>
+                                <th scope="col" class="{{ $sizeClasses }} text-sm font-medium text-zinc-500 dark:text-zinc-300 flex items-center justify-center">#</th>
                             <?php endif; ?>
 
                             <template name="weekday">
-                                <th scope="col" class="{{ $sizeClasses }} text-sm font-medium text-zinc-500 dark:text-zinc-300 flex items-center"><div class="w-full"><slot></slot></div></th>
+                                <th scope="col" class="{{ $sizeClasses }} text-sm font-medium text-zinc-500 dark:text-zinc-300 flex items-center justify-center"><slot></slot></th>
                             </template>
                         </tr>
                     </thead>

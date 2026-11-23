@@ -14,7 +14,7 @@ use Anthropic\Testing\Responses\Concerns\Files\Fakeable;
 /**
  * @implements ResponseContract<array{id: string, type: string, filename: string, mime_type: string, size_bytes: int, created_at: string, downloadable?: bool, scope?: array{id: string, type: string}}>
  */
-final class FileResponse implements ResponseContract, ResponseHasMetaInformationContract
+class FileResponse implements ResponseContract, ResponseHasMetaInformationContract
 {
     /**
      * @use ArrayAccessible<array{id: string, type: string, filename: string, mime_type: string, size_bytes: int, created_at: string, downloadable?: bool, scope?: array{id: string, type: string}}>
@@ -24,6 +24,9 @@ final class FileResponse implements ResponseContract, ResponseHasMetaInformation
     use Fakeable;
     use HasMetaInformation;
 
+    /**
+     * @param  array{id: string, type: string, filename: string, mime_type: string, size_bytes: int, created_at: string, downloadable?: bool, scope?: array{id: string, type: string}}  $attributes
+     */
     private function __construct(
         public readonly string $id,
         public readonly string $type,
@@ -34,6 +37,7 @@ final class FileResponse implements ResponseContract, ResponseHasMetaInformation
         public readonly ?bool $downloadable,
         public readonly ?FileResponseScope $scope,
         private readonly MetaInformation $meta,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -53,6 +57,7 @@ final class FileResponse implements ResponseContract, ResponseHasMetaInformation
             $attributes['downloadable'] ?? null,
             isset($attributes['scope']) ? FileResponseScope::from($attributes['scope']) : null,
             $meta,
+            $attributes,
         );
     }
 
@@ -78,6 +83,6 @@ final class FileResponse implements ResponseContract, ResponseHasMetaInformation
             $result['scope'] = $this->scope->toArray();
         }
 
-        return $result;
+        return array_replace($this->attributes, $result);
     }
 }

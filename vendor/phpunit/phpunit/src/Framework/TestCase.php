@@ -632,16 +632,39 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
                     // @codeCoverageIgnoreEnd
                 }
             }
-        } catch (AssertionError|AssertionFailedError $e) {
-            $this->status = TestStatus::failure($e->getMessage());
+        } catch (IncompleteTest $markedIncompleteDuringTearDown) {
+            if (!isset($e) && !isset($_e)) {
+                $this->status = TestStatus::incomplete($markedIncompleteDuringTearDown->getMessage());
+                $e            = $markedIncompleteDuringTearDown;
 
-            $emitter->testFailed(
-                $this->valueObjectForEvents(),
-                Event\Code\ThrowableBuilder::from($e),
-                Event\Code\ComparisonFailureBuilder::from($e),
-            );
+                $emitter->testMarkedAsIncomplete(
+                    $this->valueObjectForEvents(),
+                    Event\Code\ThrowableBuilder::from($markedIncompleteDuringTearDown),
+                );
+            }
+        } catch (SkippedTest $skippedDuringTearDown) {
+            if (!isset($e) && !isset($_e)) {
+                $this->status = TestStatus::skipped($skippedDuringTearDown->getMessage());
+                $e            = $skippedDuringTearDown;
+
+                $emitter->testSkipped(
+                    $this->valueObjectForEvents(),
+                    $skippedDuringTearDown->getMessage(),
+                );
+            }
+        } catch (AssertionError|AssertionFailedError $assertionFailedDuringTearDown) {
+            if (!isset($_e) && (!isset($e) || $e instanceof SkippedWithMessageException)) {
+                $this->status = TestStatus::failure($assertionFailedDuringTearDown->getMessage());
+                $e            = $assertionFailedDuringTearDown;
+
+                $emitter->testFailed(
+                    $this->valueObjectForEvents(),
+                    Event\Code\ThrowableBuilder::from($assertionFailedDuringTearDown),
+                    Event\Code\ComparisonFailureBuilder::from($assertionFailedDuringTearDown),
+                );
+            }
         } catch (Throwable $exceptionRaisedDuringTearDown) {
-            if (!isset($e) || $e instanceof SkippedWithMessageException) {
+            if (!isset($_e) && (!isset($e) || $e instanceof SkippedWithMessageException)) {
                 $this->status = TestStatus::error($exceptionRaisedDuringTearDown->getMessage());
                 $e            = $exceptionRaisedDuringTearDown;
 
@@ -1189,9 +1212,12 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $mock = (new MockGenerator)->testDouble(
             $type,
             true,
-            callOriginalConstructor: false,
-            callOriginalClone: false,
-            returnValueGeneration: self::generateReturnValuesForTestDoubles(),
+            [],
+            [],
+            '',
+            false,
+            false,
+            self::generateReturnValuesForTestDoubles(),
         );
 
         assert($mock instanceof $type);
@@ -1214,7 +1240,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $mock = (new MockGenerator)->testDoubleForInterfaceIntersection(
             $interfaces,
             true,
-            returnValueGeneration: self::generateReturnValuesForTestDoubles(),
+            self::generateReturnValuesForTestDoubles(),
         );
 
         assert($mock instanceof MockObject);
@@ -2188,7 +2214,20 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
      */
     private function invokeAfterClassHookMethods(array $hookMethods): void
     {
-        $this->invokeHookMethodsWithoutEmittingEvents($hookMethods['afterClass']);
+        foreach ($hookMethods['afterClass']->methodNamesSortedByPriority() as $methodName) {
+            if ($this->methodDoesNotExistOrIsDeclaredInTestCase($methodName)) {
+                continue;
+            }
+
+            try {
+                /** @phpstan-ignore method.dynamicName */
+                $this->{$methodName}();
+            } catch (IncompleteTest|SkippedTest) {
+                // an after-last-test method cannot mark the test as incomplete
+                // or skip it, just as it cannot when it is called for the test
+                // class in the process that runs the test suite
+            }
+        }
     }
 
     /**
@@ -2230,8 +2269,8 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
             $methodsInvoked[] = $methodInvoked;
 
             if (isset($t)) {
-                if (!$t instanceof SkippedTest) {
-                    if ($t instanceof AssertionFailedError) {
+                if (!$t instanceof IncompleteTest && !$t instanceof SkippedTest) {
+                    if ($t instanceof AssertionError || $t instanceof AssertionFailedError) {
                         $method = $failedMethod;
                     } else {
                         $method = $erroredMethod;
@@ -2577,9 +2616,12 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $stub = (new MockGenerator)->testDouble(
             $type,
             false,
-            callOriginalConstructor: false,
-            callOriginalClone: false,
-            returnValueGeneration: self::generateReturnValuesForTestDoubles(),
+            [],
+            [],
+            '',
+            false,
+            false,
+            self::generateReturnValuesForTestDoubles(),
         );
 
         Event\Facade::emitter()->testCreatedStub($type);
@@ -2600,7 +2642,7 @@ abstract class TestCase extends Assert implements Reorderable, SelfDescribing, T
         $stub = (new MockGenerator)->testDoubleForInterfaceIntersection(
             $interfaces,
             false,
-            returnValueGeneration: self::generateReturnValuesForTestDoubles(),
+            self::generateReturnValuesForTestDoubles(),
         );
 
         Event\Facade::emitter()->testCreatedStubForIntersectionOfInterfaces($interfaces);

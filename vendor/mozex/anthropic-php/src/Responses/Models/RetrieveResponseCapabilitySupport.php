@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Anthropic\Responses\Models;
 
-final class RetrieveResponseCapabilitySupport
+class RetrieveResponseCapabilitySupport
 {
+    /**
+     * @param  array{supported: bool}  $attributes
+     */
     private function __construct(
         public readonly bool $supported,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -17,6 +21,7 @@ final class RetrieveResponseCapabilitySupport
     {
         return new self(
             $attributes['supported'],
+            $attributes,
         );
     }
 
@@ -25,8 +30,8 @@ final class RetrieveResponseCapabilitySupport
      */
     public function toArray(): array
     {
-        return [
+        return array_replace($this->attributes, [
             'supported' => $this->supported,
-        ];
+        ]);
     }
 }

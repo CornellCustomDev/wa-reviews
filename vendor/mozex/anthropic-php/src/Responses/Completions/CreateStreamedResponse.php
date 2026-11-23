@@ -11,7 +11,7 @@ use Anthropic\Testing\Responses\Concerns\Completions\FakeableForStreamedResponse
 /**
  * @implements ResponseContract<array{type: string, id: string, completion: string, stop_reason: string|null, model: string, stop: string|null, log_id: string}>
  */
-final class CreateStreamedResponse implements ResponseContract
+class CreateStreamedResponse implements ResponseContract
 {
     /**
      * @use ArrayAccessible<array{type: string, id: string, completion: string, stop_reason: string|null, model: string, stop: string|null, log_id: string}>
@@ -20,6 +20,9 @@ final class CreateStreamedResponse implements ResponseContract
 
     use FakeableForStreamedResponse;
 
+    /**
+     * @param  array{type: string, id: string, completion: string, stop_reason: string|null, model: string, stop: string|null, log_id: string}  $attributes
+     */
     private function __construct(
         public readonly string $type,
         public readonly string $id,
@@ -28,6 +31,7 @@ final class CreateStreamedResponse implements ResponseContract
         public readonly string $model,
         public readonly ?string $stop,
         public readonly string $log_id,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -45,6 +49,7 @@ final class CreateStreamedResponse implements ResponseContract
             $attributes['model'],
             $attributes['stop'],
             $attributes['log_id'],
+            $attributes,
         );
     }
 
@@ -53,7 +58,7 @@ final class CreateStreamedResponse implements ResponseContract
      */
     public function toArray(): array
     {
-        return [
+        return array_replace($this->attributes, [
             'type' => $this->type,
             'id' => $this->id,
             'completion' => $this->completion,
@@ -61,6 +66,6 @@ final class CreateStreamedResponse implements ResponseContract
             'model' => $this->model,
             'stop' => $this->stop,
             'log_id' => $this->log_id,
-        ];
+        ]);
     }
 }

@@ -15,7 +15,7 @@ $classes = Flux::classes()
     ->add('[&[hidden=until-found]]:absolute [&[hidden=until-found]]:opacity-0 [&[hidden=until-found]]:pointer-events-none')
 ;
 
-if ($name) {
+if (isset($name)) {
     $attributes = $attributes->merge([
         'name' => $name,
         'wire:key' => $name,

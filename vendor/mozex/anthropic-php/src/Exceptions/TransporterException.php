@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Anthropic\Exceptions;
 
+use Anthropic\Testing\Exceptions\Concerns\FakeableTransportFailure;
 use Exception;
 use Psr\Http\Client\ClientExceptionInterface;
 
-final class TransporterException extends Exception
+class TransporterException extends Exception
 {
+    use FakeableTransportFailure;
+
     /**
      * Creates a new Exception instance.
      */

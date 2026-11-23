@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Anthropic\Responses\Messages;
 
-final class CreateResponseDiagnosticsCacheMissReason
+class CreateResponseDiagnosticsCacheMissReason
 {
+    /**
+     * @param  array{type: string, cache_missed_input_tokens?: int|null}  $attributes
+     */
     private function __construct(
         public readonly string $type,
         public readonly ?int $cache_missed_input_tokens,
+        protected readonly array $attributes,
     ) {}
 
     /**
@@ -19,11 +23,12 @@ final class CreateResponseDiagnosticsCacheMissReason
         return new self(
             $attributes['type'],
             $attributes['cache_missed_input_tokens'] ?? null,
+            $attributes,
         );
     }
 
     /**
-     * @return array{type: string, cache_missed_input_tokens?: int}
+     * @return array{type: string, cache_missed_input_tokens?: int|null}
      */
     public function toArray(): array
     {
@@ -35,6 +40,6 @@ final class CreateResponseDiagnosticsCacheMissReason
             $result['cache_missed_input_tokens'] = $this->cache_missed_input_tokens;
         }
 
-        return $result;
+        return array_replace($this->attributes, $result);
     }
 }

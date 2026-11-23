@@ -193,6 +193,10 @@ class WorkCommand extends Command
         });
 
         $this->laravel['events']->listen(JobProcessed::class, function ($event) {
+            if ($event->job->hasFailed()) {
+                return;
+            }
+
             $this->writeOutput($event->job, 'success');
         });
 
@@ -346,18 +350,21 @@ class WorkCommand extends Command
         $runTime = $this->runTimeForHumans($this->latestStartedAt);
         $memory = $isVerbose ? round(memory_get_usage(true) / 1024 / 1024, 1).'MB' : '';
 
+        [$result, $color] = match (true) {
+            $status === 'success' && $job->isReleased() => ['RELEASED', 'yellow'],
+            $status === 'success' => ['DONE', 'green'],
+            $status === 'released_after_exception' => ['FAIL', 'yellow'],
+            default => ['FAIL', 'red'],
+        };
+
         $dots = max(terminal()->width() - mb_strlen($job->resolveName()) - (
             $isVerbose ? mb_strlen($job->getJobId()) + mb_strlen($job->getConnectionName()) + mb_strlen($job->getQueue()) + mb_strlen($memory) + 3 : 0
-        ) - mb_strlen($runTime) - 31, 0);
+        ) - mb_strlen($runTime) - mb_strlen($result) - 27, 0);
 
         $this->output->write(' '.str_repeat('<fg=gray>.</>', $dots));
         $this->output->write(" <fg=gray>{$runTime}".($memory ? " {$memory}" : '').'</>');
 
-        $this->output->writeln(match ($status) {
-            'success' => ' <fg=green;options=bold>DONE</>',
-            'released_after_exception' => ' <fg=yellow;options=bold>FAIL</>',
-            default => ' <fg=red;options=bold>FAIL</>',
-        });
+        $this->output->writeln(" <fg={$color};options=bold>{$result}</>");
     }
 
     /**

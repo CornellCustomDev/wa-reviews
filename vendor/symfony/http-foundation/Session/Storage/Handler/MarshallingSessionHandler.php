@@ -44,10 +44,7 @@ class MarshallingSessionHandler implements \SessionHandlerInterface, \SessionUpd
         return $this->handler->close();
     }
 
-    /**
-     * @return string
-     */
-    public function create_sid()
+    public function create_sid(): string
     {
         return session_create_id() ?: throw new \RuntimeException('Unable to create a session ID.');
     }
@@ -78,6 +75,11 @@ class MarshallingSessionHandler implements \SessionHandlerInterface, \SessionUpd
 
     public function write(#[\SensitiveParameter] string $sessionId, string $data): bool
     {
+        // empty data must reach the inner handler unchanged so that it destroys the session
+        if ('' === $data || (\function_exists('igbinary_serialize') && igbinary_serialize([]) === $data)) {
+            return $this->handler->write($sessionId, $data);
+        }
+
         $failed = [];
         $marshalledData = $this->marshaller->marshall(['data' => $data], $failed);
 
