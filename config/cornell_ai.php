@@ -92,7 +92,7 @@ return [
     */
     'profiles' => [
         ChatProfile::Reasoning->value => [
-            'model' => env('AI_MODEL_REASONING', 'openai.o4-mini'),
+            'model' => env('AI_MODEL_REASONING', 'gpt-5.6-terra'),
         ],
         ChatProfile::Chat->value => [
             'model' => env('AI_MODEL_CHAT', 'openai.gpt-5.4-mini'),
@@ -121,13 +121,16 @@ return [
     |
     */
     'api_models' => [
-        // Legacy
-        'openai.gpt-4o-mini',    // $0.165
-        'openai.gpt-4.1-mini',   // $0.40
-        'openai.o4-mini',        // $1.10
+        // Deprecated
+        // 'openai.gpt-4o-mini',    // $0.165
+        // 'openai.gpt-4.1-mini',   // $0.40
+        // 'openai.o4-mini',        // $1.10
         // Available
         'openai.gpt-5.4-nano',   // $0.20
         'openai.gpt-5.4-mini',   // $0.75
+        'gpt-5.6-luna',          // $0.20
+        'gpt-5.6-terra',         // $2.00
+        'gpt-5.6-sol',           // $5.00
         'gpt-6-luna',            // $0.10 [2x if more than 272K tokens]
         'gpt-6.1-sol',           // $2.00 [2x if more than 272K tokens]
         'gemini-3.8-flash',      // $0.75 [on 50% of until Dec 31, 2026]
