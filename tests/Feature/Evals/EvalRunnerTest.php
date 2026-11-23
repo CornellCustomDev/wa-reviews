@@ -15,8 +15,11 @@ use App\Models\Issue;
 use App\Models\Scope;
 use App\Models\User;
 use App\Services\Evals\EvalRunner;
+use App\Services\Evals\Graders\AgreementGrader;
+use App\Services\Evals\Graders\StructuralGrader;
 use App\Services\Evals\ReplayScratchPadTool;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Sleep;
 use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Testing\StructuredResponseFake;
@@ -35,7 +38,9 @@ class EvalRunnerTest extends FeatureTestCase
     public function test_it_replays_a_structured_output_case_and_scores_it(): void
     {
         Prism::fake([
-            $this->structuredFake()->withUsage(new Usage(1200, 340)),
+            // Prism's structured handler reports cached input separately from
+            // `promptTokens`, so 200 uncached + 1000 cached is 1200 sent.
+            $this->structuredFake()->withUsage(new Usage(200, 340, cacheReadInputTokens: 1000)),
         ]);
 
         $case = $this->structuredOutputCase();
@@ -45,7 +50,8 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertNull($result->error);
         $this->assertSame('Stop', $result->finish_reason);
-        $this->assertSame(1200, $result->usage['promptTokens']);
+        $this->assertSame(1200, $result->usage['promptTokens'], 'Cached input is still input.');
+        $this->assertSame(1000, $result->usage['cachedPromptTokens']);
         $this->assertSame(340, $result->usage['completionTokens']);
         $this->assertGreaterThan(0, $result->latency_ms, 'Latency is a new signal history does not carry.');
         $this->assertSame([$this->guidelineId], $result->output['guideline_ids']);
@@ -60,7 +66,7 @@ class EvalRunnerTest extends FeatureTestCase
         // Agreement grading runs inline too; this case's reference is prose, so
         // it is recorded as unscoreable rather than left ungraded.
         $this->assertFalse($result->score('agreement_scored'));
-        $this->assertSame('reference not parseable', $result->scores['agreement_skipped']);
+        $this->assertSame('reference is prose', $result->scores['agreement_skipped']);
     }
 
     public function test_it_leaves_no_database_residue(): void
@@ -91,7 +97,7 @@ class EvalRunnerTest extends FeatureTestCase
                     TextStepFake::make()->withText('Guideline 9001 fails.'),
                 ]))
                 ->withFinishReason(FinishReason::Stop)
-                ->withUsage(new Usage(98000, 900))
+                ->withUsage(new Usage(98000, 900, cacheReadInputTokens: 60000))
                 ->withMeta(new Meta('fake', 'fake')),
             $this->structuredFake(),
         ]);
@@ -109,6 +115,7 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertTrue($result->score('structured_transform_ok'));
         $this->assertTrue($result->score('schema_valid'));
+        $this->assertSame(98000, $result->usage['promptTokens'], 'The stream already counts cached input; it must not be added twice.');
         $this->assertSame(1, $result->score('tool_call_count'));
         $this->assertFalse($result->score('max_steps_hit'));
         $this->assertSame($histories, ChatHistory::count(), 'Both the recommender and the nested transform writes are discarded.');
@@ -209,6 +216,49 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertFalse($result->score('schema_valid'));
     }
 
+    public function test_a_rate_limited_case_is_replayed_after_a_wait_instead_of_recorded_as_an_error(): void
+    {
+        Sleep::fake();
+        $waits = [];
+        $runner = $this->runnerAnswering([
+            ['error' => 'You hit a provider rate limit. Details: []'],
+            ['error' => null, 'finish_reason' => 'Stop'],
+        ])->retryRateLimits(3, 60, function (EvalCase $case, int $seconds, int $retry) use (&$waits) {
+            $waits[] = [$seconds, $retry];
+        });
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertNull($result->error);
+        $this->assertSame('Stop', $result->finish_reason);
+        $this->assertSame(1, EvalResult::where('eval_run_id', $result->eval_run_id)->count(), 'Only the attempt that is kept is recorded.');
+        $this->assertSame([[60, 1]], $waits);
+        Sleep::assertSleptTimes(1);
+    }
+
+    public function test_a_case_still_rate_limited_after_the_last_retry_is_recorded_as_an_error(): void
+    {
+        Sleep::fake();
+        $runner = $this->runnerAnswering(array_fill(0, 3, ['error' => 'You hit a provider rate limit. Details: []']))
+            ->retryRateLimits(2, 60);
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertStringContainsString('rate limit', $result->error);
+        Sleep::assertSleptTimes(2);
+    }
+
+    public function test_an_error_that_is_not_a_rate_limit_is_not_retried(): void
+    {
+        Sleep::fake();
+        $runner = $this->runnerAnswering([['error' => 'Connection refused for URI https://example.test']]);
+
+        $result = $runner->runCase($this->evalRun(), $this->structuredOutputCase());
+
+        $this->assertStringContainsString('Connection refused', $result->error);
+        Sleep::assertNeverSlept();
+    }
+
     public function test_an_unreplayable_case_is_recorded_as_an_error(): void
     {
         $case = $this->structuredOutputCase();
@@ -219,6 +269,7 @@ class EvalRunnerTest extends FeatureTestCase
 
         $this->assertStringContainsString('no input data', $result->error);
         $this->assertFalse($result->score('completed'));
+        $this->assertNull($result->score('schema_valid'), 'A call that never came back is a reliability failure, not a schema one.');
         $this->assertSame($results + 1, EvalResult::count(), 'A failure is still a result, not a lost case.');
     }
 
@@ -235,6 +286,23 @@ class EvalRunnerTest extends FeatureTestCase
         $this->assertSame('test-provider', config('cornell_ai.prism_provider'));
         $this->assertSame('candidate-chat', config('cornell_ai.profiles.'.ChatProfile::Chat->value.'.model'));
         $this->assertSame('candidate-task', config('cornell_ai.profiles.'.ChatProfile::Task->value.'.model'));
+    }
+
+    public function test_it_applies_a_runs_reasoning_effort_and_clears_one_it_does_not_name(): void
+    {
+        $effortKey = 'cornell_ai.profiles.'.ChatProfile::Chat->value.'.reasoning_effort';
+        $runner = app(EvalRunner::class);
+
+        $runner->applyModels([
+            'profiles' => [ChatProfile::Chat->value => 'candidate-chat'],
+            'reasoning_effort' => [ChatProfile::Chat->value => 'low'],
+        ]);
+
+        $this->assertSame('low', config($effortKey));
+
+        $runner->applyModels(['profiles' => [ChatProfile::Chat->value => 'baseline-chat']]);
+
+        $this->assertNull(config($effortKey), 'A run that names no effort must not inherit one from the environment.');
     }
 
     public function test_replay_answers_every_case_once_per_repeat_and_completes_the_run(): void
@@ -375,5 +443,36 @@ class EvalRunnerTest extends FeatureTestCase
                 ],
             ],
         ]);
+    }
+
+    /**
+     * A runner whose agent calls return these outcomes in turn, so retry
+     * behaviour can be tested without a provider that really rate limits.
+     *
+     * @param  array<int, array<string, mixed>>  $outcomes
+     */
+    private function runnerAnswering(array $outcomes): EvalRunner
+    {
+        return new class(app(StructuralGrader::class), app(AgreementGrader::class), $outcomes) extends EvalRunner
+        {
+            /**
+             * @param  array<int, array<string, mixed>>  $outcomes
+             */
+            public function __construct(StructuralGrader $structural, AgreementGrader $agreement, private array $outcomes)
+            {
+                parent::__construct($structural, $agreement);
+            }
+
+            protected function invokeAgent(EvalCase $case): array
+            {
+                return [
+                    'output' => null,
+                    'usage' => null,
+                    'finish_reason' => null,
+                    'tool_calls' => [],
+                    ...array_shift($this->outcomes),
+                ];
+            }
+        };
     }
 }

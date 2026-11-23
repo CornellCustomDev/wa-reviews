@@ -122,6 +122,88 @@ class RecommendationParser
         return array_values(array_unique($candidates));
     }
 
+    /** A `number` value naming several guidelines, such as "33 and 34" or "35, 36". */
+    private const string COMBINED_NUMBER = '/^\d+(?:\s*(?:,|;|\/|&|\band\b)\s*\d+)+$/i';
+
+    /**
+     * Every `number` value in the text that names several guidelines at once.
+     * Production cannot store one (`isValidGuidelineId()` rejects it), so each
+     * is a guideline the recommender found that a reviewer may never see.
+     *
+     * @return array<int, string>
+     */
+    public static function combinedNumbers(?string $text): array
+    {
+        return array_values(array_filter(
+            self::scrapeNumbers($text),
+            fn (string $number) => preg_match(self::COMBINED_NUMBER, $number) === 1
+        ));
+    }
+
+    /**
+     * Split each guideline whose `number` names several guidelines into one
+     * entry per guideline, sharing the other fields. This is what a faithful
+     * transformation of such an entry looks like, so it is applied to a
+     * reference and never to a model's answer.
+     *
+     * @param  array<int, array<string, mixed>|object>  $guidelines
+     * @return array<int, array<string, mixed>|object>
+     */
+    public static function splitCombinedGuidelines(array $guidelines): array
+    {
+        $split = [];
+
+        foreach ($guidelines as $guideline) {
+            $number = ((array) $guideline)['number'] ?? null;
+
+            if (! is_string($number) || preg_match(self::COMBINED_NUMBER, trim($number)) !== 1) {
+                $split[] = $guideline;
+
+                continue;
+            }
+
+            preg_match_all('/\d+/', $number, $matches);
+
+            foreach (array_unique($matches[0]) as $digits) {
+                $copy = [...(array) $guideline, 'number' => (int) $digits];
+                $split[] = is_object($guideline) ? (object) $copy : $copy;
+            }
+        }
+
+        return $split;
+    }
+
+    /**
+     * The guidelines in JSON that was cut off, in the order they appear: each
+     * `"number"` with the `"assessment"` that follows it, if the cut came later.
+     * Fields are written in schema order, so an assessment always belongs to
+     * the number before it.
+     *
+     * @return array<int, array{number: string, assessment: string|null}>
+     */
+    public static function scrapeGuidelines(?string $text): array
+    {
+        if ($text === null) {
+            return [];
+        }
+
+        preg_match_all('/"(number|assessment)"\s*:\s*(?:"([^"]*)"|(\d+)(?=\s*[,}\n]))/', $text, $matches, PREG_SET_ORDER);
+
+        $guidelines = [];
+
+        foreach ($matches as $match) {
+            $value = trim(($match[3] ?? '') !== '' ? $match[3] : $match[2]);
+
+            if ($match[1] === 'number') {
+                $guidelines[] = ['number' => $value, 'assessment' => null];
+            } elseif ($guidelines !== []) {
+                $guidelines[array_key_last($guidelines)]['assessment'] = $value;
+            }
+        }
+
+        return $guidelines;
+    }
+
     /**
      * @return array<int, string>
      */
@@ -131,9 +213,11 @@ class RecommendationParser
             return [];
         }
 
-        preg_match_all('/"number"\s*:\s*"?([\d,\s]+?)"?\s*[,}\n]/', $text, $matches);
+        // Any complete value counts, so a malformed number such as `"33 and 34"`
+        // is still seen; a value cut off before it ends is not.
+        preg_match_all('/"number"\s*:\s*(?:"([^"]*)"|(\d+)(?=\s*[,}\n]))/', $text, $matches, PREG_SET_ORDER);
 
-        return array_map('trim', $matches[1] ?? []);
+        return array_map(fn (array $match) => trim(($match[2] ?? '') !== '' ? $match[2] : $match[1]), $matches);
     }
 
     /**

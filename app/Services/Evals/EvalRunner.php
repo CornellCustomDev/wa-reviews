@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Sleep;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Prism\Prism\Contracts\Schema;
@@ -45,10 +46,49 @@ class EvalRunner
     use PrismAction;
     use PrismSchema;
 
+    private int $rateLimitRetries = 3;
+
+    private int $rateLimitWaitSeconds = 60;
+
+    /** @var (Closure(EvalCase, int, int, int): void)|null */
+    private ?Closure $onRateLimitWait = null;
+
     public function __construct(
         private readonly StructuralGrader $structural,
         private readonly AgreementGrader $agreement,
     ) {}
+
+    /**
+     * How a replay answers a provider rate limit: wait, then ask again.
+     *
+     * A rate limit says the run is asking too fast, not that the model answered
+     * badly, and once one is hit every call after it fails the same way. So the
+     * case is replayed after a pause rather than recorded as an error, and only
+     * the attempt that is kept counts towards latency. A case still limited
+     * after the last retry is recorded as the error it is.
+     *
+     * @param  (Closure(EvalCase, int, int, int): void)|null  $onWait  Told the case, the seconds about to be waited, the retry number and the retry limit.
+     */
+    public function retryRateLimits(int $retries, int $waitSeconds, ?Closure $onWait = null): static
+    {
+        $this->rateLimitRetries = max(0, $retries);
+        $this->rateLimitWaitSeconds = max(0, $waitSeconds);
+        $this->onRateLimitWait = $onWait;
+
+        return $this;
+    }
+
+    /**
+     * The stream path reports a rate limit as the text of an error step and
+     * the structured path throws, so the one thing both share is the message
+     * `PrismRateLimitedException` carries.
+     *
+     * @param  array<string, mixed>  $outcome
+     */
+    private function rateLimited(array $outcome): bool
+    {
+        return str_contains(strtolower((string) ($outcome['error'] ?? '')), 'rate limit');
+    }
 
     /**
      * Replay every case in a run, `$run->repeats` times each, and mark the run
@@ -113,18 +153,30 @@ class EvalRunner
     {
         $this->applyModels($run->models ?? []);
 
-        $start = microtime(true);
+        for ($attempt = 0; ; $attempt++) {
+            $start = microtime(true);
 
-        try {
-            $outcome = $this->isolate($case, fn () => $this->invokeAgent($case));
-        } catch (Throwable $e) {
-            $outcome = [
-                'output' => null,
-                'usage' => null,
-                'finish_reason' => null,
-                'tool_calls' => [],
-                'error' => Str::limit(get_class($e).': '.$e->getMessage(), 2000),
-            ];
+            try {
+                $outcome = $this->isolate($case, fn () => $this->invokeAgent($case));
+            } catch (Throwable $e) {
+                $outcome = [
+                    'output' => null,
+                    'usage' => null,
+                    'finish_reason' => null,
+                    'tool_calls' => [],
+                    'error' => Str::limit(get_class($e).': '.$e->getMessage(), 2000),
+                ];
+            }
+
+            if ($attempt >= $this->rateLimitRetries || ! $this->rateLimited($outcome)) {
+                break;
+            }
+
+            if ($this->onRateLimitWait) {
+                ($this->onRateLimitWait)($case, $this->rateLimitWaitSeconds, $attempt + 1, $this->rateLimitRetries);
+            }
+
+            Sleep::for($this->rateLimitWaitSeconds)->seconds();
         }
 
         $result = EvalResult::create([
@@ -156,8 +208,11 @@ class EvalRunner
     /**
      * Point the chat profiles at this run's models.
      *
-     * Both agents read `config('cornell_ai.profiles')` inside their
-     * constructors, so overriding config is the whole of the model swap.
+     * Both agents read `config('cornell_ai.profiles')` and the profile's
+     * reasoning effort inside their constructors, so overriding config is the
+     * whole of the model swap. A run that names no effort clears any the
+     * environment configures, so the effort is always part of what the run
+     * recorded.
      *
      * @param  array<string, mixed>  $models
      */
@@ -169,6 +224,7 @@ class EvalRunner
 
         foreach ($models['profiles'] ?? [] as $profile => $model) {
             config()->set("cornell_ai.profiles.$profile.model", $model);
+            config()->set("cornell_ai.profiles.$profile.reasoning_effort", $models['reasoning_effort'][$profile] ?? null);
         }
     }
 
@@ -201,7 +257,7 @@ class EvalRunner
     /**
      * @return array<string, mixed>
      */
-    private function invokeAgent(EvalCase $case): array
+    protected function invokeAgent(EvalCase $case): array
     {
         $agent = Agents::tryFrom($case->agent?->name ?? '');
 
@@ -244,7 +300,7 @@ class EvalRunner
                 'container_issues' => $decoded['container_issues'],
                 'guideline_ids' => $this->guidelineIds($decoded['payload'], $response->text),
             ],
-            'usage' => $this->usageArray($response->usage),
+            'usage' => $this->usageArray($response->usage, promptExcludesCache: true),
             'finish_reason' => $response->finishReason?->name,
             'tool_calls' => [],
             'error' => null,
@@ -447,17 +503,26 @@ class EvalRunner
     }
 
     /**
-     * @return array<string, int|null>|null
+     * Token usage with `promptTokens` always the full input, cached or not.
+     *
+     * Prism's OpenAI text and structured handlers subtract cached tokens from
+     * `promptTokens`, while its stream handler does not. Left alone, an OpenAI
+     * model replaying a case it has just seen reports a fraction of its input,
+     * and a provider that reports no cache looks dearer by comparison.
+     *
+     * @return array{promptTokens: int, completionTokens: int, cachedPromptTokens: int|null, reasoningTokens: int|null}|null
      */
-    private function usageArray(?Usage $usage): ?array
+    private function usageArray(?Usage $usage, bool $promptExcludesCache = false): ?array
     {
         if (! $usage) {
             return null;
         }
 
         return [
-            'promptTokens' => $usage->promptTokens,
+            'promptTokens' => $usage->promptTokens + ($promptExcludesCache ? (int) $usage->cacheReadInputTokens : 0),
             'completionTokens' => $usage->completionTokens,
+            'cachedPromptTokens' => $usage->cacheReadInputTokens,
+            'reasoningTokens' => $usage->thoughtTokens,
         ];
     }
 }

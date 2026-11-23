@@ -38,6 +38,10 @@ class MetricCatalog
         'precision_lenient' => MetricDirection::HigherBetter,
         'recall_lenient' => MetricDirection::HigherBetter,
 
+        // Recommender output production cannot store: an entry such as
+        // "33 and 34" is not a valid guideline id.
+        'combined_number_count' => MetricDirection::LowerBetter,
+
         // Cost and speed.
         'latency_ms' => MetricDirection::LowerBetter,
         'prompt_tokens' => MetricDirection::LowerBetter,

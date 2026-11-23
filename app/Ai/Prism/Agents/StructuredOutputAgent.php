@@ -51,7 +51,9 @@ You are a structured output agent. Your task is to format the data the user prov
 
 The data may already be in the format you need, or it may require some transformation.
 
-If the data requires transformation, stay as true to the original data as possible while adhering to the schema provided.
+If the data requires transformation, stay as true to the original data as possible while adhering to the schema provided. Copy free-text fields (such as reasoning, observation, recommendation, testing, and feedback) verbatim from the source data — do not rephrase, summarize, or "improve" the wording, even if it seems terse or informal.
+
+If a field expects an array and there is nothing to report, use an empty array. Never use null for an array field.
 INSTRUCTIONS;
     }
 

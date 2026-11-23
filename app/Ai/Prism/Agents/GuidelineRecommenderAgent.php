@@ -50,6 +50,10 @@ class GuidelineRecommenderAgent extends PendingTextRequest
 
         $this->usingTemperature(0.2);
 
+        if ($effort = config('cornell_ai.profiles')[ChatProfile::Chat->value]['reasoning_effort'] ?? null) {
+            $this->withProviderOptions(['reasoning' => ['effort' => $effort]]);
+        }
+
         $this->withSystemPrompt($this->instructions());
     }
 

@@ -27,7 +27,7 @@ class EvalResultFactory extends Factory
                 'text' => $this->faker->paragraph,
                 'parsed' => null,
             ],
-            'usage' => ['prompt_tokens' => 1000, 'completion_tokens' => 500],
+            'usage' => ['promptTokens' => 1000, 'completionTokens' => 500, 'cachedPromptTokens' => 0, 'reasoningTokens' => null],
             'finish_reason' => 'Stop',
             'latency_ms' => $this->faker->numberBetween(500, 30000),
             'tool_calls' => [],

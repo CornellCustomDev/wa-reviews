@@ -75,9 +75,9 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame('candidate-task', $candidate->modelForProfile(ChatProfile::Task->value));
         $this->assertSame('production-chat', $candidate->modelForProfile(ChatProfile::Chat->value), 'Only the profile the agent reads is swapped.');
         $this->assertSame(
-            ['schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
+            ['completed', 'schema_valid', 'field_match_rate', 'feedback_match', 'guideline_ids_exact'],
             array_keys($candidate->margins),
-            'Every fidelity check is gated by default.'
+            'Reliability and every fidelity check are gated by default.'
         );
 
         // The sampled cases come from the shared development database, so how
@@ -121,6 +121,107 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileExists($this->reportPath);
     }
 
+    public function test_effort_is_recorded_on_a_recommender_candidate_and_not_on_its_baseline(): void
+    {
+        Prism::fake([$this->recommenderFake(), $this->structuredFake()]);
+        $this->recommenderCase('eval-model-effort');
+        $baseline = EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-effort',
+            'is_baseline' => true,
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--agent' => Agents::GuidelineRecommender->value,
+            '--model' => 'candidate-chat',
+            '--effort' => 'low',
+            '--dataset-version' => 'eval-model-effort',
+            '--repeats' => 1,
+            '--out' => $this->reportPath,
+        ])->assertSuccessful();
+
+        $candidate = EvalRun::latest('id')->firstOrFail();
+
+        $this->assertSame([ChatProfile::Chat->value => 'low'], $candidate->models['reasoning_effort']);
+        $this->assertArrayNotHasKey('reasoning_effort', $baseline->refresh()->models ?? []);
+        $this->assertStringContainsString('chat: candidate-chat (effort: low)', File::get($this->reportPath));
+    }
+
+    public function test_effort_is_refused_for_a_profile_whose_agent_never_sends_one(): void
+    {
+        $this->structuredOutputCase('eval-model-effort-task');
+        $runsBefore = EvalRun::count();
+
+        $this->artisan('ai:eval', [
+            '--model' => 'candidate-task',
+            '--effort' => 'low',
+            '--dataset-version' => 'eval-model-effort-task',
+        ])->assertFailed();
+
+        $this->assertSame($runsBefore, EvalRun::count());
+    }
+
+    public function test_a_baseline_replayed_on_the_way_to_a_candidate_keeps_productions_effort_not_the_candidates(): void
+    {
+        config()->set('cornell_ai.profiles.'.ChatProfile::Chat->value.'.reasoning_effort', 'medium');
+        Prism::fake([
+            $this->recommenderFake(), $this->structuredFake(),
+            $this->recommenderFake(), $this->structuredFake(),
+        ]);
+        $this->recommenderCase('eval-model-effort-auto');
+
+        $this->artisan('ai:eval', [
+            '--agent' => Agents::GuidelineRecommender->value,
+            '--model' => 'candidate-chat',
+            '--effort' => 'low',
+            '--dataset-version' => 'eval-model-effort-auto',
+            '--repeats' => 1,
+            '--out' => $this->reportPath,
+        ])->assertSuccessful();
+
+        $baseline = EvalRun::where('dataset_version', 'eval-model-effort-auto')->where('is_baseline', true)->firstOrFail();
+        $candidate = EvalRun::where('dataset_version', 'eval-model-effort-auto')->where('is_baseline', false)->firstOrFail();
+
+        $this->assertSame([ChatProfile::Chat->value => 'medium'], $baseline->models['reasoning_effort']);
+        $this->assertSame([ChatProfile::Chat->value => 'low'], $candidate->models['reasoning_effort']);
+    }
+
+    public function test_a_candidate_keeps_its_baselines_effort_on_a_profile_it_leaves_alone(): void
+    {
+        Prism::fake([$this->recommenderFake(), $this->structuredFake()]);
+        $this->recommenderCase('eval-model-effort-kept');
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-effort-kept',
+            'is_baseline' => true,
+            'models' => [
+                'provider' => 'cornell',
+                'profiles' => [ChatProfile::Chat->value => 'baseline-chat', ChatProfile::Task->value => 'baseline-task'],
+                'reasoning_effort' => [ChatProfile::Chat->value => 'low'],
+            ],
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--agent' => Agents::GuidelineRecommender->value,
+            '--profile' => ChatProfile::Task->value,
+            '--model' => 'candidate-task',
+            '--dataset-version' => 'eval-model-effort-kept',
+            '--repeats' => 1,
+            '--out' => $this->reportPath,
+        ])->assertSuccessful();
+
+        $candidate = EvalRun::latest('id')->firstOrFail();
+
+        $this->assertSame([ChatProfile::Chat->value => 'low'], $candidate->models['reasoning_effort']);
+    }
+
+    public function test_an_unknown_effort_is_refused_before_anything_runs(): void
+    {
+        $runsBefore = EvalRun::count();
+
+        $this->artisan('ai:eval', ['--model' => 'candidate-task', '--effort' => 'extreme'])->assertFailed();
+
+        $this->assertSame($runsBefore, EvalRun::count());
+    }
+
     public function test_the_baseline_flag_replaces_the_current_baseline_and_writes_no_report(): void
     {
         Prism::fake([$this->structuredFake()]);
@@ -143,6 +244,34 @@ class EvalModelTest extends FeatureTestCase
         $this->assertSame('production-task', $replacement->modelForProfile(ChatProfile::Task->value), 'Without --model the production model is the baseline.');
         $this->assertFalse($previous->refresh()->is_baseline);
         $this->assertFileDoesNotExist($this->reportPath);
+    }
+
+    public function test_a_new_baseline_registers_the_standard_margins_rather_than_the_previous_baselines(): void
+    {
+        Prism::fake([$this->structuredFake()]);
+        $this->structuredOutputCase('eval-model-rebaseline-margins');
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-rebaseline-margins',
+            'is_baseline' => true,
+            'margins' => ['schema_valid' => ['margin' => 0.1]],
+        ]);
+
+        $this->artisan('ai:eval', [
+            '--baseline' => true,
+            '--dataset-version' => 'eval-model-rebaseline-margins',
+            '--repeats' => 1,
+        ])->assertSuccessful();
+
+        $replacement = EvalRun::latest('id')->firstOrFail();
+
+        // Stored as JSON, so a zero margin reads back as an integer.
+        $this->assertSame([
+            'completed' => ['margin' => 0.1],
+            'schema_valid' => ['margin' => 0],
+            'field_match_rate' => ['margin' => 0],
+            'feedback_match' => ['margin' => 0],
+            'guideline_ids_exact' => ['margin' => 0],
+        ], $replacement->margins);
     }
 
     public function test_a_baseline_replay_that_errors_on_every_call_does_not_displace_the_current_baseline(): void
@@ -189,18 +318,7 @@ class EvalModelTest extends FeatureTestCase
 
     public function test_a_recommender_candidate_replaces_the_chat_profile(): void
     {
-        Prism::fake([
-            TextResponseFake::make()
-                ->withSteps(collect([
-                    TextStepFake::make()
-                        ->withToolCalls([new ToolCall('call-1', 'fetch_guidelines', [])])
-                        ->withFinishReason(FinishReason::ToolCalls),
-                    TextStepFake::make()->withText('Guideline fails.'),
-                ]))
-                ->withFinishReason(FinishReason::Stop)
-                ->withMeta(new Meta('fake', 'fake')),
-            $this->structuredFake(),
-        ]);
+        Prism::fake([$this->recommenderFake(), $this->structuredFake()]);
         $this->recommenderCase('eval-model-recommender');
         EvalRun::factory()->create([
             'dataset_version' => 'eval-model-recommender',
@@ -269,12 +387,53 @@ class EvalModelTest extends FeatureTestCase
         $this->assertFileDoesNotExist($this->reportPath);
     }
 
+    public function test_without_a_model_it_suggests_the_gateway_models_past_models_and_production(): void
+    {
+        Prism::fake([]);
+        config()->set('cornell_ai.api_models', ['gateway-model-b', 'gateway-model-a']);
+        // The suggestions read every past run, so only this test's run may exist.
+        EvalRun::query()->delete();
+        EvalRun::factory()->create([
+            'dataset_version' => 'eval-model-suggest',
+            'models' => ['provider' => 'cornell', 'profiles' => [
+                ChatProfile::Chat->value => 'past-chat',
+                ChatProfile::Task->value => 'gateway-model-a',
+            ]],
+        ]);
+        $this->structuredOutputCase('eval-model-suggest');
+
+        $this->artisan('ai:eval', [
+            '--dataset-version' => 'eval-model-suggest',
+            '--dry-run' => true,
+        ])
+            ->expectsChoice(
+                'Which model do you want to test?',
+                'gateway-model-b',
+                ['gateway-model-a', 'gateway-model-b', 'past-chat', 'production-task'],
+                strict: true,
+            )
+            ->assertSuccessful();
+    }
+
     public function test_an_unsupported_agent_is_rejected(): void
     {
         $this->artisan('ai:eval', ['--agent' => 'ModelChatAgent', '--model' => 'x'])->assertFailed();
     }
 
     private int $guidelineId = 0;
+
+    private function recommenderFake(): TextResponseFake
+    {
+        return TextResponseFake::make()
+            ->withSteps(collect([
+                TextStepFake::make()
+                    ->withToolCalls([new ToolCall('call-1', 'fetch_guidelines', [])])
+                    ->withFinishReason(FinishReason::ToolCalls),
+                TextStepFake::make()->withText('Guideline fails.'),
+            ]))
+            ->withFinishReason(FinishReason::Stop)
+            ->withMeta(new Meta('fake', 'fake'));
+    }
 
     /**
      * Production decodes the response *text*, so a fake that only sets

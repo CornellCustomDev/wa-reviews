@@ -42,9 +42,13 @@ class CaseExtractor
      * every source the agent accepts, deduplicated, then sampled across strata
      * down to `$limit`. Call `drainSkipReasons()` afterwards for what was left out.
      *
+     * With `$reviewedOnly`, a case is kept only if a reviewer accepted, modified
+     * or rejected at least one of its guidelines. Most recommender runs were
+     * never triaged, so a mixed sample leaves F1 resting on a handful of cases.
+     *
      * @return Collection<int, EvalCase>
      */
-    public function extractDataset(Agents $agent, string $datasetVersion, ?int $limit): Collection
+    public function extractDataset(Agents $agent, string $datasetVersion, ?int $limit, bool $reviewedOnly = false): Collection
     {
         $extracted = collect();
 
@@ -56,6 +60,10 @@ class CaseExtractor
 
                 foreach ($histories as $history) {
                     $attributes = $this->extract($history, $datasetVersion, $agent);
+
+                    if ($attributes !== null && $reviewedOnly && ($attributes['labels']['mined']['triaged_count'] ?? 0) === 0) {
+                        $attributes = $this->skip('no reviewer verdicts');
+                    }
 
                     if ($attributes !== null) {
                         $extracted->push($attributes);
@@ -331,6 +339,14 @@ class CaseExtractor
         // the case is not replayable even though every DB row survives.
         if ($this->pageContentLength($scopeId) === 0) {
             return $this->skip('stored page content missing');
+        }
+
+        // Production refuses a page this large before calling a model, so the
+        // question is never asked there. Replaying it would grade a model on
+        // something users cannot do, and fail any model whose context window is
+        // smaller than the page for a reason that never reaches production.
+        if ($this->pageContentLength($scopeId) > config('cornell_ai.page_content_char_limit')) {
+            return $this->skip('page content exceeds the analysis limit');
         }
 
         return [
