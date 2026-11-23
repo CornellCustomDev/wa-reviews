@@ -73,6 +73,23 @@ class StructuralGraderTest extends FeatureTestCase
         $this->assertSame([], $scores['schema_issues']);
     }
 
+    public function test_an_answer_prism_could_not_decode_fails_schema_validity_but_a_missing_one_is_left_out(): void
+    {
+        $case = EvalCase::factory()->structuredOutput()->create(['dataset_version' => 'structural-test']);
+        $grade = fn (string $error) => app(StructuralGrader::class)->grade($case, EvalResult::factory()->create([
+            'eval_case_id' => $case->id,
+            'output' => null,
+            'error' => $error,
+        ]));
+
+        $undecodable = $grade('Prism\\Prism\\Exceptions\\PrismStructuredDecodingException: Structured object could not be decoded.');
+        $missing = $grade('Illuminate\\Http\\Client\\ConnectionException: Connection refused for URI https://example.test');
+
+        $this->assertFalse($undecodable['schema_valid'], 'The model answered, in a shape production cannot use.');
+        $this->assertNull($missing['schema_valid'], 'A call that never came back says nothing about shape.');
+        $this->assertFalse($missing['completed']);
+    }
+
     public function test_combined_numbers_are_counted_from_the_recommenders_own_text(): void
     {
         $text = json_encode(['guidelines' => [

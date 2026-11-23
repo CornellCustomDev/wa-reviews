@@ -7,6 +7,7 @@ use App\Models\EvalCase;
 use App\Models\EvalResult;
 use App\Services\Evals\RecommendationParser;
 use App\Services\GuidelinesAnalyzer\GuidelinesAnalyzerService;
+use Prism\Prism\Exceptions\PrismStructuredDecodingException;
 
 /**
  * Free, deterministic scoring of a replayed result.
@@ -54,8 +55,14 @@ class StructuralGrader
 
             // A call that never came back (a timeout, a gateway error) says
             // nothing about the shape a model answers in. `completed` already
-            // counts it, so it is left out here rather than counted twice.
-            'schema_valid' => $result->failed() ? null : $payload !== null && $schemaIssues === [],
+            // counts it, so it is left out here rather than counted twice. An
+            // answer that came back as JSON Prism could not decode did say
+            // something about its shape, so it fails the check.
+            'schema_valid' => match (true) {
+                $this->undecodable($result) => false,
+                $result->failed() => null,
+                default => $payload !== null && $schemaIssues === [],
+            },
             'schema_issue_count' => count($schemaIssues),
             'schema_issues' => $schemaIssues,
 
@@ -81,6 +88,16 @@ class StructuralGrader
         }
 
         return $scores;
+    }
+
+    /**
+     * Whether the recorded error is Prism refusing to decode the answer, as
+     * opposed to the answer never arriving. `EvalRunner::runCase()` records an
+     * exception as its class name followed by its message.
+     */
+    private function undecodable(EvalResult $result): bool
+    {
+        return str_contains((string) $result->error, class_basename(PrismStructuredDecodingException::class));
     }
 
     /**

@@ -125,6 +125,15 @@ class EvalModel extends Command
         $profile = $this->profile($agent);
         $productionModel = config("cornell_ai.profiles.{$profile}.model");
 
+        // Only the recommender sends a reasoning effort, and only for Chat.
+        // Recording one for a profile whose agent never sends it would have
+        // the run and its report claim an effort the model never received.
+        if ($this->option('effort') && $profile !== ChatProfile::Chat->value) {
+            $this->error(sprintf('--effort only applies when the chat profile is replaced; this run replaces "%s".', $profile));
+
+            return self::FAILURE;
+        }
+
         if ($this->option('baseline')) {
             $model = $this->option('model') ?: $productionModel;
             $this->plan($cases, $profile, $model, null, asBaseline: true);
@@ -363,9 +372,14 @@ class EvalModel extends Command
      * baseline ran, the comparison still changes exactly one thing. A baseline
      * starts from the configured production models.
      *
+     * Reasoning efforts follow the same rule. A baseline carries the efforts
+     * production is configured with; a candidate keeps its baseline's effort on
+     * the profiles it leaves alone and, on the one it replaces, sends only what
+     * `--effort` asks for.
+     *
      * @return array<string, mixed>
      */
-    private function models(string $profile, string $model, ?EvalRun $baseline): array
+    private function models(string $profile, string $model, ?EvalRun $baseline, bool $asBaseline): array
     {
         $configured = [];
 
@@ -380,11 +394,34 @@ class EvalModel extends Command
 
         $snapshot['profiles'][$profile] = $model;
 
-        if ($effort = $this->option('effort')) {
-            $snapshot['reasoning_effort'] = [$profile => $effort];
+        $efforts = $asBaseline
+            ? $this->configuredEfforts()
+            : array_diff_key((array) data_get($baseline?->models, 'reasoning_effort', []), [$profile => true]);
+
+        // --effort describes the run the user asked for. A production baseline
+        // replayed on the way to a candidate is not that run.
+        if (($effort = $this->option('effort')) && (! $asBaseline || $this->option('baseline'))) {
+            $efforts[$profile] = $effort;
+        }
+
+        if ($efforts !== []) {
+            $snapshot['reasoning_effort'] = $efforts;
         }
 
         return $snapshot;
+    }
+
+    /**
+     * The reasoning efforts production is configured to send, by profile.
+     *
+     * @return array<string, string>
+     */
+    private function configuredEfforts(): array
+    {
+        return collect(config('cornell_ai.profiles', []))
+            ->map(fn ($settings) => $settings['reasoning_effort'] ?? null)
+            ->filter()
+            ->all();
     }
 
     /**
@@ -393,7 +430,7 @@ class EvalModel extends Command
     private function plan(Collection $cases, string $profile, string $model, ?EvalRun $baseline, bool $asBaseline): void
     {
         $repeats = max(1, (int) $this->option('repeats'));
-        $models = $this->models($profile, $model, $baseline);
+        $models = $this->models($profile, $model, $baseline, $asBaseline);
 
         $this->newLine();
         $this->components->twoColumnDetail(
@@ -425,7 +462,7 @@ class EvalModel extends Command
             'dataset_version' => $cases->first()->dataset_version,
             'status' => EvalRunStatus::Pending,
             'repeats' => max(1, (int) $this->option('repeats')),
-            'models' => $this->models($profile, $model, $baseline),
+            'models' => $this->models($profile, $model, $baseline, $asBaseline),
             'margins' => $margins,
             'git_sha' => $this->gitSha(),
         ]);
