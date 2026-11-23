@@ -26,7 +26,7 @@ Complex features follow: `Show[Feature].php` (primary view) + `[Feature]Sidebar`
 
 # Development Environment
 
-- Local development uses `lando`.
+If the local development uses `lando`:
 - Run PHP-related commands through `lando`, not directly on the host machine.
 - This applies to all PHP tooling, including `php`, `composer`, `artisan`, `phpunit`, and `pint`.
 - Prefer commands such as `lando php`, `lando composer`, and `lando artisan`.
@@ -37,10 +37,10 @@ Complex features follow: `Show[Feature].php` (primary view) + `[Feature]Sidebar`
 
 ## Foundational Context
 
-This application is a Laravel application running on PHP 8.4. Always use the APIs that match the installed major version of each package — do not assume a version.
+This application is a Laravel application running on PHP 8.3. Always use the APIs that match the installed major version of each package — do not assume a version.
 
 Before relying on a package's API, confirm its installed version:
-- PHP packages: run `lando composer show --direct` to list direct dependencies with versions, or `lando composer show <vendor/package>` for a single package.
+- PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
 - JS packages: check `package.json` for the installed versions.
 
 ## Skills Activation
@@ -64,7 +64,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 ## Frontend Bundling
 
-- If a frontend change doesn't show in the UI or you get a "Unable to locate file in Vite manifest" error, run `lando npm run build` or ask the user to run `lando npm run dev`.
+- If a frontend change doesn't show in the UI or you get a "Unable to locate file in Vite manifest" error, run `npm run build` or ask the user to run `npm run dev`.
 
 ## Documentation Files
 
@@ -128,6 +128,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 # Deployment
 
 - Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
+- Activate the `deploying-to-cloud` skill whenever deploying to Laravel Cloud, configuring Cloud environments or resources, using the Cloud CLI, or troubleshooting Cloud deployments.
 
 === tests rules ===
 
@@ -177,8 +178,8 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 # Laravel Pint Code Formatter
 
-- If you have modified any PHP files, you must run `lando exec appserver -- /app/vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
-- Do not run `lando exec appserver -- /app/vendor/bin/pint --test --format agent`, simply run `lando exec appserver -- /app/vendor/bin/pint --format agent` to fix any formatting issues.
+- If you have modified any PHP files, you must run `vendor/bin/pint --dirty --format agent` before finalizing changes to ensure your code matches the project's expected style.
+- Do not run `vendor/bin/pint --test --format agent`, simply run `vendor/bin/pint --format agent` to fix any formatting issues.
 
 === phpunit/core rules ===
 
@@ -192,7 +193,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - Run the narrowest set of tests that covers the change. Pass a file path or `--filter=testName` to `php artisan test --compact`.
 - Rerun a test after each change to it.
-- Run `lando exec appserver -- /app/vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
+- Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
 === prism-php/prism/core rules ===
 
