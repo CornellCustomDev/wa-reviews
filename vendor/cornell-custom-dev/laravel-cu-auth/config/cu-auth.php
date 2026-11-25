@@ -1,5 +1,7 @@
 <?php
 
+$is_production = env('APP_ENV') == 'production';
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -27,6 +29,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Require CUAuth
+    |--------------------------------------------------------------------------
+    |
+    | Put every route in the "web" middleware group behind the CUAuth
+    | middleware. If AppTesters is defined, it is also applied.
+    |
+    */
+    'require_cu_auth' => boolval(env('REQUIRE_CU_AUTH', false)),
+
+    /*
+    |--------------------------------------------------------------------------
     | ApacheShib Configuration
     |--------------------------------------------------------------------------
     |
@@ -36,12 +49,8 @@ return [
     | The default user variable is "REMOTE_USER", but this may differ depending
     | on how mod_shib is configured.
     |
-    | For local development without shibboleth, you can add
-    | REMOTE_USER=<netid> to your project .env file to log in as that user.
-    |
     */
     'apache_shib_user_variable' => env('APACHE_SHIB_USER_VARIABLE', 'REMOTE_USER'),
-    'remote_user_override' => env('REMOTE_USER'),
 
     /*
     |--------------------------------------------------------------------------
@@ -59,15 +68,91 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | PHP-SAML IdP Metadata URLs
+    |--------------------------------------------------------------------------
+    |
+    | Metadata for the Cornell IdPs, used by `php artisan cu-auth:generate-keys`
+    | to retrieve IdP settings and certificates. Defaults to the production or
+    | test IdP based on APP_ENV.
+    |
+    */
+    'idp_metadata_urls' => [
+        'cornell' => env('SAML_METADATA_URL_CORNELL', $is_production
+            ? 'https://shibidp.cit.cornell.edu/idp/shibboleth'
+            : 'https://shibidp-test.cit.cornell.edu/idp/shibboleth'),
+        'weill' => env('SAML_METADATA_URL_WEILL', $is_production
+            ? 'https://login.weill.cornell.edu/idp/saml2/idp/metadata.php'
+            : 'https://login-test.weill.cornell.edu/idp/saml2/idp/metadata.php'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML IdP Selection Mode
+    |--------------------------------------------------------------------------
+    |
+    | How users get the IdP to log in with. Options are:
+    | - single: the one IdP in config/php-saml-toolkit.php
+    | - discovery: choose at a SAML discovery service (CIT idselect)
+    | - page: choose on this package's selection page (/sso/select)
+    |
+    */
+    'idp_selection_mode' => env('SAML_IDP_SELECTION', 'single'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | PHP-SAML IdP Selection
+    |--------------------------------------------------------------------------
+    |
+    | Settings for each idp_selection_mode. 'idps' are the IdPs users can
+    | choose, keyed by 'idp_metadata_urls' above.
+    |
+    */
+    'idp_selection' => [
+        'discovery' => [
+            'idps' => ['cornell', 'weill'],
+
+            'url' => env('SAML_IDP_DISCOVERY_URL', $is_production
+                ? 'https://idselect.idm.cit.cornell.edu/idselect/select.html'
+                : 'https://idselect-test.idm.cit.cornell.edu/idselect/select.html'),
+        ],
+
+        'page' => [
+            'idps' => [
+                'cornell' => [
+                    'label' => 'Cornell NetID',
+                    'info_text' => 'More information about NetID',
+                    'info_url' => 'https://netid.cornell.edu/',
+                ],
+                'weill' => [
+                    'label' => 'Weill Cornell Medicine (CWID)',
+                    'info_text' => 'More information about WCM CWID',
+                    'info_url' => 'https://its.weill.cornell.edu/services/accounts-and-access/center-wide-id',
+                ],
+            ],
+
+            'heading' => env('SAML_IDP_SELECTION_HEADING', 'Select Your Cornell Login'),
+
+            'view' => env('SAML_IDP_SELECTION_VIEW', 'cu-auth::select'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AppTesters Configuration
     |--------------------------------------------------------------------------
     |
     | Comma-separated list of users to allow in development environments.
     | APP_TESTERS_FIELD is the field on the user model to compare against.
     |
+    | For local development without SSO (apache-shib or php-saml), you can add
+    | CU_AUTH_REMOTE_USER=<netid> to your project .env file to log in as that
+    | user. It is ignored in production. REMOTE_USER=<netid> also works, unless
+    | the web server sets REMOTE_USER itself (nginx and Caddy pass it empty).
+    |
     */
     'app_testers' => env('APP_TESTERS', ''),
     'app_testers_field' => env('APP_TESTERS_FIELD', 'netid'),
+    'remote_user_override' => env('CU_AUTH_REMOTE_USER') ?: env('REMOTE_USER'),
 
     /*
     |--------------------------------------------------------------------------

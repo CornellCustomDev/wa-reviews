@@ -71,7 +71,7 @@ class ShibIdentityManager implements IdentityManager
 
     public function getSsoReturnUrl(Request $request): string
     {
-        return $request->query('redirect_url', '/');
+        return $request->query->getString('redirect_url', '/');
     }
 
     public function getSloUrl(string $returnUrl): string

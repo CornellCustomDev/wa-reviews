@@ -16,7 +16,7 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  *
- * @final
+ * @final since Symfony 7.4
  */
 class Profile
 {
@@ -32,7 +32,6 @@ class Profile
     private ?int $statusCode = null;
     private ?self $parent = null;
     private ?string $virtualType = null;
-    private bool $hasErrors = false;
 
     /**
      * @var Profile[]
@@ -156,16 +155,6 @@ class Profile
         return $this->virtualType;
     }
 
-    public function hasErrors(): bool
-    {
-        return $this->hasErrors;
-    }
-
-    public function setHasErrors(bool $hasErrors): void
-    {
-        $this->hasErrors = $hasErrors;
-    }
-
     /**
      * Finds children profilers.
      *
@@ -259,20 +248,11 @@ class Profile
         return isset($this->collectors[$name]);
     }
 
-    public function __serialize(): array
+    /**
+     * @internal since Symfony 7.4, will be replaced by `__serialize()` in 8.0
+     */
+    public function __sleep(): array
     {
-        return [
-            'token' => $this->token,
-            'parent' => $this->parent,
-            'children' => $this->children,
-            'collectors' => $this->collectors,
-            'ip' => $this->ip,
-            'method' => $this->method,
-            'url' => $this->url,
-            'time' => $this->time,
-            'statusCode' => $this->statusCode,
-            'virtualType' => $this->virtualType,
-            'hasErrors' => $this->hasErrors,
-        ];
+        return ['token', 'parent', 'children', 'collectors', 'ip', 'method', 'url', 'time', 'statusCode', 'virtualType'];
     }
 }

@@ -12,7 +12,6 @@
 namespace Symfony\Component\VarDumper\Server;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\VarDumper\Caster\ClassDumpStub;
 use Symfony\Component\VarDumper\Cloner\Data;
 use Symfony\Component\VarDumper\Cloner\Stub;
 
@@ -50,9 +49,6 @@ class DumpServer
         }
     }
 
-    /**
-     * @param-immediately-invoked-callable $callback
-     */
     public function listen(callable $callback): void
     {
         if (null === $this->socket) {
@@ -62,7 +58,7 @@ class DumpServer
         foreach ($this->getMessages() as $clientId => $message) {
             $this->logger?->info('Received a payload from client {clientId}', ['clientId' => $clientId]);
 
-            $payload = @unserialize(base64_decode($message), ['allowed_classes' => [Data::class, Stub::class, ClassDumpStub::class]]);
+            $payload = @unserialize(base64_decode($message), ['allowed_classes' => [Data::class, Stub::class]]);
 
             // Impossible to decode the message, give up.
             if (false === $payload) {

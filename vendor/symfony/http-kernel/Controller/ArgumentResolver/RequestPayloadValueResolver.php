@@ -12,8 +12,6 @@
 namespace Symfony\Component\HttpKernel\Controller\ArgumentResolver;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\ExpressionLanguage\Expression;
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString;
@@ -35,7 +33,6 @@ use Symfony\Component\Serializer\Exception\UnsupportedFormatException;
 use Symfony\Component\Serializer\Normalizer\DenormalizerInterface;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Constraints\GroupSequence;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use Symfony\Component\Validator\Exception\ValidationFailedException;
@@ -44,8 +41,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @author Konstantin Myakshin <molodchick@gmail.com>
- *
- * @psalm-type GroupResolver = \Closure(array<string, mixed>, Request, ?object):string|GroupSequence|array<string>
  *
  * @final
  */
@@ -70,7 +65,6 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
         private readonly ?ValidatorInterface $validator = null,
         private readonly ?TranslatorInterface $translator = null,
         private string $translationDomain = 'validators',
-        private ?ExpressionLanguage $expressionLanguage = null,
     ) {
     }
 
@@ -85,7 +79,7 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
             return [];
         }
 
-        if ($attribute instanceof MapQueryString && $argument->isVariadic()) {
+        if (!$attribute instanceof MapUploadedFile && $argument->isVariadic()) {
             throw new \LogicException(\sprintf('Mapping variadic argument "$%s" is not supported.', $argument->getName()));
         }
 
@@ -94,7 +88,7 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
                 if (!$attribute->type) {
                     throw new NearMissValueResolverException(\sprintf('Please set the $type argument of the #[%s] attribute to the type of the objects in the expected array.', MapRequestPayload::class));
                 }
-            } elseif ($attribute->type && !$argument->isVariadic()) {
+            } elseif ($attribute->type) {
                 throw new NearMissValueResolverException(\sprintf('Please set its type to "array" when using argument $type of #[%s].', MapRequestPayload::class));
             }
         }
@@ -133,8 +127,7 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
                     $payload = $payloadMapper($request, $argument->metadata, $argument);
                 } catch (PartialDenormalizationException $e) {
                     $trans = $this->translator ? $this->translator->trans(...) : static fn ($m, $p) => strtr($m, $p);
-                    $errors = method_exists($e, 'getNotNormalizableValueErrors') ? $e->getNotNormalizableValueErrors() : $e->getErrors();
-                    foreach ($errors as $error) {
+                    foreach ($e->getErrors() as $error) {
                         $parameters = [];
                         $template = 'This value was of an unexpected type.';
                         if ($expectedTypes = $error->getExpectedTypes()) {
@@ -147,13 +140,6 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
                         $message = $trans($template, $parameters, $this->translationDomain);
                         $violations->add(new ConstraintViolation($message, $template, $parameters, null, $error->getPath(), null));
                     }
-                    if (null !== $extraAttributesError = method_exists($e, 'getExtraAttributesError') ? $e->getExtraAttributesError() : null) {
-                        $template = 'This attribute was not expected.';
-                        foreach ($extraAttributesError->getExtraAttributes() as $extraAttribute) {
-                            $message = $trans($template, [], $this->translationDomain);
-                            $violations->add(new ConstraintViolation($message, $template, [], null, $extraAttribute, null));
-                        }
-                    }
                     $payload = $e->getData();
                 } catch (SerializerInvalidArgumentException $e) {
                     $violations->add(new ConstraintViolation($e->getMessage(), $e->getMessage(), [], null, '', null));
@@ -165,12 +151,10 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
                     if (\is_array($payload) && !empty($constraints) && !$constraints instanceof Assert\All) {
                         $constraints = new Assert\All($constraints);
                     }
-                    $groups = $this->resolveValidationGroups($argument->validationGroups ?? null, $event);
-
                     if ($argument instanceof MapUploadedFile) {
-                        $violations->addAll($this->validator->startContext()->atPath($argument->metadata->getName())->validate($payload, $constraints, $groups)->getViolations());
+                        $violations->addAll($this->validator->startContext()->atPath($argument->metadata->getName())->validate($payload, $constraints, $argument->validationGroups ?? null)->getViolations());
                     } else {
-                        $violations->addAll($this->validator->validate($payload, $constraints, $groups));
+                        $violations->addAll($this->validator->validate($payload, $constraints, $argument->validationGroups ?? null));
                     }
                 }
 
@@ -181,8 +165,7 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
                 try {
                     $payload = $payloadMapper($request, $argument->metadata, $argument);
                 } catch (PartialDenormalizationException $e) {
-                    $errors = method_exists($e, 'getNotNormalizableValueErrors') ? $e->getNotNormalizableValueErrors() : $e->getErrors();
-                    throw HttpException::fromStatusCode($validationFailedCode, implode("\n", array_map(static fn ($e) => $e->getMessage(), $errors)), $e);
+                    throw HttpException::fromStatusCode($validationFailedCode, implode("\n", array_map(static fn ($e) => $e->getMessage(), $e->getErrors())), $e);
                 } catch (SerializerInvalidArgumentException $e) {
                     throw HttpException::fromStatusCode($validationFailedCode, $e->getMessage(), $e);
                 }
@@ -209,16 +192,14 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
 
     public static function getSubscribedEvents(): array
     {
-        // Keep this priority lower than ControllerAttributesListener (-10000) so that gate
-        // attributes such as #[IsGranted] are handled before the payload is mapped.
         return [
-            KernelEvents::CONTROLLER_ARGUMENTS => ['onKernelControllerArguments', -10100],
+            KernelEvents::CONTROLLER_ARGUMENTS => 'onKernelControllerArguments',
         ];
     }
 
     private function mapQueryString(Request $request, ArgumentMetadata $argument, MapQueryString $attribute): ?object
     {
-        if (!($data = $request->query->all($attribute->key)) && ($argument->isNullable() || $argument->hasDefaultValue()) && !$attribute->mapWhenEmpty) {
+        if (!($data = $request->query->all($attribute->key)) && ($argument->isNullable() || $argument->hasDefaultValue())) {
             return null;
         }
 
@@ -227,12 +208,8 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
 
     private function mapRequestPayload(Request $request, ArgumentMetadata $argument, MapRequestPayload $attribute): object|array|null
     {
-        if ('' === $data = $request->request->all() ?: $request->getContent()) {
-            if ($attribute->mapWhenEmpty) {
-                $data = [];
-            } elseif ($argument->isNullable() || $argument->hasDefaultValue()) {
-                return null;
-            }
+        if ('' === ($data = $request->request->all() ?: $request->getContent()) && ($argument->isNullable() || $argument->hasDefaultValue())) {
+            return null;
         }
 
         if (null === $format = $request->getContentTypeFormat()) {
@@ -247,15 +224,13 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
             throw new UnsupportedMediaTypeHttpException(\sprintf('Unsupported format, "%s" must be explicitly listed in "acceptFormat".', $format));
         }
 
-        $type = match (true) {
-            $argument->isVariadic() => ($attribute->type ?? $argument->getType()).'[]',
-            'array' === $argument->getType() && null !== $attribute->type => $attribute->type.'[]',
-            default => $argument->getType(),
-        };
+        if ('array' === $argument->getType() && null !== $attribute->type) {
+            $type = $attribute->type.'[]';
+        } else {
+            $type = $argument->getType();
+        }
 
         if (\is_array($data)) {
-            $data = $this->mergeParamsAndFiles($data, $request->files->all());
-
             return $this->serializer->denormalize($data, $type, self::hasNonStringScalar($data) ? $format : 'csv', $attribute->serializationContext + self::CONTEXT_DENORMALIZE + ('form' === $format ? ['filter_bool' => true] : []));
         }
 
@@ -287,63 +262,6 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
         return 'array' === $argument->getType() ? [] : null;
     }
 
-    private function mergeParamsAndFiles(array $params, array $files): array
-    {
-        $isFilesList = array_is_list($files);
-
-        foreach ($params as $key => $value) {
-            if (\is_array($value) && \is_array($files[$key] ?? null)) {
-                $params[$key] = $this->mergeParamsAndFiles($value, $files[$key]);
-                unset($files[$key]);
-            }
-        }
-
-        if (!$isFilesList) {
-            return array_replace($params, $files);
-        }
-
-        foreach ($files as $value) {
-            $params[] = $value;
-        }
-
-        return $params;
-    }
-
-    private function resolveValidationGroups(Expression|string|GroupSequence|\Closure|array|null $validationGroups, ControllerArgumentsEvent $event): string|GroupSequence|array|null
-    {
-        if ($validationGroups instanceof Expression || $validationGroups instanceof \Closure) {
-            $validationGroups = $event->evaluate($validationGroups, $this->expressionLanguage);
-        }
-
-        if (null === $validationGroups || \is_string($validationGroups) || $validationGroups instanceof GroupSequence) {
-            return $validationGroups;
-        }
-
-        if (!\is_array($validationGroups)) {
-            throw new \LogicException('The validation groups expression or closure must return a string, an array of strings, or a GroupSequence.');
-        }
-
-        foreach ($validationGroups as $group) {
-            if ($group instanceof Expression) {
-                throw new \LogicException('Nested expressions in validation groups are not supported. Use a single Expression or a list of strings (or a GroupSequence) instead.');
-            }
-
-            if ($group instanceof \Closure) {
-                throw new \LogicException('Nested closures in validation groups are not supported. Use a single Closure or a list of strings (or a GroupSequence) instead.');
-            }
-
-            if ($group instanceof GroupSequence) {
-                throw new \LogicException('GroupSequence cannot be used inside an array of validation groups. Pass the GroupSequence as the top-level validationGroups value instead.');
-            }
-
-            if (!\is_string($group)) {
-                throw new \LogicException('Validation groups must be strings.');
-            }
-        }
-
-        return $validationGroups;
-    }
-
     private static function hasNonStringScalar(array $data): bool
     {
         $stack = [$data];
@@ -352,9 +270,7 @@ class RequestPayloadValueResolver implements ValueResolverInterface, EventSubscr
             foreach (array_pop($stack) as $v) {
                 if (\is_array($v)) {
                     $stack[] = $v;
-                } elseif (!\is_string($v) && !\is_object($v)) {
-                    // uploaded files are merged into the payload of a "form" request; being objects,
-                    // they are not scalars and must not make the payload look like a typed one
+                } elseif (!\is_string($v)) {
                     return true;
                 }
             }

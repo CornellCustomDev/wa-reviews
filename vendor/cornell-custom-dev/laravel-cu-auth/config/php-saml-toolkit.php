@@ -3,8 +3,10 @@
 $sp_base_url = env('SAML_BASEURL', env('APP_URL', 'https://localhost'));
 
 /*
- | The IDP base url has been tested against CIT shibboleth. It does not
- | support a discovery service at this time (e.g. CIT idselect).
+ | The IDP base url has been tested against CIT shibboleth. This is the single
+ | IdP used by default. To let users choose between the Cornell and Weill IdPs
+ | via a discovery service or selection page, see 'idp_selection_mode' in
+ | config/cu-auth.php.
  */
 $idp_base_url = env('SAML_IDP_BASEURL', (env('APP_ENV') == 'production')
     ? 'https://shibidp.cit.cornell.edu/idp'

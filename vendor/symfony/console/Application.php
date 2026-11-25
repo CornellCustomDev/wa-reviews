@@ -11,8 +11,6 @@
 
 namespace Symfony\Component\Console;
 
-use Psr\Container\ContainerInterface;
-use Symfony\Component\Console\ArgumentResolver\ArgumentResolverInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Command\CompleteCommand;
 use Symfony\Component\Console\Command\DumpCompletionCommand;
@@ -53,7 +51,6 @@ use Symfony\Component\Console\Output\ConsoleOutputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\SignalRegistry\SignalRegistry;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface as SymfonyContainerInterface;
 use Symfony\Component\ErrorHandler\ErrorHandler;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface as ComponentEventDispatcherInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
@@ -86,7 +83,6 @@ class Application implements ResetInterface
     private InputDefinition $definition;
     private HelperSet $helperSet;
     private ?EventDispatcherInterface $dispatcher = null;
-    private ?ArgumentResolverInterface $argumentResolver = null;
     private Terminal $terminal;
     private string $defaultCommand;
     private bool $singleCommand = false;
@@ -98,7 +94,6 @@ class Application implements ResetInterface
     public function __construct(
         private string $name = 'UNKNOWN',
         private string $version = 'UNKNOWN',
-        private ?ContainerInterface $container = null,
     ) {
         $this->terminal = new Terminal();
         $this->defaultCommand = 'list';
@@ -114,24 +109,6 @@ class Application implements ResetInterface
     public function setDispatcher(EventDispatcherInterface $dispatcher): void
     {
         $this->dispatcher = $dispatcher;
-    }
-
-    public function getDispatcher(): ?EventDispatcherInterface
-    {
-        return $this->dispatcher;
-    }
-
-    /**
-     * @final
-     */
-    public function setArgumentResolver(ArgumentResolverInterface $argumentResolver): void
-    {
-        $this->argumentResolver = $argumentResolver;
-    }
-
-    public function getArgumentResolver(): ?ArgumentResolverInterface
-    {
-        return $this->argumentResolver;
     }
 
     public function setCommandLoader(CommandLoaderInterface $commandLoader): void
@@ -385,9 +362,6 @@ class Application implements ResetInterface
 
     public function reset(): void
     {
-        if ($this->container?->has('services_resetter')) {
-            $this->container->get('services_resetter')->reset();
-        }
     }
 
     public function setHelperSet(HelperSet $helperSet): void
@@ -546,19 +520,13 @@ class Application implements ResetInterface
     {
         if ('UNKNOWN' !== $this->getName()) {
             if ('UNKNOWN' !== $this->getVersion()) {
-                $version = \sprintf('%s <info>%s</info>', $this->getName(), $this->getVersion());
-            } else {
-                $version = $this->getName();
+                return \sprintf('%s <info>%s</info>', $this->getName(), $this->getVersion());
             }
-        } else {
-            $version = 'Console Tool';
+
+            return $this->getName();
         }
 
-        if ($this->container instanceof SymfonyContainerInterface && $this->container->hasParameter('kernel.environment')) {
-            $version .= \sprintf(' (env: <comment>%s</>, debug: <comment>%s</>)', $this->container->getParameter('kernel.environment'), $this->container->getParameter('kernel.debug') ? 'true' : 'false');
-        }
-
-        return $version;
+        return 'Console Tool';
     }
 
     /**
@@ -581,6 +549,16 @@ class Application implements ResetInterface
         foreach ($commands as $command) {
             $this->addCommand($command);
         }
+    }
+
+    /**
+     * @deprecated since Symfony 7.4, use Application::addCommand() instead
+     */
+    public function add(Command $command): ?Command
+    {
+        trigger_deprecation('symfony/console', '7.4', 'The "%s()" method is deprecated and will be removed in Symfony 8.0, use "%s::addCommand()" instead.', __METHOD__, self::class);
+
+        return $this->addCommand($command);
     }
 
     /**
@@ -719,8 +697,6 @@ class Application implements ResetInterface
 
         $exact = \in_array($namespace, $namespaces, true);
         if (\count($namespaces) > 1 && !$exact) {
-            sort($namespaces);
-
             throw new NamespaceNotFoundException(\sprintf("The namespace \"%s\" is ambiguous.\nDid you mean one of these?\n%s.", $namespace, $this->getAbbreviationSuggestions(array_values($namespaces))), array_values($namespaces));
         }
 
@@ -760,8 +736,6 @@ class Application implements ResetInterface
         if (!$commands) {
             $commands = preg_grep('{^'.$expr.'}i', $allCommands);
         }
-
-        sort($commands);
 
         // if no commands matched or we just matched namespaces
         if (!$commands || \count(preg_grep('{^'.$expr.'$}i', $commands)) < 1) {
@@ -818,7 +792,6 @@ class Application implements ResetInterface
         }
 
         if (\count($commands) > 1) {
-            sort($commands);
             $usableWidth = $this->terminal->getWidth() - 10;
             $abbrevs = array_values($commands);
             $maxLen = 0;
@@ -840,7 +813,7 @@ class Application implements ResetInterface
             if (\count($commands) > 1) {
                 $suggestions = $this->getAbbreviationSuggestions(array_filter($abbrevs));
 
-                throw new CommandNotFoundException(\sprintf("Command \"%s\" is ambiguous.\nDid you mean one of these?\n%s", $name, $suggestions), array_values($commands));
+                throw new CommandNotFoundException(\sprintf("Command \"%s\" is ambiguous.\nDid you mean one of these?\n%s.", $name, $suggestions), array_values($commands));
             }
         }
 
@@ -1385,47 +1358,14 @@ class Application implements ResetInterface
         }
         $this->initialized = true;
 
+        if ((new \ReflectionMethod($this, 'add'))->getDeclaringClass()->getName() !== (new \ReflectionMethod($this, 'addCommand'))->getDeclaringClass()->getName()) {
+            $adder = $this->add(...);
+        } else {
+            $adder = $this->addCommand(...);
+        }
+
         foreach ($this->getDefaultCommands() as $command) {
-            $this->addCommand($command);
-        }
-
-        $this->registerContainerServices();
-    }
-
-    private function registerContainerServices(): void
-    {
-        if (!$this->container) {
-            return;
-        }
-
-        if ($this->container->has('event_dispatcher')) {
-            $this->setDispatcher($this->container->get('event_dispatcher'));
-        }
-        if ($this->container->has('console.argument_resolver')) {
-            $this->setArgumentResolver($this->container->get('console.argument_resolver'));
-        }
-        if ($this->container->has('console.command_loader')) {
-            $this->setCommandLoader($this->container->get('console.command_loader'));
-        }
-
-        if (!$commandIds = match (true) {
-            !$this->container instanceof SymfonyContainerInterface => $this->container->has('console.command.ids') ? $this->container->get('console.command.ids') : [],
-            $this->container->hasParameter('console.command.ids') => $this->container->getParameter('console.command.ids'),
-            default => [],
-        }) {
-            return;
-        }
-
-        $lazyCommandIds = match (true) {
-            !$this->container instanceof SymfonyContainerInterface => $this->container->has('console.lazy_command.ids') ? $this->container->get('console.lazy_command.ids') : [],
-            $this->container->hasParameter('console.lazy_command.ids') => $this->container->getParameter('console.lazy_command.ids'),
-            default => [],
-        };
-
-        foreach ($commandIds as $id) {
-            if (!isset($lazyCommandIds[$id])) {
-                $this->addCommand($this->container->get($id));
-            }
+            $adder($command);
         }
     }
 }

@@ -11,9 +11,8 @@
 
 namespace Symfony\Component\HttpKernel\DependencyInjection;
 
-use Symfony\Component\DependencyInjection\ServicesResetter as BaseServicesResetter;
-
-trigger_deprecation('symfony/http-kernel', '8.1', 'The "%s" class is deprecated, use "%s" from the DependencyInjection component instead.', ServicesResetter::class, BaseServicesResetter::class);
+use ProxyManager\Proxy\LazyLoadingInterface;
+use Symfony\Component\VarExporter\LazyObjectInterface;
 
 /**
  * Resets provided services.
@@ -21,8 +20,53 @@ trigger_deprecation('symfony/http-kernel', '8.1', 'The "%s" class is deprecated,
  * @author Alexander M. Turek <me@derrabus.de>
  * @author Nicolas Grekas <p@tchwork.com>
  *
- * @deprecated since Symfony 8.1, use ServicesResetter from the DependencyInjection component instead
+ * @final since Symfony 7.2
  */
-final class ServicesResetter extends BaseServicesResetter implements ServicesResetterInterface
+class ServicesResetter implements ServicesResetterInterface
 {
+    /**
+     * @param \Traversable<string, object>   $resettableServices
+     * @param array<string, string|string[]> $resetMethods
+     */
+    public function __construct(
+        private \Traversable $resettableServices,
+        private array $resetMethods,
+    ) {
+    }
+
+    public function reset(): void
+    {
+        $throwable = null;
+
+        foreach ($this->resettableServices as $id => $service) {
+            if ($service instanceof LazyObjectInterface && !$service->isLazyObjectInitialized(true)) {
+                continue;
+            }
+
+            if ($service instanceof LazyLoadingInterface && !$service->isProxyInitialized()) {
+                continue;
+            }
+
+            if (\PHP_VERSION_ID >= 80400 && (new \ReflectionClass($service))->isUninitializedLazyObject($service)) {
+                continue;
+            }
+
+            foreach ((array) $this->resetMethods[$id] as $resetMethod) {
+                if ('?' === $resetMethod[0] && !method_exists($service, $resetMethod = substr($resetMethod, 1))) {
+                    continue;
+                }
+
+                try {
+                    $service->$resetMethod();
+                } catch (\Throwable $e) {
+                    // failing to reset one service should not prevent resetting the remaining ones
+                    $throwable ??= $e;
+                }
+            }
+        }
+
+        if (null !== $throwable) {
+            throw $throwable;
+        }
+    }
 }

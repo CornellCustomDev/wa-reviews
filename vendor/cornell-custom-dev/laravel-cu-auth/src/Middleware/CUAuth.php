@@ -30,13 +30,8 @@ class CUAuth
         }
 
         // SSO routes need to pass through so the identity manager can process the SSO responses.
-        $passThrough = in_array($request->path(), [
-            route('cu-auth.sso-login'),
-            route('cu-auth.sso-logout'),
-            route('cu-auth.sso-acs'),
-            route('cu-auth.sso-metadata'),
-        ]);
-        if ($passThrough) {
+        // Otherwise, applying CUAuth to the package's own routes would redirect them back to login.
+        if ($request->routeIs('cu-auth.sso-*', 'cu-auth.shibboleth-*')) {
             return $next($request);
         }
 

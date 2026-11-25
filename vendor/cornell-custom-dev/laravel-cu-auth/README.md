@@ -5,6 +5,7 @@ Middleware for authorizing Laravel users.
 - [CUAuth SSO](#cuauth) - Single sign-on and authorization middleware 
   - SAML PHP Toolkit integration
   - Apache mod_shib integration
+- [Require CUAuth](#require-cuauth) - Put the whole site behind SSO without changing routes
 - [AppTesters](#apptesters) - Limit access to users in the `APP_TESTERS` environment variable
 - [Local Login](#local-login) - Allow Laravel users to log in with a local username and password
 - [Livewire Auth](#livewire-auth) - Block unauthenticated Livewire update requests
@@ -13,6 +14,7 @@ Middleware for authorizing Laravel users.
 
 - **Single Sign-On**: Protect routes with SSO (mod_shib or PHP SAML)
   - Optionally log in SSO users to app user accounts
+- **Require CUAuth**: Keep bots and anonymous visitors off every page, such as on a non-production site
 - **AppTesters**: Limit access on non-production sites to users in the `APP_TESTERS` environment variable
 
 
@@ -68,17 +70,84 @@ It is possible to have composer automatically install the keys on `composer inst
 
 The default location for the SAML keys and certs is in `storage/app/keys`. This location is configurable in the `config/cu-auth.php` file or by setting the `SAML_CERT_PATH` in `.env`.
 
+### Stable SAML SP keys in container deployments
+
+Containers start with an empty filesystem, so `cu-auth:generate-keys` creates a new SP key pair on every deploy. The SP 
+certificate is part of the metadata registered with the IdP, so a new key pair breaks login until the registration is 
+updated. For a stable SP, generate the keys once and store `sp_key.pem` and `sp_cert.pem` as secrets. Write them to the 
+cert path (`storage/app/keys/` by default) before `cu-auth:generate-keys` runs, and the command keeps them and downloads 
+only the IdP certificate (or, with IdP selection, the IdP settings files).
+
+### Multiple IdPs (php-saml)
+
+`SAML_IDP_SELECTION` sets how php-saml gets the IdP to log in with:
+
+- `single` (the default) uses the one IdP in `config/php-saml-toolkit.php`.
+- `discovery` lets users choose between Cornell NetID and Weill CWID at CIT's discovery service (idselect).
+- `page` lets users choose on this package's selection page at `/sso/select`.
+
+```dotenv
+# File: .env
+SAML_IDP_SELECTION=page # single | discovery | page
+# SAML_IDP_DISCOVERY_URL=https://idselect-test.idm.cit.cornell.edu/idselect/select.html
+# SAML_METADATA_URL_CORNELL=https://shibidp-test.cit.cornell.edu/idp/shibboleth
+# SAML_METADATA_URL_WEILL=https://login-test.weill.cornell.edu/idp/saml2/idp/metadata.php
+```
+
+With `discovery` or `page`, run `php artisan cu-auth:generate-keys` to download each IdP's settings. Links to 
+`/sso/login?entityID=<IdP entityID>` skip the choice and go straight to that IdP. The IdPs offered are 
+`idp_selection.discovery.idps` or `idp_selection.page.idps` (with their labels and info links) in `config/cu-auth.php`.
+
+#### The selection page in your site's layout
+
+By default, `/sso/select` is a standalone page styled after idselect. To show the choice in your site's layout instead, 
+create a view that wraps the `<x-cu-auth::idp-selection />` component in your layout:
+
+```blade
+{{-- File: resources/views/auth/select-login.blade.php --}}
+<x-layouts.app title="Select Your Cornell Login">
+    <x-cu-auth::idp-selection heading="" />
+</x-layouts.app>
+```
+
+Then point the selection page at it:
+
+```dotenv
+# File: .env
+SAML_IDP_SELECTION_VIEW=auth.select-login
+```
+
+The component renders a heading from `cu-auth.idp_selection.page.heading`, "Select Your Cornell Login" by default (set 
+`SAML_IDP_SELECTION_HEADING` to change it everywhere, `heading="..."` to change it for one use, or `heading=""` to leave 
+it out when your layout already shows it) and one button per IdP. The buttons return to the `redirect_url` query 
+parameter after login, or `/`; pass `redirect-url="..."` to use another URL. The component can be used on any page, 
+and renders nothing outside `page` mode.
+
+To change the package's views themselves, publish them to `resources/views/vendor/cu-auth`:
+
+```bash
+php artisan vendor:publish --tag=starterkit:cu-auth-views
+```
+
+
+For `apache-shib`, IdP selection is configured in mod_shib instead; see the `idselect` ApplicationOverride in
+[shibboleth configuration](SHIBBOLETH.md#shibboleth-with-multiple-idps).
+
 ---
 
-### Local Testing (apache-shib)
-For local testing where mod_shib is not available, the `REMOTE_USER` environment variable can be set to simulate
-Shibboleth authentication. Note that `APP_ENV` must be set to "local" for this to work and the config cache must be cleared when `REMOTE_USER` is changed.
+### Local Testing
+For local testing without SSO, the `CU_AUTH_REMOTE_USER` environment variable can be set to simulate
+authentication as that NetID, with either `apache-shib` or `php-saml`. It is ignored when `APP_ENV` is "production",
+and the config cache must be cleared when it is changed.
 
 ```dotenv
 # File: .env
 APP_ENV=local
-REMOTE_USER=abc123
+CU_AUTH_REMOTE_USER=abc123
 ```
+
+`REMOTE_USER` also works, unless the web server sets `REMOTE_USER` itself: nginx and Caddy (for example, Laravel Herd
+or Valet) pass it to PHP as an empty value, which takes precedence over `.env`.
 
 ## Identity and Authorization
 
@@ -133,6 +202,25 @@ To modify the PHP SAML Toolkit configuration, publish the configuration file:
 ```
 
 
+## Require CUAuth
+
+Puts every route in the `web` middleware group behind [CUAuth](#single-sign-on), followed by [AppTesters](#apptesters),
+without adding either to your routes. Anonymous visitors, including bots, are redirected to SSO login on every page.
+
+### Usage
+
+```dotenv
+# File: .env
+REQUIRE_CU_AUTH=true
+```
+
+This applies in any environment it is set, including production. To limit a non-production site to specific users, also set
+`APP_TESTERS`. Routes outside the `web` middleware group are not affected.
+
+Combining Laravel's `auth` middleware with CUAuth on a route is not supported as a way to log in SSO users: `auth` runs
+before CUAuth, so a visitor without a local session is sent to the app's login route instead of SSO.
+
+
 ## AppTesters
 
 Limits non-production access to users in the `APP_TESTERS` environment variable.
@@ -154,7 +242,11 @@ Route::group(['middleware' => [CUAuth::class, AppTesters::class], function () {
 APP_TESTERS=abc123,def456
 ```
 
-On non-production sites, the [AppTesters](Middleware/AppTesters.php) middleware checks the "APP_TESTERS" environment variable for a comma-separated list of users. If a user is logged in and not in the list, the middleware will return an HTTP_FORBIDDEN response.
+On non-production sites, the [AppTesters](Middleware/AppTesters.php) middleware checks the "APP_TESTERS" environment variable for a comma-separated list of users. Anyone who is not in the list, including a visitor who is not logged in, gets an HTTP_FORBIDDEN response.
+
+AppTesters only checks who the user is; it does not log anyone in. Put it after the middleware that authenticates
+users (`CUAuth` or Laravel's `auth`), or set [`REQUIRE_CU_AUTH`](#require-cuauth) to apply both to the whole site.
+The package's own SSO routes exclude AppTesters, so users can always log in and out.
 
 The field used for looking up users is `netid` by default. It is configured in [config/cu-auth.php](../../config/cu-auth.php) file as `app_testers_field`.
 

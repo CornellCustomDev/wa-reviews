@@ -18,7 +18,7 @@ the *same case*, never a score standing alone. Confirm both run ids/models
 before pulling case data:
 
 ```
-lando artisan tinker --execute 'echo json_encode(App\Models\EvalRun::find($id)?->toArray());'
+php artisan tinker --execute 'echo json_encode(App\Models\EvalRun::find($id)?->toArray());'
 ```
 
 ## Find the actual regressing case before explaining anything

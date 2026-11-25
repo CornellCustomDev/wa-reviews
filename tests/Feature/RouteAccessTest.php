@@ -22,14 +22,12 @@ class RouteAccessTest extends FeatureTestCase
     #[Test]
     public function projects_not_publicly_accessible(): void
     {
-        config(['cu-auth.remote_user_override' => null]);
-
-        // In non-prod, AppTesters middleware returns forbidden
-        $this->get(route('projects'))->assertForbidden();
-
-        // In prod, CUAuth redirects to login
         Config::set('app.env', 'production');
-        $this->get(route('projects'))->assertRedirect();
+        config(['cu-auth.remote_user_override' => null]);
+        $ssoLogin = route('cu-auth.sso-login', ['redirect_url' => route('projects')]);
+
+        // CUAuth redirects to login
+        $this->get(route('projects'))->assertRedirect($ssoLogin);
     }
 
     #[Test]

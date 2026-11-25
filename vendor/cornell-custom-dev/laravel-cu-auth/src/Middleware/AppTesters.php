@@ -33,6 +33,18 @@ class AppTesters
             return $next($request);
         }
 
+        if ($this->isTester()) {
+            return $next($request);
+        }
+
+        return $this->forbidden();
+    }
+
+    /**
+     * Whether the logged-in user, or else the remote identity, is one of the app testers.
+     */
+    private function isTester(): bool
+    {
         if (auth()->check()) {
             $appTestersField = config('cu-auth.app_testers_field');
             $tester = auth()->user()->$appTestersField ?? '';
@@ -40,10 +52,11 @@ class AppTesters
             $tester = $this->identityManager->getIdentity()?->id() ?: '';
         }
 
-        if ($this->app_testers->contains($tester)) {
-            return $next($request);
-        }
+        return $this->app_testers->contains($tester);
+    }
 
+    private function forbidden(): Response
+    {
         if (app()->runningInConsole()) {
             return response('Forbidden', Response::HTTP_FORBIDDEN);
         }

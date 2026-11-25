@@ -11,9 +11,6 @@
 
 namespace Symfony\Component\HttpKernel\Event;
 
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpKernel\HttpKernelInterface;
-
 /**
  * Triggered whenever a request is fully processed.
  *
@@ -21,12 +18,4 @@ use Symfony\Component\HttpKernel\HttpKernelInterface;
  */
 final class FinishRequestEvent extends KernelEvent
 {
-    public function __construct(
-        HttpKernelInterface $kernel,
-        Request $request,
-        ?int $requestType,
-        public readonly ?ControllerMetadata $controllerMetadata = null,
-    ) {
-        parent::__construct($kernel, $request, $requestType);
-    }
 }
