@@ -29,6 +29,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Require CUAuth
+    |--------------------------------------------------------------------------
+    |
+    | Put every route in the "web" middleware group behind the CUAuth
+    | middleware. If AppTesters is defined, it is also applied.
+    |
+    */
+    'require_cu_auth' => boolval(env('REQUIRE_CU_AUTH', false)),
+
+    /*
+    |--------------------------------------------------------------------------
     | ApacheShib Configuration
     |--------------------------------------------------------------------------
     |

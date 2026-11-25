@@ -5,7 +5,10 @@ namespace CornellCustomDev\LaravelStarterKit\CUAuth;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\SamlIdentityManager;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\ShibIdentityManager;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\AppTesters;
+use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\CUAuth;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Middleware\LivewireAuth;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -60,6 +63,13 @@ class CUAuthServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__.'/../routes/cu-auth.php');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'cu-auth');
         Blade::componentNamespace('CornellCustomDev\\LaravelStarterKit\\CUAuth\\View\\Components', 'cu-auth');
+
+        if (config('cu-auth.require_cu_auth')) {
+            // Put every route in the web group behind CUAuth, then AppTesters.
+            $kernel = $this->app->make(Kernel::class);
+            $kernel->appendMiddlewareToGroup('web', CUAuth::class);
+            $kernel->appendMiddlewareToGroup('web', AppTesters::class);
+        }
 
         if (config('cu-auth.require_livewire_auth')) {
             LivewireAuth::requireLivewireAuth();

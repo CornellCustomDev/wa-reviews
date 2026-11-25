@@ -5,6 +5,7 @@ Middleware for authorizing Laravel users.
 - [CUAuth SSO](#cuauth) - Single sign-on and authorization middleware 
   - SAML PHP Toolkit integration
   - Apache mod_shib integration
+- [Require CUAuth](#require-cuauth) - Put the whole site behind SSO without changing routes
 - [AppTesters](#apptesters) - Limit access to users in the `APP_TESTERS` environment variable
 - [Local Login](#local-login) - Allow Laravel users to log in with a local username and password
 - [Livewire Auth](#livewire-auth) - Block unauthenticated Livewire update requests
@@ -13,6 +14,7 @@ Middleware for authorizing Laravel users.
 
 - **Single Sign-On**: Protect routes with SSO (mod_shib or PHP SAML)
   - Optionally log in SSO users to app user accounts
+- **Require CUAuth**: Keep bots and anonymous visitors off every page, such as on a non-production site
 - **AppTesters**: Limit access on non-production sites to users in the `APP_TESTERS` environment variable
 
 
@@ -200,6 +202,25 @@ To modify the PHP SAML Toolkit configuration, publish the configuration file:
 ```
 
 
+## Require CUAuth
+
+Puts every route in the `web` middleware group behind [CUAuth](#single-sign-on), followed by [AppTesters](#apptesters),
+without adding either to your routes. Anonymous visitors, including bots, are redirected to SSO login on every page.
+
+### Usage
+
+```dotenv
+# File: .env
+REQUIRE_CU_AUTH=true
+```
+
+This applies in any environment it is set, including production. To limit a non-production site to specific users, also set
+`APP_TESTERS`. Routes outside the `web` middleware group are not affected.
+
+Combining Laravel's `auth` middleware with CUAuth on a route is not supported as a way to log in SSO users: `auth` runs
+before CUAuth, so a visitor without a local session is sent to the app's login route instead of SSO.
+
+
 ## AppTesters
 
 Limits non-production access to users in the `APP_TESTERS` environment variable.
@@ -221,7 +242,11 @@ Route::group(['middleware' => [CUAuth::class, AppTesters::class], function () {
 APP_TESTERS=abc123,def456
 ```
 
-On non-production sites, the [AppTesters](Middleware/AppTesters.php) middleware checks the "APP_TESTERS" environment variable for a comma-separated list of users. If a user is logged in and not in the list, the middleware will return an HTTP_FORBIDDEN response.
+On non-production sites, the [AppTesters](Middleware/AppTesters.php) middleware checks the "APP_TESTERS" environment variable for a comma-separated list of users. Anyone who is not in the list, including a visitor who is not logged in, gets an HTTP_FORBIDDEN response.
+
+AppTesters only checks who the user is; it does not log anyone in. Put it after the middleware that authenticates
+users (`CUAuth` or Laravel's `auth`), or set [`REQUIRE_CU_AUTH`](#require-cuauth) to apply both to the whole site.
+The package's own SSO routes exclude AppTesters, so users can always log in and out.
 
 The field used for looking up users is `netid` by default. It is configured in [config/cu-auth.php](../../config/cu-auth.php) file as `app_testers_field`.
 

@@ -3,7 +3,6 @@
 namespace CornellCustomDev\LaravelStarterKit\CUAuth\Middleware;
 
 use Closure;
-use CornellCustomDev\LaravelStarterKit\CUAuth\Events\CUAuthenticated;
 use CornellCustomDev\LaravelStarterKit\CUAuth\Managers\IdentityManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -34,23 +33,18 @@ class AppTesters
             return $next($request);
         }
 
-        // SSO routes need to pass through so a tester can log in.
-        if ($request->routeIs('cu-auth.sso-*', 'cu-auth.shibboleth-*')) {
+        if ($this->isTester()) {
             return $next($request);
         }
 
-        if (! auth()->check()) {
-            // If nobody is logged in yet, redirect to the SSO login route instead of denying access.
-            if (! $this->identityManager->hasRemoteIdentity()) {
-                return redirect()->route('cu-auth.sso-login', ['redirect_url' => $request->fullUrl()]);
-            }
+        return $this->forbidden();
+    }
 
-            // If requiring a local user, attempt to log in the user so they can be checked as a tester.
-            if (config('cu-auth.require_local_user')) {
-                event(new CUAuthenticated);
-            }
-        }
-
+    /**
+     * Whether the logged-in user, or else the remote identity, is one of the app testers.
+     */
+    private function isTester(): bool
+    {
         if (auth()->check()) {
             $appTestersField = config('cu-auth.app_testers_field');
             $tester = auth()->user()->$appTestersField ?? '';
@@ -58,10 +52,11 @@ class AppTesters
             $tester = $this->identityManager->getIdentity()?->id() ?: '';
         }
 
-        if ($this->app_testers->contains($tester)) {
-            return $next($request);
-        }
+        return $this->app_testers->contains($tester);
+    }
 
+    private function forbidden(): Response
+    {
         if (app()->runningInConsole()) {
             return response('Forbidden', Response::HTTP_FORBIDDEN);
         }

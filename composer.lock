@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6c562cdd1b2a3f09d439648bcbc00f24",
+    "content-hash": "e37a90ac25ae3cc5d1d11df271710b95",
     "packages": [
         {
             "name": "brick/math",
@@ -299,16 +299,16 @@
         },
         {
             "name": "cornell-custom-dev/laravel-cu-auth",
-            "version": "dev-app-testers-login-redirect",
+            "version": "v1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CornellCustomDev/CD-LaravelCUAuth.git",
-                "reference": "7ff354a8fd001b30246e4a20ce32d60e66ee0cf7"
+                "reference": "94a81eed502d9635636eecb2897d7a2341df6e14"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/7ff354a8fd001b30246e4a20ce32d60e66ee0cf7",
-                "reference": "7ff354a8fd001b30246e4a20ce32d60e66ee0cf7",
+                "url": "https://api.github.com/repos/CornellCustomDev/CD-LaravelCUAuth/zipball/94a81eed502d9635636eecb2897d7a2341df6e14",
+                "reference": "94a81eed502d9635636eecb2897d7a2341df6e14",
                 "shasum": ""
             },
             "require": {
@@ -343,10 +343,10 @@
             "description": "A Laravel package for authentication and identity management at Cornell University",
             "support": {
                 "issues": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/issues",
-                "source": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/tree/app-testers-login-redirect"
+                "source": "https://github.com/CornellCustomDev/CD-LaravelCUAuth/tree/v1.4.0"
             },
-            "time": "2026-11-23T21:01:32+00:00",
-            "published-time": "2026-11-23T21:06:18+00:00"
+            "time": "2026-11-25T00:13:30+00:00",
+            "published-time": "2026-11-25T00:25:03+00:00"
         },
         {
             "name": "cornell-custom-dev/laravel-ldap",
@@ -11697,7 +11697,6 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "cornell-custom-dev/laravel-cu-auth": 20,
         "maestroerror/laragent": 20
     },
     "prefer-stable": true,
